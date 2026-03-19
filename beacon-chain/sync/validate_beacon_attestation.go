@@ -44,7 +44,9 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 ) (pubsub.ValidationResult, error) {
 	start := time.Now()
 	defer func() {
-		attestationVerificationGossipSummary.Observe(float64(time.Since(start).Milliseconds()))
+		elapsed := float64(time.Since(start).Milliseconds())
+		attestationVerificationGossipSummary.Observe(elapsed)
+		attestationVerificationGossipHistogram.Observe(elapsed)
 	}()
 
 	if pid == s.cfg.p2p.PeerID() {
@@ -236,6 +238,34 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 
 	// Attach final validated attestation to the message for further pipeline use
 	msg.ValidatorData = attForValidation
+
+	// Observe attestation arrival delay since slot start.
+	slotStartTime, err := slots.StartTime(s.cfg.clock.GenesisTime(), data.Slot)
+	if err == nil {
+		sinceSlotStartTime := start.Sub(slotStartTime)
+		validationTime := time.Since(start)
+		attestationArrivalGossipHistogram.Observe(float64(sinceSlotStartTime.Milliseconds()))
+
+		peerGossipScore := s.cfg.p2p.Peers().Scorers().GossipScorer().Score(pid)
+		peerStr := pid.String()
+		if len(peerStr) > 6 {
+			peerStr = peerStr[len(peerStr)-6:]
+		}
+		select {
+		case s.attestationLogCh <- attestationLogEntry{
+			slot:               data.Slot,
+			committeeIndex:     committeeIndex,
+			sinceSlotStartTime: sinceSlotStartTime,
+			validationTime:     validationTime,
+			peerSuffix:         peerStr,
+			peerGossipScore:    peerGossipScore,
+			beaconBlockRoot:    bytesutil.ToBytes32(data.BeaconBlockRoot),
+			targetEpoch:        data.Target.Epoch,
+			isAggregate:        false,
+		}:
+		default:
+		}
+	}
 
 	return pubsub.ValidationAccept, nil
 }

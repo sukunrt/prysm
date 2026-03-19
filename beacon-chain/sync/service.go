@@ -6,6 +6,7 @@ package sync
 
 import (
 	"context"
+	"os"
 	"sync"
 	"time"
 
@@ -107,6 +108,7 @@ type config struct {
 	blobStorage             *filesystem.BlobStorage
 	dataColumnStorage       *filesystem.DataColumnStorage
 	batchVerifierLimit      int
+	dataDir                 string
 }
 
 // This defines the interface for interacting with block chain service
@@ -180,6 +182,8 @@ type Service struct {
 	slasherEnabled                   bool
 	lcStore                          *lightClient.Store
 	dataColumnLogCh                  chan dataColumnLogEntry
+	attestationLogCh                 chan attestationLogEntry
+	attestationLogFile               *os.File
 	digestActions                    perDigestSet
 	subscriptionSpawner              func(func()) // see Service.spawn for details
 }
@@ -196,6 +200,7 @@ func NewService(ctx context.Context, opts ...Option) *Service {
 		seenPendingBlocks:     make(map[[32]byte]bool),
 		blkRootToPendingAtts:  make(map[[32]byte][]any),
 		dataColumnLogCh:       make(chan dataColumnLogEntry, 1000),
+		attestationLogCh:      make(chan attestationLogEntry, 1000),
 		reconstructionRandGen: rand.NewGenerator(),
 	}
 
@@ -265,6 +270,7 @@ func (s *Service) Start() {
 	go s.kzgVerifierRoutine()
 	go s.startDiscoveryAndSubscriptions()
 	go s.processDataColumnLogs()
+	go s.processAttestationLogs()
 
 	s.cfg.p2p.AddConnectionHandler(s.reValidatePeer, s.sendGoodbye)
 	s.cfg.p2p.AddDisconnectionHandler(func(_ context.Context, _ peer.ID) error {
@@ -296,6 +302,9 @@ func (s *Service) Stop() error {
 
 		if s.rateLimiter != nil {
 			s.rateLimiter.free()
+		}
+		if s.attestationLogFile != nil {
+			s.attestationLogFile.Close()
 		}
 	}()
 

@@ -223,6 +223,14 @@ func WithLightClientStore(lcs *lightClient.Store) Option {
 	}
 }
 
+// WithDataDir sets the data directory path for file-based logging.
+func WithDataDir(dir string) Option {
+	return func(s *Service) error {
+		s.cfg.dataDir = dir
+		return nil
+	}
+}
+
 // WithBatchVerifierLimit sets the maximum number of signatures to batch verify at once.
 func WithBatchVerifierLimit(limit int) Option {
 	return func(s *Service) error {

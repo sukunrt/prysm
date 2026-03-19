@@ -133,10 +133,24 @@ var (
 			Help: "Time to verify gossiped attestations",
 		},
 	)
+	aggregateAttestationVerificationGossipHistogram = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "gossip_aggregate_attestation_verification_duration_milliseconds",
+			Help:    "Time to verify gossiped aggregate attestations",
+			Buckets: []float64{1, 5, 20, 50, 75, 100, 500, 1000},
+		},
+	)
 	attestationVerificationGossipSummary = promauto.NewSummary(
 		prometheus.SummaryOpts{
 			Name: "gossip_attestation_verification_milliseconds",
 			Help: "Time to verify gossiped attestations",
+		},
+	)
+	attestationVerificationGossipHistogram = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "gossip_attestation_verification_duration_milliseconds",
+			Help:    "Time to verify gossiped unaggregated attestations",
+			Buckets: []float64{1, 5, 20, 50, 75, 100, 500, 1000},
 		},
 	)
 	blockVerificationGossipSummary = promauto.NewSummary(
@@ -254,6 +268,22 @@ var (
 		prometheus.SummaryOpts{
 			Name: "data_column_obtained_via_el_count",
 			Help: "Count the number of data column sidecars obtained via the execution layer.",
+		},
+	)
+
+	attestationArrivalGossipHistogram = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "gossip_attestation_arrival_duration_milliseconds",
+			Help:    "Time for gossiped unaggregated attestations to arrive since slot start in milliseconds",
+			Buckets: []float64{100, 200, 300, 400, 500, 1000, 2000, 4000, 8000, 12000},
+		},
+	)
+
+	aggregateAttestationArrivalGossipHistogram = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "gossip_aggregate_attestation_arrival_duration_milliseconds",
+			Help:    "Time for gossiped aggregate attestations to arrive since slot start in milliseconds",
+			Buckets: []float64{100, 200, 300, 400, 500, 1000, 2000, 4000, 8000, 12000},
 		},
 	)
 )

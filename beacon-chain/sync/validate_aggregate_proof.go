@@ -143,7 +143,37 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 
 	msg.ValidatorData = m
 
-	aggregateAttestationVerificationGossipSummary.Observe(float64(prysmTime.Since(receivedTime).Milliseconds()))
+	aggregateElapsed := float64(prysmTime.Since(receivedTime).Milliseconds())
+	aggregateAttestationVerificationGossipSummary.Observe(aggregateElapsed)
+	aggregateAttestationVerificationGossipHistogram.Observe(aggregateElapsed)
+
+	// Observe aggregate attestation arrival delay since slot start.
+	slotStartTime, err := slots.StartTime(s.cfg.clock.GenesisTime(), data.Slot)
+	if err == nil {
+		sinceSlotStartTime := receivedTime.Sub(slotStartTime)
+		validationTime := prysmTime.Since(receivedTime)
+		aggregateAttestationArrivalGossipHistogram.Observe(float64(sinceSlotStartTime.Milliseconds()))
+
+		peerGossipScore := s.cfg.p2p.Peers().Scorers().GossipScorer().Score(pid)
+		peerStr := pid.String()
+		if len(peerStr) > 6 {
+			peerStr = peerStr[len(peerStr)-6:]
+		}
+		select {
+		case s.attestationLogCh <- attestationLogEntry{
+			slot:               data.Slot,
+			committeeIndex:     aggregate.GetCommitteeIndex(),
+			sinceSlotStartTime: sinceSlotStartTime,
+			validationTime:     validationTime,
+			peerSuffix:         peerStr,
+			peerGossipScore:    peerGossipScore,
+			beaconBlockRoot:    bytesutil.ToBytes32(data.BeaconBlockRoot),
+			targetEpoch:        data.Target.Epoch,
+			isAggregate:        true,
+		}:
+		default:
+		}
+	}
 
 	return pubsub.ValidationAccept, nil
 }
