@@ -6,6 +6,15 @@ These rules allow for variable substitution for hardcoded tag values like ssz-si
 
 ####### Configuration #######
 
+# presets lists every SSZ substitution dict defined below. Element 0 is the base
+# preset: build/gen generates it untagged (or negatively tagged) and emits every
+# other preset as a build-tagged twin. This list is the source of truth for the
+# preset set, for both Bazel and build/gen.
+presets = [
+    "mainnet",
+    "minimal",
+]
+
 mainnet = {
     "block_roots.size": "8192,32",  # SLOTS_PER_HISTORICAL_ROOT, [32]byte
     "state_roots.size": "8192,32",  # SLOTS_PER_HISTORICAL_ROOT, [32]byte
@@ -106,16 +115,20 @@ minimal = {
 
 ###### Rules definitions #######
 
+# _substitutions maps each preset name to its substitution dict. Keep the keys in
+# sync with presets above.
+_substitutions = {
+    "mainnet": mainnet,
+    "minimal": minimal,
+}
+
 def _ssz_proto_files_impl(ctx):
     """
     ssz_proto_files implementation performs expand_template based on the value of "config".
     """
     outputs = []
-    if (ctx.attr.config.lower() == "mainnet"):
-        subs = mainnet
-    elif (ctx.attr.config.lower() == "minimal"):
-        subs = minimal
-    else:
+    subs = _substitutions.get(ctx.attr.config.lower())
+    if subs == None:
         fail("%s is an unknown configuration" % ctx.attr.config)
 
     for src in ctx.attr.srcs:

@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -27,7 +28,7 @@ func TestLoadCache(t *testing.T) {
 	})
 
 	t.Run("loads a valid cache", func(t *testing.T) {
-		writeCache(t, `{"version":1,"kinds":{"proto":"abc","ssz":"def"}}`)
+		writeCache(t, fmt.Sprintf(`{"version":%d,"kinds":{"proto":"abc","ssz":"def"}}`, cacheVersion))
 		got := loadCache()
 		require.Equal(t, cacheVersion, got.Version)
 		require.DeepEqual(t, map[string]string{"proto": "abc", "ssz": "def"}, got.Kinds)
@@ -147,6 +148,7 @@ func TestSpecificFiles(t *testing.T) {
 	    objs = ["X"],
 	)
 	`,
+			sszProtoLibraryBzl: "presets = [\"mainnet\"]\nmainnet = {}\n",
 		})
 
 		got, err := specificFiles(kindSSZ)

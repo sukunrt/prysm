@@ -127,9 +127,9 @@ func TestEvalStringList(t *testing.T) {
 	})
 }
 
-func TestLoadSSZDicts(t *testing.T) {
+func TestLoadPresets(t *testing.T) {
 	// writeSSZBzl creates proto/ssz_proto_library.bzl under a temp dir and
-	// chdirs into it, so loadSSZDicts resolves its fixed relative path there.
+	// chdirs into it, so loadPresets resolves its fixed relative path there.
 	writeSSZBzl := func(t *testing.T, content string) {
 		t.Helper()
 		dir := t.TempDir()
@@ -138,7 +138,9 @@ func TestLoadSSZDicts(t *testing.T) {
 		t.Chdir(dir)
 	}
 
-	writeSSZBzl(t, `
+	t.Run("loads every preset named by the presets list", func(t *testing.T) {
+		writeSSZBzl(t, `
+presets = ["mainnet", "minimal"]
 mainnet = {
     "Foo": "1",
     "Bar": "2",
@@ -148,11 +150,32 @@ minimal = {
 }
 `)
 
-	mainnet, minimal, err := loadSSZDicts()
-	require.NoError(t, err)
-	require.DeepEqual(t, map[string]string{"Foo": "1", "Bar": "2"}, mainnet)
-	require.DeepEqual(t, map[string]string{"Foo": "3"}, minimal)
+		got, err := loadPresets()
+		require.NoError(t, err)
+		require.DeepEqual(t, []string{"mainnet", "minimal"}, got.names)
+		require.Equal(t, "mainnet", got.base())
+		require.DeepEqual(t, []string{"minimal"}, got.nonBase())
+		require.DeepEqual(t, map[string]string{"Foo": "1", "Bar": "2"}, got.dicts["mainnet"])
+		require.DeepEqual(t, map[string]string{"Foo": "3"}, got.dicts["minimal"])
+	})
 
+	t.Run("errors when the presets list is absent", func(t *testing.T) {
+		writeSSZBzl(t, "mainnet = {}\n")
+		_, err := loadPresets()
+		require.ErrorContains(t, `list "presets" not found`, err)
+	})
+
+	t.Run("errors when the presets list is empty", func(t *testing.T) {
+		writeSSZBzl(t, "presets = []\n")
+		_, err := loadPresets()
+		require.ErrorContains(t, "presets is empty", err)
+	})
+
+	t.Run("errors when a named preset has no dict", func(t *testing.T) {
+		writeSSZBzl(t, `presets = ["mainnet"]`)
+		_, err := loadPresets()
+		require.ErrorContains(t, `dict "mainnet" not found`, err)
+	})
 }
 
 func TestStringDict(t *testing.T) {

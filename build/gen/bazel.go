@@ -3,7 +3,8 @@ package main
 // This file is the single point where build/gen reads its generation config
 // from the Bazel files, which are the source of truth:
 //
-//   - proto/ssz_proto_library.bzl  -> the mainnet/minimal SSZ substitution dicts
+//   - proto/ssz_proto_library.bzl  -> the preset list + per-preset SSZ
+//                                     substitution dicts
 //   - proto/**/BUILD.bazel         -> the proto package list + plugin mode
 //                                     (go_proto_library) and the SSZ targets
 //                                     (ssz_gen_marshal)
@@ -101,26 +102,54 @@ func evalStringList(e build.Expr, env map[string]build.Expr) ([]string, error) {
 	}
 }
 
-// loadSSZDicts returns the mainnet and minimal SSZ-size substitution maps.
-func loadSSZDicts() (mainnet, minimal map[string]string, err error) {
+// presetSet is the SSZ substitution config: the preset names in declaration
+// order plus each preset's substitution dict. names[0] is the base preset, the
+// one written to the plain output path; every other preset is emitted as a
+// build-tagged twin.
+type presetSet struct {
+	names []string
+	dicts map[string]map[string]string
+}
+
+// base returns the base preset's name.
+func (p presetSet) base() string { return p.names[0] }
+
+// nonBase returns every preset name except the base one.
+func (p presetSet) nonBase() []string { return p.names[1:] }
+
+// loadPresets reads the `presets` list and the SSZ-size substitution dict of
+// each preset it names.
+func loadPresets() (presetSet, error) {
 	f, err := parseBazel(sszProtoLibraryBzl)
 	if err != nil {
-		return nil, nil, err
+		return presetSet{}, err
 	}
 
 	env := topLevelAssignments(f)
 
-	mainnet, err = stringDict(env, "mainnet")
-	if err != nil {
-		return nil, nil, fmt.Errorf("string dict: %w", err)
+	e, ok := env["presets"]
+	if !ok {
+		return presetSet{}, fmt.Errorf("%s: list %q not found", sszProtoLibraryBzl, "presets")
 	}
 
-	minimal, err = stringDict(env, "minimal")
+	names, err := evalStringList(e, env)
 	if err != nil {
-		return nil, nil, fmt.Errorf("string dict: %w", err)
+		return presetSet{}, fmt.Errorf("presets: %w", err)
 	}
 
-	return mainnet, minimal, nil
+	if len(names) == 0 {
+		return presetSet{}, fmt.Errorf("%s: presets is empty", sszProtoLibraryBzl)
+	}
+
+	dicts := make(map[string]map[string]string, len(names))
+	for _, name := range names {
+		dicts[name], err = stringDict(env, name)
+		if err != nil {
+			return presetSet{}, fmt.Errorf("string dict: %w", err)
+		}
+	}
+
+	return presetSet{names: names, dicts: dicts}, nil
 }
 
 // stringDict resolves a top-level `name = {...}` assignment to a string map.

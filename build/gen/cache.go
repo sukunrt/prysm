@@ -25,7 +25,7 @@ import (
 
 const (
 	cacheFile    = ".gen-cache.json"
-	cacheVersion = 1
+	cacheVersion = 2
 	modulePath   = "github.com/OffchainLabs/prysm/v7"
 )
 
@@ -189,10 +189,17 @@ func sszFiles() ([]string, error) {
 		return nil, fmt.Errorf("buildBazelFiles: %w", err)
 	}
 
+	ps, err := loadPresets()
+	if err != nil {
+		return nil, fmt.Errorf("loadPresets: %w", err)
+	}
+
+	nonBase := ps.nonBase()
+
 	files := slices.Clone(bzl)
 	for _, target := range targets {
 		for _, dir := range append([]string{target.pkg}, target.protoInc...) {
-			pbs, err := pbgoFiles(dir)
+			pbs, err := pbgoFiles(dir, nonBase)
 			if err != nil {
 				return nil, fmt.Errorf("pbgoFiles %s: %w", dir, err)
 			}
@@ -200,9 +207,14 @@ func sszFiles() ([]string, error) {
 			files = append(files, pbs...)
 		}
 
+		// The twins are listed whether or not they exist: fileSum reports a
+		// missing file as "absent", so one appearing or disappearing
+		// invalidates the cache.
 		out := filepath.ToSlash(filepath.Join(target.pkg, target.out))
-		minOut := strings.TrimSuffix(out, ".ssz.go") + ".minimal.ssz.go"
-		files = append(files, out, minOut)
+		files = append(files, out)
+		for _, preset := range nonBase {
+			files = append(files, presetTwin(out, ".ssz.go", preset))
+		}
 	}
 
 	return files, nil
@@ -229,12 +241,13 @@ func mockFiles() ([]string, error) {
 	return files, nil
 }
 
-// pbgoFiles returns the .pb.go files in dir, skipping .minimal.pb.go twins.
+// pbgoFiles returns the .pb.go files in dir, skipping the twins of the given
+// presets.
 //
-// The .minimal.pb.go twins are not fed to sszgen: the minimal variant is
-// regenerated from .proto files into a temp dir at gen time and they are proto
-// outputs already covered by the proto manifest.
-func pbgoFiles(dir string) ([]string, error) {
+// The twins are not fed to sszgen: each non-base preset is regenerated from the
+// .proto files into a temp dir at gen time, and they are proto outputs already
+// covered by the proto manifest.
+func pbgoFiles(dir string, presets []string) ([]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("readDir %s: %w", dir, err)
@@ -243,7 +256,8 @@ func pbgoFiles(dir string) ([]string, error) {
 	var out []string
 	for _, entry := range entries {
 		name := entry.Name()
-		if entry.IsDir() || !strings.HasSuffix(name, ".pb.go") || strings.HasSuffix(name, ".minimal.pb.go") {
+		if entry.IsDir() || !strings.HasSuffix(name, ".pb.go") ||
+			isPresetTwin(name, ".pb.go", presets) {
 			continue
 		}
 

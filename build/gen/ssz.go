@@ -22,18 +22,30 @@ func genSSZ() error {
 		return fmt.Errorf("load SSZ targets: %w", err)
 	}
 
-	minPb, err := os.MkdirTemp("", "gen-minpb-")
+	ps, err := loadPresets()
 	if err != nil {
-		return fmt.Errorf("mkdirTemp: %w", err)
+		return fmt.Errorf("load presets: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(minPb) }()
 
-	if err := emitMinimalPbgo(minPb); err != nil {
-		return fmt.Errorf("emit minimal pb.go: %w", err)
+	// The base preset's .pb.go tree is the checked-in one (root ""); every other
+	// preset is regenerated into its own temp tree.
+	roots := make(map[string]string, len(ps.nonBase()))
+	for _, preset := range ps.nonBase() {
+		root, err := os.MkdirTemp("", "gen-"+preset+"pb-")
+		if err != nil {
+			return fmt.Errorf("mkdirTemp: %w", err)
+		}
+		defer func() { _ = os.RemoveAll(root) }()
+
+		if err := emitPresetPbgo(preset, root); err != nil {
+			return fmt.Errorf("emit %s pb.go: %w", preset, err)
+		}
+
+		roots[preset] = root
 	}
 
 	for _, target := range targets {
-		if err := genSSZTarget(target, minPb); err != nil {
+		if err := genSSZTarget(target, ps, roots); err != nil {
 			return fmt.Errorf("gen SSZ target: %w", err)
 		}
 	}
@@ -41,42 +53,64 @@ func genSSZ() error {
 	return nil
 }
 
-func genSSZTarget(t sszTarget, minPb string) error {
+func genSSZTarget(t sszTarget, ps presetSet, roots map[string]string) error {
 	fmt.Printf("generating %s/%s\n", t.pkg, t.out)
 
-	mainnet, err := sszgenOne(t, "")
+	nonBase := ps.nonBase()
+
+	base, err := sszgenOne(t, "", nonBase)
 	if err != nil {
-		return fmt.Errorf("mainnet: %w", err)
+		return fmt.Errorf("%s: %w", ps.base(), err)
 	}
 
-	minimal, err := sszgenOne(t, minPb)
-	if err != nil {
-		return fmt.Errorf("minimal: %w", err)
-	}
-
-	if mainnet == minimal {
-		if err := os.WriteFile(filepath.Join(t.pkg, t.out), []byte(mainnet), 0o600); err != nil {
-			return fmt.Errorf("writeFile: %w", err)
+	// Presets whose output is byte-identical to the base one need no twin.
+	twins := make(map[string]string, len(nonBase))
+	var differing []string
+	for _, preset := range nonBase {
+		out, err := sszgenOne(t, roots[preset], nonBase)
+		if err != nil {
+			return fmt.Errorf("%s: %w", preset, err)
 		}
 
-		return nil
+		if out != base {
+			differing = append(differing, preset)
+			twins[preset] = out
+		}
 	}
 
-	if err := os.WriteFile(filepath.Join(t.pkg, t.out), []byte("//go:build !minimal\n\n"+mainnet), 0o600); err != nil {
+	content := base
+	if tag := buildTag(differing); tag != "" {
+		content = "//go:build " + tag + "\n\n" + base
+	}
+
+	if err := os.WriteFile(filepath.Join(t.pkg, t.out), []byte(content), 0o600); err != nil {
 		return fmt.Errorf("writeFile: %w", err)
 	}
 
-	minOut := strings.TrimSuffix(t.out, ".ssz.go") + ".minimal.ssz.go"
-	if err := os.WriteFile(filepath.Join(t.pkg, minOut), []byte("//go:build minimal\n\n"+minimal), 0o600); err != nil {
-		return fmt.Errorf("writeFile: %w", err)
+	for _, preset := range nonBase {
+		path := filepath.Join(t.pkg, presetTwin(t.out, ".ssz.go", preset))
+		out, ok := twins[preset]
+		if !ok {
+			// Drop a stale twin from an earlier run: the base file is not
+			// negated for this preset, so the twin would shadow it.
+			if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+				return fmt.Errorf("remove %s: %w", path, err)
+			}
+
+			continue
+		}
+
+		if err := os.WriteFile(path, []byte("//go:build "+preset+"\n\n"+out), 0o600); err != nil {
+			return fmt.Errorf("writeFile: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func sszgenOne(t sszTarget, root string) (string, error) {
+func sszgenOne(t sszTarget, root string, presets []string) (string, error) {
 	stage := filepath.Join(root, t.pkg, ".sszgen_tmp")
-	if err := stagePbgo(filepath.Join(root, t.pkg), stage); err != nil {
+	if err := stagePbgo(filepath.Join(root, t.pkg), stage, presets); err != nil {
 		return "", fmt.Errorf("stagePbgo: %w", err)
 	}
 
@@ -85,7 +119,7 @@ func sszgenOne(t sszTarget, root string) (string, error) {
 	inc := slices.Clone(t.libInc)
 	for _, p := range t.protoInc {
 		istage := filepath.Join(root, p, ".sszinc_tmp")
-		if err := stagePbgo(filepath.Join(root, p), istage); err != nil {
+		if err := stagePbgo(filepath.Join(root, p), istage, presets); err != nil {
 			return "", fmt.Errorf("stagePbgo: %w", err)
 		}
 
@@ -135,13 +169,13 @@ func sszgenOne(t sszTarget, root string) (string, error) {
 	return b.String(), nil
 }
 
-// stagePbgo copies pkgDir's .pb.go files into stageDir, skipping .minimal.pb.go
-// twins.
+// stagePbgo copies pkgDir's .pb.go files into stageDir, skipping the twins of
+// the given presets.
 //
-// The .minimal.pb.go twins are not fed to sszgen: the minimal variant is
-// regenerated from .proto files into a temp dir at gen time and they are proto
-// outputs already covered by the proto manifest.
-func stagePbgo(pkgDir, stageDir string) error {
+// The twins are not fed to sszgen: each non-base preset is regenerated from the
+// .proto files into a temp dir at gen time, and they are proto outputs already
+// covered by the proto manifest.
+func stagePbgo(pkgDir, stageDir string, presets []string) error {
 	if err := os.MkdirAll(stageDir, 0o750); err != nil {
 		return fmt.Errorf("mkdirAll: %w", err)
 	}
@@ -153,7 +187,7 @@ func stagePbgo(pkgDir, stageDir string) error {
 
 	for _, e := range entries {
 		name := e.Name()
-		if !strings.HasSuffix(name, ".pb.go") || strings.HasSuffix(name, ".minimal.pb.go") {
+		if !strings.HasSuffix(name, ".pb.go") || isPresetTwin(name, ".pb.go", presets) {
 			continue
 		}
 

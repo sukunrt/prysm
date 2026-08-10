@@ -44,7 +44,7 @@ func TestApplyGenModes(t *testing.T) {
 	nested := writeFile(t, dir, "proto/eth/v1/bar.pb.go", 0o600)
 	other := writeFile(t, dir, "proto/eth/foo.go", 0o600)
 
-	require.NoError(t, applyGenModes(dir))
+	require.NoError(t, applyGenModes(dir, []string{"minimal"}))
 
 	mode := func(path string) os.FileMode {
 		info, err := os.Stat(path)
@@ -260,6 +260,26 @@ func TestWriteTagged(t *testing.T) {
 	got, err := os.ReadFile(dst)
 	require.NoError(t, err)
 	require.Equal(t, "//go:build !minimal\n\npackage foo\n", string(got))
+}
+
+func TestBuildTag(t *testing.T) {
+	require.Equal(t, "", buildTag(nil))
+	require.Equal(t, "!minimal", buildTag([]string{"minimal"}))
+	require.Equal(t, "!minimal && !decoupled", buildTag([]string{"minimal", "decoupled"}))
+}
+
+func TestPresetTwin(t *testing.T) {
+	require.Equal(t, "a/foo.minimal.pb.go", presetTwin("a/foo.pb.go", ".pb.go", "minimal"))
+	require.Equal(t, "bar.decoupled.ssz.go", presetTwin("bar.ssz.go", ".ssz.go", "decoupled"))
+}
+
+func TestIsPresetTwin(t *testing.T) {
+	presets := []string{"minimal", "decoupled"}
+	require.Equal(t, true, isPresetTwin("foo.minimal.pb.go", ".pb.go", presets))
+	require.Equal(t, true, isPresetTwin("foo.decoupled.pb.go", ".pb.go", presets))
+	require.Equal(t, false, isPresetTwin("foo.pb.go", ".pb.go", presets))
+	require.Equal(t, false, isPresetTwin("foo.minimal.ssz.go", ".pb.go", presets))
+	require.Equal(t, false, isPresetTwin("foo.minimal.pb.go", ".pb.go", nil))
 }
 
 func TestPluginForMode(t *testing.T) {

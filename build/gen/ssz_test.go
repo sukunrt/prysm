@@ -9,7 +9,9 @@ import (
 )
 
 func TestStagePbgo(t *testing.T) {
-	t.Run("copies .pb.go files, skipping minimal and non-pb.go", func(t *testing.T) {
+	presets := []string{"minimal"}
+
+	t.Run("copies .pb.go files, skipping preset twins and non-pb.go", func(t *testing.T) {
 		dir := t.TempDir()
 		pkgDir := filepath.Join(dir, "pkg")
 		require.NoError(t, os.MkdirAll(pkgDir, 0o700))
@@ -23,7 +25,7 @@ func TestStagePbgo(t *testing.T) {
 		write("README.txt", "nope\n")               // excluded
 
 		stageDir := filepath.Join(dir, "stage")
-		require.NoError(t, stagePbgo(pkgDir, stageDir))
+		require.NoError(t, stagePbgo(pkgDir, stageDir, presets))
 
 		entries, err := os.ReadDir(stageDir)
 		require.NoError(t, err)
@@ -45,13 +47,13 @@ func TestStagePbgo(t *testing.T) {
 		blocker := filepath.Join(dir, "blocker")
 		require.NoError(t, os.WriteFile(blocker, []byte("x"), 0o600))
 
-		err := stagePbgo(dir, filepath.Join(blocker, "stage"))
+		err := stagePbgo(dir, filepath.Join(blocker, "stage"), presets)
 		require.ErrorContains(t, "mkdirAll:", err)
 	})
 
 	t.Run("errors when the package dir cannot be read", func(t *testing.T) {
 		dir := t.TempDir()
-		err := stagePbgo(filepath.Join(dir, "missing"), filepath.Join(dir, "stage"))
+		err := stagePbgo(filepath.Join(dir, "missing"), filepath.Join(dir, "stage"), presets)
 		require.ErrorContains(t, "readDir:", err)
 	})
 }

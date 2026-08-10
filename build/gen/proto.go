@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -41,14 +42,47 @@ const (
 	modeStock    = "stock"
 )
 
-// typeDiffering lists the generated *.pb.go whose Go
-// field TYPE differs between mainnet and minimal.
-var typeDiffering = map[string]bool{
-	"proto/prysm/v1alpha1/attestation.pb.go":       true,
-	"proto/prysm/v1alpha1/sync_committee.pb.go":    true,
-	"proto/prysm/v1alpha1/beacon_core_types.pb.go": true,
-	"proto/prysm/v1alpha1/gloas.pb.go":             true,
-	"proto/eth/v1/beacon_block.pb.go":              true,
+// typeDiffering maps a generated *.pb.go to the non-base presets whose Go field
+// TYPES differ from the base preset's.
+//
+// This is a hand-maintained list on purpose: the generated files embed the ssz
+// option strings in their file_..._rawDesc blob, so comparing the bytes of two
+// presets' output would flag dozens of files whose Go types are identical.
+var typeDiffering = map[string][]string{
+	"proto/prysm/v1alpha1/attestation.pb.go":       {"minimal"},
+	"proto/prysm/v1alpha1/sync_committee.pb.go":    {"minimal"},
+	"proto/prysm/v1alpha1/beacon_core_types.pb.go": {"minimal"},
+	"proto/prysm/v1alpha1/gloas.pb.go":             {"minimal"},
+	"proto/eth/v1/beacon_block.pb.go":              {"minimal"},
+}
+
+// buildTag returns the //go:build constraint for a base file that has twins for
+// the given presets: the negation of every one of them, or "" when there are
+// none (the file is preset-invariant and needs no tag).
+func buildTag(differing []string) string {
+	if len(differing) == 0 {
+		return ""
+	}
+
+	tags := make([]string, len(differing))
+	for i, p := range differing {
+		tags[i] = "!" + p
+	}
+
+	return strings.Join(tags, " && ")
+}
+
+// presetTwin returns the twin path of a generated file for one preset:
+// <name>.<preset><suffix>, e.g. foo.pb.go + "minimal" -> foo.minimal.pb.go.
+func presetTwin(path, suffix, preset string) string {
+	return strings.TrimSuffix(path, suffix) + "." + preset + suffix
+}
+
+// isPresetTwin reports whether path is the twin of any of the given presets.
+func isPresetTwin(path, suffix string, presets []string) bool {
+	return slices.ContainsFunc(presets, func(p string) bool {
+		return strings.HasSuffix(path, "."+p+suffix)
+	})
 }
 
 func protoPkgDirs(pkgs map[string]string) []string {
@@ -63,9 +97,9 @@ func protoPkgDirs(pkgs map[string]string) []string {
 }
 
 func genProto() error {
-	mainnet, minimal, err := loadSSZDicts()
+	ps, err := loadPresets()
 	if err != nil {
-		return fmt.Errorf("load SSZ dicts: %w", err)
+		return fmt.Errorf("load presets: %w", err)
 	}
 
 	pkgs, err := loadProtoPkgs()
@@ -89,42 +123,47 @@ func genProto() error {
 		return fmt.Errorf("build proto plugins: %w", err)
 	}
 
-	outMain := filepath.Join(tmpRoot, "mainnet")
-	if err := generateNetwork(mainnet, outMain, binDir, googleapisInc, pkgs); err != nil {
-		return fmt.Errorf("generate mainnet: %w", err)
+	outs := make(map[string]string, len(ps.names))
+	for _, name := range ps.names {
+		out := filepath.Join(tmpRoot, name)
+		if err := generateNetwork(ps.dicts[name], out, binDir, googleapisInc, pkgs); err != nil {
+			return fmt.Errorf("generate %s: %w", name, err)
+		}
+
+		outs[name] = out
 	}
 
-	outMin := filepath.Join(tmpRoot, "minimal")
-	if err := generateNetwork(minimal, outMin, binDir, googleapisInc, pkgs); err != nil {
-		return fmt.Errorf("generate minimal: %w", err)
-	}
-
-	// Write each mainnet *.pb.go back to its source-relative path:
+	// Write each base-preset *.pb.go back to its source-relative path:
 	// - untagged for config-invariant protos
-	// - //go:build !minimal file plus a <name>.minimal.pb.go twin for the type-differing ones.
-	err = filepath.WalkDir(outMain, func(path string, d os.DirEntry, err error) error {
+	// - a negatively tagged file plus one <name>.<preset>.pb.go twin per
+	//   differing preset for the type-differing ones.
+	outBase := outs[ps.base()]
+	err = filepath.WalkDir(outBase, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".pb.go") {
 			return err
 		}
 
-		rel, err := filepath.Rel(outMain, path)
+		rel, err := filepath.Rel(outBase, path)
 		if err != nil {
 			return fmt.Errorf("filepath.Rel: %w", err)
 		}
 		rel = filepath.ToSlash(rel)
 
-		if !typeDiffering[rel] {
+		differing := typeDiffering[rel]
+		tag := buildTag(differing)
+		if tag == "" {
 			return copyFile(path, rel)
 		}
 
-		if err := writeTagged("!minimal", path, rel); err != nil {
+		if err := writeTagged(tag, path, rel); err != nil {
 			return fmt.Errorf("writeTagged: %w", err)
 		}
 
-		minTwin := strings.TrimSuffix(rel, ".pb.go") + ".minimal.pb.go"
-
-		if err := writeTagged("minimal", filepath.Join(outMin, rel), minTwin); err != nil {
-			return fmt.Errorf("writeTagged: %w", err)
+		for _, preset := range differing {
+			twin := presetTwin(rel, ".pb.go", preset)
+			if err := writeTagged(preset, filepath.Join(outs[preset], rel), twin); err != nil {
+				return fmt.Errorf("writeTagged: %w", err)
+			}
 		}
 
 		return nil
@@ -141,7 +180,7 @@ func genProto() error {
 		return fmt.Errorf("gofmtSimplify: %w", err)
 	}
 
-	if err := applyGenModes("proto"); err != nil {
+	if err := applyGenModes("proto", ps.nonBase()); err != nil {
 		return fmt.Errorf("applyGenModes: %w", err)
 	}
 
@@ -151,14 +190,14 @@ func genProto() error {
 // The 0755 mode mimics the old Bazel codegen, which marked its outputs
 // executable. That makes no sense for Go source files, but we reproduce it
 // here to avoid a large mode diff across the whole proto tree.
-func applyGenModes(root string) error {
+func applyGenModes(root string, presets []string) error {
 	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".pb.go") {
 			return err
 		}
 
 		mode := os.FileMode(0o755)
-		if strings.HasSuffix(path, ".minimal.pb.go") {
+		if isPresetTwin(path, ".pb.go", presets) {
 			mode = 0o644
 		}
 
@@ -170,10 +209,16 @@ func applyGenModes(root string) error {
 	})
 }
 
-func emitMinimalPbgo(dir string) error {
-	_, minimal, err := loadSSZDicts()
+// emitPresetPbgo generates the *.pb.go tree for one preset into dir.
+func emitPresetPbgo(preset, dir string) error {
+	ps, err := loadPresets()
 	if err != nil {
-		return fmt.Errorf("load SSZ dicts: %w", err)
+		return fmt.Errorf("load presets: %w", err)
+	}
+
+	dict, ok := ps.dicts[preset]
+	if !ok {
+		return fmt.Errorf("unknown preset %q", preset)
 	}
 
 	pkgs, err := loadProtoPkgs()
@@ -181,7 +226,7 @@ func emitMinimalPbgo(dir string) error {
 		return fmt.Errorf("load proto pkgs: %w", err)
 	}
 
-	tmpRoot, err := os.MkdirTemp("", "gen-minpb-")
+	tmpRoot, err := os.MkdirTemp("", "gen-presetpb-")
 	if err != nil {
 		return fmt.Errorf("mkdirTemp: %w", err)
 	}
@@ -197,7 +242,7 @@ func emitMinimalPbgo(dir string) error {
 		return fmt.Errorf("build proto plugins: %w", err)
 	}
 
-	return generateNetwork(minimal, dir, binDir, googleapisInc, pkgs)
+	return generateNetwork(dict, dir, binDir, googleapisInc, pkgs)
 }
 
 func fetchGoogleapis(dest string) (string, error) {
