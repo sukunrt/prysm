@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hardcode SLOTS_PER_EPOCH = 8 — Mainnet Build Surgery</title>
+<style>
+  ::selection { background: var(--ink); color: var(--ground); }
+
+  *,*::before,*::after { box-sizing: border-box; }
+  :root {
+    --ground:#F5F6F4; --panel:#FFFFFF; --ink:#14181A; --muted:#5C666B; --faint:#8A9499;
+    --rule:#DBE0DD; --rule-hi:#C2C9C5;
+    --real:#0F6E6B; --real-bg:#0F6E6B14;
+    --fake:#8A5A0B; --fake-bg:#8A5A0B14;
+    --warn:#A32A1C; --warn-bg:#A32A1C12;
+    --shadow: 0 1px 2px rgba(20,24,26,.05), 0 8px 24px -16px rgba(20,24,26,.25);
+    --mono: ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#0E1113; --panel:#161A1C; --ink:#E4E9E9; --muted:#98A3A7; --faint:#6E787C;
+      --rule:#262C2E; --rule-hi:#3A4245;
+      --real:#4FC2BC; --real-bg:#4FC2BC1A;
+      --fake:#D3A24A; --fake-bg:#D3A24A1A;
+      --warn:#E8735F; --warn-bg:#E8735F14;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="light"]{--ground:#F5F6F4;--panel:#FFFFFF;--ink:#14181A;--muted:#5C666B;--faint:#8A9499;--rule:#DBE0DD;--rule-hi:#C2C9C5;--real:#0F6E6B;--real-bg:#0F6E6B14;--fake:#8A5A0B;--fake-bg:#8A5A0B14;--warn:#A32A1C;--warn-bg:#A32A1C12;}
+  :root[data-theme="dark"]{--ground:#0E1113;--panel:#161A1C;--ink:#E4E9E9;--muted:#98A3A7;--faint:#6E787C;--rule:#262C2E;--rule-hi:#3A4245;--real:#4FC2BC;--real-bg:#4FC2BC1A;--fake:#D3A24A;--fake-bg:#D3A24A1A;--warn:#E8735F;--warn-bg:#E8735F14;}
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16.5px; line-height: 1.6;
+    margin: 0; overflow-x: hidden;
+  }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: var(--rule-hi); }
+  a:focus-visible { outline: 2px solid var(--real); outline-offset: 3px; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 100px; }
+
+  .topbar { position: sticky; top: 0; z-index: 20; background: var(--ground); border-bottom: 1px solid var(--rule); }
+  .topbar-in { max-width: 1120px; margin: 0 auto; padding: 10px 24px; display: flex; gap: 18px; align-items: baseline; overflow-x: auto; scrollbar-width: none; }
+  .topbar-in::-webkit-scrollbar { display: none; }
+  .topbar a, .topbar strong { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; text-decoration: none; color: var(--muted); }
+  .topbar strong { color: var(--ink); font-weight: 700; }
+  .topbar a:hover { color: var(--ink); }
+
+  .mast { padding: 60px 0 34px; border-bottom: 1px solid var(--rule); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
+  h1 { font-family: var(--mono); font-weight: 700; letter-spacing: -.02em; font-size: clamp(28px,5vw,42px); line-height: 1.12; margin: 0 0 18px; max-width: 24ch; }
+  .standfirst { font-size: 18px; line-height: 1.5; color: var(--muted); max-width: 62ch; margin: 0; }
+
+  section { padding-top: 52px; scroll-margin-top: 56px; }
+  h2 { font-family: var(--mono); font-weight: 700; font-size: 20px; margin: 0 0 6px; display: flex; gap: 13px; align-items: baseline; }
+  h2 .num { font-size: 11px; letter-spacing: .12em; color: var(--faint); border: 1px solid var(--rule-hi); border-radius: 3px; padding: 2px 6px; flex: none; }
+  h3 { font-family: var(--mono); font-size: 14px; margin: 30px 0 10px; letter-spacing: .01em; }
+  .dek { color: var(--muted); margin: 0 0 24px; max-width: 64ch; font-size: 15.5px; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+
+  code { font-family: var(--mono); font-size: .875em; background: color-mix(in srgb, var(--ink) 6%, transparent); border-radius: 3px; padding: .1em .34em; word-break: break-word; }
+  .path { font-family: var(--mono); font-size: .85em; color: var(--muted); word-break: break-all; }
+
+  .chip { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; white-space: nowrap; font-weight: 600; }
+  .chip.real { color: var(--real); background: var(--real-bg); border: 1px solid color-mix(in srgb, var(--real) 35%, transparent); }
+  .chip.fake { color: var(--fake); background: var(--fake-bg); border: 1px solid color-mix(in srgb, var(--fake) 35%, transparent); }
+  .chip.warn { color: var(--warn); background: var(--warn-bg); border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); }
+  .chip.nx   { color: var(--muted); background: color-mix(in srgb, var(--ink) 6%, transparent); border: 1px solid var(--rule-hi); }
+
+  figure { margin: 30px 0 34px; }
+  .figbox { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 20px 18px 12px; overflow-x: auto; box-shadow: var(--shadow); }
+  figure svg { display: block; width: 100%; min-width: 660px; height: auto; color: var(--ink); }
+  figcaption { font-size: 13.5px; color: var(--muted); margin-top: 11px; max-width: 68ch; padding-left: 13px; border-left: 2px solid var(--rule-hi); }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  .box { border: 1px solid var(--rule-hi); border-left: 3px solid var(--real); background: var(--panel); border-radius: 4px; padding: 16px 18px; margin: 22px 0; max-width: 68ch; }
+  .box .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--real); display: block; margin-bottom: 7px; font-weight: 700; }
+  .box p:last-child, .box ul:last-child { margin-bottom: 0; }
+  .box.w { border-left-color: var(--warn); background: var(--warn-bg); }
+  .box.w .lbl { color: var(--warn); }
+  .box.f { border-left-color: var(--fake); background: var(--fake-bg); }
+  .box.f .lbl { color: var(--fake); }
+
+  .scroller { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); margin: 22px 0 28px; box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 720px; }
+  th, td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: color-mix(in srgb, var(--ink) 3%, transparent); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.n { font-family: var(--mono); color: var(--faint); font-variant-numeric: tabular-nums; width: 1%; white-space: nowrap; }
+  td.c { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.5; }
+  td.c b { color: var(--ink); font-weight: 600; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .steps { margin: 20px 0 0; }
+  .step { display: grid; grid-template-columns: 28px 1fr; gap: 0 13px; padding: 11px 0; border-top: 1px solid var(--rule); }
+  .step .k { font-family: var(--mono); font-size: 11px; color: var(--faint); padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .step .b { min-width: 0; }
+  .step .t { font-size: 15px; margin: 0 0 3px; max-width: 66ch; }
+  .step .p { font-family: var(--mono); font-size: 11.5px; color: var(--muted); word-break: break-all; line-height: 1.5; }
+  .step.hi { background: var(--real-bg); margin: 0 -11px; padding-left: 11px; padding-right: 11px; border-radius: 3px; }
+  .step.hi .k { color: var(--real); font-weight: 700; }
+
+  ul.tight { padding-left: 20px; margin: 0 0 16px; max-width: 68ch; }
+  ul.tight li { margin-bottom: 8px; }
+
+  pre.code {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 16px 18px; overflow-x: auto; margin: 20px 0 26px; box-shadow: var(--shadow);
+  }
+  pre.code b { color: var(--real); font-weight: 700; }
+  pre.code i { color: var(--faint); font-style: normal; }
+  pre.code u { color: var(--fake); text-decoration: none; font-weight: 700; }
+  pre.code s { color: var(--warn); text-decoration: line-through; }
+
+  hr.sep { border: none; border-top: 1px solid var(--rule); margin: 52px 0 0; }
+  footer { padding-top: 30px; color: var(--faint); font-size: 13px; font-family: var(--mono); max-width: 70ch; }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 18px 70px; }
+    .topbar-in { padding: 10px 18px; }
+    .mast { padding: 40px 0 26px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-in">
+    <strong>8-Slot Epochs</strong>
+    <a href="#s00">00 Decision</a>
+    <a href="#s01">01 Three layers</a>
+    <a href="#s02">02 Edit list</a>
+    <a href="#s03">03 Seams</a>
+    <a href="#s04">04 What breaks</a>
+    <a href="#s05">05 Run it</a>
+    <a href="#s06">06 Verify</a>
+    <a href="#s07">07 After this</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Prysm · Decoupled Consensus · Option A, mainnet build</p>
+  <h1>Hardcode SLOTS_PER_EPOCH = 8 into the mainnet build</h1>
+  <p class="standfirst">The quick experiment: mainnet-shaped everything, 8-slot epochs, one
+  attestation stream at 4× today's rate. Three files change and one command regenerates the SSZ
+  code. Tests are allowed to break. The binary must never touch a real network.</p>
+</header>
+
+<div class="box" style="max-width:none;margin-top:26px">
+  <span class="lbl">Why not the minimal preset</span>
+  <p>The minimal build already has 8-slot epochs, but it drags in 6-second slots, 4-member
+  committees, a 32-member sync committee, a 16-member PTC, and 64-slot history vectors. The slot
+  time and committee shape are runtime-overridable; the compiled sizes are not. For a
+  mainnet-shaped measurement it is less work to move one number in the mainnet preset than to move
+  a dozen numbers back in the minimal one. All line numbers from change
+  <code>rooyqxqp</code> (Hegota registration).</p>
+</div>
+
+<!-- ============================================================ 00 -->
+<section id="s00">
+  <h2><span class="num">00</span> The decision</h2>
+  <p class="dek">This is a lab binary. Two costs are accepted up front.</p>
+
+  <ul class="tight">
+    <li><b>Spec tests break.</b> The mainnet spec-test vectors are generated for 32-slot epochs.
+    <code>make test mainnet-spectest</code> will fail wholesale. Accepted.</li>
+    <li><b>The binary is network-poisonous.</b> It keeps mainnet fork versions but changes the
+    SSZ shape of the state. It must only ever run on a closed devnet with its own genesis.
+    A devnet genesis has its own genesis validators root, so all fork digests differ from
+    mainnet and real peers will refuse it — but do not rely on that; keep it off public
+    bootnodes.</li>
+  </ul>
+
+  <div class="box">
+    <span class="lbl">What this buys</span>
+    <p>One attestation per validator per 8 slots — the 4× finality-vote rate of decoupled
+    consensus — on the real path: real 64-subnet spread, real aggregators, real block inclusion,
+    real fork choice, 12-second slots, mainnet committee sizes. No new message type, no new
+    topic, no Hegota logic needed. Gloas and Hegota stay at <code>FarFutureEpoch</code> for this
+    experiment; run the chain at Fulu.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 01 -->
+<section id="s01">
+  <h2><span class="num">01</span> The three layers where 32 lives</h2>
+  <p class="dek">The same number exists in three places that do not read each other. All three
+  must agree, and only one of them is a yaml value.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 900 330" role="img" aria-label="Three layers holding SLOTS_PER_EPOCH: runtime config, compiled constants, generated code">
+        <defs>
+          <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <!-- layer 1 -->
+        <rect x="10" y="40" width="270" height="190" rx="6" fill="var(--real-bg)" stroke="var(--real)" stroke-width="1.6"/>
+        <text x="145" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">1 · RUNTIME CONFIG</text>
+        <text x="145" y="92" text-anchor="middle" font-size="12.5" fill="currentColor">params.BeaconConfig()</text>
+        <text x="145" y="114" text-anchor="middle" font-size="11.5" fill="var(--muted)">config/params/mainnet_config.go</text>
+        <text x="145" y="146" text-anchor="middle" font-size="12" fill="currentColor">Committees, duties, epochs,</text>
+        <text x="145" y="164" text-anchor="middle" font-size="12" fill="currentColor">rewards, eth1 voting period</text>
+        <text x="145" y="200" text-anchor="middle" font-size="11" fill="var(--muted)">Changeable via yaml at start-up</text>
+
+        <!-- layer 2 -->
+        <rect x="315" y="40" width="270" height="190" rx="6" fill="var(--fake-bg)" stroke="var(--fake)" stroke-width="1.6"/>
+        <text x="450" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--fake)">2 · COMPILED CONSTANTS</text>
+        <text x="450" y="92" text-anchor="middle" font-size="12.5" fill="currentColor">fieldparams.SlotsPerEpoch</text>
+        <text x="450" y="114" text-anchor="middle" font-size="11.5" fill="var(--muted)">config/fieldparams/mainnet.go</text>
+        <text x="450" y="146" text-anchor="middle" font-size="12" fill="currentColor">State-native vectors, fork choice</text>
+        <text x="450" y="164" text-anchor="middle" font-size="12" fill="currentColor">arrays, hdiff layouts</text>
+        <text x="450" y="200" text-anchor="middle" font-size="11" fill="var(--muted)">Fixed at go build (!minimal tag)</text>
+
+        <!-- layer 3 -->
+        <rect x="620" y="40" width="270" height="190" rx="6" fill="var(--fake-bg)" stroke="var(--fake)" stroke-width="1.6"/>
+        <text x="755" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--fake)">3 · GENERATED CODE</text>
+        <text x="755" y="92" text-anchor="middle" font-size="12.5" fill="currentColor">*.pb.go and *.ssz.go</text>
+        <text x="755" y="114" text-anchor="middle" font-size="11.5" fill="var(--muted)">proto/prysm/v1alpha1/</text>
+        <text x="755" y="146" text-anchor="middle" font-size="12" fill="currentColor">SSZ vector lengths, list limits,</text>
+        <text x="755" y="164" text-anchor="middle" font-size="12" fill="currentColor">merkleization depths</text>
+        <text x="755" y="200" text-anchor="middle" font-size="11" fill="var(--muted)">Stamped by make gen from the bzl dicts</text>
+
+        <!-- source of truth arrow -->
+        <rect x="315" y="270" width="270" height="44" rx="5" fill="var(--panel)" stroke="var(--rule-hi)"/>
+        <text x="450" y="289" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="currentColor">proto/ssz_proto_library.bzl</text>
+        <text x="450" y="305" text-anchor="middle" font-size="10.5" fill="var(--muted)">the mainnet size dictionary</text>
+        <line x1="590" y1="285" x2="700" y2="236" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar1)"/>
+      </svg>
+    </div>
+    <figcaption><b>Three copies of one number.</b> The yaml loader writes only layer 1. Layers 2
+    and 3 are frozen at build time, which is why a <code>SLOTS_PER_EPOCH: 8</code> yaml on a stock
+    mainnet binary tears the state apart. The fix is to move all three together.</figcaption>
+  </figure>
+
+  <p>Layer 3 has a single source of truth: the <code>mainnet</code> dictionary in
+  <span class="path">proto/ssz_proto_library.bzl</span>. <code>make gen</code>
+  (<span class="path">build/gen/</span>) reads that dictionary, substitutes the placeholders in
+  the <code>.proto</code> files, and rewrites the checked-in <code>.pb.go</code> and
+  <code>.ssz.go</code> files. The minimal twins (<code>*.minimal.pb.go</code>,
+  <code>*.minimal.ssz.go</code>) come from the <code>minimal</code> dictionary and are not
+  touched by this change.</p>
+</section>
+
+<!-- ============================================================ 02 -->
+<section id="s02">
+  <h2><span class="num">02</span> The edit list</h2>
+  <p class="dek">Three files, one regeneration command. Every SLOTS_PER_EPOCH-derived size in the
+  mainnet dictionary, and nothing else.</p>
+
+  <h3>Edit 1 — proto/ssz_proto_library.bzl, the mainnet dictionary</h3>
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Key</th><th>Formula</th><th>Now</th><th>New</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>eth1_data_votes.size</code></td>
+          <td class="c">EPOCHS_PER_ETH1_VOTING_PERIOD (64) × SLOTS_PER_EPOCH</td>
+          <td class="num">2048</td><td class="num"><b>512</b></td></tr>
+        <tr><td><code>previous_epoch_attestations.max</code></td>
+          <td class="c">MAX_ATTESTATIONS (128) × SLOTS_PER_EPOCH — phase0 states only</td>
+          <td class="num">4096</td><td class="num"><b>1024</b></td></tr>
+        <tr><td><code>current_epoch_attestations.max</code></td>
+          <td class="c">MAX_ATTESTATIONS (128) × SLOTS_PER_EPOCH — phase0 states only</td>
+          <td class="num">4096</td><td class="num"><b>1024</b></td></tr>
+        <tr><td><code>proposer_lookahead_size</code></td>
+          <td class="c">(MIN_SEED_LOOKAHEAD + 1) × SLOTS_PER_EPOCH — Fulu EIP-7917</td>
+          <td class="num">64</td><td class="num"><b>16</b></td></tr>
+        <tr><td><code>ptc_window.size</code></td>
+          <td class="c">(2 + MIN_SEED_LOOKAHEAD) × SLOTS_PER_EPOCH — Gloas</td>
+          <td class="num">96</td><td class="num"><b>24</b></td></tr>
+        <tr><td><code>builder_pending_payments.size</code></td>
+          <td class="c">2 × SLOTS_PER_EPOCH — Gloas</td>
+          <td class="num">64</td><td class="num"><b>16</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box w">
+    <span class="lbl">Do not touch the look-alikes</span>
+    <p>Several entries in the same dictionary contain 8192 or a power of two that smells like
+    slots, but is not slots-per-epoch: <code>block_roots.size</code> and
+    <code>state_roots.size</code> (SLOTS_PER_HISTORICAL_ROOT = 8192),
+    <code>slashings.size</code> (EPOCHS_PER_SLASHINGS_VECTOR = 8192),
+    <code>randao_mixes.size</code> (EPOCHS_PER_HISTORICAL_VECTOR = 65536),
+    <code>execution_payload_availability.size</code> (SLOTS_PER_HISTORICAL_ROOT again),
+    <code>ptc.size</code> / <code>ptc_committee_indices.size</code> (PTC_SIZE = 512, a committee
+    size). Leave every one of them alone.</p>
+  </div>
+
+  <h3>Edit 2 — config/fieldparams/mainnet.go</h3>
+  <p>Four constants, same formulas as above. The file is guarded by <code>//go:build !minimal</code>;
+  the minimal file stays untouched.</p>
+  <pre class="code">SlotsPerEpoch                   = <s>32</s>   <b>8</b>
+Eth1DataVotesLength             = <s>2048</s> <b>512</b>
+PreviousEpochAttestationsLength = <s>4096</s> <b>1024</b>
+CurrentEpochAttestationsLength  = <s>4096</s> <b>1024</b></pre>
+
+  <h3>Edit 3 — config/params/mainnet_config.go:110–111</h3>
+  <pre class="code">SlotsPerEpoch:        <s>32</s> <b>8</b>
+SqrRootSlotsPerEpoch: <s>5</s>  <b>2</b>   <i>// floor(sqrt(8)) — used in altair/attestation.go:305</i></pre>
+  <p>Everything else in the runtime config stays at mainnet values: 12-second slots, 64
+  committees per slot, target committee size 128, aggregator target 16,
+  <code>EpochsPerEth1VotingPeriod = 64</code> (the voting period shortens from ~6.8 h to
+  ~1.7 h of wall time — harmless on a devnet).</p>
+
+  <h3>Edit 4 — regenerate</h3>
+  <pre class="code">make gen proto ssz mode=force</pre>
+  <p>This rewrites the mainnet <code>.pb.go</code> and <code>.ssz.go</code> files from the
+  edited dictionary. Then <code>go build ./...</code> (no build tag — mainnet is the default).</p>
+</section>
+
+<!-- ============================================================ 03 -->
+<section id="s03">
+  <h2><span class="num">03</span> The seams — verified sites that line up by themselves</h2>
+  <p class="dek">Every runtime consumer of the compiled constant was checked. They all read
+  <code>fieldparams.SlotsPerEpoch</code> or the runtime config, so they follow the edits with no
+  further work.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Site</th><th>What it does with the number</th><th>After the edit</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="c">beacon-chain/state/state-native/state_trie.go:722</td>
+          <td>Pads <code>proposer_lookahead</code> to <code>2 × fieldparams.SlotsPerEpoch</code>
+          on unmarshal.</td>
+          <td><span class="chip real">Lines up</span> Pads to 16; the regenerated vector is
+          16.</td></tr>
+        <tr><td class="c">beacon-chain/core/fulu/upgrade.go:25<br>core/fulu/transition.go:25</td>
+          <td>Builds and shifts the lookahead with the runtime
+          <code>(MinSeedLookahead+1) × SlotsPerEpoch</code>.</td>
+          <td><span class="chip real">Lines up</span> Produces 16 entries.</td></tr>
+        <tr><td class="c">consensus-types/hdiff/state_diff.go:171<br>hdiff/state_diff_gloas.go:22</td>
+          <td>Diff layout constants: <code>8 × 2 × SlotsPerEpoch</code> lookahead bytes,
+          <code>2 × SlotsPerEpoch</code> pending payments.</td>
+          <td><span class="chip real">Lines up</span> Compiled from the same constant.</td></tr>
+        <tr><td class="c">beacon-chain/forkchoice/doubly-linked-tree/types.go:48<br>store.go:372</td>
+          <td><code>[SlotsPerEpoch]</code> array of recently received block slots.</td>
+          <td><span class="chip real">Lines up</span> Array shrinks to 8.</td></tr>
+        <tr><td class="c">beacon-chain/state/stateutil/eth1_root.go:53</td>
+          <td>Merkleizes eth1 data votes with the <b>runtime</b> limit
+          <code>params.BeaconConfig().Eth1DataVotesLength()</code>.</td>
+          <td><span class="chip real">Lines up</span> Runtime 64×8 = 512 = compiled 512. This was
+          the site that silently disagreed under the yaml-only approach.</td></tr>
+        <tr><td class="c">config/fieldparams/common_test.go:17–19</td>
+          <td>Asserts runtime config × compiled constants agree.</td>
+          <td><span class="chip real">Passes again</span> Use it as the consistency check.</td></tr>
+        <tr><td class="c">beacon-chain/sync/rpc.go:42<br>p2p/gossip_topic_mappings.go:41</td>
+          <td>Fork-gated with <code>&gt;=</code> comparisons; never read slots-per-epoch.</td>
+          <td><span class="chip nx">Untouched</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box">
+    <span class="lbl">Why this works when the yaml alone does not</span>
+    <p>The failure mode of the yaml-only approach was two halves of the code disagreeing: runtime
+    duty logic computing 16 lookahead entries while the SSZ vector demanded 64. After these edits
+    there is exactly one value of the number again, everywhere, at compile time. Internal
+    consistency is the whole requirement — a closed devnet of identical binaries does not care
+    that its state roots match no spec vector.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 04 -->
+<section id="s04">
+  <h2><span class="num">04</span> What breaks, and that it is accepted</h2>
+  <p class="dek">Write these down next to every result produced with this binary.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Casualty</th><th>Why</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Mainnet spec tests</td>
+          <td>Vectors generated for 32-slot epochs: different state roots, committee counts,
+          reward values.</td>
+          <td><span class="chip warn">Accept</span> Do not run
+          <code>make test mainnet-spectest</code>.</td></tr>
+        <tr><td>Unit tests with literal 32s</td>
+          <td>Many tests hardcode epoch arithmetic.</td>
+          <td><span class="chip warn">Accept</span> Run only the targeted packages in
+          section 06.</td></tr>
+        <tr><td>E2E suite</td>
+          <td><span class="path">config/params/testnet_e2e_config.go:44</span> sets
+          <code>SqrRootSlotsPerEpoch = 5</code> for 32-slot epochs, and the harness embeds epoch
+          assumptions.</td>
+          <td><span class="chip warn">Accept</span> Fix later only if the e2e harness turns out
+          to be useful for the measurement (section 13 of the mock plan says it is too small
+          anyway).</td></tr>
+        <tr><td>Syncing any real network</td>
+          <td>Embedded genesis states and every historical state have 32-shaped vectors; the
+          regenerated unmarshal code rejects or mis-roots them.</td>
+          <td><span class="chip warn">Accept</span> Devnet genesis only. Never point this binary
+          at mainnet, holesky, hoodi, or sepolia.</td></tr>
+        <tr><td>The minimal build</td>
+          <td>—</td>
+          <td><span class="chip real">Unaffected</span> Dictionary, fieldparams, and generated
+          twins all untouched; <code>make test minimal-spectest</code> still passes as a canary
+          that the generator ran cleanly.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ 05 -->
+<section id="s05">
+  <h2><span class="num">05</span> Run it</h2>
+  <p class="dek">Genesis at Fulu, forks scheduled through epoch 0, Gloas and Hegota left in the
+  far future. The 4× measurement needs no Hegota logic.</p>
+
+  <div class="steps">
+    <div class="step"><div class="k">R1</div><div class="b">
+      <p class="t">Write the devnet yaml. Base it on mainnet values; the compiled defaults now
+      already say 8, so the yaml only needs the fork ladder and network identity.</p>
+      <p class="p">CONFIG_NAME: devnet-8slot · ALTAIR…FULU_FORK_EPOCH: 0 · GLOAS/HEGOTA: far
+      future · MIN_GENESIS_ACTIVE_VALIDATOR_COUNT and GENESIS_DELAY to taste</p></div></div>
+    <div class="step"><div class="k">R2</div><div class="b">
+      <p class="t">Generate the genesis state with the same binary.
+      <code>prysmctl testnet generate-genesis --fork fulu</code> with the yaml and interop
+      keys. Note <code>--fork</code> accepts only supported forks
+      (<span class="path">cmd/prysmctl/testnet/generate_genesis.go:137</span> uses
+      <code>version.All()</code>, which excludes Gloas and Hegota).</p>
+      <p class="p">prysmctl testnet generate-genesis --fork=fulu --num-validators=N
+      --chain-config-file=devnet.yaml --output-ssz=genesis.ssz</p></div></div>
+    <div class="step"><div class="k">R3</div><div class="b">
+      <p class="t">Start beacon nodes + validators with the yaml and the genesis file, peered
+      only with each other (<code>--no-discovery --peer=…</code> or a private bootnode).</p>
+      <p class="p">beacon-chain --chain-config-file=devnet.yaml --genesis-state=genesis.ssz
+      --interop-eth1data-votes …</p></div></div>
+    <div class="step hi"><div class="k">R4</div><div class="b">
+      <p class="t">Confirm the shape before measuring: epochs tick every 96 s, and each slot
+      carries ≈ n/8 single attestations instead of n/32.</p>
+      <p class="p">subnet spread: committees per slot = clamp(n / 8 / 128, 1, 64) — all 64
+      subnets are busy only at n ≥ 65 536 validators</p></div></div>
+  </div>
+
+  <div class="box f">
+    <span class="lbl">Committee spread caveat at small n</span>
+    <p>With 8-slot epochs and target committee size 128, a 10 000-validator devnet fills ~9
+    committees per slot, so ~9 of the 64 subnets carry traffic each slot. Today's mainnet at the
+    same n would fill ~2. The per-subnet load ratio is still 4×, but absolute subnet coverage
+    depends on validator count — record n with every run, as the mock plan already demands for
+    the preset.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 06 -->
+<section id="s06">
+  <h2><span class="num">06</span> Verify</h2>
+  <p class="dek">Cheap checks first. Each one catches a different class of mistake.</p>
+
+  <ul class="tight">
+    <li><b>Build:</b> <code>go build ./...</code> — catches a missed fieldparams constant or a
+    generated-file drift.</li>
+    <li><b>Consistency:</b> <code>go test ./config/fieldparams/</code> — the
+    <span class="path">common_test.go</span> assertions are exactly the runtime-vs-compiled
+    agreement this change must restore.</li>
+    <li><b>Generator canary:</b> <code>make test minimal-spectest</code> (or any minimal-tag
+    build) — proves <code>make gen</code> did not disturb the minimal twins.</li>
+    <li><b>State round-trip:</b> <code>go test ./beacon-chain/state/state-native/...</code> —
+    exercises marshal/unmarshal/HTR with the new vector sizes, including the
+    <code>proposer_lookahead</code> padding at
+    <span class="path">state_trie.go:722</span>. Expect some literal-32 test failures; read
+    them, don't chase them.</li>
+    <li><b>Live smoke:</b> on the devnet, justification within 2 epochs (~3.2 min) and
+    finalisation within 3. If the chain finalises, committee assignment, shuffling, and
+    aggregation all agree about the number 8.</li>
+    <li><b>The measurement precondition:</b> count <code>beacon_attestation_*</code> messages per
+    slot on one node; it must be ≈ n/8. If it reads ≈ n/32, a 32 survived somewhere in the duty
+    scheduler.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 07 -->
+<section id="s07">
+  <h2><span class="num">07</span> After this — what the hack cannot tell you</h2>
+  <p class="dek">This binary answers the first question of the mock plan. Three limits remain,
+  and they are the reason Option B follows.</p>
+
+  <ul class="tight">
+    <li><b>One stream, not two.</b> This is the finality stream at 4×. The Goldfish
+    <code>available_attestation</code> topic — 512 messages per slot, flat in n, global mesh —
+    is absent. Its load must be added before any capacity claim.</li>
+    <li><b>Wrong publish time.</b> These attestations wait for the one-third-slot deadline. The
+    real finality vote freezes its fields at round start and ships at the start of the slot,
+    colliding with block propagation. That collision is unmeasurable here.</li>
+    <li><b>Epoch semantics moved.</b> Shuffling period, aggregator count per slot, and
+    finalisation cadence all changed with the epoch length. Fine for a first traffic number;
+    label every result with this document.</li>
+  </ul>
+
+  <p>When these numbers are in hand, proceed to Option B (steps B1–B8 of the mock plan): keep
+  32-slot epochs, add the cloned vote topics behind the registered Hegota fork, publish at slot
+  start, and add the <code>available_attestation</code> topic.</p>
+</section>
+
+<hr class="sep">
+<footer>
+  Companion to decoupled-consensus-networking-mock.html (the plan) ·
+  gossip-forkchoice.html (the reference) · simplex-network-simulation-guide.html (the harness).
+  Facts verified against the working tree at change rooyqxqp, 2026-08-10.
+</footer>
+
+</div>
+</body>
+</html>
