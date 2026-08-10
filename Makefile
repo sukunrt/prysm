@@ -6,7 +6,7 @@ DIST ?= dist
 
 BINARIES := $(notdir $(patsubst %/,%,$(dir $(wildcard cmd/*/main.go))))
 GEN_KINDS := proto ssz mocks
-TEST_KINDS := mainnet mainnet-spectest minimal minimal-spectest
+TEST_KINDS := mainnet mainnet-spectest minimal minimal-spectest decoupled
 POSITIONAL := $(sort $(GEN_KINDS) $(TEST_KINDS) $(BINARIES))
 COMMANDS := run build gen clean help test testdata
 

@@ -22,10 +22,11 @@ const (
 	mainnetSpectest kind = "mainnet-spectest"
 	minimal         kind = "minimal"
 	minimalSpectest kind = "minimal-spectest"
+	decoupled       kind = "decoupled"
 )
 
 // validKinds are the test passes, in canonical run order.
-var validKinds = []kind{mainnet, mainnetSpectest, minimal, minimalSpectest}
+var validKinds = []kind{mainnet, mainnetSpectest, minimal, minimalSpectest, decoupled}
 
 const (
 	totalRuns = 5
@@ -125,6 +126,10 @@ func passSpec(goBin string, k kind) (pkgs []string, header, tagFlag string, err 
 	case minimalSpectest:
 		pkgs, err = goList(goBin, "./testing/spectest/minimal/...")
 		return pkgs, "=== minimal spectest pass (-tags=minimal) ===", "-tags=develop,minimal", err
+
+	case decoupled:
+		pkgs, err = decoupledPackages(goBin)
+		return pkgs, "=== decoupled pass (-tags=decoupled) ===", "-tags=develop,decoupled", err
 	}
 
 	return nil, "", "", fmt.Errorf("unknown pass %q", k)
@@ -134,6 +139,50 @@ var minimalPkgs = []string{
 	"./beacon-chain/rpc/prysm/v1alpha1/beacon",
 	"./beacon-chain/rpc/prysm/v1alpha1/validator",
 	"./config/fieldparams",
+}
+
+// decoupledPkgs are the packages exercised by the decoupled pass: the ones
+// whose behaviour depends on the SSZ sizes the preset changes. A full
+// `-tags=decoupled ./...` run is not possible by design, because the many
+// `//go:build !minimal` test files are compiled in and assert mainnet's
+// 32-slot epochs.
+var decoupledPkgs = []string{
+	"./beacon-chain/core/...",
+	"./beacon-chain/state/...",
+	"./config/...",
+	"./consensus-types/...",
+	"./encoding/ssz/...",
+	"./proto/...",
+}
+
+// decoupledExcludeRe matches packages inside decoupledPkgs whose untagged tests
+// bake in mainnet's 32-slot epochs -- via checked-in state fixtures, cache keys
+// derived from the epoch length, or the mainnet ssz-size struct tags that the
+// shared .pb.go carries. They fail under -tags=minimal for the same reason, so
+// they are mainnet-only tests rather than decoupled regressions.
+var decoupledExcludeRe = regexp.MustCompile(strings.Join([]string{
+	`/beacon-chain/core/helpers$`,
+	`/beacon-chain/state/state-native$`,
+	`/consensus-types/hdiff$`,
+	`/encoding/ssz/detect$`,
+	`/encoding/ssz/query$`,
+}, "|"))
+
+// decoupledPackages is `go list` over decoupledPkgs minus decoupledExcludeRe.
+func decoupledPackages(goBin string) ([]string, error) {
+	all, err := goList(goBin, decoupledPkgs...)
+	if err != nil {
+		return nil, fmt.Errorf("listing decoupled packages: %w", err)
+	}
+
+	pkgs := all[:0]
+	for _, p := range all {
+		if !decoupledExcludeRe.MatchString(p) {
+			pkgs = append(pkgs, p)
+		}
+	}
+
+	return pkgs, nil
 }
 
 // excludeRe matches the packages dropped from the mainnet pass: E2E (heavy), all

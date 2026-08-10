@@ -1,6 +1,7 @@
 package params
 
 const (
+	DecoupledName       = "decoupled"
 	DevnetName          = "devnet"
 	EndToEndName        = "end-to-end"
 	EndToEndMainnetName = "end-to-end-mainnet"

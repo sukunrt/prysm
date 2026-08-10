@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"errors"
+
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/urfave/cli/v2"
@@ -85,6 +87,10 @@ func newConfig(ctx *cli.Context) (*Flags, error) {
 			if err := params.SetActive(params.E2ETestConfig().Copy()); err != nil {
 				return nil, err
 			}
+		case "decoupled":
+			// The decoupled preset targets Shadow devnets, which take their
+			// config from --chain-config-file rather than an e2e preset.
+			return nil, errors.New("--e2e-config is not supported with the decoupled preset")
 		default:
 			log.Fatalf("Unrecognized preset being used: %s", fieldparams.Preset)
 		}

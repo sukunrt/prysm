@@ -102,31 +102,16 @@ func genProto() error {
 		return fmt.Errorf("load presets: %w", err)
 	}
 
-	pkgs, err := loadProtoPkgs()
+	g, err := newProtoGen()
 	if err != nil {
-		return fmt.Errorf("load proto pkgs: %w", err)
+		return fmt.Errorf("new proto gen: %w", err)
 	}
-
-	tmpRoot, err := os.MkdirTemp("", "gen-proto-")
-	if err != nil {
-		return fmt.Errorf("mkdirTemp: %w", err)
-	}
-	defer func() { _ = os.RemoveAll(tmpRoot) }()
-
-	googleapisInc, err := fetchGoogleapis(filepath.Join(tmpRoot, "googleapis"))
-	if err != nil {
-		return fmt.Errorf("fetch googleapis: %w", err)
-	}
-
-	binDir, err := buildProtoPlugins(tmpRoot)
-	if err != nil {
-		return fmt.Errorf("build proto plugins: %w", err)
-	}
+	defer g.cleanup()
 
 	outs := make(map[string]string, len(ps.names))
 	for _, name := range ps.names {
-		out := filepath.Join(tmpRoot, name)
-		if err := generateNetwork(ps.dicts[name], out, binDir, googleapisInc, pkgs); err != nil {
+		out := filepath.Join(g.root, "out", name)
+		if err := g.emit(ps.dicts[name], out); err != nil {
 			return fmt.Errorf("generate %s: %w", name, err)
 		}
 
@@ -209,40 +194,53 @@ func applyGenModes(root string, presets []string) error {
 	})
 }
 
-// emitPresetPbgo generates the *.pb.go tree for one preset into dir.
-func emitPresetPbgo(preset, dir string) error {
-	ps, err := loadPresets()
-	if err != nil {
-		return fmt.Errorf("load presets: %w", err)
-	}
+// protoGen holds the setup every preset's .pb.go generation shares: the
+// downloaded googleapis includes, the freshly built protoc plugins and the
+// proto package list. That setup is the slow part of codegen, so it is done
+// once and reused for every preset instead of once per preset.
+type protoGen struct {
+	root          string
+	googleapisInc string
+	binDir        string
+	pkgs          map[string]string
+}
 
-	dict, ok := ps.dicts[preset]
-	if !ok {
-		return fmt.Errorf("unknown preset %q", preset)
-	}
-
+// newProtoGen performs the one-time setup. The caller must call cleanup.
+func newProtoGen() (*protoGen, error) {
 	pkgs, err := loadProtoPkgs()
 	if err != nil {
-		return fmt.Errorf("load proto pkgs: %w", err)
+		return nil, fmt.Errorf("load proto pkgs: %w", err)
 	}
 
-	tmpRoot, err := os.MkdirTemp("", "gen-presetpb-")
+	root, err := os.MkdirTemp("", "gen-proto-")
 	if err != nil {
-		return fmt.Errorf("mkdirTemp: %w", err)
+		return nil, fmt.Errorf("mkdirTemp: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(tmpRoot) }()
 
-	googleapisInc, err := fetchGoogleapis(filepath.Join(tmpRoot, "googleapis"))
+	g := &protoGen{root: root, pkgs: pkgs}
+
+	g.googleapisInc, err = fetchGoogleapis(filepath.Join(root, "googleapis"))
 	if err != nil {
-		return fmt.Errorf("fetch googleapis: %w", err)
+		g.cleanup()
+
+		return nil, fmt.Errorf("fetch googleapis: %w", err)
 	}
 
-	binDir, err := buildProtoPlugins(tmpRoot)
+	g.binDir, err = buildProtoPlugins(root)
 	if err != nil {
-		return fmt.Errorf("build proto plugins: %w", err)
+		g.cleanup()
+
+		return nil, fmt.Errorf("build proto plugins: %w", err)
 	}
 
-	return generateNetwork(dict, dir, binDir, googleapisInc, pkgs)
+	return g, nil
+}
+
+func (g *protoGen) cleanup() { _ = os.RemoveAll(g.root) }
+
+// emit generates the *.pb.go tree for one preset's substitution dict into dir.
+func (g *protoGen) emit(dict map[string]string, dir string) error {
+	return generateNetwork(dict, dir, g.binDir, g.googleapisInc, g.pkgs)
 }
 
 func fetchGoogleapis(dest string) (string, error) {

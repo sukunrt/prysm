@@ -29,19 +29,24 @@ func genSSZ() error {
 
 	// The base preset's .pb.go tree is the checked-in one (root ""); every other
 	// preset is regenerated into its own temp tree.
-	roots := make(map[string]string, len(ps.nonBase()))
-	for _, preset := range ps.nonBase() {
-		root, err := os.MkdirTemp("", "gen-"+preset+"pb-")
+	nonBase := ps.nonBase()
+
+	roots := make(map[string]string, len(nonBase))
+	if len(nonBase) > 0 {
+		g, err := newProtoGen()
 		if err != nil {
-			return fmt.Errorf("mkdirTemp: %w", err)
+			return fmt.Errorf("new proto gen: %w", err)
 		}
-		defer func() { _ = os.RemoveAll(root) }()
+		defer g.cleanup()
 
-		if err := emitPresetPbgo(preset, root); err != nil {
-			return fmt.Errorf("emit %s pb.go: %w", preset, err)
+		for _, preset := range nonBase {
+			root := filepath.Join(g.root, "pbgo", preset)
+			if err := g.emit(ps.dicts[preset], root); err != nil {
+				return fmt.Errorf("emit %s pb.go: %w", preset, err)
+			}
+
+			roots[preset] = root
 		}
-
-		roots[preset] = root
 	}
 
 	for _, target := range targets {

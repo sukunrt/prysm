@@ -124,27 +124,37 @@ func genKind(k kind) error {
 	}
 }
 
-// chdirRepoRoot walks up from the working directory to the module root (the
-// directory containing go.mod) and chdirs there, so every path below is
-// repo-relative regardless of where the command was invoked.
-func chdirRepoRoot() error {
+// repoRoot walks up from the working directory to the module root: the
+// directory containing go.mod.
+func repoRoot() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("getwd: %w", err)
+		return "", fmt.Errorf("getwd: %w", err)
 	}
 
 	for {
 		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-			return os.Chdir(dir)
+			return dir, nil
 		}
 
 		parent := filepath.Dir(dir)
 		if parent == dir {
-			return fmt.Errorf("go.mod not found above %s", dir)
+			return "", fmt.Errorf("go.mod not found above %s", dir)
 		}
 
 		dir = parent
 	}
+}
+
+// chdirRepoRoot chdirs to the module root, so every path below is
+// repo-relative regardless of where the command was invoked.
+func chdirRepoRoot() error {
+	dir, err := repoRoot()
+	if err != nil {
+		return err
+	}
+
+	return os.Chdir(dir)
 }
 
 func sh(name string, args ...string) error {
