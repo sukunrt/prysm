@@ -208,6 +208,113 @@ expected count of expectation edits is **zero**. Verify by running:
       attestations flow, and the new metrics are nonzero in the logs.
 - [ ] `go build ./...`, `go vet`, `bazelisk build //...` (full logs).
 
+## 4.9 Executed 2026-08-20 <added by executor>
+
+Seven jj changes on top of `rnslyvxp`, oldest first:
+
+| change | what |
+|---|---|
+| `rqlvotsr` | the vote store, the receive path, the vote metrics |
+| `pmlpymvn` | the walk, the passthrough, `IsCanonical`, gate metrics |
+| `oztyywyl` | proposer boost, late-block reorg off under the gate |
+| `syylkqsn` | geth genesis: Amsterdam blob schedule entry (e2e blocker) |
+| `nxzstrpp` | `TestEndToEnd_HezeGenesisShort` recreated |
+| `ktzlulyk` | local votes fed through the RPC; the vote's due time |
+| `rssoytzn` | one electorate for the mock committee |
+
+### What the plan did not say, and the smoke found
+
+1. **A node never saw its own votes.** `subscribeWithBase` skips every message
+   whose `ReceivedFrom` is our own peer ID, so the subscriber - the plan's
+   feeding point - is dead for locally published available attestations. On the
+   single-node smoke that is the whole electorate; on a two-node devnet it is
+   half. The local vote now goes to forkchoice from
+   `ProposeAvailableAttestation`, right after the broadcast. Symptom before the
+   fix: `goldfish_seat_fraction` pinned at 0 and every block after the first
+   built on genesis.
+2. **`AVAILABLE_ATTESTATION_DUE_BPS_HEZE` had no value anywhere**, so it was 0
+   and every validator published its head vote at the start of the slot, before
+   that slot's block existed. Every vote named the previous block and no block
+   could ever clear the gate. It now defaults to 2500 like the spec.
+3. **The publisher and the receiver disagreed about the electorate.** The
+   validator client resolved seats against
+   `MIN_GENESIS_ACTIVE_VALIDATOR_COUNT`, the beacon node against the live
+   registry size. They agree until the first deposit - which the e2e sends on
+   purpose - and then every seat names the wrong validator. Both sides now call
+   `decoupled.CommitteeValidatorCount`, and an index outside it gets no seats.
+   This is the one expectation edit in the step:
+   `TestService_validateAvailableAttestation` built its seat bits from the test
+   state's validator count.
+4. **The proposer boost root is still recorded on insert**, against 4.4's
+   letter. Only the boost *weight* is skipped. `shouldExtendPayload` reads the
+   boost root, and the walk's payload tiebreaker reads `shouldExtendPayload`;
+   without the record every previous-slot payload decision resolves to FULL,
+   which strands a block that built on the empty node and freezes the head at
+   its parent. `TestGoldfish_PreviousSlotPayloadDecisionFollowsTheNewBlock`
+   fails exactly that way if the record is removed.
+5. **Equivocators score every child**, per the spec's
+   `get_available_attestation_score` (`score += 1` for each equivocating seat,
+   for every child), not "no child" as 4.1's prose says. The spec's own comment
+   is "Equivocator counted for viability", which is what 4.1 was paraphrasing.
+
+### Round-start proposals are orphaned, and that is phase 2 without phase 1
+
+`is_available_attestation_viable` refuses a current-slot proposal at a
+round-start slot because the spec's phase 2 admits it through the *stable root
+proposal* instead - the TSQ-distinguished proposal, which does not exist while
+the stable root is stubbed as the justified root. So the round-start block
+never becomes head, its own slot's voters name its parent, and the next slot's
+proposer builds on that parent. One block per round is lost: with
+`SLOTS_PER_ROUND = 8` that is 12.5% of blocks: in the four-and-a-bit epoch
+smoke every one of slots 8, 16, 24 ... 128 was orphaned and every other slot
+was canonical. Pinned by
+`TestGoldfish_RoundStartProposalIsOrphaned`. If this cost is not acceptable
+before the gadget lands, the smallest spec-shaped stub is to treat the unique
+round-start block descending from the stable root as the distinguished
+proposal.
+
+### The e2e cannot judge this step in this checkout
+
+Two pre-existing infrastructure failures, both in the execution layer:
+
+- geth refuses the e2e genesis because `AmsterdamTime` is set with no
+  `blobSchedule.amsterdam` entry. Fixed here (`syylkqsn`) because nothing else
+  could run.
+- With that fixed the run starts, but the vendored geth 1.17.4 answers
+  `engine_getPayloadV6` with a structured `blockAccessList`, while Prysm's
+  `ExecutionPayloadGloasJSON` expects `hexutil.Bytes`. Every block build fails
+  with "cannot unmarshal non-string into ... blockAccessList", so the e2e chain
+  produces no blocks at all. `TestEndToEnd_HezeGenesisShort` still passes -
+  its early evaluators do not need blocks - which is worth knowing about that
+  tier. The locally installed geth 1.17.6-unstable does not have the problem,
+  which is why the single-node smoke works. Fixing it means either bumping the
+  vendored geth or teaching the Gloas payload JSON the structured BAL; neither
+  belongs in this step.
+
+The evidence for this step therefore comes from the unit ladder and from
+single-node smokes on geth 1.17.6 (`step4-smoke.sh`, `step4-long.sh` and
+`step4-fin.sh` in the session scratchpad), not from the full e2e.
+
+### What the long smoke shows
+
+256 validators, one node, `SLOTS_PER_ROUND = 8`, Heze genesis, 12-second slots,
+five epochs:
+
+- **It finalizes twice.** `finalizedEpoch=2` at slot 129, and by the last slot
+  of the run (160) the head reports `justifiedEpoch=4`, `finalizedEpoch=3`.
+  FFG justification still consumes block attestations with the LMD input off,
+  which is what the full e2e was meant to prove.
+- **Blocks at every slot but the round starts.** Slots 1-160 all produced a
+  block; the only orphans are slots 8, 16, 24 ... 152.
+- `goldfish_seat_fraction` 1.0 every slot (all 512 seats heard from before the
+  next slot started), `goldfish_late_vote_total` 0,
+  `goldfish_gate_stop_total` 77, `goldfish_gate_retreat` 0,
+  `goldfish_equivocation_total` 0, and `beacon_reorgs_total` 0 - the head never
+  moved backwards, the round-start blocks simply never became head.
+
+A run with late block publishers (step 6's knob) is what will move
+`goldfish_gate_retreat` off zero.
+
 ---
 
 # Step 5 — timing knobs
