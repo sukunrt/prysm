@@ -323,6 +323,17 @@ above Gloas in the enum. There are 0 `== version.Gloas` sites.
 - `detect` resolves the Heze fork version to a Heze state and a Gloas block.
 - No reference to `HezeShape` remains.
 
+### Executed 2026-08-19 <added by executor>
+
+Done in four jj changes (`lzsxwrmr`, `mkonswyn`, `xzqrwxwy`, `krxuztzm`),
+all acceptance criteria green. Biggest surprises: the db/kv **read** side
+(schema key, `unmarshalState`, `decodeStateSnapshot`) was missing from the
+plan; `NewGenesisBlockForState` needed a Heze arm (step 4 depends on it);
+and unhiding Gloas/Heze in `version.All()` woke nine fork-walking test
+suites — including exposing that the REST validator client has **no SSZ
+block codec for Gloas/Heze** (falls back to Fulu; steps 4/5 must use gRPC or
+fix it). Full list in `plan-detailed.md` 3.8.
+
 ---
 
 ## Step 4: genesis is a Heze state

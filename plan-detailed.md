@@ -497,6 +497,61 @@ Do not edit these. They look like they need Heze arms and do not.
 - [ ] `grep -rn HezeShape` returns nothing
 - [ ] `make test mainnet` and `bazelisk build //...`
 
+## 3.8 Executed 2026-08-19 <added by executor>
+
+Done as four jj changes: `lzsxwrmr` (proto), `mkonswyn` (state-native),
+`xzqrwxwy` (version plumbing), `krxuztzm` (shape rule + upgrade deletion).
+All acceptance tests in 3.7 added and green; `bazelisk build //...` green;
+grep for `HezeShape` clean. Deviations:
+
+Sites the plan did not name, all required:
+
+- `proto/prysm/v1alpha1/BUILD.bazel` — the `methodical_heze_imports` genrule
+  sed-stripped `encoding/binary` ("heze types are all fixed-size");
+  `BeaconStateHeze` is not, so the genrule is gone and the library uses
+  `:methodical_heze` directly.
+- `proto/prysm/v1alpha1/heze.yaml` — `BeaconStateHeze` needs the same
+  `progressive:`/`ProgressiveList` map as Gloas or roots diverge. Plus five
+  new imports in `heze.proto`.
+- **db/kv read side**: the plan named only `marshalState` and
+  `keyForSnapshot` (write side). Also needed: `hezeKey` in `schema.go`,
+  `hasHezeKey` in `key.go`, `unmarshalState` and `decodeStateSnapshot` arms —
+  else every saved Heze state is unreadable.
+- `beacon-chain/core/blocks/genesis.go` — `NewGenesisBlockForState` needs a
+  `*ethpb.BeaconStateHeze` arm returning a Gloas-shaped signed block.
+  **Step 4 depends on this; it exists now.**
+- `state_trie.go` `progressiveHashTreeRoot` / `initializeProgressiveMerkleTree`
+  hardcoded Gloas; now a version-keyed `progressiveFields()` helper.
+- `beacon-chain/core/time/slot_epoch.go` — `CanUpgradeToHeze` deleted with
+  the upgrade (it was the only caller; "no upgrade to Heze, ever").
+- `testing/util/state.go` — new `NewBeaconStateHeze` helper. **Step 4 can
+  use it.**
+
+Fallout of removing Gloas+Heze from `unsupportedVersions` (largest unplanned
+cost — `version.All()` doubles as a test-loop driver, so nine fork-walking
+suites saw Gloas/Heze for the first time):
+
+- Light-client tests in blockchain, db/kv, light-client, rpc/eth/light-client,
+  sync: the `== version.Gloas` skips widened to `>= version.Gloas` (the light
+  client genuinely stops at Fulu).
+- `validator/client/beacon-api/get_beacon_block_test.go` — the REST validator
+  client **has no SSZ block codec for Gloas or Heze** and silently falls back
+  to the Fulu codec. Test relaxed to assert coverage up to Fulu. **Real gap:
+  a Heze devnet using the REST validator client will hit it. Steps 4/5 must
+  either use gRPC or accept/fix this.**
+- `db/kv/state_diff_test.go` — fork-transition walk stops at Fulu (a
+  Gloas→Heze transition will never exist); `createState` got a Heze arm.
+
+Named but different in practice:
+
+- The block-unmarshal arms merged into `case version.Gloas, version.Heze:`
+  rather than duplicate cases.
+- `HezeShapes` sync test: kept only the gloas-scheduled subtest, renamed
+  `TestReadChunkedDataColumnSidecar_HezeUsesGloasShape`; same for
+  `context_test.go` → `TestContextByteVersions_HezeUsesGloas`.
+- `proofs.go` field-count ladder already stops at Fulu — no arm needed.
+- `tools/ssztrace` left alone (no Heze spectests, per 3.6).
+
 ---
 
 # Step 4 — genesis is a Heze state
