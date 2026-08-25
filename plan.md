@@ -233,6 +233,17 @@ per-epoch today and becomes per-round. Spec: `validator.md:228`.
   round's 8 slots partition the whole active set, with no validator in two
   slots of one round and none missing.
 
+### Executed 2026-08-19 <added by executor>
+
+Done in three jj changes (`lssoxmyt`, `oltyqmro`, `lomukltk`). The plan's
+"committee cache needs no change" claim was wrong: the cache *contents*
+(`CommitteeCount`, and the offset/committees-per-slot math in
+`cache/committee.go`) embed `SlotsPerEpoch` and had to move to
+`SlotsPerRound`. `CommitteeAssignments` keeps its epoch-shaped API and
+enumerates only the epoch's first round — correct committees, but the duty
+API under-reports attester slots once a config uses a short round; step 5
+must address it. Full deviation list in `plan-detailed.md` 2.8.
+
 ---
 
 ## Step 3: Heze owns the state container

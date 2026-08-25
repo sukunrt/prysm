@@ -332,6 +332,51 @@ In `time/slots/slottime.go`, beside `ToEpoch:69`, `EpochStart:106`,
       the round's 8 slots partition the whole active set: no validator in two
       slots of one round, none missing, and the union equals the active set.
 
+## 2.8 Executed 2026-08-19 <added by executor>
+
+Done as three jj changes: `lssoxmyt` (Round type), `oltyqmro` (config field,
+`VerifyRounds`, slot arithmetic), `lomukltk` (committee math, cache, dedup,
+partition tests). Deviations from the list above, all reconciled here:
+
+- **2.5 is wrong about the cache.** The key `(slot, seed, index)` is fine but
+  the *contents* are not: `UpdateCommitteeCache` / `fillCommitteeCacheAsync`
+  store `CommitteeCount = SlotsPerEpoch * committeesPerSlot`, and
+  `beacon-chain/cache/committee.go` `Committee()` recomputes committees-per-
+  slot and the offset from `SlotsPerEpoch`. All three sites now use
+  `SlotsPerRound`; without them the cached and uncached paths disagree the
+  moment a round is shorter than an epoch.
+- `BeaconCommittee` uses `slot.ModSlot(SlotsPerRound)` rather than
+  `slot - RoundStart(RoundAt(slot))` — same value, no error branch in a hot
+  path.
+- Validation is `params.VerifyRounds` in new `config/params/rounds.go`,
+  called from `beacon-chain/node/node.go` right after `VerifyPreset`.
+- `testing/slasher/simulator/simulator.go` overrides `SlotsPerEpoch = 4` at
+  runtime; it now sets `SlotsPerRound` to match, else mainnet's 32 would not
+  divide 4. Two tests in `beacon_committee_test.go` that set
+  `SlotsPerEpoch = 4` got the same treatment.
+- Sync dedup: renamed to `hasSeenAggregatorIndexRound` /
+  `setAggregatorIndexRoundSeen`, taking `primitives.Round` from
+  `slots.RoundAt(data.Slot)`. A third call site the plan missed:
+  `beacon-chain/sync/pending_attestations_queue.go:368`.
+- `handlers_test.go` also needed a `case "SLOTS_PER_ROUND"` value arm (its
+  `default:` errors on unknown keys), besides the 214 → 215 count.
+- **`CommitteeAssignments` keeps its epoch signature.** It enumerates the
+  epoch's *first round* only; committees repeat identically each round, so
+  committee and index are right, but the attester-slot field reports only the
+  first round's slot. Reporting all of them needs an API change
+  (`CommitteeAssignment` holds one slot). **Under a short round the validator
+  duty API under-reports duties — must be dealt with in step 5.**
+- `ComputeSubnetForCommitteesPerSlot` still uses `SinceEpochStarts` —
+  considered and deliberately skipped: it is a subnet mapping, consistent
+  across nodes either way.
+- **Blanket `go modernize` is not safe in this tree** — it rewrote five
+  unrelated files, one (`deposit_pruner.go`) with a likely behaviour change.
+  Unrelated churn reverted; only fixes to new code kept.
+- Pre-existing failures confirmed at baseline, not touched:
+  `beacon-chain/core/helpers` sync-committee cache flake,
+  `beacon-chain/rpc/prysm/v1alpha1/beacon` (34 failures, identical set
+  before/after), `sync_fuzz_test.go` vet errors.
+
 ---
 
 # Step 3 — Heze owns the state container
