@@ -1165,6 +1165,13 @@ dirs, which killed run 4 mid-flight.
 
 ## 5.3 Shadow
 
+**<added by executor, 2026-08-19>** User parameters for the run: 10–16
+nodes, ~100 validators, executed locally from
+`/home/sukun/dev/decoupled-shadow-sim` (the sim workspace; the ethshadow
+tool lives in `/home/sukun/dev/ethshadow`). Existing `data*` dirs and
+`shadow-run*.log` files are prior run data — never deleted or overwritten;
+each new run gets a fresh data dir.
+
 - [ ] Flip the sim config to `SLOTS_PER_ROUND = 8` here, not earlier.
 - [ ] `ethshadow` has no heze knob, so `HEZE_FORK_EPOCH` goes through
       `sim.yaml` `extra_env`.
