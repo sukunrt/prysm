@@ -1,6 +1,7 @@
 package endtoend
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/OffchainLabs/prysm/v7/config/params"
@@ -46,15 +47,48 @@ func TestEndToEnd_HezeGenesis(t *testing.T) {
 
 	r := e2eMinimal(t, cfg,
 		types.WithEpochs(5),
-		withoutEvaluators(
-			ev.VerifyBlockGraffiti.Name,
-			ev.FeeRecipientIsPresent.Name,
-			ev.ValidatorsVoteWithTheMajority.Name,
-			ev.ProcessesDepositsInBlocks.Name,
-			ev.ValidatorSyncParticipation.Name,
-			ev.ActivatesDepositedValidators.Name,
-		),
+		withoutEvaluators(hezeDroppedEvaluators...),
 		withEvaluators(
+			ev.AvailableAttestationsFlow,
+			ev.AttestationsInEveryRound,
+		),
+	)
+	r.run()
+}
+
+// hezeDroppedEvaluators are the stock minimal evaluators the Heze runs cannot
+// use; the reason for each is on TestEndToEnd_HezeGenesis.
+var hezeDroppedEvaluators = []string{
+	ev.VerifyBlockGraffiti.Name,
+	ev.FeeRecipientIsPresent.Name,
+	ev.ValidatorsVoteWithTheMajority.Name,
+	ev.ProcessesDepositsInBlocks.Name,
+	ev.ValidatorSyncParticipation.Name,
+	ev.ActivatesDepositedValidators.Name,
+}
+
+// TestEndToEnd_HezeGenesisSlotStartFFG is the Heze run with the FFG vote cast
+// at the start of the slot instead of at the attestation due time.
+//
+// The vote then names the previous slot's block as head, so is_matching_head is
+// missed every slot: 14/64 of the attestation reward, which the task's charter
+// allows to be wrong. The FFG target is not affected - it is the block at
+// StartSlot(E)-1, which a voter at the start of any slot of epoch E has already
+// seen - and participation is measured on the target, so the relaxed floor here
+// only leaves slack for the vote's jitter. It is relaxed for this run only; the
+// default TestEndToEnd_HezeGenesis keeps the stock expectation.
+func TestEndToEnd_HezeGenesisSlotStartFFG(t *testing.T) {
+	cfg := params.E2EMainnetTestConfig()
+	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
+	cfg.SlotsPerRound = 8
+
+	r := e2eMinimal(t, cfg,
+		types.WithEpochs(5),
+		types.WithSlotStartFFGVote(),
+		withoutEvaluators(append(slices.Clone(hezeDroppedEvaluators),
+			ev.ValidatorsParticipatingAtEpoch(2).Name)...),
+		withEvaluators(
+			ev.ValidatorsParticipatingAtEpochWithFloor(2, 0.95),
 			ev.AvailableAttestationsFlow,
 			ev.AttestationsInEveryRound,
 		),
@@ -101,14 +135,7 @@ func TestEndToEnd_HezeGenesisShort(t *testing.T) {
 			c.TestDeposits = false
 			c.TestFeature = false
 		},
-		withoutEvaluators(
-			ev.VerifyBlockGraffiti.Name,
-			ev.FeeRecipientIsPresent.Name,
-			ev.ValidatorsVoteWithTheMajority.Name,
-			ev.ProcessesDepositsInBlocks.Name,
-			ev.ValidatorSyncParticipation.Name,
-			ev.ActivatesDepositedValidators.Name,
-		),
+		withoutEvaluators(hezeDroppedEvaluators...),
 		withEvaluators(ev.AvailableAttestationsFlow),
 	)
 	r.run()

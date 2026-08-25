@@ -48,6 +48,22 @@ var ValidatorsParticipatingAtEpoch = func(epoch primitives.Epoch) types.Evaluato
 	}
 }
 
+// ValidatorsParticipatingAtEpochWithFloor is ValidatorsParticipatingAtEpoch
+// with an explicit floor instead of the default expectation. It exists for the
+// runs whose timing knobs give up participation on purpose; the default run
+// keeps the default expectation.
+var ValidatorsParticipatingAtEpochWithFloor = func(
+	epoch primitives.Epoch, floor float32,
+) types.Evaluator {
+	return types.Evaluator{
+		Name:   "validators_participating_epoch_%d",
+		Policy: policies.AfterNthEpoch(epoch),
+		Evaluation: func(_ *types.EvaluationContext, conns ...*grpc.ClientConn) error {
+			return validatorsParticipatingAtLeast(floor, conns...)
+		},
+	}
+}
+
 // ValidatorSyncParticipation ensures the expected amount of sync committee participants
 // are active.
 var ValidatorSyncParticipation = types.Evaluator{
@@ -123,6 +139,12 @@ func validatorsAreActive(ec *types.EvaluationContext, conns ...*grpc.ClientConn)
 
 // validatorsParticipating ensures the validators have an acceptable participation rate.
 func validatorsParticipating(_ *types.EvaluationContext, conns ...*grpc.ClientConn) error {
+	return validatorsParticipatingAtLeast(0, conns...)
+}
+
+// validatorsParticipatingAtLeast ensures the validators have an acceptable
+// participation rate. A nonzero floor replaces the default expectation.
+func validatorsParticipatingAtLeast(floor float32, conns ...*grpc.ClientConn) error {
 	conn := conns[0]
 	client := ethpb.NewBeaconChainClient(conn)
 	validatorRequest := &ethpb.GetValidatorParticipationRequest{}
@@ -147,6 +169,9 @@ func validatorsParticipating(_ *types.EvaluationContext, conns ...*grpc.ClientCo
 		// the merge block. Target and head will likely be missed for a few validators at
 		// slot 0.
 		expected = 0.95
+	}
+	if floor > 0 {
+		expected = floor
 	}
 	if partRate < expected {
 		path := fmt.Sprintf("http://localhost:%d/eth/v2/debug/beacon/states/head", e2eparams.TestParams.Ports.PrysmBeaconNodeHTTPPort)
