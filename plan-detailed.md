@@ -381,6 +381,19 @@ partition tests). Deviations from the list above, all reconciled here:
   `beacon-chain/rpc/prysm/v1alpha1/beacon` (34 failures, identical set
   before/after), `sync_fuzz_test.go` vet errors.
 
+## 2.9 Build-infra fix for the bazel accept criteria <added by executor>
+
+`bazelisk build //...` — an accept criterion in every step — could not pass
+in this checkout at all, for two pre-existing reasons unrelated to the plan
+(fixed in jj change `wzmnumrr`):
+
+- `hack/workspace_status.sh` shells out to git; this jj checkout has no
+  `.git`, so `STABLE_GIT_TAG` was never emitted and the
+  `//runtime:version_file` genrule failed. The script now falls back to
+  placeholders (`v0.0.0-dev` etc.) when git metadata is unavailable.
+- `tools/interop-wallet` failed the `logruswitherror` / `logcapitalization`
+  nogo analyzers; it now uses logrus.
+
 ---
 
 # Step 3 — Heze owns the state container
