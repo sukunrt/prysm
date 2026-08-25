@@ -235,12 +235,16 @@ func TestGoldfishWalk_NoPassthroughAtRoundStart(t *testing.T) {
 	zero := params.BeaconConfig().ZeroHash
 	rootA, rootB := indexToHash(1), indexToHash(2)
 
-	driftGenesisTime(f, 8, 0)
+	// The slot-8 block arrives while the previous round is still current, so it
+	// is not that round's distinguished proposal and only the ordinary walk can
+	// admit it.
+	driftGenesisTime(f, 7, 0)
 	insertGoldfishBlock(t, f, 7, rootA, zero, true)
 	insertGoldfishBlock(t, f, 8, rootB, rootA, false)
 	f.InsertAvailableAttestation(7, 1, 4, rootA, false)
+	driftGenesisTime(f, 8, 0)
 
-	// Slot 8 starts a round, so the proposal has to earn its votes.
+	// Slot 8 starts a round, so the ordinary walk makes it earn its votes.
 	head, err := f.Head(ctx)
 	require.NoError(t, err)
 	require.Equal(t, rootA, head)
@@ -600,30 +604,82 @@ func TestGoldfish_GateStopNotCountedAtTheTip(t *testing.T) {
 	require.Equal(t, before, goldfishGateStops(t))
 }
 
-func TestGoldfish_RoundStartProposalIsOrphaned(t *testing.T) {
+func TestGoldfish_RoundStartProposalAdmitted(t *testing.T) {
 	f := setupGoldfish(t, 0, 0)
 	zero := params.BeaconConfig().ZeroHash
 	rootA, rootB, rootC := indexToHash(1), indexToHash(2), indexToHash(3)
 
-	// Slot 8 starts a round. Without the finality gadget there is no
-	// distinguished round-start proposal, so the block of that slot never
-	// becomes head: the walk refuses it at slot 8 and it has no votes at slot
-	// 9. The slot-9 proposer therefore builds on the slot-7 block.
+	// Slot 8 starts a round, so the ordinary walk refuses the block of that
+	// slot. It is admitted instead as the round's distinguished proposal: the
+	// single round-start block received during its own round that descends from
+	// the stable root, here stubbed as the justified root.
 	driftGenesisTime(f, 8, 0)
 	insertGoldfishBlock(t, f, 7, rootA, zero, true)
 	f.InsertAvailableAttestation(7, 1, 4, rootA, false)
 	insertGoldfishBlock(t, f, 8, rootB, rootA, false)
-	before := goldfishGateStops(t)
 	head, err := f.Head(t.Context())
 	require.NoError(t, err)
-	require.Equal(t, rootA, head)
-	require.Equal(t, before+1, goldfishGateStops(t))
+	require.Equal(t, rootB, head)
 
-	// Slot 8's voters named the head they saw, which is the slot-7 block.
+	// From the next slot on the proposal has no special status: it is the head
+	// because slot 8's voters named it, and the slot-9 block builds on it.
 	driftGenesisTime(f, 9, 0)
-	f.InsertAvailableAttestation(8, 1, 4, rootA, false)
-	insertGoldfishBlock(t, f, 9, rootC, rootA, false)
+	f.InsertAvailableAttestation(8, 1, 4, rootB, false)
+	insertGoldfishBlock(t, f, 9, rootC, rootB, false)
 	head, err = f.Head(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, rootC, head)
+}
+
+func TestGoldfish_CompetingRoundStartProposalsDistinguishNeither(t *testing.T) {
+	f := setupGoldfish(t, 0, 0)
+	zero := params.BeaconConfig().ZeroHash
+	rootA, rootB, rootC := indexToHash(1), indexToHash(2), indexToHash(3)
+
+	// Two round-start blocks for the same round: the spec's rule is that two
+	// proposals distinguish neither, so the walk stays at the parent and the
+	// round-start slot is orphaned, as it was before the stub.
+	driftGenesisTime(f, 8, 0)
+	insertGoldfishBlock(t, f, 7, rootA, zero, true)
+	f.InsertAvailableAttestation(7, 1, 4, rootA, false)
+	insertGoldfishBlock(t, f, 8, rootB, rootA, false)
+	insertGoldfishBlock(t, f, 8, rootC, rootA, false)
+	head, err := f.Head(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootA, head)
+}
+
+func TestGoldfish_RoundStartProposalFromAnotherRoundIsNotDistinguished(t *testing.T) {
+	f := setupGoldfish(t, 0, 0)
+	zero := params.BeaconConfig().ZeroHash
+	rootA, rootB := indexToHash(1), indexToHash(2)
+
+	// Round 2 starts at slot 16. A block at slot 8 arriving now starts round 1,
+	// which is over: the spec records a proposal during its own round only, so
+	// this one is no round's proposal and the walk cannot admit it.
+	driftGenesisTime(f, 16, 0)
+	insertGoldfishBlock(t, f, 15, rootA, zero, true)
+	insertGoldfishBlock(t, f, 8, rootB, zero, true)
+	require.Equal(t, 0, len(f.store.goldfishProposals.byRound))
+	f.InsertAvailableAttestation(15, 1, 4, rootA, false)
+	head, err := f.Head(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootA, head)
+}
+
+func TestGoldfish_RoundStartProposalMustDescendFromTheStableRoot(t *testing.T) {
+	f := setupGoldfish(t, 1, 0)
+	zero := params.BeaconConfig().ZeroHash
+	rootA, rootB, rootC := indexToHash(1), indexToHash(2), indexToHash(3)
+
+	// The stable root is the justified root. A round-start block on a branch
+	// that does not descend from it is not the round's proposal.
+	driftGenesisTime(f, 8, 0)
+	insertGoldfishBlock(t, f, 6, rootA, zero, true)
+	insertGoldfishBlock(t, f, 7, rootB, zero, true)
+	f.store.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 0, Root: rootB}
+	insertGoldfishBlock(t, f, 8, rootC, rootA, false)
+	head, err := f.Head(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootB, head)
 }

@@ -96,6 +96,18 @@ var (
 			Help: "The number of times the Goldfish walk moved the head back to an ancestor of the previous head.",
 		},
 	)
+	goldfishRoundProposalCount = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "goldfish_round_proposal_total",
+			Help: "The number of times the round's distinguished proposal started the Goldfish walk.",
+		},
+	)
+	goldfishProposalConflictCount = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "goldfish_round_proposal_conflict_total",
+			Help: "The number of rounds that saw more than one round start block.",
+		},
+	)
 	goldfishEquivocationCount = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "goldfish_equivocation_total",

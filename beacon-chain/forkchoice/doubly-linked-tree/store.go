@@ -242,6 +242,10 @@ func (s *Store) insert(ctx context.Context,
 			}).Error("Could not update best descendant")
 		}
 	}
+	// A block that starts the current round can be the round's distinguished
+	// proposal, which is the only way a round start block becomes head.
+	s.recordRoundProposal(n)
+
 	// Update metrics.
 	processedBlockCount.Inc()
 	nodeCount.Set(float64(len(s.emptyNodeByRoot)))

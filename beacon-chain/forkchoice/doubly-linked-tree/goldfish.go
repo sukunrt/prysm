@@ -101,6 +101,74 @@ func (g *goldfishVotes) seats(slot primitives.Slot) uint64 {
 	return total
 }
 
+// goldfishProposals records the round start blocks that arrived during their
+// own round. It is the stub of the spec's store.round_proposals and
+// store.round_proposal_conflicts: the finality gadget that would distinguish a
+// proposal by the frozen stable root does not exist here, so the round's single
+// round start block plays that role.
+//
+// The caller must hold the forkchoice write lock for every method here.
+type goldfishProposals struct {
+	byRound map[primitives.Round][32]byte
+	// conflicts are the rounds that saw more than one round start block. The
+	// spec's rule is that two proposals distinguish neither.
+	conflicts map[primitives.Round]bool
+}
+
+func newGoldfishProposals() *goldfishProposals {
+	return &goldfishProposals{
+		byRound:   make(map[primitives.Round][32]byte),
+		conflicts: make(map[primitives.Round]bool),
+	}
+}
+
+// insert records a round start block for its round.
+func (p *goldfishProposals) insert(round primitives.Round, root [32]byte) {
+	previous, ok := p.byRound[round]
+	if !ok {
+		p.byRound[round] = root
+		return
+	}
+	if previous != root && !p.conflicts[round] {
+		p.conflicts[round] = true
+		goldfishProposalConflictCount.Inc()
+	}
+}
+
+// distinguished returns the round's proposal root, if the round saw exactly one
+// round start block.
+func (p *goldfishProposals) distinguished(round primitives.Round) ([32]byte, bool) {
+	if p.conflicts[round] {
+		return [32]byte{}, false
+	}
+	root, ok := p.byRound[round]
+	return root, ok
+}
+
+// prune drops every round before the given one.
+func (p *goldfishProposals) prune(current primitives.Round) {
+	for round := range p.byRound {
+		if round < current {
+			delete(p.byRound, round)
+			delete(p.conflicts, round)
+		}
+	}
+}
+
+// recordRoundProposal notes a block that starts the current round, mirroring
+// the spec's update_round_proposals: a block is a candidate proposal only for
+// its own round, and only while that round is the current one.
+func (s *Store) recordRoundProposal(n *Node) {
+	if !goldfishActiveAt(n.slot) || !slots.IsRoundStart(n.slot) {
+		return
+	}
+	round := slots.RoundAt(n.slot)
+	if slots.RoundAt(s.currentSlot()) != round {
+		return
+	}
+	s.goldfishProposals.insert(round, n.root)
+}
+
 // InsertAvailableAttestation records a validated available attestation vote.
 // The caller MUST hold the forkchoice write lock.
 func (f *ForkChoice) InsertAvailableAttestation(
@@ -147,6 +215,7 @@ func (s *Store) goldfishNewSlot(slot primitives.Slot) {
 		goldfishSeatFraction.Set(float64(seats) / float64(decoupled.AvailableAttestationCommitteeSize))
 	}
 	s.goldfishVotes.prune(slot)
+	s.goldfishProposals.prune(slots.RoundAt(slot))
 }
 
 // goldfishScores holds one walk's available-attestation scores. Scores are
@@ -329,15 +398,53 @@ func (s *Store) goldfishBestChild(
 	return best, hadCandidates
 }
 
+// goldfishRoundProposal implements the proposal arm of the spec's get_head
+// phase 2. At a round start slot the round's distinguished proposal starts the
+// walk, which is how a round start block becomes head at all: the ordinary walk
+// refuses it (is_available_attestation_viable) because a proposal cannot have
+// earned votes yet.
+//
+// The spec distinguishes the proposal at the round's available vote action,
+// against the frozen stable root and the live available confirmed head. Neither
+// exists here: the stable root is stubbed as the justified root, so the checks
+// that remain are the ones that do not need the gadget - exactly one round start
+// block was received during its own round, it is the block of this slot, it
+// descends from the stable root, and it is viable for the head. Two round start
+// blocks distinguish neither, as in the spec. Unlike the spec this decision is
+// not frozen, so a second proposal arriving later in the slot withdraws the
+// first one's distinction rather than being ignored; that is the conservative
+// direction, the round start slot is then orphaned as it was before the stub.
+func (s *Store) goldfishRoundProposal(justified *Node, current primitives.Slot) *Node {
+	if !slots.IsRoundStart(current) {
+		return nil
+	}
+	root, ok := s.goldfishProposals.distinguished(slots.RoundAt(current))
+	if !ok {
+		return nil
+	}
+	en, ok := s.emptyNodeByRoot[root]
+	if !ok || en == nil {
+		return nil
+	}
+	n := en.node
+	if n.slot != current || !isGoldfishAncestor(n, justified) {
+		return nil
+	}
+	if !n.leadsToViableHead(s.justifiedCheckpoint.Epoch, slots.ToEpoch(current)) {
+		return nil
+	}
+	return n
+}
+
 // goldfishDescend runs phase 2 of the spec's get_head: from the stable root
-// (here the justified root) follow the available chain while a child clears the
-// previous slot's majority gate.
+// (here the justified root) or from the round's distinguished proposal, follow
+// the available chain while a child clears the previous slot's majority gate.
 func (s *Store) goldfishDescend(
-	justified *Node, sc *goldfishScores, current primitives.Slot,
+	from *Node, sc *goldfishScores, current primitives.Slot,
 ) *Node {
 	justifiedEpoch := s.justifiedCheckpoint.Epoch
 	currentEpoch := slots.ToEpoch(current)
-	head := justified
+	head := from
 	for {
 		p, hadPayloads := s.goldfishBestPayload(head, sc, current)
 		if p == nil {
@@ -371,7 +478,12 @@ func (s *Store) goldfishHead() ([32]byte, error) {
 	if current > 0 {
 		sc = s.goldfishScoresForSlot(current-1, justified)
 	}
-	head := s.goldfishDescend(justified, sc, current)
+	start := justified
+	if proposal := s.goldfishRoundProposal(justified, current); proposal != nil {
+		start = proposal
+		goldfishRoundProposalCount.Inc()
+	}
+	head := s.goldfishDescend(start, sc, current)
 	s.allTipsAreInvalid = false
 	previous := s.headNode
 	if head != previous {
