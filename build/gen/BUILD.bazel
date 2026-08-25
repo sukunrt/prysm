@@ -21,6 +21,7 @@ go_library(
         "@org_golang_google_protobuf//reflect/protoreflect:go_default_library",
         "@org_golang_google_protobuf//types/descriptorpb:go_default_library",
         "@org_golang_google_protobuf//types/pluginpb:go_default_library",
+        "@org_golang_x_tools//imports:go_default_library",
     ],
 )
 
@@ -35,10 +36,12 @@ go_test(
     srcs = [
         "bazel_test.go",
         "cache_test.go",
+        "preset_consistency_test.go",
         "proto_test.go",
     ],
     embed = [":go_default_library"],
     deps = [
+        "//config/params:go_default_library",
         "//testing/require:go_default_library",
         "@com_github_bazelbuild_buildtools//build:go_default_library",
         "@org_golang_google_protobuf//proto:go_default_library",

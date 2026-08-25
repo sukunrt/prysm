@@ -174,6 +174,8 @@ def _ssz_proto_files_impl(ctx):
         subs = mainnet
     elif (ctx.attr.config.lower() == "minimal"):
         subs = minimal
+    elif (ctx.attr.config.lower() == "decoupled"):
+        subs = decoupled
     else:
         fail("%s is an unknown configuration" % ctx.attr.config)
 

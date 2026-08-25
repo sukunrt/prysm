@@ -52,21 +52,25 @@ def _ssz_methodical_impl(ctx):
     ctx.actions.write(all_pkg_list, content = json.encode(json_out))
     out_base = ctx.outputs.out.root.path
 
-    # The //proto:network build setting (mainnet|minimal) -- the same flag the
-    # ssz_proto_files select() keys on -- determines which .pb.go sizes the
-    # go_proto dep was built with, and therefore which //go:build constraint
-    # methodical must stamp so the output matches the mainnet/minimal pair that
-    # //build/gen writes. methodical emits no header on its own; both codegen
+    # The //proto:network build setting -- the same flag the ssz_proto_files
+    # select() keys on -- determines which .pb.go sizes the go_proto dep was
+    # built with, and therefore which //go:build constraint methodical must
+    # stamp so the output matches the per-preset files that //build/gen writes
+    # (base preset: the conjunction of the other presets' negations; any other
+    # preset: its own tag). methodical emits no header on its own; both codegen
     # paths drive it through --go-build-constraint.
-    go_build_constraint = "!minimal"
-    if ctx.attr._network[BuildSettingInfo].value == "minimal":
-        go_build_constraint = "minimal"
+    network = ctx.attr._network[BuildSettingInfo].value
+    go_build_constraint = "!minimal && !decoupled"
+    if network != "mainnet":
+        go_build_constraint = network
 
     args = [
         "gen",
         "--config=" + ctx.file.config_file.path,
         "--output=" + ctx.outputs.out.path,
-        "--go-build-constraint=" + go_build_constraint,
+        # Single-quoted: the args are joined into a `bash -c` string, and the
+        # base constraint contains `&&`.
+        "--go-build-constraint='" + go_build_constraint + "'",
     ]
     if ctx.attr.override_package_name != "":
         args.append("--override-package-name=" + ctx.attr.override_package_name)

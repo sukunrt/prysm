@@ -6,6 +6,7 @@ go_library(
     srcs = select({
         "//config:mainnet": ["mainnet.go"],
         "//config:minimal": ["minimal.go"],
+        "//config:decoupled": ["decoupled.go"],
     }),
     importpath = "github.com/OffchainLabs/prysm/v7/config/fieldparams",
     visibility = ["//visibility:public"],
@@ -32,6 +33,21 @@ go_test(
     ],
     eth_network = "minimal",
     tags = ["minimal"],
+    deps = [
+        ":go_default_library",
+        "//config/params:go_default_library",
+        "//testing/require:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_decoupled_test",
+    srcs = [
+        "common_test.go",
+        "decoupled_test.go",
+    ],
+    eth_network = "decoupled",
+    tags = ["decoupled"],
     deps = [
         ":go_default_library",
         "//config/params:go_default_library",

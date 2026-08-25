@@ -117,6 +117,15 @@ ssz_methodical(
     out = "heze.ssz.go",
 )
 
+# The heze types are all fixed-size, so the generated code never uses
+# encoding/binary, but methodical emits the import unconditionally.
+genrule(
+    name = "methodical_heze_imports",
+    srcs = [":methodical_heze"],
+    outs = ["heze.gen.ssz.go"],
+    cmd = "sed '/encoding\\/binary/d' $(location :methodical_heze) > $@",
+)
+
 ssz_methodical(
     name = "methodical_non_core",
     deps = [":go_proto"],
@@ -172,6 +181,7 @@ go_library(
         ":methodical_electra", # keep
         ":methodical_fulu", # keep
         ":methodical_gloas", # keep
+        ":methodical_heze_imports", # keep
         ":methodical_non_core", # keep
         ":methodical_phase0", # keep
         "validator.go",
@@ -220,6 +230,7 @@ ssz_proto_files(
         "data_columns.proto",
         "gloas.proto",
 	"gloas_builder_api.proto",
+        "heze.proto",
         "light_client.proto",
         "partial_data_columns.proto",
         "sync_committee.proto",
@@ -229,6 +240,7 @@ ssz_proto_files(
         "//conditions:default": "mainnet",
         "//proto:ssz_mainnet": "mainnet",
         "//proto:ssz_minimal": "minimal",
+        "//proto:ssz_decoupled": "decoupled",
     }),
 )
 
