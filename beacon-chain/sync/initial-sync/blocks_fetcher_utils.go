@@ -151,22 +151,18 @@ func (f *blocksFetcher) findFork(ctx context.Context, slot primitives.Slot) (*fo
 		return nil, fmt.Errorf("slot is too low to backtrack, min. expected %d", slotsPerEpoch*2)
 	}
 
-	// The current slot's epoch must be after the finalization epoch,
-	// triggering backtracking on earlier epochs is unnecessary.
+	// Rewind to the start of the slot's own round, after checking that round is
+	// after finalization. Preserve the original slot for comparison.
 	cp := f.chain.FinalizedCheckpt()
-	if slots.RoundAt(slot) <= cp.Epoch {
-		return nil, errors.New("slot is not after the finalized round, no backtracking is necessary")
-	}
-	epoch := slots.ToEpoch(slot)
-	// Update slot to the beginning of the current epoch (preserve original slot for comparison).
-	slot, err := slots.EpochStart(epoch)
+	slot, err := backtrackStartSlot(cp.Epoch, slot)
 	if err != nil {
 		return nil, err
 	}
 
 	// Select peers that have higher head slot, and potentially blocks from more favourable fork.
 	// Exit early if no peers are ready.
-	_, peers := f.p2p.Peers().BestNonFinalized(1, epoch+1)
+	// Peer selection stays epoch-keyed: BestNonFinalized compares head epochs.
+	_, peers := f.p2p.Peers().BestNonFinalized(1, slots.ToEpoch(slot)+1)
 	if len(peers) == 0 {
 		return nil, errNoPeersAvailable
 	}
@@ -191,6 +187,22 @@ func (f *blocksFetcher) findFork(ctx context.Context, slot primitives.Slot) (*fo
 		return fork, nil
 	}
 	return nil, errNoPeersWithAltBlocks
+}
+
+// backtrackStartSlot returns the slot findFork rewinds to before searching for
+// alternative branches: the first slot of the given slot's own round.
+//
+// The finality guard and the rewind must speak the same unit. Checkpoints carry
+// rounds, so the guard compares rounds; rewinding to the slot's epoch start
+// instead would drop up to SLOTS_PER_EPOCH-1 slots and can land below the
+// finalized round the guard just cleared. Rewinding to the round start bounds the
+// rewind by SLOTS_PER_ROUND-1 and keeps it at or after the finalized round start.
+func backtrackStartSlot(finalizedRound primitives.Round, slot primitives.Slot) (primitives.Slot, error) {
+	round := slots.RoundAt(slot)
+	if round <= finalizedRound {
+		return 0, errors.New("slot is not after the finalized round, no backtracking is necessary")
+	}
+	return slots.RoundStart(round)
 }
 
 var errNoAlternateBlocks = errors.New("no alternative blocks exist within scanned range")

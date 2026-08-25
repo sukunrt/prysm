@@ -677,3 +677,35 @@ func TestBlocksFetcher_bestNonFinalizedSlot_PreservesPeerHeadWithinEpoch(t *test
 	got := fetcher.bestNonFinalizedSlot()
 	require.Equal(t, peerHeadSlot, got, "bestNonFinalizedSlot should keep slot precision within the current epoch")
 }
+
+// TestBacktrackStartSlot pins the unit of findFork's rewind against the unit of
+// the finality guard that precedes it. Checkpoints carry rounds, so the guard
+// compares rounds; an epoch-keyed rewind can land below the very round the guard
+// just cleared. At 8 slots per round inside a 32-slot epoch, finalized round 10
+// starts at slot 80, and slot 95 is in round 11 -- past finalization -- but its
+// epoch starts at slot 64, 16 slots below the finalized round start.
+func TestBacktrackStartSlot(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	const finalizedRound = primitives.Round(10)
+	finalizedStart, err := slots.RoundStart(finalizedRound)
+	require.NoError(t, err)
+	require.Equal(t, primitives.Slot(80), finalizedStart)
+
+	t.Run("rewinds to the round start, not the epoch start", func(t *testing.T) {
+		got, err := backtrackStartSlot(finalizedRound, 95)
+		require.NoError(t, err)
+		require.Equal(t, primitives.Slot(88), got)
+		require.Equal(t, true, got >= finalizedStart,
+			"rewound slot %d must not be below the finalized round start %d", got, finalizedStart)
+	})
+
+	t.Run("rejects a slot at or before the finalized round", func(t *testing.T) {
+		_, err := backtrackStartSlot(finalizedRound, 87)
+		require.ErrorContains(t, "not after the finalized round", err)
+	})
+}
