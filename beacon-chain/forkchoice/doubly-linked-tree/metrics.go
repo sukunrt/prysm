@@ -72,6 +72,18 @@ var (
 			Help: "The number of PTC votes recorded by forkchoice.",
 		},
 	)
+	justifiedRoundAdvanceTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "justified_round_advance_total",
+			Help: "Count of the times the store's justified checkpoint moved to a later round.",
+		},
+	)
+	finalizedRoundAdvanceTotal = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "finalized_round_advance_total",
+			Help: "Count of the times the store's finalized checkpoint moved to a later round.",
+		},
+	)
 	goldfishSeatFraction = promauto.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "goldfish_seat_fraction",

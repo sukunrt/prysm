@@ -338,3 +338,40 @@ func TestStore_PullTips_Heuristics(t *testing.T) {
 		require.Equal(tt, primitives.Round(2), f.store.emptyNodeByRoot[[32]byte{'h'}].node.unrealizedJustifiedEpoch)
 	})
 }
+
+// The round advance counters must move on the tick path. Forkchoice realizes a
+// checkpoint advance at the round boundary (NewSlot -> updateUnrealizedCheckpoints),
+// so counting the advance anywhere on the block path misses it entirely.
+func TestStore_RoundAdvanceCountersOnTickPath(t *testing.T) {
+	setupRoundsConfig(t, 0)
+	ctx := t.Context()
+	f := setup(0, 0)
+
+	// A block in round 1 whose unrealized checkpoints are a round ahead of the
+	// store's realized ones.
+	state, blkRoot, err := prepareForkchoiceState(
+		ctx, 8, [32]byte{'a'}, params.BeaconConfig().ZeroHash, [32]byte{'A'}, 0, 0)
+	require.NoError(t, err)
+	require.NoError(t, f.InsertNode(ctx, state, blkRoot))
+	require.NoError(t, f.store.setUnrealizedJustifiedEpoch([32]byte{'a'}, 1))
+	require.NoError(t, f.store.setUnrealizedFinalizedEpoch([32]byte{'a'}, 1))
+	zero := params.BeaconConfig().ZeroHash
+	f.store.unrealizedJustifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: zero}
+	f.store.unrealizedFinalizedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: zero}
+
+	just := counterValue(t, justifiedRoundAdvanceTotal)
+	fin := counterValue(t, finalizedRoundAdvanceTotal)
+
+	// Slot 16 starts a round with 8 slot rounds, so the tick realizes them.
+	require.NoError(t, f.NewSlot(ctx, 16))
+
+	require.Equal(t, primitives.Round(1), f.store.justifiedCheckpoint.Epoch)
+	require.Equal(t, primitives.Round(1), f.store.finalizedCheckpoint.Epoch)
+	require.Equal(t, just+1, counterValue(t, justifiedRoundAdvanceTotal))
+	require.Equal(t, fin+1, counterValue(t, finalizedRoundAdvanceTotal))
+
+	// A second tick with nothing new to realize must not move them again.
+	require.NoError(t, f.NewSlot(ctx, 24))
+	require.Equal(t, just+1, counterValue(t, justifiedRoundAdvanceTotal))
+	require.Equal(t, fin+1, counterValue(t, finalizedRoundAdvanceTotal))
+}

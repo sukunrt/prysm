@@ -600,9 +600,6 @@ func (s *Service) updateJustificationOnBlock(ctx context.Context, preState, post
 	justified := s.cfg.ForkChoiceStore.JustifiedCheckpoint()
 	preStateJustifiedEpoch := preState.CurrentJustifiedCheckpoint().Epoch
 	postStateJustifiedEpoch := postState.CurrentJustifiedCheckpoint().Epoch
-	if justified.Epoch > preJustifiedRound {
-		justifiedRoundAdvanceTotal.Inc()
-	}
 	if justified.Epoch > preJustifiedRound || (justified.Epoch == postStateJustifiedEpoch && justified.Epoch > preStateJustifiedEpoch) {
 		if err := s.cfg.BeaconDB.SaveJustifiedCheckpoint(ctx, &ethpb.Checkpoint{
 			Epoch: justified.Epoch, Root: justified.Root[:],
@@ -619,9 +616,6 @@ func (s *Service) updateFinalizationOnBlock(ctx context.Context, preState, postS
 	preStateFinalizedEpoch := preState.FinalizedCheckpoint().Epoch
 	postStateFinalizedEpoch := postState.FinalizedCheckpoint().Epoch
 	finalized := s.cfg.ForkChoiceStore.FinalizedCheckpoint()
-	if finalized.Epoch > preFinalizedRound {
-		finalizedRoundAdvanceTotal.Inc()
-	}
 	if finalized.Epoch > preFinalizedRound || (finalized.Epoch == postStateFinalizedEpoch && finalized.Epoch > preStateFinalizedEpoch) {
 		if err := s.updateFinalized(ctx, &ethpb.Checkpoint{Epoch: finalized.Epoch, Root: finalized.Root[:]}); err != nil {
 			return true, err

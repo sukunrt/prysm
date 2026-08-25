@@ -46,14 +46,13 @@ func (f *ForkChoice) updateUnrealizedCheckpoints(ctx context.Context) error {
 		node.justifiedEpoch = node.unrealizedJustifiedEpoch
 		node.finalizedEpoch = node.unrealizedFinalizedEpoch
 		if node.justifiedEpoch > f.store.justifiedCheckpoint.Epoch {
-			f.store.prevJustifiedCheckpoint = f.store.justifiedCheckpoint
-			f.store.justifiedCheckpoint = f.store.unrealizedJustifiedCheckpoint
+			f.store.advanceJustifiedCheckpoint(f.store.unrealizedJustifiedCheckpoint)
 			if err := f.updateJustifiedBalances(ctx, f.store.justifiedCheckpoint.Root); err != nil {
 				return errors.Wrap(err, "could not update justified balances")
 			}
 		}
 		if node.finalizedEpoch > f.store.finalizedCheckpoint.Epoch {
-			f.store.finalizedCheckpoint = f.store.unrealizedFinalizedCheckpoint
+			f.store.advanceFinalizedCheckpoint(f.store.unrealizedFinalizedCheckpoint)
 		}
 	}
 	return nil

@@ -155,12 +155,34 @@ func (f *ForkChoice) InsertNode(ctx context.Context, state state.BeaconState, ro
 	return nil
 }
 
+// advanceJustifiedCheckpoint replaces the store's justified checkpoint with a
+// later one and counts the round advance.
+//
+// A checkpoint advance is realized on two paths: a block that pulls the tips
+// (updateCheckpoints) and the round boundary tick that realizes the unrealized
+// checkpoints (updateUnrealizedCheckpoints). Both funnel through here so the
+// counter moves exactly once per round whichever path got there first.
+func (s *Store) advanceJustifiedCheckpoint(cp *forkchoicetypes.Checkpoint) {
+	if cp.Epoch > s.justifiedCheckpoint.Epoch {
+		justifiedRoundAdvanceTotal.Inc()
+	}
+	s.prevJustifiedCheckpoint = s.justifiedCheckpoint
+	s.justifiedCheckpoint = cp
+}
+
+// advanceFinalizedCheckpoint is advanceJustifiedCheckpoint for finalization.
+func (s *Store) advanceFinalizedCheckpoint(cp *forkchoicetypes.Checkpoint) {
+	if cp.Epoch > s.finalizedCheckpoint.Epoch {
+		finalizedRoundAdvanceTotal.Inc()
+	}
+	s.finalizedCheckpoint = cp
+}
+
 // updateCheckpoints update the checkpoints when inserting a new node.
 func (f *ForkChoice) updateCheckpoints(ctx context.Context, jc, fc *ethpb.Checkpoint) error {
 	if jc.Epoch > f.store.justifiedCheckpoint.Epoch {
-		f.store.prevJustifiedCheckpoint = f.store.justifiedCheckpoint
 		jcRoot := bytesutil.ToBytes32(jc.Root)
-		f.store.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: jc.Epoch, Root: jcRoot}
+		f.store.advanceJustifiedCheckpoint(&forkchoicetypes.Checkpoint{Epoch: jc.Epoch, Root: jcRoot})
 		if err := f.updateJustifiedBalances(ctx, jcRoot); err != nil {
 			return errors.Wrap(err, "could not update justified balances")
 		}
@@ -169,10 +191,10 @@ func (f *ForkChoice) updateCheckpoints(ctx context.Context, jc, fc *ethpb.Checkp
 	if fc.Epoch <= f.store.finalizedCheckpoint.Epoch {
 		return nil
 	}
-	f.store.finalizedCheckpoint = &forkchoicetypes.Checkpoint{
+	f.store.advanceFinalizedCheckpoint(&forkchoicetypes.Checkpoint{
 		Epoch: fc.Epoch,
 		Root:  bytesutil.ToBytes32(fc.Root),
-	}
+	})
 	return f.store.prune(ctx)
 }
 

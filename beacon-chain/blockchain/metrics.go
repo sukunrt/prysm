@@ -89,14 +89,6 @@ var (
 		Name: "finality_latency_slots",
 		Help: "Slots between the current slot and the first slot of the last finalized round",
 	})
-	justifiedRoundAdvanceTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "justified_round_advance_total",
-		Help: "Count of the times the justified checkpoint's round increased",
-	})
-	finalizedRoundAdvanceTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "finalized_round_advance_total",
-		Help: "Count of the times the finalized checkpoint's round increased",
-	})
 	activeValidatorCount = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "beacon_current_active_validators",
 		Help: "Current total active validators",
