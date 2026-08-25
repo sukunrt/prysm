@@ -1,129 +1,151 @@
-# Task: scope the per-round finality vote (the gadget era)
+# Plan-finality-round: FFG votes relate to rounds, not epochs
 
-Written 2026-08-21 for a planning agent. The deliverable is a full
-implementation plan in the style of `plan.md` / `plan-next.md` — spec
-deltas, containers, wire paths, forkchoice integration, verification
-ladder — ready for executor agents. Do not implement anything under this
-task; the plan is reviewed by the user first. Flag design decisions as
-open questions rather than deciding them.
+Written 2026-08-21. Companion: `plan-finality-round-detailed.md` (the work
+items, file:line pointers, verification ladders). Successor to
+`plan-next.md`; design record `task.md`; the tracked goal is
+`plan-final.md` item 1 (`per-round-finality-vote-target` in the global
+todo).
 
-## The goal, in the user's words
+## Scope correction (user, 2026-08-21) — read this first
 
-The finality vote in the round starting at slot N targets the block at
-slot N-1 — a per-ROUND target; that is what fast finality means
-(user, 2026-08-20; recorded in `plan-final.md` item 1 and the global todo
-`per-round-finality-vote-target`).
+An earlier draft of this charter scoped the full Simplex finality gadget
+(heights, timeouts, TSQ, view merge, a new finality-vote stream). **That is
+all out of scope.** The finality gadget is NOT changed: Casper FFG's
+machinery — 2/3 quorums over active balance, the justification-bits window,
+the k=1/k=2 finalization rules, surround/double-vote slashing conditions —
+stays exactly as it is.
 
-Today's finalization is stock per-epoch Casper FFG with one deviation: the
-target is shifted to `StartSlot(E) - 1` (plan-next step 5.2). That is an
-interim mock. This task scopes its replacement: a finality vote stream
-whose target moves every round and whose justification/finalization
-bookkeeping is per-round, so finality latency is measured in rounds, not
-epochs.
+What changes is the *unit* FFG runs over. Validators already attest once
+per **round** (8 slots in the devnet config; plan step 1). But the FFG data
+each vote carries — source and target checkpoints — and the
+justification/finalization bookkeeping still name **epochs** (32 slots).
+Voting once per round while justifying once per epoch is the mismatch this
+plan removes: votes, checkpoints, and justification/finalization all key to
+rounds. Fast finality means finality latency measured in rounds
+(~2 rounds = 16 slots at the devnet config, against ~2 epochs = 64+ slots
+today).
 
-## Design sources — read before writing anything
+The Simplex spec at
+`../decoupled-consensus-networking/consensus-specs/specs/_features/simplex/`
+remains the reference for the *eventual* gadget and for the round helpers
+it defines, but nothing from its gadget layer (Store heights, TSQ,
+timeouts, stable-root freeze, safe confirmation, the modified
+AttestationData) is implemented here.
 
-- `task.md`: the design record. Decisions 12-17 cover the goldfish head
-  vote, timing, adversarial knobs, and ordering; the gadget items were
-  deliberately deferred out of plan-next.
-- The executable spec:
-  `../decoupled-consensus-networking/consensus-specs/specs/_features/simplex/`
-  (fork-choice.md was the source for the goldfish walk; the gadget pieces
-  named in plan-next's not-in-scope list live here: the Fresh Simplex
-  store, timeouts, TSQ, height filter, view merge, and the stable root).
-  Where the spec and this repo's mock disagree, the spec wins; where the
-  spec is silent, raise an open question.
-- `plan-next.md` "Not in scope" — the exact debt this task pays down:
-  the finality gadget store, the finality-vote message stream (the
-  2026-08-14 plan's clone of the attestation path), slashing for
-  equivocating votes (evidence kept, nothing acts on it), and the stable
-  root stubbed as the justified root.
-- `plan.md`, `plan-detailed.md`, `plan-next-detailed.md`: the executed
-  record, including every `<added by executor>` deviation note. The
-  "Lessons applied" section of plan-next is binding style for the new
-  plan (symmetric pairs, verified no-change claims, identity-trick
-  activation, budgeted multi-cause debugging, BUILD twins, line drift).
+## The change, concretely
 
-## What exists today (verified state, tip `wvornuor`)
+1. **Target.** The FFG vote cast in round R targets the block at slot
+   `RoundStart(R) - 1` (the last block before the round), replacing today's
+   `StartSlot(E) - 1`. The round-0 underflow returns the anchor root, as
+   the epoch-0 arm does today. Open question 1 records the `-1` vs `0`
+   (round's own first slot) choice; `-1` is recommended and matches
+   `plan-final.md` item 1 ("the round starting at slot N targets the block
+   at slot N-1").
+2. **Checkpoints carry rounds.** `Checkpoint{epoch, root}` keeps its proto
+   shape; the `epoch` field is reinterpreted as the round index. No proto
+   or SSZ change. With `SlotsPerRound == SlotsPerEpoch` (shipped mainnet
+   and minimal configs) the round index equals the epoch index at every
+   slot, so the reinterpretation is numerically the identity — the whole
+   existing test suite and the spectest survey set stay put. Only the
+   e2e/devnet configs (SLOTS_PER_ROUND=8 against 32-slot epochs) exercise
+   real per-round finality. This is the plan-next "identity trick" applied
+   a third time.
+3. **Cadence.** Justification/finalization processing and the
+   participation-array rotation move from the epoch boundary to every round
+   boundary (a `ProcessRound` hook in `ProcessSlots`, running before epoch
+   processing when the boundaries coincide — which, under the identity
+   configs, they always do, preserving today's ordering exactly). Epoch
+   processing keeps everything else: registry, slashings, randao, sync
+   committees, effective balances.
+4. **Sources follow.** The attestation's source checkpoint is the state's
+   justified checkpoint, which is now round-based; no separate work, but
+   every site that converts `checkpoint.Epoch` to a slot must use
+   `RoundStart`, and every site that derives a signing domain or committee
+   from `target.Epoch` must derive it from the attestation's slot instead
+   (rounds are not domain/shuffle units; epochs remain those).
 
-- Rounds are real: `SlotsPerRound`, per-round committees, validators
-  attest once per round. Genesis is Heze; there is no fork transition.
-- Head selection is the goldfish walk over available attestations
-  (`forkchoice/doubly-linked-tree/goldfish.go` and neighbors): per-slot
-  vote store, seat scoring, majority gate, current-slot passthrough,
-  round-start behavior. The stable root is stubbed as the justified root.
-- The FFG mock: target `StartSlot(E) - 1` via `helpers.FFGTargetRoot`
-  (`beacon-chain/core/helpers/block.go`), unconditional; epoch-0
-  underflow falls back to the anchor root. Slot-start vote flag
-  `--decoupled-ffg-vote-at-slot-start` (+ jitter flag), head-source knob,
-  `AVAILABLE_ATTESTATION_DUE_BPS_HEZE` as the head-timing sweep axis.
-- A pending queue replays available attestations that arrive before
-  their block (`beacon-chain/sync`); the gate abstains on empty vote
-  slots (cold start; commit `ukxoopmz` — deviation awaiting sign-off);
-  checkpoint sync works and is witnessed in e2e; five genesis-edge
-  payload bugs are fixed (parent hash / envelope / common-ancestor).
-- Verification stack: 2-slot EL witnesses, 6-slot and 1-epoch
-  send-and-verify state windows, `TestEndToEnd_HezeGenesis` (5 epochs),
-  SlotStartFFG variant, checkpoint-sync variant, kurtosis harness with
-  scrape tooling (run 05 recorded), ethshadow baseline (data19) — the
-  numbers new work is measured against. Metrics live in
-  `forkchoice/doubly-linked-tree/metrics.go` (`goldfish_*`) and the
-  payload-attestation counters.
-- Spectests: survey-only policy. `testing/spectest/SURVEY-2026-08-21.md`
-  records 486 expected failures from the target shift and 10 pre-existing
-  stock-Gloas ones. The new plan must state its expected spectest impact
-  and extend the survey, not fix vectors.
+## What is deliberately untouched
 
-## What the plan must cover
+- The FFG quorum math, justification bits, finalization rules: unchanged
+  code, new inputs.
+- The Goldfish head vote, walk, gate, passthrough, round-start proposal
+  stub, and the available-attestation stream: untouched. The stable root
+  stays stubbed as the justified root — it simply advances per round now.
+- Committees, shuffling, seeds, proposer selection: epoch-keyed as today
+  (rounds already reuse the shuffle via slot-in-round; plan step 1).
+- All of slashing (decision 2026-08-21: slashing out of scope):
+  the surround/double-vote predicates, the slasher, and the EIP-3076
+  protection gate are left with zero changes — they are unit-agnostic
+  value comparisons and keep running on round values; whatever they
+  detect or miss is not measured.
+- Rewards/penalties fidelity is secondary (task charter: consensus values
+  may be wrong; wire behavior must be real). No 1/rounds-per-epoch reward
+  rescaling. The one accounting item that MUST be fixed is the
+  finality-delay/inactivity-leak computation, which would otherwise
+  underflow or spuriously fire when round indices outrun epoch indices —
+  see detailed step 2.
 
-1. **The finality-vote stream.** Container, signature domain, gossip
-   topic, validation pipeline, pool/aggregation (if any), block inclusion
-   or standalone propagation, and the symmetric pairs: send+receive,
-   store+read, fresh-start+restart+checkpoint-sync. State explicitly
-   whether the existing committee attestation keeps carrying FFG data
-   during a transition window, and how both being live at once behaves.
-2. **Per-round justification/finalization.** The bookkeeping that replaces
-   the epoch machinery for this stream: quorum accounting per round
-   (seats vs balance — say which and why, consistent with the spec),
-   justified/finalized advancement, and the interaction with the existing
-   per-epoch FFG processing while both exist. The gadget store pieces from
-   the spec (timeouts, TSQ, height filter, view merge) — scope each or
-   explicitly defer it with a reason.
-3. **The stable root becomes real.** What replaces the justified-root
-   stub, and every reader of the stub today (goldfish gate, round-start
-   proposal path, status handshake `xrmqllqx`) re-examined against the
-   real definition.
-4. **Retiring the mock.** The per-epoch target shift
-   (`FFGTargetRoot` and its six call sites) is replaced by this work per
-   `plan-final.md`; the plan says when in the sequence that happens and
-   what the spectest survey's expected-failure set becomes.
-5. **Equivocation and slashing.** At minimum the evidence path for the
-   new votes; whether slashing activates now or stays recorded-only is an
-   open question for the user.
-6. **Metrics and measurement.** Finality latency in slots/rounds as the
-   headline metric, against the recorded kurtosis run 05 and Shadow
-   baselines; per-round justification rate; vote arrival fractions.
-   Name the exact new metric names up front (the run 05 pattern).
-7. **Verification ladder per step** (binding convention): unit tests →
-   2-3 slot witness → `TestEndToEnd_HezeGenesisShort` → full 5-epoch e2e
-   → sims last. Full outputs to files. No spectest fixing — survey only.
-   The user rejects fixed sleeps that race setup; tests assert on
-   observable chain state.
+## What the detailed plan covers
 
-## Rules for the plan document itself
+1. The target shift, state side and forkchoice side together (the
+   plan-next 5.2 lesson: the two must move as one or
+   `VerifyLmdFfgConsistency` rejects every vote).
+2. The `ProcessRound` cadence hook and the split of Heze epoch processing;
+   the finality-delay conversion to rounds.
+3. Attestation plumbing: data construction, state/gossip/pool acceptance
+   windows moving from {prev,current} epoch to {prev,current} round,
+   domain-from-slot, committee resolution from slot.
+4. Every consumer of `checkpoint.Epoch → slot`: blockchain service, db/kv,
+   forkchoice pruning and dependent roots, status handshake and checkpoint
+   sync, engine-API finalized notifications, plus the state-internal
+   readers (registry activation gating, deposit finalization) that feed
+   round-valued checkpoints into epoch-typed logic. Symmetric pairs and
+   "no change needed" claims with checkable whys.
+5. Logging, metrics reporting, and state management (user emphasis,
+   2026-08-21): every log field and gauge that would print a round
+   labeled "epoch" is enumerated and relabeled or converted; new headline
+   metrics (`finality_latency_slots`, per-round justification rate) are
+   named up front; the state split keeps SSZ shapes untouched and the
+   caches/stategen surfaces are audited.
+6. Slashing: the zero-change path — explicitly out of scope.
+7. Measurement and verification: finality latency in slots as the
+   headline number against kurtosis run 02 and the Shadow baseline; the
+   e2e ladder with a rounds twin of the finalization evaluator; spectest
+   survey extension (the identity configs mean the expected-failure set
+   should not move; the survey pass proves it and records any delta — no
+   vector fixing).
 
-- House rules carry over verbatim from plan-next (jj discipline, one
-  change per logical piece, `Assisted-By:` trailer, never
-  `Co-Authored-By:`, no data deletion, line length 100, go vet, no
-  blanket modernize).
-- Every `file:line` pointer verified against tip `wvornuor` on the day of
-  writing, named as pointer-not-address.
-- Every "no change needed" claim carries its checkable why.
-- Open questions section at the end, one crisp recommendation each —
-  the user answers there, as in the prior plans.
+## Rules (carried over, binding)
+
+- jj discipline: new changes on top, one logical piece per change, clear
+  descriptions, `Assisted-By: <model>` trailer only. Never delete data.
+- `go vet` on touched packages; no blanket `go modernize`; lines under 100.
+- Full command outputs to scratchpad log files; no bazel spectests as
+  routine verification.
+- Verification ladder per step: unit tests → ~3-slot single-node smoke →
+  `TestEndToEnd_HezeGenesisShort` → full `TestEndToEnd_HezeGenesis` → sims
+  last. No fixed sleeps racing setup; assert on observable chain state.
+- Every `file:line` in the detailed file was verified on 2026-08-21 and is
+  a pointer, not an address — grep for the symbol.
+
+## Open questions for the user
+
+Recorded with recommendations in `plan-finality-round-detailed.md`'s final
+section; summary: (1) target slot `RoundStart(R)-1` vs `RoundStart(R)` —
+recommend `-1` (matches plan-final.md item 1); (2) checkpoint unit typing
+— recommend pure reinterpretation of the existing `Epoch`-typed fields,
+no proto retype, with the mixed-units audit and 8/32 tests carrying the
+load; (3) which accounting moves to round cadence — recommend
+J&F + participation rotation + rewards + inactivity as one unit; (4) the
+inactivity leak — with delay measured in rounds it arms ~4x sooner in
+wall clock; recommend keeping the raw threshold, documented; (5) wire and
+pool retention — recommend leaving the slot-based gossip windows and
+epoch-based pool pruning as is while state acceptance narrows to the
+round pair; (6) metrics compatibility — recommend the `*_epoch` gauges
+emit the epoch of the round-start slot with new `*_round` gauges beside
+them.
 
 ## Deliverable
 
-`plan-final.md` expanded into the full plan (or a sibling
-`plan-final-detailed.md` pair, matching the existing convention), as one
-jj change with a clear description. Nothing else modified.
+This charter plus `plan-finality-round-detailed.md`, one jj change.
+Nothing else modified.
