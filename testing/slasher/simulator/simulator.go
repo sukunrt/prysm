@@ -131,6 +131,9 @@ func (s *Simulator) Start() {
 	config := params.BeaconConfig().Copy()
 	config.SecondsPerSlot = s.srvConfig.Params.SecondsPerSlot
 	config.SlotsPerEpoch = s.srvConfig.Params.SlotsPerEpoch
+	// The simulator does not exercise rounds, so keep them at the identity.
+	// A leftover mainnet SLOTS_PER_ROUND would not divide this epoch.
+	config.SlotsPerRound = s.srvConfig.Params.SlotsPerEpoch
 	undo, err := params.SetActiveWithUndo(config)
 	if err != nil {
 		panic(err)

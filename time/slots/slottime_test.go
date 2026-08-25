@@ -756,3 +756,95 @@ func TestMaxEpoch(t *testing.T) {
 	_, err = EpochStart(maxEpoch)
 	require.NoError(t, err)
 }
+
+// setSlotsPerRound overrides SLOTS_PER_ROUND for the duration of the test.
+func setSlotsPerRound(t *testing.T, slotsPerRound primitives.Slot) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerRound = slotsPerRound
+	params.OverrideBeaconConfig(cfg)
+}
+
+func TestRoundAt(t *testing.T) {
+	t.Run("identity: a round is an epoch", func(t *testing.T) {
+		spe := params.BeaconConfig().SlotsPerEpoch
+		require.Equal(t, params.BeaconConfig().SlotsPerRound, spe)
+		for _, slot := range []primitives.Slot{0, 1, spe - 1, spe, spe*3 + 2} {
+			require.Equal(t, primitives.Round(ToEpoch(slot)), RoundAt(slot))
+		}
+	})
+
+	t.Run("8-slot rounds inside a 32-slot epoch", func(t *testing.T) {
+		setSlotsPerRound(t, 8)
+		require.Equal(t, primitives.Slot(32), params.BeaconConfig().SlotsPerEpoch)
+
+		tests := []struct {
+			slot  primitives.Slot
+			round primitives.Round
+		}{
+			{slot: 0, round: 0},
+			{slot: 7, round: 0},
+			{slot: 8, round: 1},
+			{slot: 31, round: 3},
+			{slot: 32, round: 4},
+			{slot: 33, round: 4},
+		}
+		for _, tt := range tests {
+			assert.Equal(t, tt.round, RoundAt(tt.slot), "RoundAt(%d)", tt.slot)
+		}
+		// Four rounds to the epoch, and slot 32 opens both epoch 1 and round 4.
+		assert.Equal(t, primitives.Epoch(1), ToEpoch(32))
+	})
+}
+
+func TestRoundStart(t *testing.T) {
+	setSlotsPerRound(t, 8)
+
+	tests := []struct {
+		round     primitives.Round
+		startSlot primitives.Slot
+		error     bool
+	}{
+		{round: 0, startSlot: 0},
+		{round: 1, startSlot: 8},
+		{round: 4, startSlot: 32},
+		{round: 1 << 60, startSlot: 1 << 63},
+		{round: 1 << 61, error: true},
+	}
+	for _, tt := range tests {
+		ss, err := RoundStart(tt.round)
+		if tt.error {
+			require.ErrorIs(t, err, errOverflow)
+			continue
+		}
+		require.NoError(t, err)
+		assert.Equal(t, tt.startSlot, ss, "RoundStart(%d)", tt.round)
+	}
+}
+
+func TestRoundStart_RoundTripsWithRoundAt(t *testing.T) {
+	setSlotsPerRound(t, 8)
+	for slot := range primitives.Slot(64) {
+		start, err := RoundStart(RoundAt(slot))
+		require.NoError(t, err)
+		assert.Equal(t, slot-slot%8, start, "RoundStart(RoundAt(%d))", slot)
+	}
+}
+
+func TestIsRoundStart(t *testing.T) {
+	setSlotsPerRound(t, 8)
+
+	tests := []struct {
+		slot   primitives.Slot
+		result bool
+	}{
+		{slot: 0, result: true},
+		{slot: 1, result: false},
+		{slot: 7, result: false},
+		{slot: 8, result: true},
+		{slot: 32, result: true},
+	}
+	for _, tt := range tests {
+		assert.Equal(t, tt.result, IsRoundStart(tt.slot), "IsRoundStart(%d)", tt.slot)
+	}
+}

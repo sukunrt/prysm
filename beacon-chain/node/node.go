@@ -332,8 +332,12 @@ func configureBeacon(cliCtx *cli.Context) error {
 	}
 
 	// Last: every step above can swap the active config, and a config whose
-	// SSZ sizes disagree with the compiled-in preset would fork off silently.
-	return params.VerifyPreset(params.BeaconConfig())
+	// SSZ sizes disagree with the compiled-in preset, or whose round length
+	// does not divide an epoch, would fork off silently.
+	if err := params.VerifyPreset(params.BeaconConfig()); err != nil {
+		return err
+	}
+	return params.VerifyRounds(params.BeaconConfig())
 }
 
 func startBaseServices(cliCtx *cli.Context, beacon *BeaconNode, depositAddress string, clearer *dbClearer) (*backfill.Store, error) {

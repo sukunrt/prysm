@@ -108,6 +108,7 @@ var mainnetBeaconConfig = &BeaconChainConfig{
 	SecondsPerSlot:                   12,
 	SlotDurationMilliseconds:         12000,
 	SlotsPerEpoch:                    32,
+	SlotsPerRound:                    32,
 	SqrRootSlotsPerEpoch:             5,
 	MinSeedLookahead:                 1,
 	MaxSeedLookahead:                 4,
@@ -254,8 +255,8 @@ var mainnetBeaconConfig = &BeaconChainConfig{
 	FuluForkEpoch:        mainnetFuluForkEpoch,
 	GloasForkVersion:     []byte{7, 0, 0, 0},
 	GloasForkEpoch:       mainnetGloasForkEpoch,
-	HezeForkVersion:    []byte{8, 0, 0, 0},
-	HezeForkEpoch:      mainnetHezeForkEpoch,
+	HezeForkVersion:      []byte{8, 0, 0, 0},
+	HezeForkEpoch:        mainnetHezeForkEpoch,
 
 	// New values introduced in Altair hard fork 1.
 	// Participation flag indices.

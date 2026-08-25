@@ -140,6 +140,42 @@ func IsEpochStart(slot primitives.Slot) bool {
 	return slot%params.BeaconConfig().SlotsPerEpoch == 0
 }
 
+// RoundAt returns the round number of the input slot.
+//
+// Spec pseudocode definition:
+//
+//	def compute_round_at_slot(slot: Slot) -> Round:
+//	  """
+//	  Return the round number at ``slot``.
+//	  """
+//	  return Round(slot // SLOTS_PER_ROUND)
+func RoundAt(slot primitives.Slot) primitives.Round {
+	return primitives.Round(slot.DivSlot(params.BeaconConfig().SlotsPerRound))
+}
+
+// RoundStart returns the first slot number of the given round.
+//
+// Spec pseudocode definition:
+//
+//	def compute_start_slot_at_round(round: Round) -> Slot:
+//	  """
+//	  Return the start slot of ``round``.
+//	  """
+//	  return Slot(round * SLOTS_PER_ROUND)
+func RoundStart(round primitives.Round) (primitives.Slot, error) {
+	slot, err := params.BeaconConfig().SlotsPerRound.SafeMul(uint64(round))
+	if err != nil {
+		return slot, errors.Wrap(errOverflow, "round start")
+	}
+	return slot, nil
+}
+
+// IsRoundStart returns true if the given slot number is a round starting slot
+// number.
+func IsRoundStart(slot primitives.Slot) bool {
+	return slot%params.BeaconConfig().SlotsPerRound == 0
+}
+
 // IsEpochEnd returns true if the given slot number is an epoch ending slot
 // number.
 func IsEpochEnd(slot primitives.Slot) bool {

@@ -45,6 +45,7 @@ func MinimalSpecConfig() *BeaconChainConfig {
 	minimalConfig.EquivocationEarlyDueBPS = 7500
 	minimalConfig.MinAttestationInclusionDelay = 1
 	minimalConfig.SlotsPerEpoch = 8
+	minimalConfig.SlotsPerRound = 8
 	minimalConfig.SqrRootSlotsPerEpoch = 2
 	minimalConfig.MinSeedLookahead = 1
 	minimalConfig.MaxSeedLookahead = 4
