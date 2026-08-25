@@ -35,10 +35,12 @@ import (
 // epoch holds four rounds and every validator attests four times per epoch. At
 // the e2e config's 6-second slots an epoch takes 3.2 minutes.
 //
-// The run is five epochs rather than four. Justification is skipped for the
-// first two epochs (the spec returns early while the current epoch is at most
-// GENESIS_EPOCH + 1), so the first finalized checkpoint only appears during
-// epoch 4, and the evaluator loop stops at epoch EpochsToRun-1.
+// The run is five epochs rather than four. Justification is skipped while the
+// state slot is at or below EpochStart(2) -- the spec's genesis guard, which the
+// plan deliberately keeps epoch-based -- so nothing justifies before slot 64.
+// Round 8 is the first to justify, one round later at slot 72, and finalizes two
+// rounds after it closes, by slot 80: inside epoch 2. The extra epochs are
+// headroom for the evaluators, which stop at epoch EpochsToRun-1.
 //
 // Evaluators dropped relative to the stock minimal run:
 //   - VerifyBlockGraffiti, FeeRecipientIsPresent, ValidatorsVoteWithTheMajority,
@@ -108,11 +110,14 @@ var hezeDroppedEvaluators = []string{
 // the tip. This run is the witness for it.
 //
 // It takes five epochs because the checkpoint has to be real. The Heze chain
-// only finalizes during epoch 4, so a node that checkpoint-synced any earlier
-// would receive the genesis state as its "finalized" state and would in fact
-// be syncing from genesis. testCheckpointSync fails the run when the origin
-// block slot it reads out of the joining node's own log is zero, so a silent
-// fall back to genesis sync cannot pass here.
+// finalizes nothing before slot 80 -- the epoch-2 genesis guard holds
+// justification off until slot 64, and finalization trails by two rounds -- so a
+// node that checkpoint-synced any earlier would receive the genesis state as its
+// "finalized" state and would in fact be syncing from genesis. The extra epochs
+// also leave the checkpoint far enough behind head to be worth syncing to.
+// testCheckpointSync fails the run when the origin block slot it reads out of
+// the joining node's own log is zero, so a silent fall back to genesis sync
+// cannot pass here.
 //
 // The run is otherwise leaner than TestEndToEnd_HezeGenesis: no deposit phase
 // and no genesis-sync node, since the joining node is the whole point. The

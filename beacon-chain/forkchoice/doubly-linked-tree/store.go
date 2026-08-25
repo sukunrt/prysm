@@ -48,7 +48,7 @@ func (s *Store) head(ctx context.Context) ([32]byte, error) {
 	currentRound := slots.RoundsSinceGenesis(s.genesisTime)
 	if !bestDescendant.viableForHead(s.justifiedCheckpoint.Epoch, currentRound) {
 		s.allTipsAreInvalid = true
-		return [32]byte{}, fmt.Errorf("head at slot %d with weight %d is not eligible, finalizedRound, justified Round %d, %d != %d, %d",
+		return [32]byte{}, fmt.Errorf("head at slot %d with weight %d is not eligible, finalized round, justified round %d, %d != %d, %d",
 			bestDescendant.slot, bestDescendant.weight/10e9, bestDescendant.finalizedEpoch, bestDescendant.justifiedEpoch, s.finalizedCheckpoint.Epoch, s.justifiedCheckpoint.Epoch)
 	}
 	s.allTipsAreInvalid = false
