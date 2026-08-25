@@ -7,11 +7,13 @@ import (
 	"time"
 
 	mock "github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain/testing"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/db/filesystem"
 	dbtest "github.com/OffchainLabs/prysm/v7/beacon-chain/db/testing"
 	doublylinkedtree "github.com/OffchainLabs/prysm/v7/beacon-chain/forkchoice/doubly-linked-tree"
 	p2ptesting "github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/testing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/startup"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state/stategen"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/verification"
 	lruwrpr "github.com/OffchainLabs/prysm/v7/cache/lru"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
@@ -643,4 +645,71 @@ func TestValidateExecutionPayloadEnvelope_QueueKeepsFirst(t *testing.T) {
 	_, _ = s.validateExecutionPayloadEnvelope(ctx, "", msg)
 	require.Equal(t, 1, len(s.pendingPayloadEnvelopes))
 	require.Equal(t, 1, len(s.pendingPayloadEnvelopes[root]))
+}
+
+// A queued envelope for a slot that is already in the past can never be satisfied by
+// gossip, so its block's data columns must be requested by root before the import waits
+// on them. `requestDataColumnsForEnvelope` drains the pending Gloas column map first, so
+// that drain is the observable that the fetch ran.
+func TestProcessPendingPayloadEnvelope_PastSlotFetchesDataColumns(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+
+	newService := func(t *testing.T, envelopeSlot, currentSlot primitives.Slot) (*Service, [32]byte) {
+		ctx := context.Background()
+		db := dbtest.SetupDB(t)
+		secondsPerSlot := int64(params.BeaconConfig().SecondsPerSlot)
+		genesis := time.Unix(time.Now().Unix()-int64(currentSlot)*secondsPerSlot, 0)
+		chainService := &mock.ChainService{
+			Genesis:             genesis,
+			FinalizedCheckPoint: &ethpb.Checkpoint{},
+			DB:                  db,
+		}
+		bid := util.GenerateTestSignedExecutionPayloadBid(envelopeSlot)
+		bid.Message.BlobKzgCommitments = [][]byte{make([]byte, 48)}
+		sb := util.NewBeaconBlockGloas()
+		sb.Block.Slot = envelopeSlot
+		sb.Block.Body.SignedExecutionPayloadBid = bid
+		signedBlock, err := blocks.NewSignedBeaconBlock(sb)
+		require.NoError(t, err)
+		root, err := signedBlock.Block().HashTreeRoot()
+		require.NoError(t, err)
+		require.NoError(t, db.SaveBlock(ctx, signedBlock))
+		chainService.ForkchoiceRoots = map[[32]byte]bool{root: true}
+
+		s := &Service{
+			ctx:                      ctx,
+			pendingPayloadEnvelopes:  make(map[[32]byte]map[uint64]*ethpb.SignedExecutionPayloadEnvelope),
+			pendingGloasColumns:      map[[32]byte]*pendingGloasEntry{root: {slot: envelopeSlot}},
+			seenPayloadEnvelopeCache: lruwrpr.New(10),
+			badBlockCache:            lruwrpr.New(10),
+			cfg: &config{
+				chain:             chainService,
+				beaconDB:          db,
+				stateGen:          stategen.New(db, doublylinkedtree.New()),
+				clock:             startup.NewClock(genesis, chainService.ValidatorsRoot),
+				p2p:               p2ptesting.NewTestP2P(t),
+				dataColumnStorage: filesystem.NewEphemeralDataColumnStorage(t),
+			},
+			newColumnsVerifier: func(_ []blocks.RODataColumn, _ []verification.Requirement) verification.DataColumnsVerifier {
+				return &verification.MockDataColumnsVerifier{}
+			},
+		}
+		builderIdx := primitives.BuilderIndex(bid.Message.BuilderIndex)
+		blockHash := bytesutil.ToBytes32(bid.Message.BlockHash)
+		env := testSignedExecutionPayloadEnvelope(t, envelopeSlot, builderIdx, root, blockHash)
+		s.pendingPayloadEnvelopes[root] = map[uint64]*ethpb.SignedExecutionPayloadEnvelope{uint64(builderIdx): env}
+		return s, root
+	}
+
+	t.Run("past slot requests the columns", func(t *testing.T) {
+		s, root := newService(t, 1, 5)
+		s.processPendingPayloadEnvelope(s.ctx, root)
+		require.Equal(t, false, s.hasPendingGloasColumns(root))
+	})
+
+	t.Run("current slot leaves it to gossip", func(t *testing.T) {
+		s, root := newService(t, 5, 5)
+		s.processPendingPayloadEnvelope(s.ctx, root)
+		require.Equal(t, true, s.hasPendingGloasColumns(root))
+	})
 }

@@ -58,6 +58,12 @@ func (s *Service) processPendingPayloadEnvelope(ctx context.Context, root [32]by
 			continue
 		}
 
+		// Columns for a past slot are no longer gossiped, so nothing else would ever feed
+		// the envelope's data availability check. Request them by root before it waits.
+		if env.Slot() < s.cfg.clock.CurrentSlot() {
+			s.requestDataColumnsForEnvelope(root)
+		}
+
 		if err := s.cfg.chain.ReceiveExecutionPayloadEnvelope(ctx, e); err != nil {
 			log.WithError(err).Debug("Could not process pending payload envelope")
 			continue
