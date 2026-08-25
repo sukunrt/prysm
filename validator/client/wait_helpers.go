@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/crypto/rand"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	prysmTime "github.com/OffchainLabs/prysm/v7/time"
@@ -54,6 +56,42 @@ func (v *validator) waitUntilSlotComponent(ctx context.Context, slot primitives.
 		return
 	case <-t.C:
 		return
+	}
+}
+
+// ffgVoteJitter returns a random delay in [0, bound). A non-positive bound yields
+// no delay.
+func ffgVoteJitter(bound time.Duration) time.Duration {
+	if bound <= 0 {
+		return 0
+	}
+	return time.Duration(rand.NewGenerator().Int63n(int64(bound)))
+}
+
+// waitSlotStartJitter waits until a bounded random offset from the start of the slot
+// has elapsed. It replaces waitUntilAttestationDueOrValidBlock when the FFG vote is
+// cast at slot start: the vote no longer waits for the slot's block, and the jitter
+// keeps a large validator set from publishing in a single burst.
+func (v *validator) waitSlotStartJitter(ctx context.Context, slot primitives.Slot) {
+	ctx, span := trace.StartSpan(ctx, "validator.waitSlotStartJitter")
+	defer span.End()
+
+	startTime, err := slots.StartTime(v.genesisTime, slot)
+	if err != nil {
+		log.WithError(err).WithField("slot", slot).
+			Error("Slot overflows, unable to jitter the FFG vote")
+		return
+	}
+	wait := prysmTime.Until(startTime.Add(ffgVoteJitter(features.Get().DecoupledFFGVoteJitter)))
+	if wait <= 0 {
+		return
+	}
+	t := time.NewTimer(wait)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		tracing.AnnotateError(span, ctx.Err())
+	case <-t.C:
 	}
 }
 

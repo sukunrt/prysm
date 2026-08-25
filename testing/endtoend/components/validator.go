@@ -289,6 +289,9 @@ func (v *ValidatorNode) Start(ctx context.Context) error {
 	if v.config.UseBuilder {
 		args = append(args, fmt.Sprintf("--%s", flags.EnableBuilderFlag.Name))
 	}
+	if v.config.UseSlotStartFFGVote {
+		args = append(args, fmt.Sprintf("--%s", features.DecoupledFFGVoteAtSlotStart.Name))
+	}
 	args = append(args, config.ValidatorFlags...)
 
 	if v.config.UsePrysmShValidator {

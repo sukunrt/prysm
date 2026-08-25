@@ -62,6 +62,18 @@ func WithBuilder() E2EConfigOpt {
 // WithLargeBlobs configures the transaction generator to use large blob
 // transactions (6 blobs per tx) for testing BPO limits. Without this option,
 // small blob transactions (1 blob per tx) are used by default.
+// WithSlotStartFFGVote casts the FFG attestation at the start of the slot plus a
+// bounded jitter instead of at the attestation due time.
+//
+// A run using this option misses is_matching_head every slot, so the
+// participation and reward evaluators have to be relaxed for it; the default
+// run keeps them as they are.
+func WithSlotStartFFGVote() E2EConfigOpt {
+	return func(cfg *E2EConfig) {
+		cfg.UseSlotStartFFGVote = true
+	}
+}
+
 func WithLargeBlobs() E2EConfigOpt {
 	return func(cfg *E2EConfig) {
 		cfg.UseLargeBlobs = true
@@ -107,17 +119,20 @@ type E2EConfig struct {
 	UseValidatorCrossClient bool
 	UseBeaconRestApi        bool
 	UseBuilder              bool
-	UseLargeBlobs           bool // Use large blob transactions (6 blobs per tx) for BPO testing
-	EpochsToRun             uint64
-	ExitEpoch               primitives.Epoch // Custom epoch for voluntary exit submission (0 means use default)
-	Seed                    int64
-	TracingSinkEndpoint     string
-	Evaluators              []Evaluator
-	EvalInterceptor         func(*EvaluationContext, uint64, []*grpc.ClientConn) bool
-	BeaconFlags             []string
-	ValidatorFlags          []string
-	PeerIDs                 []string
-	ExtraEpochs             uint64
+	// UseSlotStartFFGVote flips the validator client's decoupled slot-start FFG
+	// vote knob on for the run.
+	UseSlotStartFFGVote bool
+	UseLargeBlobs       bool // Use large blob transactions (6 blobs per tx) for BPO testing
+	EpochsToRun         uint64
+	ExitEpoch           primitives.Epoch // Custom epoch for voluntary exit submission (0 means use default)
+	Seed                int64
+	TracingSinkEndpoint string
+	Evaluators          []Evaluator
+	EvalInterceptor     func(*EvaluationContext, uint64, []*grpc.ClientConn) bool
+	BeaconFlags         []string
+	ValidatorFlags      []string
+	PeerIDs             []string
+	ExtraEpochs         uint64
 }
 
 func GenesisFork() int {

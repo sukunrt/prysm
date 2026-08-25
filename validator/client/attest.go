@@ -36,7 +36,11 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 	defer span.End()
 	span.SetAttributes(trace.StringAttribute("validator", fmt.Sprintf("%#x", pubKey)))
 
-	v.waitUntilAttestationDueOrValidBlock(ctx, slot)
+	if features.Get().DecoupledFFGVoteAtSlotStart {
+		v.waitSlotStartJitter(ctx, slot)
+	} else {
+		v.waitUntilAttestationDueOrValidBlock(ctx, slot)
+	}
 
 	var b strings.Builder
 	if err := b.WriteByte(byte(iface.RoleAttester)); err != nil {

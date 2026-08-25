@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
@@ -84,4 +85,62 @@ func TestWaitUntilSlotComponent_ContextCancelReturnsImmediately(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("waitUntilSlotComponent did not return after context cancellation")
 	}
+}
+
+func TestFFGVoteJitter(t *testing.T) {
+	assert.Equal(t, time.Duration(0), ffgVoteJitter(0))
+	assert.Equal(t, time.Duration(0), ffgVoteJitter(-time.Second))
+
+	const bound = 200 * time.Millisecond
+	distinct := make(map[time.Duration]bool)
+	for range 1000 {
+		got := ffgVoteJitter(bound)
+		require.Equal(t, true, got >= 0, "jitter is negative")
+		require.Equal(t, true, got < bound, "jitter is not below the bound")
+		distinct[got] = true
+	}
+	// A constant would be a silent regression of the anti-burst property.
+	require.Equal(t, true, len(distinct) > 1, "jitter never varied")
+}
+
+func TestWaitSlotStartJitter(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 200
+	params.OverrideBeaconConfig(cfg)
+	reset := features.InitWithReset(&features.Flags{
+		DecoupledFFGVoteAtSlotStart: true,
+		DecoupledFFGVoteJitter:      50 * time.Millisecond,
+	})
+	defer reset()
+
+	// A slot that started long ago never waits, whatever the jitter draws.
+	v := &validator{genesisTime: time.Now().Add(-time.Hour)}
+	start := time.Now()
+	v.waitSlotStartJitter(t.Context(), 0)
+	assert.Equal(t, true, time.Since(start) < 50*time.Millisecond, "waited for a past slot")
+
+	// A slot that has not started yet waits at most the slot offset plus the bound.
+	genesis := time.Now()
+	v = &validator{genesisTime: genesis}
+	start = time.Now()
+	v.waitSlotStartJitter(t.Context(), 1)
+	waited := time.Since(start)
+	slotDuration := params.BeaconConfig().SlotDuration()
+	assert.Equal(t, true, waited >= slotDuration, "returned before the slot started")
+	assert.Equal(t, true, waited < slotDuration+time.Second, "waited past the jitter bound")
+
+}
+
+func TestWaitSlotStartJitterCancelled(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	reset := features.InitWithReset(&features.Flags{DecoupledFFGVoteJitter: time.Hour})
+	defer reset()
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	v := &validator{genesisTime: time.Now()}
+	start := time.Now()
+	v.waitSlotStartJitter(ctx, 1)
+	assert.Equal(t, true, time.Since(start) < time.Second, "cancellation ignored")
 }

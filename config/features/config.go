@@ -82,6 +82,14 @@ type Flags struct {
 	// BlobSaveFsync requires blob saving to block on fsync to ensure blobs are durably persisted before passing DA.
 	BlobSaveFsync bool
 
+	// Decoupled-consensus research knobs (validator client only).
+	//
+	// DecoupledFFGVoteAtSlotStart casts the FFG attestation at the start of the slot
+	// rather than at the attestation due time, delayed only by a random jitter bounded
+	// by DecoupledFFGVoteJitter.
+	DecoupledFFGVoteAtSlotStart bool
+	DecoupledFFGVoteJitter      time.Duration
+
 	SaveInvalidBlock bool // SaveInvalidBlock saves invalid block to temp.
 	SaveInvalidBlob  bool // SaveInvalidBlob saves invalid blob to temp.
 
@@ -381,6 +389,12 @@ func ConfigureValidator(ctx *cli.Context) error {
 		logEnabled(EnableWebFlag)
 		cfg.EnableWeb = true
 	}
+
+	if ctx.Bool(DecoupledFFGVoteAtSlotStart.Name) {
+		logEnabled(DecoupledFFGVoteAtSlotStart)
+		cfg.DecoupledFFGVoteAtSlotStart = true
+	}
+	cfg.DecoupledFFGVoteJitter = ctx.Duration(decoupledFFGVoteJitter.Name)
 
 	cfg.KeystoreImportDebounceInterval = ctx.Duration(dynamicKeyReloadDebounceInterval.Name)
 	Init(cfg)

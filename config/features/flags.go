@@ -232,6 +232,22 @@ var (
 		Name:  "disable-track-equivocations",
 		Usage: "Disables recording proposer equivocations observed on gossip into forkchoice.",
 	}
+
+	// DecoupledFFGVoteAtSlotStart moves the FFG (committee) attestation from the
+	// attestation due time to the start of the slot, plus a bounded random jitter.
+	// The available attestation keeps its own due time, which is a config value.
+	DecoupledFFGVoteAtSlotStart = &cli.BoolFlag{
+		Name: "decoupled-ffg-vote-at-slot-start",
+		Usage: "(Decoupled research): Casts the FFG attestation at the start of the slot instead of " +
+			"waiting for a block or the attestation due time.",
+	}
+	// decoupledFFGVoteJitter bounds the random delay added to a slot-start FFG vote.
+	decoupledFFGVoteJitter = &cli.DurationFlag{
+		Name: "decoupled-ffg-vote-jitter",
+		Usage: "(Decoupled research): Upper bound of the random delay added to a slot-start FFG " +
+			"vote. Only read when --decoupled-ffg-vote-at-slot-start is set.",
+		Value: 200 * time.Millisecond,
+	}
 )
 
 // devModeFlags holds list of flags that are set when development mode is on.
@@ -254,6 +270,8 @@ var ValidatorFlags = append(deprecatedFlags, []cli.Flag{
 	EnableBeaconRESTApi,
 	DisableDutiesV2,
 	EnableWebFlag,
+	DecoupledFFGVoteAtSlotStart,
+	decoupledFFGVoteJitter,
 }...)
 
 // E2EValidatorFlags contains a list of the validator feature flags to be tested in E2E.
