@@ -149,6 +149,9 @@ func TestProposeAvailableAttestation(t *testing.T) {
 			AttestationStateFetcher: cs,
 			SyncChecker:             &mockSync.Sync{IsSyncing: false},
 			ForkchoiceFetcher:       cs,
+			// The gossip subscription skips messages this node published, so
+			// the local vote reaches forkchoice through this receiver.
+			AvailableAttestationReceiver: cs,
 		}
 		req := &ethpb.AvailableAttestation{
 			Signature: sig.Marshal(),
@@ -163,6 +166,8 @@ func TestProposeAvailableAttestation(t *testing.T) {
 		assert.Equal(t, true, broadcaster.BroadcastCalled.Load())
 		require.Equal(t, 1, len(broadcaster.BroadcastMessages))
 		assert.Equal(t, true, proto.Equal(req, broadcaster.BroadcastMessages[0]))
+		require.Equal(t, 1, len(cs.AvailableAttestations))
+		assert.Equal(t, true, proto.Equal(req, cs.AvailableAttestations[0]))
 	})
 }
 

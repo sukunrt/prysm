@@ -92,6 +92,7 @@ type Config struct {
 	AttestationReceiver              blockchain.AttestationReceiver
 	BlockReceiver                    blockchain.BlockReceiver
 	PayloadAttestationReceiver       blockchain.PayloadAttestationReceiver
+	AvailableAttestationReceiver     blockchain.AvailableAttestationReceiver
 	ExecutionPayloadEnvelopeReceiver blockchain.ExecutionPayloadEnvelopeReceiver
 	BlobReceiver                     blockchain.BlobReceiver
 	DataColumnReceiver               blockchain.DataColumnReceiver
@@ -254,6 +255,7 @@ func NewService(ctx context.Context, cfg *Config) *Service {
 		BlockReceiver:                    s.cfg.BlockReceiver,
 		PayloadAttestationPool:           s.cfg.PayloadAttestationPool,
 		PayloadAttestationReceiver:       s.cfg.PayloadAttestationReceiver,
+		AvailableAttestationReceiver:     s.cfg.AvailableAttestationReceiver,
 		ExecutionPayloadEnvelopeReceiver: s.cfg.ExecutionPayloadEnvelopeReceiver,
 		BlobReceiver:                     s.cfg.BlobReceiver,
 		DataColumnReceiver:               s.cfg.DataColumnReceiver,

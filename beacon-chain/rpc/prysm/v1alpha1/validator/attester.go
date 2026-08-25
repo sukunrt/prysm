@@ -354,6 +354,15 @@ func (vs *Server) proposeAvailableAtt(
 		return nil, status.Errorf(codes.Internal, "Could not broadcast available attestation: %v", err)
 	}
 
+	// The gossip subscription skips messages this node published, so the local
+	// vote is handed to forkchoice here. Without it a node would run the
+	// Goldfish walk on its peers' votes only.
+	if vs.AvailableAttestationReceiver != nil {
+		if err := vs.AvailableAttestationReceiver.ReceiveAvailableAttestation(ctx, att); err != nil {
+			log.WithError(err).Error("Could not record local available attestation")
+		}
+	}
+
 	return &ethpb.AttestResponse{
 		AttestationDataRoot: root[:],
 	}, nil

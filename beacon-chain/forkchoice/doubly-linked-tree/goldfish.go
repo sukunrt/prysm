@@ -280,7 +280,8 @@ func (s *Store) goldfishPayloadTiebreaker(p *PayloadNode, current primitives.Slo
 }
 
 // goldfishBestPayload picks between the empty and full payload node of n, over
-// the ones that clear the gate.
+// the ones that clear the gate. hadCandidates reports whether a refused node
+// had blocks below it, that is whether the gate is what stopped the walk.
 func (s *Store) goldfishBestPayload(
 	n *Node, sc *goldfishScores, current primitives.Slot,
 ) (best *PayloadNode, hadCandidates bool) {
@@ -289,7 +290,7 @@ func (s *Store) goldfishBestPayload(
 		if p == nil {
 			continue
 		}
-		hadCandidates = true
+		hadCandidates = hadCandidates || len(p.children) > 0
 		if !goldfishPayloadViable(p, sc, current) {
 			continue
 		}

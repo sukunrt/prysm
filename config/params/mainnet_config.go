@@ -139,7 +139,10 @@ var mainnetBeaconConfig = &BeaconChainConfig{
 	ContributionDueBPSGloas:  primitives.BP(5000),
 	PayloadAttestationDueBPS: primitives.BP(7500),
 	PayloadDueBPS:            primitives.BP(5000),
-	EquivocationEarlyDueBPS:  primitives.BP(7500),
+	// AVAILABLE_ATTESTATION_DUE_BPS: available committee validators publish at
+	// 25% of the slot, after the assumed first-quarter block delivery phase.
+	AvailableAttestationDueBPSHeze: primitives.BP(2500),
+	EquivocationEarlyDueBPS:        primitives.BP(7500),
 
 	// Ethereum PoW parameters.
 	DepositChainID:         1, // Chain ID of eth1 mainnet.

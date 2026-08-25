@@ -579,3 +579,51 @@ func TestGoldfish_ProposerBuildsOnWalkHead(t *testing.T) {
 	// With no payload for B the head hash is its full ancestor's, that is A's.
 	require.Equal(t, blockHashFor(rootA), headHash)
 }
+
+func TestGoldfish_GateStopNotCountedAtTheTip(t *testing.T) {
+	f := setupGoldfish(t, 0, 0)
+	zero := params.BeaconConfig().ZeroHash
+	rootA, rootB := indexToHash(1), indexToHash(2)
+
+	driftGenesisTime(f, 2, 0)
+	insertGoldfishBlock(t, f, 1, rootA, zero, true)
+	f.InsertAvailableAttestation(1, 1, 4, rootA, false)
+	insertGoldfishBlock(t, f, 2, rootB, rootA, false)
+
+	// The walk ends at the current slot's block because its own payload
+	// decision has no votes yet. That is the ordinary end of every walk, not a
+	// gate stop.
+	before := goldfishGateStops(t)
+	head, err := f.Head(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootB, head)
+	require.Equal(t, before, goldfishGateStops(t))
+}
+
+func TestGoldfish_RoundStartProposalIsOrphaned(t *testing.T) {
+	f := setupGoldfish(t, 0, 0)
+	zero := params.BeaconConfig().ZeroHash
+	rootA, rootB, rootC := indexToHash(1), indexToHash(2), indexToHash(3)
+
+	// Slot 8 starts a round. Without the finality gadget there is no
+	// distinguished round-start proposal, so the block of that slot never
+	// becomes head: the walk refuses it at slot 8 and it has no votes at slot
+	// 9. The slot-9 proposer therefore builds on the slot-7 block.
+	driftGenesisTime(f, 8, 0)
+	insertGoldfishBlock(t, f, 7, rootA, zero, true)
+	f.InsertAvailableAttestation(7, 1, 4, rootA, false)
+	insertGoldfishBlock(t, f, 8, rootB, rootA, false)
+	before := goldfishGateStops(t)
+	head, err := f.Head(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootA, head)
+	require.Equal(t, before+1, goldfishGateStops(t))
+
+	// Slot 8's voters named the head they saw, which is the slot-7 block.
+	driftGenesisTime(f, 9, 0)
+	f.InsertAvailableAttestation(8, 1, 4, rootA, false)
+	insertGoldfishBlock(t, f, 9, rootC, rootA, false)
+	head, err = f.Head(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootC, head)
+}

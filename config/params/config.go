@@ -100,7 +100,7 @@ type BeaconChainConfig struct {
 	ContributionDueBPSGloas         primitives.BP    `yaml:"CONTRIBUTION_DUE_BPS_GLOAS" spec:"true"`          // ContributionDueBPSGloas defines the contribution due time in basis points of the slot (Gloas).
 	PayloadAttestationDueBPS        primitives.BP    `yaml:"PAYLOAD_ATTESTATION_DUE_BPS" spec:"true"`         // PayloadAttestationDueBPS defines the payload attestation due time in basis points of the slot.
 	PayloadDueBPS                   primitives.BP    `yaml:"PAYLOAD_DUE_BPS" spec:"true"`                     // PayloadDueBPS defines the cutoff for an execution payload to be considered timely, in basis points of the slot.
-	AvailableAttestationDueBPSHeze  primitives.BP    `yaml:"AVAILABLE_ATTESTATION_DUE_BPS_HEZE" spec:"true"`  // AttestationDueBPSGloas defines the attestation due time in basis points of the slot (Gloas).
+	AvailableAttestationDueBPSHeze  primitives.BP    `yaml:"AVAILABLE_ATTESTATION_DUE_BPS_HEZE" spec:"true"`  // AvailableAttestationDueBPSHeze defines the available attestation due time in basis points of the slot (Heze).
 
 	// Prysm-internal (non-spec) parameters.
 	EquivocationEarlyDueBPS primitives.BP `yaml:"-"` // Cutoff for an "early" proposer equivocation, in basis points of the slot.

@@ -1013,6 +1013,7 @@ func (b *BeaconNode) registerRPCService(router *http.ServeMux) error {
 		FinalizationFetcher:              chainService,
 		BlockReceiver:                    chainService,
 		PayloadAttestationReceiver:       chainService,
+		AvailableAttestationReceiver:     chainService,
 		ExecutionPayloadEnvelopeReceiver: chainService,
 		BlobReceiver:                     chainService,
 		DataColumnReceiver:               chainService,
