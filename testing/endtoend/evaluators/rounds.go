@@ -25,10 +25,11 @@ import (
 
 // AvailableAttestationsFlow checks that the Heze available attestation stream is
 // live: every beacon node must have accepted messages on the global
-// available_attestation gossip topic.
+// available_attestation gossip topic. It runs from the first epoch on, so that
+// the one-epoch short run exercises it too.
 var AvailableAttestationsFlow = types.Evaluator{
 	Name:       "available_attestations_flow_%d",
-	Policy:     policies.AfterNthEpoch(0),
+	Policy:     policies.AllEpochs,
 	Evaluation: availableAttestationsFlow,
 }
 
@@ -40,6 +41,36 @@ var AttestationsInEveryRound = types.Evaluator{
 	Name:       "attestations_in_every_round_%d",
 	Policy:     policies.AfterNthEpoch(1),
 	Evaluation: attestationsInEveryRound,
+}
+
+// ChainProducesBlocks checks that the chain actually advanced past genesis.
+// Every other early evaluator passes on a blockless chain, so without this an
+// execution layer that never returns a payload looks green.
+var ChainProducesBlocks = types.Evaluator{
+	Name:       "chain_produces_blocks_%d",
+	Policy:     policies.AllEpochs,
+	Evaluation: chainProducesBlocks,
+}
+
+func chainProducesBlocks(_ *types.EvaluationContext, conns ...*grpc.ClientConn) error {
+	// The evaluator ticker fires in the middle of an epoch, so half an epoch
+	// of slots has gone by at the earliest call. Ask for half of that again,
+	// which leaves room for missed proposals but not for an empty chain.
+	want := primitives.Slot(params.BeaconConfig().SlotsPerEpoch / 4)
+	for i, conn := range conns {
+		client := eth.NewBeaconChainClient(conn)
+		head, err := client.GetChainHead(context.Background(), &emptypb.Empty{})
+		if err != nil {
+			return errors.Wrapf(err, "failed to get chain head of beacon node %d", i)
+		}
+		if head.HeadSlot < want {
+			return fmt.Errorf(
+				"beacon node %d head is at slot %d, want at least %d: the chain is not producing blocks",
+				i, head.HeadSlot, want,
+			)
+		}
+	}
+	return nil
 }
 
 func availableAttestationsFlow(_ *types.EvaluationContext, conns ...*grpc.ClientConn) error {

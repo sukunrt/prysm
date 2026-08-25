@@ -34,7 +34,8 @@ import (
 //     the eth1 voting period far beyond the run; post-genesis deposits arrive as
 //     execution requests instead.
 //
-// Two evaluators are added: AvailableAttestationsFlow, which proves the Heze
+// Three evaluators are added: ChainProducesBlocks, which fails a run whose
+// chain never left genesis, AvailableAttestationsFlow, which proves the Heze
 // available attestation topic carries traffic on every node, and
 // AttestationsInEveryRound, which proves committee attestations happen in all
 // four rounds of an epoch rather than only the first.
@@ -49,6 +50,7 @@ func TestEndToEnd_HezeGenesis(t *testing.T) {
 		types.WithEpochs(5),
 		withoutEvaluators(hezeDroppedEvaluators...),
 		withEvaluators(
+			ev.ChainProducesBlocks,
 			ev.AvailableAttestationsFlow,
 			ev.AttestationsInEveryRound,
 		),
@@ -89,6 +91,7 @@ func TestEndToEnd_HezeGenesisSlotStartFFG(t *testing.T) {
 			ev.ValidatorsParticipatingAtEpoch(2).Name)...),
 		withEvaluators(
 			ev.ValidatorsParticipatingAtEpochWithFloor(2, 0.95),
+			ev.ChainProducesBlocks,
 			ev.AvailableAttestationsFlow,
 			ev.AttestationsInEveryRound,
 		),
@@ -136,7 +139,7 @@ func TestEndToEnd_HezeGenesisShort(t *testing.T) {
 			c.TestFeature = false
 		},
 		withoutEvaluators(hezeDroppedEvaluators...),
-		withEvaluators(ev.AvailableAttestationsFlow),
+		withEvaluators(ev.ChainProducesBlocks, ev.AvailableAttestationsFlow),
 	)
 	r.run()
 }
