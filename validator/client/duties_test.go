@@ -800,9 +800,14 @@ func TestUpdateDutiesSplit(t *testing.T) {
 		assert.Equal(t, false, v.duties.isInitialized())
 	})
 
-	t.Run("promote-path dependent root divergence flags proposer missing", func(t *testing.T) {
+	// Promotion runs on the hot path: the runner calls UpdateDuties inline at
+	// every epoch start and dispatches no role until it returns. A next-epoch
+	// fetch there costs the first slot of the epoch a beacon-node round trip,
+	// which under Heze pushes the proposal past the available attestation due
+	// time and the Goldfish majority gate then orphans the block.
+	t.Run("promotion serves the epoch from cache without any fetch", func(t *testing.T) {
 		hook := logTest.NewGlobal()
-		v, client, keys := setup(t)
+		v, _, keys := setup(t)
 		spe := params.BeaconConfig().SlotsPerEpoch
 
 		// Seed the store so canPromote is true (epoch-1 cached, next-epoch
@@ -822,32 +827,26 @@ func TestUpdateDutiesSplit(t *testing.T) {
 		v.duties.data.currDependentRoot = bytesutil.PadTo([]byte{0xaa}, 32)
 		v.duties.data.indices = []primitives.ValidatorIndex{42}
 
-		rootA := bytesutil.PadTo([]byte{0x01}, 32)
-		rootB := bytesutil.PadTo([]byte{0x02}, 32)
-
-		// Promote path only: the divergent proposer response is dropped and
-		// flagged missing. No current-epoch expectations — a full refetch
-		// would fail the test.
-		client.EXPECT().AttesterDuties(gomock.Any(), epoch+1, gomock.Any()).Return(&ethpb.AttesterDutiesResponse{
-			DependentRoot: rootA,
-			Duties: []*ethpb.AttesterDuty{{
-				Pubkey: keys.pub[:], ValidatorIndex: 42,
-				Slot: primitives.Slot(epoch+1)*spe + 7, CommitteeIndex: 2, CommitteeLength: 64, CommitteesAtSlot: 4,
-			}},
-		}, nil)
-		client.EXPECT().ProposerDuties(gomock.Any(), epoch+1).Return(&ethpb.ProposerDutiesResponse{DependentRoot: rootB}, nil)
-		client.EXPECT().SyncCommitteeDuties(gomock.Any(), epoch+1, gomock.Any()).Return(&ethpb.SyncCommitteeDutiesResponse{}, nil)
-		client.EXPECT().PTCDuties(gomock.Any(), epoch+1, gomock.Any()).Return(&ethpb.PTCDutiesResponse{DependentRoot: rootA}, nil)
-
+		// No client expectations at all: any duty fetch here fails the test.
 		require.NoError(t, v.updateDutiesSplit(t.Context(), epoch, []primitives.ValidatorIndex{42}))
-		assert.LogsContain(t, hook, "divergent dependent root")
+		assert.LogsContain(t, hook, "Promoting cached next-epoch duties to current")
 
-		// Promotion proceeded with the new attester root; proposer is flagged
-		// missing so the per-slot retry re-fetches it and promotion is blocked.
+		// The epoch's own duties are ready immediately.
 		assert.Equal(t, epoch, v.duties.data.epoch)
-		require.DeepEqual(t, rootA, v.duties.currDependentRoot())
 		snap := v.duties.snapshot()
-		assert.Equal(t, true, snap.missingNext()&missingNextProposer != 0)
+		require.Equal(t, 1, snap.currentDutyCount())
+		for _, d := range snap.currentDuties() {
+			assert.Equal(t, primitives.Slot(epoch)*spe+3, d.AttesterSlot)
+		}
+		// Last cycle's current root covered these duties, so it becomes prev.
+		require.DeepEqual(t, bytesutil.PadTo([]byte{0xaa}, 32), v.duties.prevDependentRoot())
+
+		// Every next-epoch type is left to the per-slot retry, which also fills
+		// in the current dependent root. Promotion stays blocked until it lands.
+		assert.Equal(t, missingNextAttester|missingNextProposer|missingNextSync|missingNextPtc,
+			snap.missingNext())
+		assert.Equal(t, 0, snap.nextDutyCount())
+		require.DeepEqual(t, []byte(nil), v.duties.currDependentRoot())
 		assert.Equal(t, false, v.duties.canPromote(epoch+1, []primitives.ValidatorIndex{42}))
 	})
 
@@ -1033,7 +1032,7 @@ func TestUpdateDutiesSplit(t *testing.T) {
 	})
 
 	t.Run("promote refreshes Status from pubkeyToStatus", func(t *testing.T) {
-		v, client, keys := setup(t)
+		v, _, keys := setup(t)
 		spe := params.BeaconConfig().SlotsPerEpoch
 
 		// Seed the store as if the prior fetch saw the validator as PENDING
@@ -1052,18 +1051,6 @@ func TestUpdateDutiesSplit(t *testing.T) {
 			data.indices = []primitives.ValidatorIndex{42}
 			v.duties.write(data)
 		}
-
-		root := bytesutil.PadTo([]byte{0x01}, 32)
-		client.EXPECT().AttesterDuties(gomock.Any(), epoch+1, gomock.Any()).Return(&ethpb.AttesterDutiesResponse{
-			DependentRoot: root,
-			Duties: []*ethpb.AttesterDuty{{
-				Pubkey: keys.pub[:], ValidatorIndex: 42,
-				Slot: primitives.Slot(epoch+1)*spe + 7, CommitteeIndex: 2, CommitteeLength: 64, CommitteesAtSlot: 4,
-			}},
-		}, nil)
-		client.EXPECT().ProposerDuties(gomock.Any(), epoch+1).Return(&ethpb.ProposerDutiesResponse{DependentRoot: root}, nil)
-		client.EXPECT().SyncCommitteeDuties(gomock.Any(), epoch+1, gomock.Any()).Return(&ethpb.SyncCommitteeDutiesResponse{}, nil)
-		client.EXPECT().PTCDuties(gomock.Any(), epoch+1, gomock.Any()).Return(&ethpb.PTCDutiesResponse{}, nil)
 
 		require.NoError(t, v.updateDutiesSplit(t.Context(), epoch, []primitives.ValidatorIndex{42}))
 

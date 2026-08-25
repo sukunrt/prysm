@@ -236,23 +236,18 @@ func (v *validator) updateDutiesSplit(ctx context.Context, epoch primitives.Epoc
 
 	canPromote := v.duties.canPromote(epoch, indices)
 
-	var (
-		res dutiesFetchResult
-		err error
-	)
-	// On fetch failure, leave existing duties intact so the validator can
-	// continue serving the current epoch from cache while we retry next tick.
+	var res dutiesFetchResult
 	if canPromote {
 		log.WithField("epoch", epoch).Debug("Promoting cached next-epoch duties to current")
-		res, err = v.promoteDuties(ctx, epoch, indices)
-		if err != nil {
-			return errors.Wrap(err, "promote duties")
-		}
+		res = v.promoteDuties(epoch)
 	} else {
-		res, err = v.fetchAllDuties(ctx, epoch, indices)
+		// On fetch failure, leave existing duties intact so the validator can
+		// continue serving the current epoch from cache while we retry next tick.
+		fetched, err := v.fetchAllDuties(ctx, epoch, indices)
 		if err != nil {
 			return errors.Wrap(err, "fetch all duties")
 		}
+		res = fetched
 	}
 
 	nextDuties := v.buildNextDuties(res)
@@ -275,10 +270,22 @@ func (v *validator) updateDutiesSplit(ctx context.Context, epoch primitives.Epoc
 	return nil
 }
 
-// promoteDuties promotes cached next-epoch duties to current and fetches the
-// new next-epoch duties. Cached duties already carry PtcSlots from the prior
-// fetch, so no current-epoch refetch is needed.
-func (v *validator) promoteDuties(ctx context.Context, epoch primitives.Epoch, indices []primitives.ValidatorIndex) (dutiesFetchResult, error) {
+// promoteDuties promotes cached next-epoch duties to current. Cached duties
+// already carry PtcSlots from the prior fetch, so no current-epoch refetch is
+// needed.
+//
+// The new next-epoch duties are deliberately NOT fetched here. The runner calls
+// UpdateDuties inline at every epoch start and dispatches no role until it
+// returns, so a fetch here delays the first slot of every epoch by a round trip
+// to the beacon node - about a second on a loaded node. Under Heze that is
+// fatal rather than untidy: the available attestation is due a quarter of the
+// way into the slot, so a proposal pushed past it earns no Goldfish votes and
+// the majority gate orphans the block at the next slot boundary. Next-epoch
+// duties are not needed for another SLOTS_PER_EPOCH slots, so they are flagged
+// missing and left to the per-slot RetryMissingNextDuties, which already exists
+// for exactly this state and rebuilds the epoch (dependent root included) off
+// the hot path.
+func (v *validator) promoteDuties(epoch primitives.Epoch) dutiesFetchResult {
 	snap := v.duties.snapshot()
 	currentDuties := make([]*ethpb.ValidatorDuty, 0, snap.nextDutyCount())
 	for _, d := range snap.nextDuties() {
@@ -299,15 +306,11 @@ func (v *validator) promoteDuties(ctx context.Context, epoch primitives.Epoch, i
 		prevDepRoot: snap.currDependentRoot(),
 	}
 
-	res.attNext, res.propNext, res.syncNext, res.ptcNext = v.fetchNextEpochDuties(ctx, epoch.Add(1), indices)
-	res.missingNext = missingNextMask(epoch.Add(1), res.attNext, res.propNext, res.syncNext, res.ptcNext)
-
-	// currDepRoot comes from the newly fetched next-epoch attester root,
-	// which matches the head event's CurrentDutyDependentRoot.
-	if res.attNext != nil {
-		res.currDepRoot = res.attNext.DependentRoot
-	}
-	return res, nil
+	// Every next-epoch type is missing until the retry lands, which also fills
+	// in currDepRoot from the next-epoch attester response. A nil currDepRoot is
+	// an expected state that checkDependentRoots already tolerates.
+	res.missingNext = missingNextMask(epoch.Add(1), nil, nil, nil, nil)
+	return res
 }
 
 // missingNextMask flags next-epoch duty types missing post-fetch (fork-gated).
