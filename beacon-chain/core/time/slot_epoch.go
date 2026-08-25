@@ -147,3 +147,11 @@ func CanUpgradeToGloas(slot primitives.Slot) bool {
 func CanProcessEpoch(state state.ReadOnlyBeaconState) bool {
 	return (state.Slot()+1)%params.BeaconConfig().SlotsPerEpoch == 0
 }
+
+// CanProcessRound checks the eligibility to process a round. The round can be
+// processed at the end of the last slot of every round. Under the shipped
+// configs SlotsPerRound == SlotsPerEpoch, so this coincides with
+// CanProcessEpoch at every boundary.
+func CanProcessRound(state state.ReadOnlyBeaconState) bool {
+	return (state.Slot()+1)%params.BeaconConfig().SlotsPerRound == 0
+}

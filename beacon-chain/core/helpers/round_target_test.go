@@ -199,3 +199,42 @@ func TestValidateSlotTargetRound_At8Over32(t *testing.T) {
 	})
 	require.ErrorContains(t, "does not match target round", err)
 }
+
+// TestFinalityDelay_StaysEpochBasedAt8Over32 pins plan-finality-round 2.5: the
+// inactivity leak keeps counting EPOCHS, and the retype's only consequence is the one
+// conversion of the now round-valued finalized checkpoint at the callers. While
+// finality advances every round the delay stays 0 and the leak never arms; when
+// finality stalls the delay grows one per epoch, exactly as it did before.
+func TestFinalityDelay_StaysEpochBasedAt8Over32(t *testing.T) {
+	setupRoundsConfig(t, 1)
+
+	// Finality advancing once per round. Rounds 8-11 all start inside epoch 2, so the
+	// finalized EPOCH the leak reads never moves while the finalized ROUND moves four
+	// times -- and the delay is 0 throughout.
+	for _, finalized := range []primitives.Round{8, 9, 10, 11} {
+		finalizedEpoch, err := helpers.CheckpointEpoch(finalized)
+		require.NoError(t, err)
+		assert.Equal(t, primitives.Epoch(2), finalizedEpoch, "round %d", finalized)
+		assert.Equal(t, primitives.Epoch(0), helpers.FinalityDelay(2, finalizedEpoch))
+		assert.Equal(t, false, helpers.IsInInactivityLeak(2, finalizedEpoch))
+	}
+
+	// Finality stalled at round 8 while the chain runs on: the delay counts epochs and
+	// the leak arms once it passes MinEpochsToInactivityPenalty.
+	stalled, err := helpers.CheckpointEpoch(8)
+	require.NoError(t, err)
+	for _, tc := range []struct {
+		prevEpoch primitives.Epoch
+		wantDelay primitives.Epoch
+		wantLeak  bool
+	}{
+		{prevEpoch: 2, wantDelay: 0, wantLeak: false},
+		{prevEpoch: 6, wantDelay: 4, wantLeak: false},
+		{prevEpoch: 8, wantDelay: 6, wantLeak: true},
+	} {
+		assert.Equal(t, tc.wantDelay, helpers.FinalityDelay(tc.prevEpoch, stalled),
+			"previous epoch %d", tc.prevEpoch)
+		assert.Equal(t, tc.wantLeak, helpers.IsInInactivityLeak(tc.prevEpoch, stalled),
+			"previous epoch %d", tc.prevEpoch)
+	}
+}

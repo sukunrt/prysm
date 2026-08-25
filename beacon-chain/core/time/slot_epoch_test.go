@@ -276,3 +276,75 @@ func TestCanUpgradeTo(t *testing.T) {
 		}
 	}
 }
+
+// TestCanProcessRound_At8Over32 pins the round cadence at the devnet's non-identity
+// shape: four round boundaries per 32-slot epoch, only the last of which is also an
+// epoch boundary.
+func TestCanProcessRound_At8Over32(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	st, err := state_native.InitializeFromProtoPhase0(&eth.BeaconState{})
+	require.NoError(t, err)
+
+	var roundBoundaries, epochBoundaries []primitives.Slot
+	for slot := primitives.Slot(0); slot < 32; slot++ {
+		require.NoError(t, st.SetSlot(slot))
+		if time.CanProcessRound(st) {
+			roundBoundaries = append(roundBoundaries, slot)
+		}
+		if time.CanProcessEpoch(st) {
+			epochBoundaries = append(epochBoundaries, slot)
+		}
+	}
+	assert.DeepEqual(t, []primitives.Slot{7, 15, 23, 31}, roundBoundaries)
+	assert.DeepEqual(t, []primitives.Slot{31}, epochBoundaries)
+}
+
+// TestCanProcessRound_IdentityUnderShippedConfigs is the identity rule for the cadence:
+// with SlotsPerRound == SlotsPerEpoch every round boundary is an epoch boundary and
+// vice versa, so the new hook fires exactly where epoch processing already did.
+func TestCanProcessRound_IdentityUnderShippedConfigs(t *testing.T) {
+	require.Equal(t, params.BeaconConfig().SlotsPerEpoch, params.BeaconConfig().SlotsPerRound)
+
+	st, err := state_native.InitializeFromProtoPhase0(&eth.BeaconState{})
+	require.NoError(t, err)
+	for slot := primitives.Slot(0); slot < params.BeaconConfig().SlotsPerEpoch*3; slot++ {
+		require.NoError(t, st.SetSlot(slot))
+		assert.Equal(t, time.CanProcessEpoch(st), time.CanProcessRound(st), "slot %d", slot)
+	}
+}
+
+// TestCurrentRound_SourceFreshnessGateAt8Over32 pins the predicate the attestation-data
+// server uses to decide whether the head state must be advanced before a validator reads
+// its justified checkpoint (plan-finality-round 2.6). Keyed on rounds it fires at every
+// round boundary; the epoch-keyed predicate it replaced missed three boundaries out of
+// four at 8/32, which would have handed validators a round-stale source.
+func TestCurrentRound_SourceFreshnessGateAt8Over32(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	st, err := state_native.InitializeFromProtoPhase0(&eth.BeaconState{})
+	require.NoError(t, err)
+
+	// The head state sits one slot behind each round's first slot -- the common case
+	// when a validator asks for attestation data at the start of a new round.
+	for _, requestSlot := range []primitives.Slot{8, 16, 24, 32} {
+		require.NoError(t, st.SetSlot(requestSlot-1))
+		assert.Equal(t, true, time.CurrentRound(st) < slots.RoundAt(requestSlot),
+			"round gate should fire for request slot %d", requestSlot)
+	}
+	// The epoch-keyed gate only fires at slot 32, the one boundary that is also an
+	// epoch boundary.
+	for _, requestSlot := range []primitives.Slot{8, 16, 24} {
+		require.NoError(t, st.SetSlot(requestSlot-1))
+		assert.Equal(t, false, time.CurrentEpoch(st) < slots.ToEpoch(requestSlot),
+			"epoch gate must not fire for request slot %d", requestSlot)
+	}
+}

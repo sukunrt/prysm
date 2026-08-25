@@ -6,13 +6,17 @@ import (
 	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/altair"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/epoch/precompute"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/time"
 	state_native "github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 )
 
 func TestProcessJustificationAndFinalizationPreCompute_ConsecutiveEpochs(t *testing.T) {
@@ -268,4 +272,94 @@ func Test_ComputeCheckpoints_CantUpdateToLower(t *testing.T) {
 	cp, _, err := precompute.ComputeCheckpoints(st, jb)
 	require.NoError(t, err)
 	require.Equal(t, primitives.Round(2), cp.Epoch)
+}
+
+// TestProcessJustificationAndFinalization_RoundProgressionAt8Over32 pins the per-round
+// finality cadence at the devnet's non-identity shape: 8-slot rounds inside 32-slot
+// epochs. With full participation, round R is justified at the R->R+1 boundary and
+// finalized at the R+1->R+2 boundary -- a finality latency of two ROUNDS, 16 slots,
+// against the two epochs (64 slots) the same votes would have bought before.
+func TestProcessJustificationAndFinalization_RoundProgressionAt8Over32(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	cfg.FFGTargetOffsetSlots = 1
+	params.OverrideBeaconConfig(cfg)
+
+	far := params.BeaconConfig().FarFutureEpoch
+	amount := params.BeaconConfig().MaxEffectiveBalance
+	blockRoots := make([][]byte, params.BeaconConfig().SlotsPerHistoricalRoot)
+	for i := range blockRoots {
+		blockRoots[i] = []byte{byte(i)}
+	}
+	base := &ethpb.BeaconState{
+		PreviousJustifiedCheckpoint: &ethpb.Checkpoint{Root: params.BeaconConfig().ZeroHash[:]},
+		CurrentJustifiedCheckpoint:  &ethpb.Checkpoint{Root: params.BeaconConfig().ZeroHash[:]},
+		FinalizedCheckpoint:         &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+		JustificationBits:           bitfield.Bitvector4{0x00},
+		Validators: []*ethpb.Validator{
+			{ExitEpoch: far}, {ExitEpoch: far}, {ExitEpoch: far}, {ExitEpoch: far},
+		},
+		Balances:   []uint64{amount, amount, amount, amount},
+		BlockRoots: blockRoots,
+	}
+	st, err := state_native.InitializeFromProtoPhase0(base)
+	require.NoError(t, err)
+
+	// Everyone attests to the correct target every round.
+	total := 4 * amount
+	full := &precompute.Balance{
+		ActiveCurrentEpoch:         total,
+		PrevEpochTargetAttested:    total,
+		CurrentEpochTargetAttested: total,
+	}
+
+	// The genesis guard stays epoch-based, so the first boundary that justifies at all
+	// is the first round ending past slot EpochStart(2) == 64, which is round 8.
+	for _, tc := range []struct {
+		round     primitives.Round
+		justified primitives.Round
+		finalized primitives.Round
+	}{
+		{round: 7, justified: 0, finalized: 0}, // still inside the genesis guard
+		{round: 8, justified: 8, finalized: 0},
+		{round: 9, justified: 9, finalized: 8},
+		{round: 10, justified: 10, finalized: 9},
+		{round: 11, justified: 11, finalized: 10},
+	} {
+		end, err := slots.RoundEnd(tc.round)
+		require.NoError(t, err)
+		require.NoError(t, st.SetSlot(end))
+		st, err = precompute.ProcessJustificationAndFinalizationPreCompute(st, full)
+		require.NoError(t, err)
+		assert.Equal(t, tc.justified, st.CurrentJustifiedCheckpoint().Epoch,
+			"justified round after the round %d boundary", tc.round)
+		assert.Equal(t, tc.finalized, st.FinalizedCheckpointRound(),
+			"finalized round after the round %d boundary", tc.round)
+	}
+
+	// Rounds 8-11 all live inside epoch 2, so the whole progression above happened
+	// without a single epoch boundary: this cadence is invisible to epoch processing.
+	firstEpoch, err := helpers.CheckpointEpoch(8)
+	require.NoError(t, err)
+	lastEpoch, err := helpers.CheckpointEpoch(11)
+	require.NoError(t, err)
+	assert.Equal(t, primitives.Epoch(2), firstEpoch)
+	assert.Equal(t, primitives.Epoch(2), lastEpoch)
+
+	// The finalized checkpoint names round 10's FFG target block, the last block
+	// before the round started: RoundStart(10) - 1 == slot 79.
+	targetSlot, err := slots.FFGTargetSlot(10)
+	require.NoError(t, err)
+	assert.Equal(t, primitives.Slot(79), targetSlot)
+	want := bytesutil.ToBytes32(blockRoots[targetSlot])
+	assert.DeepEqual(t, want[:], st.FinalizedCheckpoint().Root)
+
+	// Two rounds of latency: round 10's target block sits at slot 79 and the state
+	// learns it is final while still in round 11, at slot 95.
+	assert.Equal(t, primitives.Round(11), time.CurrentRound(st))
+	assert.Equal(t, primitives.Slot(95), st.Slot())
+	assert.Equal(t, primitives.Slot(16), st.Slot()-targetSlot)
+	assert.Equal(t, primitives.Slot(16), 2*params.BeaconConfig().SlotsPerRound)
 }

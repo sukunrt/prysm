@@ -305,6 +305,12 @@ func ProcessSlotsCore(ctx context.Context, span trace.Span, state state.BeaconSt
 			return nil, errors.Wrap(err, "could not process slot")
 		}
 
+		state, err = ProcessRound(ctx, state)
+		if err != nil {
+			tracing.AnnotateError(span, err)
+			return nil, err
+		}
+
 		state, err = ProcessEpoch(ctx, state)
 		if err != nil {
 			tracing.AnnotateError(span, err)
@@ -327,6 +333,22 @@ func ProcessSlotsCore(ctx context.Context, span trace.Span, state state.BeaconSt
 	return state, nil
 }
 
+// ProcessRound runs the per-round part of state processing at every round boundary.
+// Only Heze and later states have a round cadence; earlier ones are returned
+// unchanged, and justification and finalization stay inside their epoch processing.
+func ProcessRound(ctx context.Context, state state.BeaconState) (state.BeaconState, error) {
+	ctx, span := prysmTrace.StartSpan(ctx, "core.state.ProcessRound")
+	defer span.End()
+
+	if state.Version() < version.Heze || !time.CanProcessRound(state) {
+		return state, nil
+	}
+	if err := processRoundHeze(ctx, state); err != nil {
+		return nil, errors.Wrapf(err, "could not process %s round", version.String(state.Version()))
+	}
+	return state, nil
+}
+
 // ProcessEpoch is a wrapper on fork specific epoch processing
 func ProcessEpoch(ctx context.Context, state state.BeaconState) (state.BeaconState, error) {
 	ctx, span := prysmTrace.StartSpan(ctx, "core.state.ProcessEpoch")
@@ -334,7 +356,11 @@ func ProcessEpoch(ctx context.Context, state state.BeaconState) (state.BeaconSta
 
 	var err error
 	if time.CanProcessEpoch(state) {
-		if state.Version() >= version.Gloas {
+		if state.Version() >= version.Heze {
+			if err = processEpochHeze(ctx, state); err != nil {
+				return nil, errors.Wrapf(err, "could not process %s epoch", version.String(state.Version()))
+			}
+		} else if state.Version() >= version.Gloas {
 			if err = processEpochGloas(ctx, state); err != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("could not process %s epoch", version.String(state.Version())))
 			}
