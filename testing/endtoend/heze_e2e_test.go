@@ -112,15 +112,14 @@ var hezeDroppedEvaluators = []string{
 // has already matched the head once, look at the initial-sync handoff before
 // suspecting the checkpoint. Initial sync hands over at whatever slot it
 // reached, and when that is a few slots behind the head the joining node has
-// to import the gap through the pending-block queue. On a Gloas chain that
-// path wedges: the block's columns were gossiped while the node was still
-// syncing and are gone, the queue calls processPendingPayloadEnvelope
-// synchronously under its own lock, and the envelope's availability check
-// (blockchain.areDataColumnsAvailable) then waits on gossip that will never
-// come, with no deadline. Nothing fetches those columns by root either -
-// sync.requestAndSaveMissingDataColumnSidecars skips Gloas blocks. The node
-// only recovers minutes later, when "Fallen behind peers" drops it back into
-// initial sync and the range fetch supplies the columns.
+// to import the gap through the pending-block queue, which calls
+// processPendingPayloadEnvelope synchronously. Two things keep that path
+// moving on a Gloas chain, and a regression in either one shows up here as a
+// multi-minute "Processed pending block and cleared it in cache" duration:
+// the envelope fetches its block's data columns by root when its slot is
+// already behind the head, because the gossip that carried them happened
+// while this node was still syncing, and the import itself is capped at three
+// slots so a wait for data that never arrives cannot hold the queue.
 func TestEndToEnd_HezeGenesisCheckpointSync(t *testing.T) {
 	cfg := params.E2EMainnetTestConfig()
 	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
