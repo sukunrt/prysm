@@ -347,7 +347,23 @@ dynamics, not different traffic.
    vote, EMPTY otherwise, per decision 13). Promoting it to the spec's full
    rule is gadget-era work. Confirm the stub is acceptable for the first
    Goldfish measurements.
+   **ANSWERED by user 2026-08-20: no stub — implement the spec's
+   `get_available_vote_payload_status` as written (same-slot → PENDING;
+   older block → FULL/EMPTY by the vote's `payload_present` bit). The rule
+   is byte-for-byte the Gloas mainnet `get_supported_node` derivation
+   (gloas/fork-choice.md:379), so this is "identical to today's spec", per
+   the user. Code reality: the node-side machinery exists
+   (`forkchoice2.NodeV2.PayloadStatus`), but Prysm's LMD vote store does
+   not record `payload_present` — upstream approximates empty/full from
+   local payload arrival. The goldfish vote store records
+   `(root, payload_present)` anyway, so the derivation is ~5 lines in the
+   new walk. The flat-EMPTY stub would be indistinguishable in healthy
+   runs but silently wrong in the withheld-payload experiments
+   (decision 14), exactly where the measurements will look.**
 4. **Kurtosis image route.** Recommendation: plain Dockerfile over go-built
    binaries plus a patched genesis-generator image, mirroring
    `Dockerfile.genesis-gen`. The bazel `prysm_image_upload` route needs a
    registry and fights the gitless checkout.
+   **ANSWERED by user 2026-08-20: whatever is easiest to make it work —
+   the recommendation stands; the executor may swap routes if the
+   Dockerfile path hits a wall, without asking again.**
