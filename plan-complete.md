@@ -1,11 +1,20 @@
 # Plan-complete: FFG votes relate to rounds, not epochs
 
-Written 2026-08-22. Companion: `plan-complete-detailed.md` (the work items,
-file:line pointers, verification ladders, acceptance numbers). This is the
-finality-round charter written with nothing left to discover: successor to
-`plan-next.md`; design record `task.md`; the tracked goal is `plan-final.md`
-item 1 (`per-round-finality-vote-target` in the global todo). All pointers
-are verified against the current tip (`ststlkmp` / a313817d).
+Written 2026-08-22, revised the same day to fold in
+`plan-execution-critique.md`. Companion: `plan-complete-detailed.md` (the
+work items, file:line pointers, verification ladders, acceptance numbers).
+This is the finality-round charter written with nothing left to discover:
+successor to `plan-next.md`; design record `task.md`; the tracked goal is
+`plan-final.md` item 1 (`per-round-finality-vote-target` in the global
+todo). All pointers are verified against the current tip
+(`ststlkmp` / a313817d).
+
+The work runs in six phases, P0-P5, each ending in a runnable chain-tier
+gate, with a fast evaluation bench built FIRST and the expensive
+simulators LAST (see "How the work runs"). The bench is the load-bearing
+choice: every consensus edit in this plan is judged in seconds to three
+minutes, and the two simulators run on a fixed budget as confirmation,
+never as a debugging loop.
 
 ## Scope correction (user, 2026-08-21) — read this first
 
@@ -112,7 +121,77 @@ AttestationData) is implemented here.
    reconciles every expected seat, and the acceptance bar on a clean
    simulation is seat fraction EXACTLY 1.00 with zero unaccounted seats.
    Silent drops (upstream's IGNORE convention, libp2p's tracer-only
-   overflow) are indefensible in an instrumented research fork.
+   overflow) are indefensible in an instrumented research fork. All of
+   this is PHASE-1 work, done against stock code: three of the four
+   delivery mechanisms are pre-existing bugs that the instruments expose
+   at the 3-minute tier before any consensus edit lands.
+
+## How the work runs: the bench first, the sims last
+
+Six phases, each ending in a runnable chain-tier gate. The ordering
+principle: **every instrument is built and proven against stock code
+before the consensus edit it will judge**, and every phase's gate runs at
+the cheapest tier that can see that phase's failure class — seconds for
+fork-choice lifetime, three minutes for delivery and progression, the
+simulators only as final confirmation on a fixed budget.
+
+- **P0 — Preflight (no consensus code).** Warm the build caches; the
+  Short e2e green on stock; one 2-epoch kurtosis run on stock (proves
+  image build, scrape, disk headroom, and refreshes the epoch-baseline
+  numbers the headline is measured against); a Shadow binary-build
+  dry-run; a disk audit with the cleanup authorization recorded; the
+  full-suite failure baseline at `ststlkmp` captured to a committed
+  file. Gate: everything green on stock, baseline committed.
+- **P1 — The evaluation bench (still no consensus semantics).** The
+  in-process chain bench (real forkchoice + state transition, ~100
+  slots at 8/32, runs in seconds), the per-vote ledger and labeled drop
+  counters, seat-by-seat reconciliation tooling, the two finality
+  evaluators, and the vote-delivery fixes the instruments expose. Gate:
+  the Short e2e on STOCK code passes the strict seat bar — a gate
+  EXPECTED to fail on first run, because three of the four vote-loss
+  mechanisms (detailed step 7) pre-date this plan; they are found and
+  fixed here, at the 3-minute tier, against unmodified consensus code.
+- **P2 — Retype + target + fork-choice lifetime** (steps 0-1).
+- **P3 — Cadence + the round-clock guard** (step 2). Its bench gate is
+  the one that catches the prune-wedge class in seconds; its full e2e
+  is the plan's first expensive run.
+- **P4 — Consumers, reporting, variants** (steps 3-5 remainders, the
+  stater rule, offset-0).
+- **P5 — Confirmatory measurement** (step 8): kurtosis and Shadow,
+  budgeted at two kurtosis cycles and one Shadow run, asserting the
+  pinned numbers. A confirmatory run is never a debugging loop: if one
+  fails, the failure is first reproduced at a cheap tier (adding
+  whatever instrument is missing to make that possible), and only then
+  fixed.
+
+## Effort allocation: the measured path, and the don't-care list
+
+This build is a research prototype. Correctness effort concentrates
+EXCLUSIVELY on what is measured: the finality mechanism (target, cadence,
+checkpoints, fork choice), vote delivery, wire behavior, and the bench's
+own instruments. Everything else is stub-grade by design — code there may
+be absent, simplified, or outright buggy, and **no verification cycles,
+review findings, or fix iterations are spent on it**. The retype forces
+compile-level mechanical edits everywhere; those are made (the tree must
+build) and that is ALL that is owed.
+
+The don't-care list, binding: all of slashing (predicates, slasher,
+EIP-3076 protection db — their test failures join the recorded baseline,
+never investigated); rewards/penalties/inactivity fidelity; every
+pre-Heze fork path; doppelganger detection correctness;
+weak-subjectivity input/output agreement; REST-API fidelity (the e2e
+speaks gRPC). Known defects in these zones are STATED in the detailed
+plan with their symptom so an executor recognizes them on sight — and
+marked record-only: one line in the notes, no diagnosis, no fix, no
+test.
+
+**The effort-allocation rule:** when an executor or reviewer finds a
+defect, the first question is "is this on the measured path?" If not:
+one line in the notes and move on. Don't-care findings never trigger
+decision briefs, never spawn fix agents, and never consume a
+verification run. A don't-care defect that would confuse verification
+(a failing test) is pre-listed in the expected-failure baseline instead
+of fixed.
 
 ## What is deliberately untouched
 
@@ -148,6 +227,12 @@ AttestationData) is implemented here.
   epoch's active set (detailed 2.4).
 
 ## What the detailed plan covers
+
+The numbered steps are the reference material — each site with its
+correct conversion. They EXECUTE in the phase order above: the detailed
+file opens with Phase 0 (preflight) and Phase 1 (the bench, which is
+step 7 plus the evaluators, run against stock code); steps 0-1 are
+phase 2, step 2 is phase 3, steps 3-5 are phase 4, step 8 is phase 5.
 
 0. The retype (step 0): `Checkpoint.epoch` → `primitives.Round` via the
    proto `cast_type` (wire/SSZ unchanged) across all five
@@ -188,11 +273,11 @@ AttestationData) is implemented here.
    up front; the state split keeps SSZ shapes untouched and the
    caches/stategen surfaces are audited.
 6. Slashing: the zero-change path — explicitly out of scope.
-7. Goldfish vote delivery and instrumentation: the four delivery
-   mechanisms sized for the synchronized burst; the labeled drop
-   counters, the per-vote ledger, and seat-by-seat reconciliation as
-   REQUIRED run tooling; acceptance bar seat fraction exactly 1.00 on
-   clean sims.
+7. Goldfish vote delivery and instrumentation (EXECUTES FIRST, as
+   phase 1, on stock code): the four delivery mechanisms sized for the
+   synchronized burst; the labeled drop counters, the per-vote ledger,
+   and seat-by-seat reconciliation as REQUIRED run tooling; acceptance
+   bar seat fraction exactly 1.00 on clean sims.
 8. Measurement and verification: finality latency in slots as the
    headline number against kurtosis run 02 and the Shadow baseline, with
    the expected values pinned as acceptance criteria (16/≈19.5/23-slot
@@ -221,13 +306,42 @@ AttestationData) is implemented here.
   100.
 - Full command outputs to scratchpad log files; no bazel spectests as
   routine verification.
-- Verification ladder per step: unit tests → ~3-slot single-node smoke →
-  `TestEndToEnd_HezeGenesisShort` → full `TestEndToEnd_HezeGenesis` →
-  sims last. **The Short e2e runs DURING the retype stack, not after all
-  stacks land** — cross-cutting interaction bugs (pruning versus
-  epoch-keyed lookups) are invisible below the chain tier, and finding
-  them one stack late costs a day. No fixed sleeps racing setup; assert
-  on observable chain state.
+- Verification ladder per step: unit tests → the in-process chain bench
+  (seconds; built in P1) → `TestEndToEnd_HezeGenesisShort` (3 min) →
+  full `TestEndToEnd_HezeGenesis` (once per phase gate) → sims (P5
+  only, budgeted). **Every phase ends at a chain-tier gate** —
+  cross-cutting interaction bugs (pruning versus epoch-keyed lookups)
+  are invisible below the chain tier, and finding them one phase late
+  costs a day. Iterate at the cheapest tier that shows the failure; a
+  failure first seen at an expensive tier gets reproduced at a cheap
+  one (adding the missing instrument if needed) before it is fixed. No
+  fixed sleeps racing setup; assert on observable chain state.
+- **Run budget:** one full e2e per phase gate; two kurtosis cycles and
+  one Shadow run in P5, total. Exceeding the budget is itself a
+  decision brief.
+- **The steering protocol.** Executors decide freely on mechanical
+  conversions, test fixes, tooling, and anything this plan prescribes.
+  A five-line decision brief (what happened, the options, a
+  recommendation, the cost of waiting) goes to the user BEFORE work
+  proceeds when: (a) evidence contradicts a plan mandate or plan claim,
+  (b) two defensible designs exist in consensus code, (c) an acceptance
+  bar is about to be interpreted ("0.9995 ≈ 1.0" is an interpretation),
+  (d) wire-visible behavior would change. For reversible choices the
+  orchestrator may proceed with its recommendation after posting the
+  brief, in a separate flagged commit; for consensus-design forks and
+  bar interpretations it waits. An interruption — evidence
+  contradicting the plan's MODEL of the system, not a mere test
+  failure — stops that lane only; other lanes continue. Don't-care
+  findings (see effort allocation) never trigger briefs. Status
+  otherwise: one report per phase gate with the pinned-number table.
+- **Lane hygiene:** any lane silent past 45 minutes gets actively
+  checked; fire-and-forget watchers are forbidden as a lane's only wake
+  source. Durable artifacts — reviews, diagnoses, ledgers, run
+  summaries, baselines — live committed in the repo, never only in a
+  session scratchpad.
+- **Effort allocation:** the first question about any defect is "is
+  this on the measured path?" — if not, one line in the notes, no
+  diagnosis, no fix, no test, no brief (see the don't-care list above).
 - **The lifetime-audit rule:** any change to prune cadence or retention
   requires an explicit audit of everything that walks the fork-choice
   tree by age, proving reachability (not just value-correctness) for

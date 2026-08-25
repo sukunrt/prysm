@@ -3,7 +3,7 @@
 Companion to `plan-complete.md`. That file holds the scope and the
 reasoning; this one holds the work. Every `file:line` below is verified
 against `ststlkmp` (a313817d), the tip this plan executes from, and will
-drift as the stacks land — treat them as pointers, not addresses; grep for
+drift as the phases land — treat them as pointers, not addresses; grep for
 the symbol.
 
 Design record: `task.md` (decisions 10, 15, 17), `plan-final.md` item 1.
@@ -31,11 +31,41 @@ exist (`compute_round_at_slot` ↔ `slots.RoundAt`, etc.).
 - No bazel spectests as routine verification. Accept commands per step:
   `go build ./...`, targeted `go test`, `bazelisk build //...`.
   `beacon-chain/blockchain` tests abort without `-tags develop`.
-- Verification ladder per step: unit tests → ~3-slot single-node smoke →
-  `TestEndToEnd_HezeGenesisShort` → full `TestEndToEnd_HezeGenesis` → sims.
-  Iterate at the cheapest failing tier. No fixed sleeps that race setup;
-  assert on observable chain state. **The Short e2e is a stack-A gate, not
-  a post-stack luxury** — see "Commit structure".
+- Verification ladder per step: unit tests → the in-process chain bench
+  (P1's deliverable; seconds) → `TestEndToEnd_HezeGenesisShort` (3 min) →
+  full `TestEndToEnd_HezeGenesis` (one per phase gate) → sims (P5 only,
+  budgeted: two kurtosis cycles, one Shadow run — exceeding the budget
+  is a decision brief). Iterate at the cheapest tier that shows the
+  failure; a failure first seen at an expensive tier is reproduced at a
+  cheap one (adding the missing instrument if needed) BEFORE it is
+  fixed. No fixed sleeps that race setup; assert on observable chain
+  state. **Every phase ends at a chain-tier gate** — see "Phase
+  structure".
+- **The steering protocol (binding).** Executors decide freely on
+  mechanical conversions, test fixes, tooling, naming, and anything this
+  plan prescribes. A five-line decision brief (what happened, the
+  options, a recommendation, the cost of waiting) goes to the user
+  BEFORE work proceeds when: (a) evidence contradicts a plan mandate or
+  a plan claim, (b) two defensible designs exist in consensus code,
+  (c) an acceptance bar is about to be interpreted, (d) wire-visible
+  behavior would change. Reversible choices: post the brief, proceed
+  with the recommendation in a separate flagged commit. Consensus-design
+  forks and bar interpretations: wait. Stop-the-line — evidence
+  contradicting the plan's MODEL of the system, not a mere test
+  failure — stops that lane only. One status report per phase gate,
+  with the pinned-number table (8.3).
+- **Lane hygiene:** a lane silent past 45 minutes gets actively checked;
+  fire-and-forget watchers are forbidden as a lane's only wake source.
+  Durable artifacts (reviews, diagnoses, ledgers, run summaries, the
+  failure baseline) are committed in the repo, never only in a session
+  scratchpad — scratchpads do not survive process restarts.
+- **The effort-allocation rule (binding; see the charter's don't-care
+  list).** The first question about any defect: is it on the measured
+  path (finality mechanism, vote delivery, wire behavior, the bench's
+  instruments)? If not — one line in the executor note, NO diagnosis,
+  NO fix beyond what compilation forces, NO test, NO decision brief. A
+  don't-care defect that would confuse verification (a failing test) is
+  pre-listed in the 8.2 baseline instead of fixed.
 - **The lifetime-audit rule.** Any change to prune cadence or retention
   requires an audit of every consumer that walks the fork-choice tree by
   AGE (dependent roots, target walks), proving the node it needs is still
@@ -126,36 +156,157 @@ from the finality clock (1.3a). Every proof about the dependent root must
 be made twice: once for the value, once for the node's lifetime on a
 pruned tree — and the tests must prune.
 
-## Commit structure
+## Phase structure (the execution order; the steps are reference)
 
-The retype makes most of the plan's mechanical conversions COMPILE
-ERRORS, so they cannot land as separate later changes. The steps below
-remain the reference material — each enumerated site with its correct
-conversion — but the work lands as four jj stacks:
+The work runs as six phases, each ending at a runnable chain-tier gate.
+Instruments are built and proven against STOCK code before the consensus
+edits they will judge; the simulators run last, on a budget, as
+confirmation. Within phases, the retype still forces one large jj change
+(the compile sweep cannot land incrementally); everything else is one
+logical change per commit.
 
-- **Stack A — retype + sweep + target + forkchoice lifetime.** Step 0
-  (Round SSZ methods → regenerate → compile-error sweep, using 1.4, 2.5,
-  2.6, 3.2-3.6, 4.0-4.3 as the per-site conversion guide) together with
-  step 1 entire — the target shift, offset config, AND the lifetime work
-  (1.3a, 1.3b): the horizon, the unwind, and the prune bound are part of
-  the same forkchoice change, not fixes for later. Tree compiles only at
-  the end of the stack; merge rather than land broken intermediates.
-  **Gate: run `TestEndToEnd_HezeGenesisShort` at the end of stack A**,
-  before stack B starts — the lifetime class of bug is only visible at
-  the chain tier, and one epoch of live chain (3 minutes) is the
-  cheapest place it can surface.
-- **Stack B — cadence.** Step 2's `ProcessRound` hook, the Heze
-  epoch-processing pair, and the round-clock genesis guard.
-- **Stack C — reporting.** Step 5's logging sweep, new metrics, and the
-  two e2e evaluators.
-- **Stack D — delivery + measurement.** Step 7's vote-delivery mechanisms
-  and instrumentation, then step 8's runs and the survey extension. The
-  instrumentation lands BEFORE the first measurement run.
+- **P0 — Preflight** (section "Phase 0" below). No consensus code.
+  Gate: every run type green on stock; the failure baseline committed.
+- **P1 — The bench** (section "Phase 1" below; its content is step 7
+  plus 5.3's evaluators plus the chain bench). Still no consensus
+  semantics. Gate: the Short e2e on stock passes the strict seat bar
+  (exactly 1.00, ledger-reconciled) — EXPECTED to fail on first run;
+  three of the four vote-loss mechanisms pre-date this plan and are
+  found and fixed here, at the 3-minute tier.
+- **P2 — Retype + target + forkchoice lifetime.** Step 0 (Round SSZ
+  methods → regenerate → compile-error sweep, using 1.4, 2.5, 2.6,
+  3.2-3.6, 4.0-4.3 as the per-site conversion guide) together with
+  step 1 entire — the target shift, offset config, AND the lifetime
+  work (1.3a, 1.3b): the horizon, the unwind, and the prune bound are
+  part of the same forkchoice change, not fixes for later. Tree
+  compiles only at the end; merge rather than land broken
+  intermediates. Gate: `go build`, suites vs the P0 baseline with the
+  single expected fixture edit (1.4), the chain bench in identity mode,
+  `TestEndToEnd_HezeGenesisShort`, and a scoped adversarial review of
+  the sweep (bare casts, value-level unit bugs, target symmetry,
+  lifetime — the charter's review themes).
+- **P3 — Cadence + the round-clock guard.** Step 2. Gate: the chain
+  bench at 8/32 — the tier that catches the prune-wedge class in
+  seconds, now asserting per-ROUND progression (round R justified at
+  the R→R+1 boundary, warmup per 2.2) — then the Short e2e (witnesses
+  slot-24 justification live), then the plan's FIRST full e2e with both
+  round evaluators, then a scoped review.
+- **P4 — Consumers, reporting, variants.** Steps 3-5 behavioral
+  remainders (packing filters, the stater rule, log/metric relabels,
+  evaluator swaps ride here if not already landed with P1's evaluator
+  files). Gate: `TestEndToEnd_HezeGenesisCheckpointSync` (the 4.4
+  witness) and the offset-0 smoke (8.2).
+- **P5 — Confirmatory measurement.** Step 8: the survey extension, two
+  kurtosis cycles (one baseline-shaped short run, one proof), one
+  Shadow smoke, against 8.3's pinned numbers. Never a debugging loop:
+  a failed confirmatory run is reproduced at a cheap tier first.
 
-Steps 3, 4, and 6 have no stacks of their own: their mechanical halves
-execute inside stack A's sweep; their behavioral remainders (packing
-filters, the stater resolution, evaluator swaps) ride the stack that owns
-the behavior.
+Steps 3, 4, and 6 have no phase of their own: their mechanical halves
+execute inside P2's sweep; their behavioral remainders ride P4. Step 6
+(slashing) is don't-care throughout — mechanical compilation fixes
+only, in the sweep.
+
+---
+
+# Phase 0 — preflight: prove the whole harness before touching code
+
+One to two hours, mostly parallel wall clock, no consensus edits. Every
+item here pre-pays a class of friction that otherwise lands mid-loop.
+
+- [ ] Warm the build caches: `bazelisk build //testing/endtoend:...`
+      once (a cold bazel rebuild is ~25 minutes; keep the cache for the
+      plan's lifetime), one docker image build via the kurtosis recipe
+      (8.4) so later builds are incremental.
+- [ ] `TestEndToEnd_HezeGenesisShort` green on stock, using 8.2's exact
+      invocation and log-saving discipline — this also verifies the
+      runfiles tree and the `-tags develop` lore before anything is at
+      stake.
+- [ ] One 2-epoch kurtosis run on STOCK code: proves image build, enclave
+      lifecycle, scrape, and disk headroom end to end, and refreshes the
+      epoch-baseline numbers (first finality slot, latency min/mean/max)
+      that 8.3's headline is measured against — recompute them from this
+      run's scrape rather than quoting older summaries.
+- [ ] Shadow: a binary-build dry-run into the sim workspace's `bin/`
+      (no sim run needed yet) — catches toolchain drift while it costs
+      nothing.
+- [ ] Disk audit: ≥50 GB free before starting; record the standing
+      cleanup authorization (spent enclaves and Shadow `data*` dirs with
+      committed summaries are disposable) in the executor note so no
+      loop ever blocks on a permission question. `/tmp` is a tmpfs —
+      never point run outputs at it expecting disk.
+- [ ] **The failure baseline, committed.** Run the full `go test` suite
+      set (the "tests that will wake up" list) at `ststlkmp` and commit
+      the failure/flake inventory as a file (`test-baseline.md`).
+      Recorded lore about pre-existing failures goes stale the moment a
+      stack lands — every later triage diffs against THIS file, and any
+      claim "pre-existing" must reproduce in a jj workspace at
+      `ststlkmp` (8.2 lists the expected inventory, including the
+      don't-care-zone failures that are pre-listed rather than fixed).
+- [ ] Gate: all of the above green/committed. Nothing else starts first.
+
+# Phase 1 — the evaluation bench, proven against stock code
+
+The plan's center of gravity: the instruments exist BEFORE the code they
+judge, so every later phase iterates at the second-to-minute tier and
+the expensive runs only ever confirm. Everything in this phase runs
+against stock consensus semantics; under identity configs the finality
+instruments assert epoch progression, and their round assertions arm in
+P3 by flipping the config, not the code.
+
+## P1.1 The in-process chain bench (replaces the mythical "3-slot smoke")
+
+A Go test-side harness (its natural home is a `testing/`-style helper
+package usable from `forkchoice/doubly-linked-tree` and `blockchain`
+tests) that drives REAL components — the doubly-linked-tree store,
+`transition.ProcessSlots`, insert/prune/tick — through ~100 simulated
+slots at 8/32 in well under a minute, no networking, no EL:
+
+- [ ] Per slot: build a block on the head, insert it (state and
+      forkchoice both), run the tick (`NewSlot`), advance J&F through
+      the real state transition with full synthetic participation.
+- [ ] Standing assertions, every slot: `InsertNode` returns no error;
+      `dependentRootForEpoch(head, currentEpoch−1)` RESOLVES (the
+      reachability assertion — this line is what catches the
+      prune-wedge class in seconds); after the warmup, justified and
+      finalized advance one unit per boundary with the finalized unit
+      trailing by exactly one; the advance counters (5.2) move once per
+      boundary once they exist.
+- [ ] Two modes: identity (rounds == epochs — green on stock from day
+      one) and 8/32 (on stock this still asserts per-EPOCH J&F; after
+      P3 the same run asserts per-ROUND, warmup per 2.2). The mode flip
+      is config, so the bench needs no edits when the semantics land.
+- [ ] The bench is a phase gate from P2 on; keep it under ~30 s so it
+      runs on every iteration, not once per phase.
+
+## P1.2 Instruments and delivery fixes (= step 7, executed here)
+
+Step 7 is written as the reference for this work and EXECUTES now, on
+stock code: the subscription buffer (7.1), the queue-key lifecycle
+(7.2), the admission/wake-up predicate pair (7.3), the drain on every
+import path (7.4), and the full instrumentation set (7.5 — labeled drop
+counters, the per-vote ledger, votetally reconciliation, the
+undeliverable counter in the scrape, the window-scoped summarizer).
+Three of the four delivery bugs pre-date this plan; the instruments
+land first and the strict gate flushes them out.
+
+## P1.3 The finality evaluators (= 5.3's evaluators, built here)
+
+`FinalizationOccursInRounds` and `JustificationAdvancesEveryRound`
+(spec in 5.3) are built and wired now. Under identity they are the
+stock finality assertions restated; they start asserting rounds when
+P3 flips the e2e config. Building them here means P3's first full e2e
+already carries its own judge.
+
+## P1.4 The phase gate
+
+- [ ] `TestEndToEnd_HezeGenesisShort` on stock, ledger flag ON, then
+      votetally over the saved node logs: **every window sample exactly
+      1.00, zero unaccounted seats.** This gate is EXPECTED to fail on
+      the first run — the pre-existing losses (7.1's buffer, 7.2's
+      queue race, 7.4's proposer drain) are found and fixed here, at 3
+      minutes per iteration, before any consensus edit exists. The gate
+      loops fix→run until exactly clean; the bar is not interpretable
+      (steering trigger (c) if anyone is tempted).
 
 ---
 
@@ -233,10 +384,10 @@ to `primitives.Epoch` today.
       implementation, and all callers — so the compiler forces the
       conversion at every one of the ~12 epoch-typed consumers (2.6).
 - [ ] `core/time.CurrentRound` / `PrevRound` (mirroring
-      `CurrentEpoch`/`PrevEpoch`, floor at round 0) ship in THIS stack —
+      `CurrentEpoch`/`PrevEpoch`, floor at round 0) ship in THIS phase —
       without them every `Target.Epoch == time.CurrentEpoch(st)` site in
       `core/` would need a bare cast. `CanProcessRound` and the
-      `ProcessRound` hook stay in stack B.
+      `ProcessRound` hook stay in P3 (step 2).
 
 ## 0.3 The compile-error sweep IS the audit
 
@@ -276,9 +427,9 @@ Checkpoint is shared by all forks. The rule for fixing each error:
   (the legacy ring buffer; add a `farFutureRound` sentinel with
   `FarFutureEpoch`'s value in the right unit).
 
-- [ ] Landing: stack A (see "Commit structure") — the tree does not
-      compile with the retype alone until the sweep is complete, so the
-      retype change must contain the full sweep, and the sweep executes
+- [ ] Landing: P2's sweep change (see "Phase structure") — the tree
+      does not compile with the retype alone until the sweep is
+      complete, so the retype change must contain the full sweep, and the sweep executes
       the mechanical halves of 1.4, 2.5, 2.6, 3.2-3.6, and 4.0-4.3 using
       those sections as the per-site conversion guide. Blast radius:
       ~108 non-test `Target/Source.Epoch` references plus ~117
@@ -291,7 +442,7 @@ Checkpoint is shared by all forks. The rule for fixing each error:
       the executor note.
 - [ ] New files need BUILD.bazel entries — run gazelle on every touched
       package and CHECK the packages whose imports changed without new
-      files: the stack-A sweep adds a `core/helpers` import to
+      files: the P2 sweep adds a `core/helpers` import to
       `beacon-chain/sync/initial-sync/service.go`, and a missing bazel
       dep there fails only at the bazel e2e build, not `go build`.
 - [ ] Accept: `go build ./...` green; full test suite green with zero
@@ -517,12 +668,12 @@ permanent wedge.
       entirely in rounds — the `+2` tolerance becomes two ROUNDS; note in
       the change description that this tightens the wall-clock window on
       the devnet by design (checkpoints advance per round). This is the
-      one BEHAVIORAL consequence inside stack A, and it invalidates one
+      one BEHAVIORAL consequence inside P2, and it invalidates one
       fixture: `TestGoldfishWalk_ColdStarts`' checkpoint-sync subtest
       pins "epoch 1" against a wall clock at round 4, which is
       self-inconsistent under round viability — restate the fixture as
       what a checkpoint-synced node actually holds. The only expectation
-      edit in the stack; every other suite is untouched.
+      edit in the phase; every other suite is untouched.
 - [ ] The wall-clock argument threaded into viability comes from
       `slots.EpochsSinceGenesis` in BOTH `store.head()` and
       `ForkChoice.updateBestDescendant` — not on any earlier site list;
@@ -561,8 +712,10 @@ permanent wedge.
       1.4 fixture restatement as the only expectation edit. The two known
       pre-existing blockchain failures (`TestStore_NoViableHead_NewPayload`,
       `TestNoViableHead_Reboot`) stay the only ones.
-- [ ] `go build ./...`, `go vet` on touched packages, then the stack-A
-      gate: `TestEndToEnd_HezeGenesisShort` (8.2's invocation).
+- [ ] `go build ./...`, `go vet` on touched packages, then the P2 gate:
+      the chain bench (P1.1) in identity mode, then
+      `TestEndToEnd_HezeGenesisShort` (8.2's invocation), then the
+      scoped review.
 
 ---
 
@@ -573,7 +726,7 @@ permanent wedge.
 - [ ] `beacon-chain/core/time/slot_epoch.go:126-128` — beside
       `CanProcessEpoch`, add `CanProcessRound(state)`:
       `(state.Slot()+1) % SlotsPerRound == 0`. (`CurrentRound` /
-      `PrevRound` already exist — stack A pulled them forward; do not
+      `PrevRound` already exist — P2 pulled them forward; do not
       re-add.)
 
 ## 2.2 A Heze-only pair; `processEpochGloas` stays byte-identical
@@ -678,7 +831,7 @@ satisfied by placing rotation per-boundary-kind:
       `processJustificationBits` (`:72-85`) needs no edit at all: it
       shifts once per invocation, and the invocation cadence is what
       moved. The 4-bit window now spans 4 rounds. (The mechanical half of
-      this lands inside stack A's sweep; stack B verifies and owns the
+      this lands inside P2's sweep; P3 verifies and owns the
       cadence that invokes it.)
 - [ ] Precompute tests
       (`TestProcessJustificationAndFinalizationPreCompute_*`) stay put
@@ -722,8 +875,10 @@ as fast as before, so the leak arms no earlier than today.
       `AttestationsDelta`). The phase0 path
       (`core/epoch/precompute/reward_penalty.go:73`) is pre-Altair and
       unreachable at Heze — mechanical retype fixes only, say why.
-- [ ] One unit test: delay 0 while finality advances per round; delay
-      counts epochs when it stalls.
+      Rewards/leak fidelity is DON'T-CARE (charter): the conversions
+      above are compile-forced and that is all that is owed — no
+      dedicated tests, no fix iterations if the values look odd; one
+      line in the notes.
 
 ## 2.6 Mixed-units audit, state-internal checkpoint readers
 
@@ -753,17 +908,22 @@ consumer. The full conversion table:
       `checkpointEpoch(*ethpb.Checkpoint)` in `getters_checkpoint.go`
       with a comment naming the relationship — the ONE sanctioned
       duplicate of the helper.
-- [ ] 8/32 unit tests: the activation gate (finalized ROUND 6 unlocks
-      epoch 1, not epoch 6) and the source freshness.
+- [ ] 8/32 unit test: the source freshness (measured path — a stale
+      source is a per-round liveness failure). The activation-gate
+      conversion is compile-forced and lands in the sweep, but registry
+      churn is off the measured path (static-validator devnet):
+      don't-care, no dedicated test.
 
 ## 2.7 Verify
 
-- [ ] Unit ladder (2.2 guard timeline, 2.3, 2.5, 2.6 tests) plus the full
-      `core/...` suites green with zero expectation edits under identity.
-- [ ] 3-slot smoke at 8/32 if a runnable single-node harness exists;
-      otherwise `TestProcessRound`-style unit coverage of the observable
-      (round boundaries process without epoch processing firing
-      mid-epoch) plus the stack-A Short e2e stand as the tier.
+- [ ] Unit ladder (2.2 guard timeline, 2.3, 2.6's source-freshness test)
+      plus the full `core/...` suites green with zero expectation edits
+      under identity.
+- [ ] The P3 gate: the chain bench (P1.1) at 8/32, now asserting
+      per-ROUND progression — this is the seconds-fast tier that sees
+      the prune-wedge class — then the Short e2e (slot-24 justification
+      witnessed live), then the plan's first FULL e2e with the round
+      evaluators, then the scoped review.
 
 ---
 
@@ -982,31 +1142,33 @@ execution time:
       a round-keyed finality guard with an epoch-keyed `EpochStart`
       rewind; the rewind becomes `RoundStart` so it cannot land 16+
       slots below the finalized round the guard just cleared.
-- [ ] The doppelganger triple: `validator/client/validator.go:501`
-      (sends the stored attestation target, now a `Round` after 0.2),
-      `rpc/prysm/v1alpha1/validator/status.go:369` (the `+2 <
-      headEpoch` recency gate), `validator/client/beacon-api/
-      doppelganger.go:56-117` (REST twin). **The gate and the evidence
-      must use the SAME unit**: the evidence (participation arrays,
-      liveness for `currentEpoch`/`currentEpoch−1`) is epoch machinery,
-      so the checkpoint side of the gate converts via
-      `helpers.CheckpointEpoch` and the comparison stays in epochs. A
-      gate in rounds (2 rounds = 16 slots) against epoch-wide evidence
-      flags a validator's own 3-round-old attestation as a duplicate and
-      refuses to start it — a false positive no e2e catches (the e2e
-      asserts a duplicate IS found). 8/32 unit test on both gRPC and
-      REST paths: a validator with a 3-round-old attestation is NOT its
-      own doppelganger.
-- [ ] Weak subjectivity — producer and consumer must agree on the unit:
-      `core/helpers/weak_subjectivity.go:161` converts via 2.6;
-      `rpc/prysm/beacon/handlers.go:43-47` (`GetWeakSubjectivity`, the
-      prysmctl source) must EMIT the checkpoint's round, since
-      `ParseWeakSubjectivityInputString` interprets the flag's value as
-      a round feeding `RoundStart`. An epoch-valued emission makes the
-      operator-pasted `--weak-subjectivity-checkpoint` search a
-      4×-wrong window → `errWSBlockNotFoundInEpoch` → node exits.
-      Unit test: the emitted string round-trips through the parser to
-      the same block.
+- [ ] The doppelganger triple — **DON'T-CARE, record-only** (charter:
+      doppelganger correctness is off the measured path; nothing in the
+      verification ladder restarts a validator). The sweep makes the
+      mechanical retype fixes (`validator/client/validator.go:501`
+      sends a `Round` after 0.2; the `+2 < headEpoch` gate at
+      `rpc/prysm/v1alpha1/validator/status.go:369` and the REST twin
+      compile against it). KNOWN DEFECT, stated so nobody diagnoses it
+      fresh: after the mechanical fix the recency gate counts rounds
+      (16 slots at 8/32) while its evidence (participation arrays,
+      liveness) stays epoch-wide, so a validator restarting after ≥2
+      rounds can flag its own old attestation and refuse to start.
+      Symptom: `DuplicateExists` on a restart that should be clean. Do
+      NOT fix, do not investigate, no test — one line in the notes.
+      (The clean fix, for whenever doppelganger enters the measured
+      path: convert the checkpoint side via `helpers.CheckpointEpoch`
+      so gate and evidence share the epoch unit.)
+- [ ] Weak subjectivity — **DON'T-CARE, record-only** (operator tooling;
+      the checkpoint-sync e2e uses `--checkpoint-sync-url`, never the
+      WS flag). Sweep-mechanical only:
+      `core/helpers/weak_subjectivity.go:161` converts via 2.6 because
+      the compiler forces it. KNOWN DEFECT, stated: `GetWeakSubjectivity`
+      (`rpc/prysm/beacon/handlers.go:43-47`, the prysmctl source) emits
+      an epoch while `ParseWeakSubjectivityInputString` reads the flag
+      as a round feeding `RoundStart` — a pasted
+      `--weak-subjectivity-checkpoint` searches a 4×-wrong window and
+      exits with `errWSBlockNotFoundInEpoch`. Symptom recognized = one
+      line in the notes; no fix, no round-trip test, no brief.
 
 ## 4.1 blockchain
 
@@ -1128,7 +1290,7 @@ moves.
 
 ## 5.1 Log fields — one grep-driven checklist
 
-- [ ] Run the grep over the finished stack-A tree; for every hit, relabel
+- [ ] Run the grep over the finished P2 tree; for every hit, relabel
       (`*Epoch` → `*Round`) or convert, and list the full set in the
       executor note. Expect ~13 relabel sites and ~14 checked-and-left
       epoch-keyed sites. Worked examples: `blockchain/log_helpers.go:115,
@@ -1198,13 +1360,15 @@ moves.
 
 - [ ] ChainHead (`rpc/core/beacon.go`) carries rounds in its retyped
       fields; one comment at the construction site names the unit. The
-      REST twin must MATCH: `validator/client/beacon-api/
-      beacon_api_beacon_chain_client.go` builds the same ChainHead from
-      string responses — parse the checkpoint values as ROUNDS (a
-      `parseRound` helper) and derive the `*Slot` fields with
-      `slots.RoundStart`, the symmetric twin of `rpc/core/beacon.go` —
-      an `EpochStart` there makes every derived slot 4× too large at
-      8/32.
+      REST twin (`validator/client/beacon-api/
+      beacon_api_beacon_chain_client.go`, which rebuilds ChainHead from
+      string responses) is **DON'T-CARE, record-only** — every
+      validator in the ladder speaks gRPC. KNOWN DEFECT, stated: it
+      parses the checkpoint values as epochs and derives `*Slot` via
+      `EpochStart`, 4× too large at 8/32. Sweep-mechanical fixes only
+      (whatever the retype forces); the value-level fix (`parseRound` +
+      `slots.RoundStart`, mirroring `rpc/core/beacon.go`) is noted for
+      whenever a REST validator enters the measured path.
 - [ ] **Verifying that justification/finalization is PROGRESSING is a
       stated requirement (user, 2026-08-21), not a nice-to-have.**
       Asserted at every ladder tier:
@@ -1215,7 +1379,9 @@ moves.
         warmup and the finalized round trails by exactly one — a stalled
         round is a failure, not a note.
       - e2e: two evaluators in `testing/endtoend/evaluators/`
-        (`finality_rounds.go`). `FinalizationOccursInRounds(epoch)` —
+        (`finality_rounds.go`), BUILT IN PHASE 1 (P1.3 — identity-mode
+        green on stock, round assertions arm when P3 flips the config).
+        `FinalizationOccursInRounds(epoch)` —
         the rounds twin of `finalizationOccurs` (`finality.go:18-61`):
         finalized round == wall-clock round − 2 and justified ==
         wall-clock round − 1 in steady state, wall-clock round computed
@@ -1248,7 +1414,11 @@ moves.
 
 Slashing — the consensus predicates, surround detection, the slasher, and
 EIP-3076 local protection — is explicitly a non-goal. Take the easiest
-path: **no behavioral change.**
+path: **no behavioral change.** This zone is on the charter's don't-care
+list in its hardest form: whatever its tests do after the mechanical
+retype, their failures JOIN THE RECORDED BASELINE (8.2) — no
+investigation, no fix iterations, no flake-chasing; a slasher test that
+fails intermittently gets one line in the notes and a baseline entry.
 
 - [ ] `slashings.IsSurround` (`proto/prysm/v1alpha1/slashings/
       surround_votes.go:13-15`), `IsSlashableAttestationData`
@@ -1277,7 +1447,7 @@ path: **no behavioral change.**
 
 ---
 
-# Step 7 — goldfish vote delivery and instrumentation (stack D, BEFORE measurement)
+# Step 7 — goldfish vote delivery and instrumentation (EXECUTES AS PHASE 1, on stock code)
 
 The availability-vote stream has a shape nothing else in the client has:
 one unsharded topic, every validator publishing the instant the block
@@ -1286,7 +1456,10 @@ reaches its node, so a whole network's votes (one per seat-holder,
 `decoupled/available_attestation_committee.go:40`; every validator holds
 seats every slot at sim validator counts) land in a burst a few
 milliseconds wide. Four delivery mechanisms must be built for that
-burst, and the stream instrumented so nothing can vanish silently. The
+burst, and the stream instrumented so nothing can vanish silently. All
+of it lands in PHASE 1, against stock code: three of the four losses
+(7.1, 7.2, 7.4) pre-date this plan, and the P1.4 gate is what flushes
+them out at the 3-minute tier before any consensus edit exists. The
 acceptance bar for any clean simulation: **seat fraction exactly 1.00 on
 every window sample of every node, with every expected seat reconciled**
 — anything less is a code bug and loops fix→run until clean. The
@@ -1382,10 +1555,11 @@ a mechanism and a fix.
       (post-warmup), never over every sample — genesis-adjacent slots
       would otherwise print a spurious headline minimum — and lists any
       short slots individually.
-- [ ] Unit ladder + the acceptance loop: after 7.1-7.4 land, one short
-      kurtosis run (8.4 recipe) must read seat fraction exactly 1.00
-      with zero unaccounted seats and both advance counters live before
-      the measurement runs begin.
+- [ ] Unit ladder + the acceptance loop: after 7.1-7.4 land, the P1.4
+      gate (Short e2e with the ledger on, votetally over the saved node
+      logs) must read seat fraction exactly 1.00 with zero unaccounted
+      seats — on STOCK code, before any consensus edit. Kurtosis is not
+      part of this loop; the sims only confirm in P5.
 
 ---
 
@@ -1416,19 +1590,22 @@ a mechanism and a fix.
       per-run scratchpad dir BEFORE any rerun overwrites them; the node
       logs are the diagnosis substrate. (`TEST_TMPDIR`/logs must be on
       real disk if redirected — `/tmp` is a tmpfs here.)
-- [ ] `TestEndToEnd_HezeGenesisShort` (1 epoch) — regression tier, run at
-      the END OF STACK A and after each subsequent stack. With the 2.2
-      guard it witnesses first justification (slot 24) inside its single
-      epoch; finalization (slot 32) needs ~40 slots and is pinned by the
-      unit tier instead.
+- [ ] `TestEndToEnd_HezeGenesisShort` (1 epoch) — regression tier, part
+      of EVERY phase gate from P0 (stock) on. With the 2.2 guard it
+      witnesses first justification (slot 24) inside its single epoch;
+      finalization (slot 32) needs ~40 slots and is pinned by the unit
+      tier and the chain bench instead.
 - [ ] Full `TestEndToEnd_HezeGenesis` (5 epochs, 8/32) with
       `FinalizationOccursInRounds` and `JustificationAdvancesEveryRound`
       (5.3): justification advances every round, finalization latency 2
       rounds; the goldfish evaluators (`AvailableAttestationsFlow`,
       `AttestationsInEveryRound`, `ChainProducesBlocks`) unchanged and
-      green. ~19 minutes; treat a wedge whose errors repeat every slot
-      (`could not get block dependent root`, `block does not exist`) as
-      the 1.3a/1.3b class and check the prune horizon first.
+      green. ~19 minutes, and P3's gate is its FIRST run — one per phase
+      gate thereafter (the run budget). Treat a wedge whose errors
+      repeat every slot (`could not get block dependent root`, `block
+      does not exist`) as the 1.3a/1.3b class: reproduce it on the
+      chain bench (seconds) and check the prune horizon before touching
+      anything else.
 - [ ] Offset sweep (answered question 1): the offset-1 default is every
       run above; the offset-0 arm is a Short-run variant
       (`cfg.FFGTargetOffsetSlots = 0` beside the existing
@@ -1449,16 +1626,18 @@ a mechanism and a fix.
       together; the 0.95 participation floor (`heze_e2e_test.go:165-168`)
       may need re-derivation at per-round targets — measure first, then
       set, and record the number.
-- [ ] Known baseline, established EXACTLY before any triage (run the
-      failing suite in a jj workspace at the pre-plan tip — do not trust
-      recorded counts, which go stale the moment a stack retypes an
-      assertion): `rpc/prysm/v1alpha1/beacon` carries **33** genuinely
-      pre-plan failures (all "bytes array does not have the correct
-      length", across assignments/attestations/committees/validators
-      tests); `TestServer_GetChainHead` is NOT one of them — its
-      `want Epoch, got Round` shape is stack-caused and gets the
-      mechanical assertion fix. Also pre-existing: the two blockchain
-      failures named in 1.5; `rpc/eth/beacon TestSubmitAttestationsV2`
+- [ ] Known baseline: P0 commits it as `test-baseline.md`, and every
+      later triage diffs against that FILE — recorded counts in notes
+      go stale the moment a stack retypes an assertion, so any
+      "pre-existing" claim must reproduce in a jj workspace at the
+      pre-plan tip. Expected inventory: `rpc/prysm/v1alpha1/beacon`
+      carries **33** genuinely pre-plan failures (all "bytes array does
+      not have the correct length", across
+      assignments/attestations/committees/validators tests);
+      `TestServer_GetChainHead` is NOT one of them — its `want Epoch,
+      got Round` shape is stack-caused and gets the mechanical
+      assertion fix. Also pre-existing: the two blockchain failures
+      named in 1.5; `rpc/eth/beacon TestSubmitAttestationsV2`
       post-electra (mock bypasses every changed function; a committed
       `debug.PrintStack()` marks it); flaky-but-clean: the two
       `core/helpers` sync-committee cache tests, one slasher surround
@@ -1466,7 +1645,9 @@ a mechanism and a fix.
       "replacement transaction underpriced" tests, and
       `TestSaveOrphanedOps` (duplicate voluntary-exit fixture) — each
       passes in isolation; verify by rerun before attributing anything
-      new.
+      new. Don't-care-zone failures (slashing above all) are baseline
+      entries by POLICY, not candidates for fixing — the charter's
+      effort-allocation rule.
 
 ## 8.3 Measurement acceptance criteria (the point of the whole plan)
 
@@ -1493,6 +1674,15 @@ Pinned numbers — a run that misses one is a bug hunt, not a shrug:
   gate retreats matching the scenario's late publishers.
 
 ## 8.4 Kurtosis and Shadow recipes, with the harness gotchas
+
+The sims are P5, CONFIRMATORY, and budgeted: **two kurtosis cycles (one
+stock-baseline run — P0's, reused — and one proof run) and one Shadow
+smoke, total.** They assert 8.3's pinned numbers; they are never a
+debugging loop. If a confirmatory run misses a pinned number, the
+failure is reproduced at a cheap tier first — chain bench or Short e2e,
+adding whatever instrument is missing to make that reproduction
+possible — and only then fixed; a third kurtosis cycle is a decision
+brief, not a habit.
 
 - [ ] Kurtosis: the run-02/05 shape scaled small for the short runs —
       6 nodes, 6 s slots, 32-slot epochs, `SLOTS_PER_ROUND: 8`, ~4
@@ -1540,7 +1730,10 @@ Pinned numbers — a run that misses one is a bug hunt, not a shrug:
 | `f.votes` + `ProcessAttestation` epoch granularity | pre-Heze head path only; goldfish never reads it (plan-next 4.4) |
 | Pool pruning epoch windows (`prune_expired.go`) | retention only; packing filters (3.6) gate inclusion |
 | Phase0/pre-Altair attestation + reward paths | unreachable at Heze (version dispatch at `transition.go:337`) |
-| All of slashing: predicates, slasher, EIP-3076 gate | non-goal (user 2026-08-21); unit-agnostic comparisons keep working on round values; see step 6 |
+| All of slashing: predicates, slasher, EIP-3076 gate | non-goal (user 2026-08-21); unit-agnostic comparisons keep working on round values; test failures join the baseline by policy; see step 6 |
+| Doppelganger gate/evidence unit split | don't-care, record-only: known false-positive on restart after ≥2 rounds (4.0); off the measured path |
+| Weak-subjectivity producer/consumer unit mismatch | don't-care, record-only: pasted WS checkpoint exits the node (4.0); operator tooling, off the measured path |
+| REST ChainHead twin's epoch parsing | don't-care, record-only: derived slots 4× too large at 8/32 (5.3); the ladder speaks gRPC |
 | Gossip attestation propagation window | wire acceptance is slot-based and unchanged; state acceptance narrows via 3.3 — wire behavior must stay real (task charter) |
 | db/kv checkpoint save/load, state schema, SSZ shapes | value-carriers; no field type or count changes anywhere in this plan |
 | `processEpochGloas` | byte-identical; live in the 496-case spectest set; Heze gets its own pair (2.2) |
@@ -1551,7 +1744,9 @@ Pinned numbers — a run that misses one is a bug hunt, not a shrug:
 
 Under identity the expectation-edit count is: ONE fixture restatement
 (the 1.4 goldfish cold-start subtest, by design) plus the 5.1 label
-strings — everything else zero. The suites to RUN and watch:
+strings — everything else zero. Every suite result diffs against P0's
+committed `test-baseline.md`, never against remembered counts. The
+suites to RUN and watch:
 `core/helpers`, `core/blocks`, `core/altair`, `core/electra`,
 `core/epoch/precompute`, `core/transition`,
 `forkchoice/doubly-linked-tree`, `blockchain` (`-tags develop`), `sync`,
@@ -1604,6 +1799,8 @@ horizon contract from the start (1.3a).
 
 Additional stated requirements: per-round J/F PROGRESSION asserted at
 every verification tier; vote accounting on clean simulations reads
-exactly 100%, reconciled seat by seat (step 7); first finality lands at
-slot 32 on the devnet (2.2's guard) so short runs measure finality
-without an epoch-scale warmup. Nothing blocks execution.
+exactly 100%, reconciled seat by seat (step 7, executed as phase 1);
+first finality lands at slot 32 on the devnet (2.2's guard) so short
+runs measure finality without an epoch-scale warmup; correctness effort
+concentrates on the measured path only, with the charter's don't-care
+list binding (effort-allocation rule). Nothing blocks execution.

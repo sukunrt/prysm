@@ -124,3 +124,41 @@ Ledger items NOT in the dictated categories (flagged per method):
 - the un-executed plan items (spectest survey, SlotStartFFG variant)
   and the evaluator `AfterNthEpoch(3)` margin note;
 - `kormpkkn`/`lttlxurz` (style/hygiene; no plan knowledge missing).
+
+## Revision 2026-08-22: the execution critique folded in
+
+`plan-complete.md` / `plan-complete-detailed.md` were revised the same
+day to incorporate `plan-execution-critique.md` (the four-hypothesis
+verdicts) and two further user directives. The technical content —
+every classified miss above — is unchanged; what moved is structure and
+effort policy:
+
+- **Phase structure replaces the commit-stack framing**: P0 preflight →
+  P1 bench-on-stock → P2 retype+target+lifetime (old stack A) → P3
+  cadence+guard (old stack B) → P4 consumers/reporting/variants (old
+  stack C + remainders) → P5 confirmatory measurement. Every phase ends
+  at a runnable chain-tier gate.
+- **The eval bench is the centerpiece** (motivation: the campaign lacked
+  a consistent eval bench): a new in-process chain bench (P1.1,
+  seconds, replaces the never-built "3-slot smoke" rung) and all of
+  step 7's instruments/delivery fixes execute in P1 against STOCK code
+  — the P1.4 gate is expected to fail on stock, flushing the three
+  pre-existing vote-loss bugs before any consensus edit.
+- **Kurtosis and Shadow moved to the end, budgeted** (user directive):
+  two kurtosis cycles + one Shadow run in P5, confirmatory only;
+  expensive-tier failures reproduce at a cheap tier before any fix.
+- **Steering protocol and lane hygiene** promoted into the binding
+  rules: four decision-brief triggers, stop-the-line definition,
+  45-minute heartbeat, no fire-and-forget watchers, durable artifacts
+  committed in the repo.
+- **The don't-care list made charter-level** (user directive): research
+  prototype; correctness effort only on the measured path. Slashing,
+  rewards/leak fidelity, pre-Heze paths, doppelganger, weak
+  subjectivity, REST fidelity are record-only zones — compile-forced
+  mechanical edits only, defects stated with symptoms in the plan
+  (4.0, 5.3) but explicitly not fixed, their test failures pre-listed
+  in the baseline. Consequence for this ledger's rows: the fixes
+  behind `lrsxwsnk` (doppelganger), `zywurrsr` (weak subjectivity),
+  and the REST half of `uuolmtlr` are now documented as KNOWN DEFECTS
+  rather than prescribed work; the replay is expected NOT to spend
+  cycles there.
