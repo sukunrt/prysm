@@ -70,5 +70,9 @@ func (s *Service) availableAttestationSubscriber(ctx context.Context, msg proto.
 	}
 	// The available attestation is the Goldfish head vote: it is not aggregated
 	// and it is not included in blocks, so forkchoice is its only consumer.
-	return s.cfg.chain.ReceiveAvailableAttestation(ctx, att)
+	if err := s.cfg.chain.ReceiveAvailableAttestation(ctx, att); err != nil {
+		availableAttDropCount.WithLabelValues("forkchoice").Inc()
+		return err
+	}
+	return nil
 }

@@ -49,6 +49,18 @@ var (
 		},
 		[]string{"topic"},
 	)
+	// A Goldfish head vote is gossiped once, during its own slot, so anything
+	// that discards one is a vote missing from that slot's seat fraction for
+	// good. Every such path is named here: the generic gossip counters cannot
+	// tell a queued vote from a dropped one, which is what made run 06's 2.4%
+	// shortfall take two runs to place.
+	availableAttDropCount = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "goldfish_vote_drop_total",
+			Help: "Available attestation head votes discarded before forkchoice, by reason.",
+		},
+		[]string{"reason"},
+	)
 	messageFailedProcessingCounter = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "p2p_message_failed_processing_total",

@@ -116,6 +116,12 @@ def parse(path):
             scalars[name] = value
         elif name == "p2p_peer_count" and 'Connected' in labels:
             scalars[name] = value
+        elif name == "goldfish_vote_drop_total":
+            # One series per reason a head vote was discarded; the summary wants
+            # them named, so key the scalar by reason.
+            m = re.search(r'reason="([^"]*)"', labels)
+            if m:
+                scalars[f"{name}:{m.group(1)}"] = value
         elif name.endswith("_count") or name.endswith("_sum"):
             scalars[name] = scalars.get(name, 0.0) + value
     if ts is not None:
@@ -313,6 +319,19 @@ def main():
               f"min {min(seat_all):.2f}, mean "
               f"{sum(seat_all) / len(seat_all):.3f}, max {max(seat_all):.2f}, "
               f"samples {len(seat_all)}, below 1.0 {below}")
+    # Why a head vote never reached forkchoice. A vote is gossiped once, during
+    # its own slot, so each of these is a seat missing from that slot.
+    reasons = sorted({k for s in per_node.values() for (_, sc, _) in s
+                      for k in sc if k.startswith("goldfish_vote_drop_total:")})
+    if reasons:
+        print("\n### Head votes dropped over the window, by reason\n")
+        print("| node | " + " | ".join(r.split(":", 1)[1] for r in reasons) +
+              " |")
+        print("|---" * (len(reasons) + 1) + "|")
+        for name, ((_, sc0, _), (_, sc1, _)) in windows.items():
+            cells = [f"{sc1.get(r, 0) - sc0.get(r, 0):.0f}" for r in reasons]
+            print(f"| {name} | " + " | ".join(cells) + " |")
+
     # Every slot that heard from less than the whole committee, so a shortfall
     # can be read as warm-up, as a few bad slots, or as a steady drip.
     print("\n### Slots below a full seat fraction\n")

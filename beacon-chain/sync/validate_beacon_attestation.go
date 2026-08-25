@@ -567,11 +567,13 @@ func (s *Service) validateAvailableAttestation(
 	data := att.GetData()
 	// Do not process slot 0 attestations.
 	if data.Slot == 0 {
+		availableAttDropCount.WithLabelValues("slot_zero").Inc()
 		return pubsub.ValidationIgnore, nil
 	}
 
 	// only care about current slot
 	if err := helpers.ValidateAvailableAttestationTime(data.Slot, s.cfg.clock.GenesisTime(), earlyAttestationProcessingTolerance); err != nil {
+		availableAttDropCount.WithLabelValues("not_current_slot").Inc()
 		tracing.AnnotateError(span, err)
 		return pubsub.ValidationIgnore, err
 	}
@@ -603,6 +605,9 @@ func (s *Service) validateAvailableAttestation(
 
 	validationRes, err := s.validateAvailableAttWithBlock(ctx, att, blockRoot)
 	if validationRes != pubsub.ValidationAccept {
+		if validationRes == pubsub.ValidationReject {
+			availableAttDropCount.WithLabelValues("signature").Inc()
+		}
 		return validationRes, err
 	}
 
@@ -625,14 +630,16 @@ func (s *Service) validateAvailableAttWithBlock(
 	targetRoot, err := s.cfg.chain.TargetRootForRound(blockRoot, round)
 	if err != nil {
 		// We can reject this, it's an invalid attestation but there might be some reason the peer forwarded this.
-		return pubsub.ValidationIgnore, nil
+		availableAttDropCount.WithLabelValues("target_root").Inc()
+		return pubsub.ValidationIgnore, errors.Wrap(err, "target root for round")
 	}
 	state, err := s.cfg.chain.AttestationTargetState(ctx, &ethpb.Checkpoint{
 		Epoch: round,
 		Root:  targetRoot[:],
 	})
 	if err != nil {
-		return pubsub.ValidationIgnore, nil
+		availableAttDropCount.WithLabelValues("target_state").Inc()
+		return pubsub.ValidationIgnore, errors.Wrap(err, "attestation target state")
 	}
 
 	// This is a goldfish attestation.

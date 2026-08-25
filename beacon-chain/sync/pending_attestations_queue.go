@@ -462,15 +462,13 @@ func pendingAvailableAttsAreEqual(a, b *ethpb.AvailableAttestation) bool {
 func (s *Service) processAvailableAttestation(ctx context.Context, att *ethpb.AvailableAttestation) {
 	blockRoot := bytesutil.ToBytes32(att.GetData().BeaconBlockRoot)
 	res, err := s.validateAvailableAttWithBlock(ctx, att, blockRoot)
-	if err != nil {
-		log.WithError(err).Debug("Pending available attestation failed validation")
-		return
-	}
 	if res != pubsub.ValidationAccept {
-		log.Debug("Pending available attestation was not accepted")
+		// validateAvailableAttWithBlock already named the reason it refused.
+		log.WithError(err).Debug("Pending available attestation was not accepted")
 		return
 	}
 	if err := s.cfg.chain.ReceiveAvailableAttestation(ctx, att); err != nil {
+		availableAttDropCount.WithLabelValues("forkchoice").Inc()
 		log.WithError(err).Debug("Could not record pending available attestation")
 		return
 	}
