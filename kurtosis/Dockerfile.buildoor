@@ -1,0 +1,89 @@
+# ethpandaops/buildoor for the decoupled fork, patched three ways.
+#
+# Upstream's image is unusable here for one reason and bids nothing for two
+# more; each patch is asserted in its own build stage, so a drifted source
+# fails the image build instead of the run.
+#
+#  1. Engine version. buildoor maps Heze -> Bogota and calls
+#     engine_forkchoiceUpdatedV5. Heze is CL-only on this fork: the EL stays on
+#     Amsterdam/V4 forever and the pinned geth answers -32601. Run 13 died here
+#     with 330 failed builds and 0 bids. Only EngineVersion is remapped;
+#     BeaconVersion still parses our "version":"heze" containers verbatim.
+#  2/3. Activation. buildoor mirrors prysm's IsActiveBuilder in two independent
+#     places and gates the bid path on BOTH -- Registry.AnyActive() (read by
+#     Scheduler.ProcessTick) and Service.IsRegistered() (which decides whether
+#     the run loop ticks the scheduler at all; computeRegistrationState has its
+#     own inline copy of the test). A genesis-seeded builder has
+#     DepositEpoch = 0 and at genesis finalizedEpoch = 0, so 0 < 0 is false and
+#     both gates hold. The scheduler then returns silently: payloads are still
+#     built and dispatched every slot, and nothing in the logs says why no bid
+#     is made. Patching one gate alone changes nothing observable. Scope
+#     matches prysm's own exemption: deposit-epoch-0 builders only, every later
+#     deposit still waits for finalization.
+#
+# Read the "state=" field on buildoor's "Builder found in beacon state" line:
+# "registered" is the only value that means the bid loop will run.
+
+FROM golang:1.26-bookworm AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc libc6-dev git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Recovered from the run-13 image's binary with `go version -m` (vcs.revision);
+# upstream's image carries no docker labels, so nothing else records it.
+ARG BUILDOOR_REV=8ea9e96fdd973d1b1cb9c88410ee0c92423c337a
+RUN git clone https://github.com/ethpandaops/buildoor.git . \
+    && git checkout "$BUILDOOR_REV"
+
+# Heze -> Amsterdam, in EngineVersion only. Anchored on the full return
+# statement: the bare token DataVersionBogota also matches
+# "case enginev.DataVersionBogota:" in BeaconVersion. The assertion counts the
+# Amsterdam return, which is what distinguishes patched from stock -- a
+# `grep -q DataVersionAmsterdam` passes on unpatched source.
+RUN sed -i 's/^\(\s*\)return enginev\.DataVersionBogota, nil$/\1return enginev.DataVersionAmsterdam, nil/' \
+        pkg/chain/engineversion.go \
+    && grep -c 'return enginev\.DataVersionAmsterdam, nil' pkg/chain/engineversion.go | grep -qx 2 \
+    && ! grep -q 'return enginev\.DataVersionBogota, nil' pkg/chain/engineversion.go
+
+# Gate 1 -- Registry.AnyActive(), read by Scheduler.ProcessTick.
+# NOTE: the s/// delimiter must not be "|"; the replacement contains "||".
+RUN sed -i 's@^\treturn info\.DepositEpoch < finalizedEpoch && info\.WithdrawableEpoch == FarFutureEpoch$@\treturn (info.DepositEpoch == 0 || info.DepositEpoch < finalizedEpoch) \&\& info.WithdrawableEpoch == FarFutureEpoch@' \
+        pkg/chain/constants.go \
+    && grep -q 'info.DepositEpoch == 0 || info.DepositEpoch < finalizedEpoch' pkg/chain/constants.go
+
+# Gate 2 -- Service.IsRegistered(), one level up from the scheduler tick.
+RUN sed -i 's@^\tif info\.DepositEpoch < uint64(finalizedEpoch) {@\tif info.DepositEpoch == 0 || info.DepositEpoch < uint64(finalizedEpoch) {@' \
+        pkg/p2p_bidder/service.go \
+    && grep -q 'info.DepositEpoch == 0 || info.DepositEpoch < uint64(finalizedEpoch)' pkg/p2p_bidder/service.go
+
+# The web UI is dead weight here, and building it drags in a node toolchain.
+# `make build` runs the npm build only when static/index.html is missing, and
+# webui.go's //go:embed static/* needs at least one file to compile.
+RUN mkdir -p pkg/webui/static && printf '<!doctype html><title>buildoor</title>\n' \
+    > pkg/webui/static/index.html
+
+RUN make build VERSION="$BUILDOOR_REV" RELEASE=decoupled
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -r -s /bin/false buildoor
+USER buildoor
+
+COPY --from=builder /app/bin/buildoor /usr/local/bin/buildoor
+
+# Upstream ships no labels, so the run has no way to tell one buildoor image
+# from another. Ours records what it is.
+LABEL buildoor.rev=8ea9e96fdd973d1b1cb9c88410ee0c92423c337a
+LABEL buildoor.patch=amsterdam-v4+genesis-activation
+
+EXPOSE 9000
+
+ENTRYPOINT ["buildoor"]
+CMD ["run"]
