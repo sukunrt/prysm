@@ -123,6 +123,45 @@ func withEvaluators(evals ...types.Evaluator) types.E2EConfigOpt {
 	}
 }
 
+// hezeELWitness builds the one-epoch execution-layer witness runs: no sync
+// or deposit phase, plus the given EL evaluators. They exist because every
+// other evaluator passes on a chain that carries no transactions at all, or
+// whose every transaction fails with status 0 (as happened when Amsterdam
+// repriced plain transfers past the tools' hardcoded 21000 gas).
+func hezeELWitness(t *testing.T, evals ...types.Evaluator) {
+	cfg := params.E2EMainnetTestConfig()
+	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
+	cfg.SlotsPerRound = 8
+
+	r := e2eMinimal(t, cfg,
+		types.WithEpochs(1),
+		func(c *types.E2EConfig) {
+			c.TestSync = false
+			c.TestDeposits = false
+			c.TestFeature = false
+		},
+		withoutEvaluators(hezeDroppedEvaluators...),
+		withEvaluators(append([]types.Evaluator{ev.ChainProducesBlocks}, evals...)...),
+	)
+	r.run()
+}
+
+// TestEndToEnd_HezeGenesisTransactions: plain transactions are included and
+// at least one value transfer credits its recipient.
+func TestEndToEnd_HezeGenesisTransactions(t *testing.T) {
+	hezeELWitness(t, ev.ELTransactionsCredit)
+}
+
+// TestEndToEnd_HezeGenesisBlobTx: blob transactions land (blob gas consumed).
+func TestEndToEnd_HezeGenesisBlobTx(t *testing.T) {
+	hezeELWitness(t, ev.ELBlobsLand)
+}
+
+// TestEndToEnd_HezeGenesisEL: both execution-layer witnesses together.
+func TestEndToEnd_HezeGenesisEL(t *testing.T) {
+	hezeELWitness(t, ev.ELTransactionsCredit, ev.ELBlobsLand)
+}
+
 // TestEndToEnd_HezeGenesisShort is the cheap shakeout tier of the Heze run: one
 // epoch, no sync or deposit phase, and only the evaluators that fire that early.
 // Three minutes instead of nineteen. It is a smoke test, not a result.

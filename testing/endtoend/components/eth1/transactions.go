@@ -355,7 +355,9 @@ func RandomBlobCellTx(rpc *rpc.Client, sender common.Address, nonce uint64, gasP
 		}
 	}
 
-	gas := uint64(100000)
+	// Amsterdam repriced state access (~207k for a bare transfer); 100k gas
+	// made every blob transaction fail before its blob was ever counted.
+	gas := uint64(500_000)
 	to := randomAddress()
 	// Generate random EVM bytecode (similar to what tx-fuzz RandomCode did)
 	code := generateRandomEVMCode(mathRand.Intn(128)) // #nosec G404
@@ -450,7 +452,9 @@ func RandomBlobTx(rpc *rpc.Client, sender common.Address, nonce uint64, gasPrice
 			}
 		}
 	}
-	gas := uint64(100000)
+	// Amsterdam repriced state access (~207k for a bare transfer); 100k gas
+	// made every blob transaction fail before its blob was ever counted.
+	gas := uint64(500_000)
 	to := randomAddress()
 	// Generate random EVM bytecode (similar to what tx-fuzz RandomCode did)
 	code := generateRandomEVMCode(mathRand.Intn(128)) // #nosec G404
@@ -889,10 +893,14 @@ func generateRandomEVMCode(maxLen int) []byte {
 // randomValidTx generates a random valid transaction
 // This replaces tx-fuzz's RandomValidTx functionality
 func randomValidTx(sender common.Address, nonce uint64, gasPrice, chainID *big.Int, forceAccessList bool) (*types.Transaction, error) {
-	gas := uint64(21000 + mathRand.Intn(100000)) // #nosec G404
+	// Amsterdam repriced state access: a plain transfer needs ~207k gas, so
+	// the pre-Amsterdam 21000 base silently fails every transaction.
+	gas := uint64(500_000 + mathRand.Intn(100_000)) // #nosec G404
 	to := randomAddress()
 	code := generateRandomEVMCode(mathRand.Intn(256)) // #nosec G404
-	value := big.NewInt(0)
+	// A nonzero value makes these transactions witness value movement: the
+	// el_health evaluator requires credited transfers on chain.
+	value := big.NewInt(1_000_000_000)
 
 	// Randomly choose transaction type
 	// 0: Legacy, 1: AccessList, 2: DynamicFee
