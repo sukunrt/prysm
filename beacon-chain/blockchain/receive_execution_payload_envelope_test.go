@@ -2,7 +2,9 @@ package blockchain
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed"
 	statefeed "github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/state"
@@ -11,6 +13,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/execution"
 	mockExecution "github.com/OffchainLabs/prysm/v7/beacon-chain/execution/testing"
 	state_native "github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
@@ -23,6 +26,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
+	logTest "github.com/sirupsen/logrus/hooks/test"
 )
 
 func gloasEnvelopeFixture(t *testing.T, blockRoot [32]byte) (*ethpb.BeaconStateGloas, *ethpb.SignedBeaconBlockGloas, *ethpb.SignedExecutionPayloadEnvelope) {
@@ -295,4 +299,47 @@ func countStateEventsByType(ch chan *feed.Event) map[feed.EventType]int {
 			return got
 		}
 	}
+}
+
+func TestLogPayloadEnvelope_QuietUnlessTheLedgerIsOn(t *testing.T) {
+	hook := logTest.NewGlobal()
+	st, err := util.NewBeaconStateGloas(func(s *ethpb.BeaconStateGloas) error {
+		s.LatestExecutionPayloadBid.BlobKzgCommitments = [][]byte{
+			bytesutil.PadTo([]byte{0x01}, 48),
+			bytesutil.PadTo([]byte{0x02}, 48),
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	envelope, err := blocks.WrappedROExecutionPayloadEnvelope(&ethpb.ExecutionPayloadEnvelope{
+		BuilderIndex:          3,
+		BeaconBlockRoot:       bytesutil.PadTo([]byte{0xab}, 32),
+		ParentBeaconBlockRoot: make([]byte, 32),
+		Payload: &enginev1.ExecutionPayloadGloas{
+			SlotNumber:   6,
+			GasUsed:      21000,
+			Transactions: [][]byte{{0x01, 0x02}, {0x03}},
+		},
+	})
+	require.NoError(t, err)
+	payload, err := envelope.Execution()
+	require.NoError(t, err)
+
+	s := &Service{genesisTime: time.Now()}
+	s.logPayloadEnvelope(envelope, payload, st, time.Now())
+	require.Equal(t, 0, len(hook.AllEntries()))
+
+	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
+	defer reset()
+	s.logPayloadEnvelope(envelope, payload, st, time.Now())
+	require.Equal(t, 1, len(hook.AllEntries()))
+	entry := hook.LastEntry()
+	require.Equal(t, "Payload envelope", entry.Message)
+	require.Equal(t, primitives.Slot(6), entry.Data["slot"])
+	require.Equal(t, primitives.BuilderIndex(3), entry.Data["builderIndex"])
+	require.Equal(t, 2, entry.Data["txCount"])
+	require.Equal(t, payload.SizeSSZ(), entry.Data["payloadBytes"])
+	require.Equal(t, uint64(21000), entry.Data["gasUsed"])
+	require.Equal(t, 2, entry.Data["blobCount"])
+	require.Equal(t, fmt.Sprintf("%#x", envelope.BeaconBlockRoot()), entry.Data["blockRoot"])
 }

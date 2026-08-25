@@ -10,6 +10,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/gloas"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/execution"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
@@ -187,7 +188,49 @@ func (s *Service) ReceiveExecutionPayloadEnvelope(ctx context.Context, signed in
 		"blockHash":  fmt.Sprintf("%#x", bytesutil.Trunc(execution.BlockHash())),
 		"parentHash": fmt.Sprintf("%#x", bytesutil.Trunc(execution.ParentHash())),
 	}).Info("Synced execution payload envelope")
+	s.logPayloadEnvelope(envelope, execution, blockState, start)
 	return nil
+}
+
+// logPayloadEnvelope writes one line per execution payload envelope the node
+// applies. Every delivery route lands here — gossip, the pending queue, a
+// by-root fetch, initial sync, and the proposer's own publish, which never
+// traverses gossip — so the line is one per envelope, not one per route.
+//
+// arrived is milliseconds into the envelope's own slot, the same clock basis as
+// the vote ledger's lines, so a run can ask when a slot's payload landed
+// relative to the votes cast on it. payloadBytes is the SSZ-encoded size of the
+// execution payload, and blobCount comes from the bid the block committed to.
+//
+// Off unless --goldfish-vote-ledger is set.
+func (s *Service) logPayloadEnvelope(
+	envelope interfaces.ROExecutionPayloadEnvelope,
+	payload interfaces.ExecutionData,
+	st state.BeaconState,
+	arrived time.Time,
+) {
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
+	txs, err := payload.Transactions()
+	if err != nil {
+		log.WithError(err).Debug("Could not read the transactions of a payload envelope")
+	}
+	root := envelope.BeaconBlockRoot()
+	slotStart := slots.UnsafeStartTime(s.genesisTime, envelope.Slot())
+	fields := logrus.Fields{
+		"slot":         envelope.Slot(),
+		"blockRoot":    fmt.Sprintf("%#x", root),
+		"builderIndex": envelope.BuilderIndex(),
+		"arrivedMs":    arrived.Sub(slotStart).Milliseconds(),
+		"txCount":      len(txs),
+		"payloadBytes": payload.SizeSSZ(),
+		"gasUsed":      payload.GasUsed(),
+	}
+	if bid, err := st.LatestExecutionPayloadBid(); err == nil && bid != nil {
+		fields["blobCount"] = len(bid.BlobKzgCommitments())
+	}
+	log.WithFields(fields).Info("Payload envelope")
 }
 
 func (s *Service) setHeadFull(root [32]byte) interfaces.ReadOnlySignedBeaconBlock {
