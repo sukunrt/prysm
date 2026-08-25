@@ -85,3 +85,31 @@ func withEvaluators(evals ...types.Evaluator) types.E2EConfigOpt {
 		c.Evaluators = append(c.Evaluators, evals...)
 	}
 }
+
+// TestEndToEnd_HezeGenesisShort is the cheap shakeout tier of the Heze run: one
+// epoch, no sync or deposit phase, and only the evaluators that fire that early.
+// Three minutes instead of nineteen. It is a smoke test, not a result.
+func TestEndToEnd_HezeGenesisShort(t *testing.T) {
+	cfg := params.E2EMainnetTestConfig()
+	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
+	cfg.SlotsPerRound = 8
+
+	r := e2eMinimal(t, cfg,
+		types.WithEpochs(1),
+		func(c *types.E2EConfig) {
+			c.TestSync = false
+			c.TestDeposits = false
+			c.TestFeature = false
+		},
+		withoutEvaluators(
+			ev.VerifyBlockGraffiti.Name,
+			ev.FeeRecipientIsPresent.Name,
+			ev.ValidatorsVoteWithTheMajority.Name,
+			ev.ProcessesDepositsInBlocks.Name,
+			ev.ValidatorSyncParticipation.Name,
+			ev.ActivatesDepositedValidators.Name,
+		),
+		withEvaluators(ev.AvailableAttestationsFlow),
+	)
+	r.run()
+}
