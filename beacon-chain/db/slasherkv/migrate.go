@@ -14,7 +14,7 @@ import (
 
 // Migrate , its corresponding usage and tests can be totally removed once Electra is on mainnet.
 // Previously, the first 8 bytes of keys of `attestation-data-roots` and `proposal-records` buckets
-// were stored as little-endian respectively epoch and slots. It was the source of
+// were stored as little-endian respectively round (then: epoch) and slots. It was the source of
 // https://github.com/prysmaticlabs/prysm/issues/14142 and potentially
 // https://github.com/prysmaticlabs/prysm/issues/13658.
 // To solve this (or these) issue(s), we decided to store the first 8 bytes of keys as big-endian.
@@ -25,12 +25,12 @@ import (
 // is stored in little-endian. We create a new entry with the same value, but with the slot (resp. epoch)
 // part in the key stored as a big-endian.
 // We start the iterate by the highest key and iterate down until we reach the current slot (resp. epoch).
-func (s *Store) Migrate(ctx context.Context, headEpoch, maxPruningEpoch primitives.Round, batchSize int) error {
+func (s *Store) Migrate(ctx context.Context, headRound, maxPruningRound primitives.Round, batchSize int) error {
 	// Migrate attestations.
 	log.Info("Starting migration of attestations. This may take a while.")
 	start := time.Now()
 
-	if err := s.migrateAttestations(ctx, headEpoch, maxPruningEpoch, batchSize); err != nil {
+	if err := s.migrateAttestations(ctx, headRound, maxPruningRound, batchSize); err != nil {
 		return errors.Wrap(err, "migrate attestations")
 	}
 
@@ -40,7 +40,7 @@ func (s *Store) Migrate(ctx context.Context, headEpoch, maxPruningEpoch primitiv
 	log.Info("Starting migration of proposals. This may take a while.")
 	start = time.Now()
 
-	if err := s.migrateProposals(ctx, headEpoch, maxPruningEpoch, batchSize); err != nil {
+	if err := s.migrateProposals(ctx, headRound, maxPruningRound, batchSize); err != nil {
 		return errors.Wrap(err, "migrate proposals")
 	}
 
@@ -49,9 +49,9 @@ func (s *Store) Migrate(ctx context.Context, headEpoch, maxPruningEpoch primitiv
 	return nil
 }
 
-func (s *Store) migrateAttestations(ctx context.Context, headEpoch, maxPruningEpoch primitives.Round, batchSize int) error {
+func (s *Store) migrateAttestations(ctx context.Context, headRound, maxPruningRound primitives.Round, batchSize int) error {
 	done := false
-	var epochLittleEndian uint64
+	var roundLittleEndian uint64
 
 	for !done {
 		count := 0
@@ -64,7 +64,7 @@ func (s *Store) migrateAttestations(ctx context.Context, headEpoch, maxPruningEp
 			c := signingRootsBkt.Cursor()
 			for k, v := c.Last(); k != nil; k, v = c.Prev() {
 				if count >= batchSize {
-					log.WithField("epoch", epochLittleEndian).Info("Migrated attestations")
+					log.WithField("round", roundLittleEndian).Info("Migrated attestations")
 
 					return nil
 				}
@@ -74,42 +74,42 @@ func (s *Store) migrateAttestations(ctx context.Context, headEpoch, maxPruningEp
 					return ctx.Err()
 				}
 
-				// Extract the epoch encoded in the first 8 bytes of the key.
-				encodedEpoch := k[:8]
+				// Extract the round encoded in the first 8 bytes of the key.
+				encodedRound := k[:8]
 
 				// Convert it to an uint64, considering it is stored as big-endian.
-				epochBigEndian := binary.BigEndian.Uint64(encodedEpoch)
+				roundBigEndian := binary.BigEndian.Uint64(encodedRound)
 
-				// If the epoch is smaller or equal to the current epoch, we are done.
-				if epochBigEndian <= uint64(headEpoch) {
+				// If the round is smaller or equal to the current round, we are done.
+				if roundBigEndian <= uint64(headRound) {
 					break
 				}
 
-				// Otherwise, we consider that the epoch is stored as little-endian.
-				epochLittleEndian = binary.LittleEndian.Uint64(encodedEpoch)
+				// Otherwise, we consider that the round is stored as little-endian.
+				roundLittleEndian = binary.LittleEndian.Uint64(encodedRound)
 
 				// Increment the count of migrated items.
 				count++
 
-				// If the epoch is still higher than the current epoch, then it is an issue.
+				// If the round is still higher than the current round, then it is an issue.
 				// This should never happen.
-				if epochLittleEndian > uint64(headEpoch) {
+				if roundLittleEndian > uint64(headRound) {
 					log.WithFields(logrus.Fields{
-						"epochLittleEndian": epochLittleEndian,
-						"epochBigEndian":    epochBigEndian,
-						"headEpoch":         headEpoch,
-					}).Error("Epoch is higher than the current epoch both if stored as little-endian or as big-endian")
+						"roundLittleEndian": roundLittleEndian,
+						"roundBigEndian":    roundBigEndian,
+						"headRound":         headRound,
+					}).Error("Round is higher than the current round both if stored as little-endian or as big-endian")
 
 					continue
 				}
 
-				epoch := primitives.Round(epochLittleEndian)
+				round := primitives.Round(roundLittleEndian)
 				if err := signingRootsBkt.Delete(k); err != nil {
 					return err
 				}
 
 				// We don't bother migrating data that is going to be pruned by the pruning routine.
-				if epoch <= maxPruningEpoch {
+				if round <= maxPruningRound {
 					if err := attRecordsBkt.Delete(v); err != nil {
 						return err
 					}
@@ -117,9 +117,9 @@ func (s *Store) migrateAttestations(ctx context.Context, headEpoch, maxPruningEp
 					continue
 				}
 
-				// Create a new key with the epoch stored as big-endian.
+				// Create a new key with the round stored as big-endian.
 				newK := make([]byte, 8)
-				binary.BigEndian.PutUint64(newK, uint64(epoch))
+				binary.BigEndian.PutUint64(newK, uint64(round))
 				newK = append(newK, k[8:]...)
 
 				// Store the same value with the new key.
@@ -139,20 +139,20 @@ func (s *Store) migrateAttestations(ctx context.Context, headEpoch, maxPruningEp
 	return nil
 }
 
-func (s *Store) migrateProposals(ctx context.Context, headEpoch, maxPruningEpoch primitives.Round, batchSize int) error {
+func (s *Store) migrateProposals(ctx context.Context, headRound, maxPruningRound primitives.Round, batchSize int) error {
 	done := false
 
 	if !done {
 		count := 0
 
 		// Compute the max pruning slot.
-		maxPruningSlot, err := slots.RoundEnd(maxPruningEpoch)
+		maxPruningSlot, err := slots.RoundEnd(maxPruningRound)
 		if err != nil {
 			return errors.Wrap(err, "compute max pruning slot")
 		}
 
 		// Compute the head slot.
-		headSlot, err := slots.RoundEnd(headEpoch)
+		headSlot, err := slots.RoundEnd(headRound)
 		if err != nil {
 			return errors.Wrap(err, "compute head slot")
 		}
@@ -178,12 +178,12 @@ func (s *Store) migrateProposals(ctx context.Context, headEpoch, maxPruningEpoch
 				// Convert it to an uint64, considering it is stored as big-endian.
 				slotBigEndian := binary.BigEndian.Uint64(encodedSlot)
 
-				// If the epoch is smaller or equal to the current epoch, we are done.
+				// If the slot is smaller or equal to the current slot, we are done.
 				if slotBigEndian <= uint64(headSlot) {
 					break
 				}
 
-				// Otherwise, we consider that the epoch is stored as little-endian.
+				// Otherwise, we consider that the slot is stored as little-endian.
 				slotLittleEndian := binary.LittleEndian.Uint64(encodedSlot)
 
 				// If the slot is still higher than the current slot, then it is an issue.
@@ -208,7 +208,7 @@ func (s *Store) migrateProposals(ctx context.Context, headEpoch, maxPruningEpoch
 					continue
 				}
 
-				// Create a new key with the epoch stored as big-endian.
+				// Create a new key with the slot stored as big-endian.
 				newK := make([]byte, 8)
 				binary.BigEndian.PutUint64(newK, uint64(slot))
 				newK = append(newK, k[8:]...)

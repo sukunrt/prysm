@@ -640,7 +640,7 @@ func attestationFields(att ethpb.Att) logrus.Fields {
 		"slot":            att.GetData().Slot,
 		"index":           att.GetData().CommitteeIndex,
 		"targetRoot":      fmt.Sprintf("%x", att.GetData().Target.Root),
-		"targetEpoch":     att.GetData().Target.Epoch,
+		"targetRound":     att.GetData().Target.Epoch,
 		"beaconBlockRoot": fmt.Sprintf("%x", att.GetData().BeaconBlockRoot),
 	}
 }

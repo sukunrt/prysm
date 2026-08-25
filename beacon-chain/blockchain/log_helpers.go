@@ -108,11 +108,18 @@ func logBlockSyncStatus(block interfaces.ReadOnlyBeaconBlock, blockRoot [32]byte
 	blkRoot := fmt.Sprintf("0x%s...", hex.EncodeToString(blockRoot[:])[:8])
 	finalizedRoot := fmt.Sprintf("0x%s...", hex.EncodeToString(finalized.Root)[:8])
 	sinceSlotStartTime := prysmTime.Now().Sub(startTime)
+	// The checkpoints carry ROUNDS. finalizedSlot is the round's first slot, so a
+	// run stays comparable at a glance with logs from before the round retype.
+	finalizedSlot, err := slots.RoundStart(finalized.Epoch)
+	if err != nil {
+		return errors.Wrap(err, "failed to get the finalized round's start slot")
+	}
 
 	lessFields := logrus.Fields{
 		"slot":               block.Slot(),
 		"block":              blkRoot,
-		"finalizedEpoch":     finalized.Epoch,
+		"finalizedRound":     finalized.Epoch,
+		"finalizedSlot":      finalizedSlot,
 		"finalizedRoot":      finalizedRoot,
 		"epoch":              slots.ToEpoch(block.Slot()),
 		"sinceSlotStartTime": sinceSlotStartTime,
@@ -122,9 +129,10 @@ func logBlockSyncStatus(block interfaces.ReadOnlyBeaconBlock, blockRoot [32]byte
 		"slotInEpoch":               block.Slot() % params.BeaconConfig().SlotsPerEpoch,
 		"block":                     blkRoot,
 		"epoch":                     slots.ToEpoch(block.Slot()),
-		"justifiedEpoch":            justified.Epoch,
+		"justifiedRound":            justified.Epoch,
 		"justifiedRoot":             fmt.Sprintf("0x%s...", hex.EncodeToString(justified.Root)[:8]),
-		"finalizedEpoch":            finalized.Epoch,
+		"finalizedRound":            finalized.Epoch,
+		"finalizedSlot":             finalizedSlot,
 		"finalizedRoot":             finalizedRoot,
 		"parentRoot":                fmt.Sprintf("0x%s...", hex.EncodeToString(parentRoot[:])[:8]),
 		"version":                   version.String(block.Version()),

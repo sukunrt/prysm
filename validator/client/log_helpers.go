@@ -230,9 +230,9 @@ func (v *validator) logSubmittedAtts(slot primitives.Slot) {
 			"committeeIndices":   committees,
 			"pubkeys":            pubkeys,
 			"blockRoot":          fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.beaconBlockRoot)),
-			"sourceEpoch":        attLog.data.source.Epoch,
+			"sourceRound":        attLog.data.source.Epoch,
 			"sourceRoot":         fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.source.Root)),
-			"targetEpoch":        attLog.data.target.Epoch,
+			"targetRound":        attLog.data.target.Epoch,
 			"targetRoot":         fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.target.Root)),
 		}).Info("Submitted new attestations")
 	}
@@ -250,9 +250,9 @@ func (v *validator) logSubmittedAtts(slot primitives.Slot) {
 			"committeeIndices": committees,
 			"pubkeys":          pubkeys,
 			"blockRoot":        fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.beaconBlockRoot)),
-			"sourceEpoch":      attLog.data.source.Epoch,
+			"sourceRound":      attLog.data.source.Epoch,
 			"sourceRoot":       fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.source.Root)),
-			"targetEpoch":      attLog.data.target.Epoch,
+			"targetRound":      attLog.data.target.Epoch,
 			"targetRoot":       fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.target.Root)),
 		}).Info("Submitted new aggregate attestations")
 	}

@@ -129,12 +129,12 @@ func (s *Service) processSlashings(blk interfaces.ReadOnlyBeaconBlock) {
 					"blockInclusionSlot": blk.Slot(),
 					"attestationSlot1":   data1.Slot,
 					"beaconBlockRoot1":   fmt.Sprintf("%#x", bytesutil.Trunc(data1.BeaconBlockRoot)),
-					"sourceEpoch1":       data1.Source.Epoch,
-					"targetEpoch1":       data1.Target.Epoch,
+					"sourceRound1":       data1.Source.Epoch,
+					"targetRound1":       data1.Target.Epoch,
 					"attestationSlot2":   data2.Slot,
 					"beaconBlockRoot2":   fmt.Sprintf("%#x", bytesutil.Trunc(data2.BeaconBlockRoot)),
-					"sourceEpoch2":       data2.Source.Epoch,
-					"targetEpoch2":       data2.Target.Epoch,
+					"sourceRound2":       data2.Source.Epoch,
+					"targetRound2":       data2.Target.Epoch,
 				}).Info("Attester slashing was included")
 			}
 		}

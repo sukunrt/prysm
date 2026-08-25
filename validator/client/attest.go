@@ -185,8 +185,8 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 		trace.Int64Attribute("slot", int64(slot)), // lint:ignore uintcast -- This conversion is OK for tracing.
 		trace.StringAttribute("attestationHash", fmt.Sprintf("%#x", attResp.AttestationDataRoot)),
 		trace.StringAttribute("blockRoot", fmt.Sprintf("%#x", data.BeaconBlockRoot)),
-		trace.Int64Attribute("justifiedEpoch", int64(data.Source.Epoch)),
-		trace.Int64Attribute("targetEpoch", int64(data.Target.Epoch)),
+		trace.Int64Attribute("justifiedRound", int64(data.Source.Epoch)),
+		trace.Int64Attribute("targetRound", int64(data.Target.Epoch)),
 	)
 	if postElectra {
 		span.SetAttributes(trace.Int64Attribute("attesterIndex", int64(duty.ValidatorIndex)))
@@ -335,9 +335,9 @@ func attestationLogFields(pubKey [fieldparams.BLSPubkeyLength]byte, indexedAtt e
 		"slot":           indexedAtt.GetData().Slot,
 		"committeeIndex": indexedAtt.GetData().CommitteeIndex,
 		"blockRoot":      fmt.Sprintf("%#x", indexedAtt.GetData().BeaconBlockRoot),
-		"sourceEpoch":    indexedAtt.GetData().Source.Epoch,
+		"sourceRound":    indexedAtt.GetData().Source.Epoch,
 		"sourceRoot":     fmt.Sprintf("%#x", indexedAtt.GetData().Source.Root),
-		"targetEpoch":    indexedAtt.GetData().Target.Epoch,
+		"targetRound":    indexedAtt.GetData().Target.Epoch,
 		"targetRoot":     fmt.Sprintf("%#x", indexedAtt.GetData().Target.Root),
 		"signature":      fmt.Sprintf("%#x", indexedAtt.GetSignature()),
 	}

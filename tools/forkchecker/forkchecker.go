@@ -125,9 +125,9 @@ func logHead(endpt string, head *pb.ChainHead) {
 		logrus.Fields{
 			"headSlot":       head.HeadSlot,
 			"headRoot":       hex.EncodeToString(head.HeadBlockRoot),
-			"justifiedEpoch": head.JustifiedEpoch,
+			"justifiedRound": head.JustifiedEpoch,
 			"justifiedRoot":  hex.EncodeToString(head.JustifiedBlockRoot),
-			"finalizedEpoch": head.FinalizedEpoch,
+			"finalizedRound": head.FinalizedEpoch,
 			"finalizedRoot":  hex.EncodeToString(head.FinalizedBlockRoot),
 		}).Info("Head from beacon node ", endpt)
 }

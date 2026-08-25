@@ -215,7 +215,7 @@ func (m *MinSpanChunksSlice) CheckSlashable(
 		// but we log an error.
 		fields := logrus.Fields{
 			"validatorIndex": validatorIdx,
-			"targetEpoch":    minTarget,
+			"targetRound":    minTarget,
 		}
 
 		log.WithFields(fields).Error("No existing attestation record found while a surrounding vote was detected.")
@@ -348,7 +348,7 @@ func (m *MaxSpanChunksSlice) CheckSlashable(
 		// but we log an error.
 		fields := logrus.Fields{
 			"validatorIndex": validatorIdx,
-			"targetEpoch":    maxTarget,
+			"targetRound":    maxTarget,
 		}
 
 		log.WithFields(fields).Error("No existing attestation record found while a surrounded vote was detected.")

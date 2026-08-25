@@ -242,8 +242,8 @@ func (s *Service) pruneSlasherDataWithinSlidingWindow(ctx context.Context, curre
 	}
 	start := time.Now()
 	log.WithFields(logrus.Fields{
-		"currentEpoch":          currentEpoch,
-		"pruningAllBeforeEpoch": maxPruningEpoch,
+		"currentRound":          currentEpoch,
+		"pruningAllBeforeRound": maxPruningEpoch,
 	}).Info("Pruning old attestations and proposals for slasher")
 	numPrunedAtts, err := s.serviceCfg.Database.PruneAttestationsAtEpoch(
 		ctx, maxPruningEpoch,

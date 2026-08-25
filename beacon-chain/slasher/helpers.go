@@ -131,10 +131,10 @@ func logAttesterSlashing(slashing ethpb.AttSlashing) {
 	indices := slice.IntersectionUint64(slashing.FirstAttestation().GetAttestingIndices(), slashing.SecondAttestation().GetAttestingIndices())
 	log.WithFields(logrus.Fields{
 		"validatorIndex":  indices,
-		"prevSourceEpoch": slashing.FirstAttestation().GetData().Source.Epoch,
-		"prevTargetEpoch": slashing.FirstAttestation().GetData().Target.Epoch,
-		"sourceEpoch":     slashing.SecondAttestation().GetData().Source.Epoch,
-		"targetEpoch":     slashing.SecondAttestation().GetData().Target.Epoch,
+		"prevSourceRound": slashing.FirstAttestation().GetData().Source.Epoch,
+		"prevTargetRound": slashing.FirstAttestation().GetData().Target.Epoch,
+		"sourceRound":     slashing.SecondAttestation().GetData().Source.Epoch,
+		"targetRound":     slashing.SecondAttestation().GetData().Target.Epoch,
 	}).Info("Attester slashing detected")
 }
 

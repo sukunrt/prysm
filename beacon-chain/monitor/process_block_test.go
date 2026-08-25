@@ -89,7 +89,7 @@ func TestProcessSlashings(t *testing.T) {
 				},
 			},
 			wantedErr: "\"Attester slashing was included\" attestationSlot1=0 attestationSlot2=0 attesterIndex=1 " +
-				"beaconBlockRoot1=0x000000000000 beaconBlockRoot2=0x000000000000 blockInclusionSlot=0 package=beacon-chain/monitor sourceEpoch1=1 sourceEpoch2=0 targetEpoch1=0 targetEpoch2=0",
+				"beaconBlockRoot1=0x000000000000 beaconBlockRoot2=0x000000000000 blockInclusionSlot=0 package=beacon-chain/monitor sourceRound1=1 sourceRound2=0 targetRound1=0 targetRound2=0",
 		},
 		{
 			name: "Attester slashing untracked index",

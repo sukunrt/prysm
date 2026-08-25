@@ -276,20 +276,20 @@ func (s *Simulator) verifySlashingsWereDetected(ctx context.Context) {
 	for slashingRoot, slashing := range s.sentAttesterSlashings {
 		if _, ok := detectedAttesterSlashings[slashingRoot]; !ok {
 			log.WithFields(logrus.Fields{
-				"targetEpoch":         slashing.FirstAttestation().GetData().Target.Epoch,
-				"prevTargetEpoch":     slashing.SecondAttestation().GetData().Target.Epoch,
-				"sourceEpoch":         slashing.FirstAttestation().GetData().Source.Epoch,
-				"prevSourceEpoch":     slashing.SecondAttestation().GetData().Source.Epoch,
+				"targetRound":         slashing.FirstAttestation().GetData().Target.Epoch,
+				"prevTargetRound":     slashing.SecondAttestation().GetData().Target.Epoch,
+				"sourceRound":         slashing.FirstAttestation().GetData().Source.Epoch,
+				"prevSourceRound":     slashing.SecondAttestation().GetData().Source.Epoch,
 				"prevBeaconBlockRoot": fmt.Sprintf("%#x", slashing.FirstAttestation().GetData().BeaconBlockRoot),
 				"newBeaconBlockRoot":  fmt.Sprintf("%#x", slashing.SecondAttestation().GetData().BeaconBlockRoot),
 			}).Errorf("Did not detect simulated attester slashing")
 			continue
 		}
 		log.WithFields(logrus.Fields{
-			"targetEpoch":     slashing.FirstAttestation().GetData().Target.Epoch,
-			"prevTargetEpoch": slashing.SecondAttestation().GetData().Target.Epoch,
-			"sourceEpoch":     slashing.FirstAttestation().GetData().Source.Epoch,
-			"prevSourceEpoch": slashing.SecondAttestation().GetData().Source.Epoch,
+			"targetRound":     slashing.FirstAttestation().GetData().Target.Epoch,
+			"prevTargetRound": slashing.SecondAttestation().GetData().Target.Epoch,
+			"sourceRound":     slashing.FirstAttestation().GetData().Source.Epoch,
+			"prevSourceRound": slashing.SecondAttestation().GetData().Source.Epoch,
 		}).Info("Correctly detected simulated attester slashing")
 	}
 }
