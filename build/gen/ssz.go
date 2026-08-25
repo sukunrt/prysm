@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"golang.org/x/tools/imports"
 )
 
 // genSSZ runs the methodical SSZ generator for every ssz_methodical target
@@ -140,5 +142,12 @@ func methodicalOne(t methodicalTarget, disableProgressive bool, buildTags []stri
 		return "", fmt.Errorf("readFile: %w", err)
 	}
 
-	return string(data), nil
+	// methodical emits some imports unconditionally (e.g. encoding/binary), which
+	// small fixed-size targets never reference; strip them or the tree fails vet.
+	formatted, err := imports.Process(filepath.Join(t.pkg, t.out), data, nil)
+	if err != nil {
+		return "", fmt.Errorf("goimports: %w", err)
+	}
+
+	return string(formatted), nil
 }
