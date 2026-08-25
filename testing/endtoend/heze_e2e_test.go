@@ -837,3 +837,36 @@ func TestEndToEnd_HezeGenesisShort(t *testing.T) {
 	)
 	r.run()
 }
+
+// TestEndToEnd_HezeGenesisShortTargetOffsetZero is the offset-0 arm of the FFG
+// target offset sweep, on the Short run's cheap shape. The offset is spec config
+// (FFG_TARGET_OFFSET_SLOTS), carried to both the beacon nodes and the validators
+// by ConfigToYaml, so the arm costs a config field and no build variant.
+//
+// It also turns on the slot-start FFG vote, because that is the pairing the
+// offset-0 loss is predicted for: at offset 0 a round's target is the round's
+// own first block, and a voter in the round's FIRST slot that votes at slot
+// start has not seen that block yet, so its target resolves to the previous
+// block and misses. That is one slot of eight, so justification should still
+// clear on the remaining 87.5% against the 2/3 threshold. At stock vote timing,
+// a third of the way into the slot, the voter has already seen the block and
+// there is no loss at all -- which is why the sweep's cheap arm pairs the two.
+func TestEndToEnd_HezeGenesisShortTargetOffsetZero(t *testing.T) {
+	cfg := params.E2EMainnetTestConfig()
+	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
+	cfg.SlotsPerRound = 8
+	cfg.FFGTargetOffsetSlots = 0
+
+	r := e2eMinimal(t, cfg,
+		types.WithEpochs(1),
+		types.WithSlotStartFFGVote(),
+		func(c *types.E2EConfig) {
+			c.TestSync = false
+			c.TestDeposits = false
+			c.TestFeature = false
+		},
+		withoutEvaluators(hezeDroppedEvaluators...),
+		withEvaluators(ev.ChainProducesBlocks, ev.AvailableAttestationsFlow),
+	)
+	r.run()
+}
