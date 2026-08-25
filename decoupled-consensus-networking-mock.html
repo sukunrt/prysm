@@ -1,0 +1,2149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decoupled Consensus in Prysm — Networking Mock Plan</title>
+<style>
+  ::selection { background: var(--ink); color: var(--ground); }
+
+  *,*::before,*::after { box-sizing: border-box; }
+  :root {
+    --ground:#F5F6F4; --panel:#FFFFFF; --ink:#14181A; --muted:#5C666B; --faint:#8A9499;
+    --rule:#DBE0DD; --rule-hi:#C2C9C5;
+    --real:#0F6E6B; --real-bg:#0F6E6B14;
+    --fake:#8A5A0B; --fake-bg:#8A5A0B14;
+    --warn:#A32A1C; --warn-bg:#A32A1C12;
+    --shadow: 0 1px 2px rgba(20,24,26,.05), 0 8px 24px -16px rgba(20,24,26,.25);
+    --mono: ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#0E1113; --panel:#161A1C; --ink:#E4E9E9; --muted:#98A3A7; --faint:#6E787C;
+      --rule:#262C2E; --rule-hi:#3A4245;
+      --real:#4FC2BC; --real-bg:#4FC2BC1A;
+      --fake:#D3A24A; --fake-bg:#D3A24A1A;
+      --warn:#E8735F; --warn-bg:#E8735F14;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="light"]{--ground:#F5F6F4;--panel:#FFFFFF;--ink:#14181A;--muted:#5C666B;--faint:#8A9499;--rule:#DBE0DD;--rule-hi:#C2C9C5;--real:#0F6E6B;--real-bg:#0F6E6B14;--fake:#8A5A0B;--fake-bg:#8A5A0B14;--warn:#A32A1C;--warn-bg:#A32A1C12;}
+  :root[data-theme="dark"]{--ground:#0E1113;--panel:#161A1C;--ink:#E4E9E9;--muted:#98A3A7;--faint:#6E787C;--rule:#262C2E;--rule-hi:#3A4245;--real:#4FC2BC;--real-bg:#4FC2BC1A;--fake:#D3A24A;--fake-bg:#D3A24A1A;--warn:#E8735F;--warn-bg:#E8735F14;}
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16.5px; line-height: 1.6;
+    margin: 0; overflow-x: hidden;
+  }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: var(--rule-hi); }
+  a:focus-visible { outline: 2px solid var(--real); outline-offset: 3px; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 100px; }
+
+  .topbar { position: sticky; top: 0; z-index: 20; background: var(--ground); border-bottom: 1px solid var(--rule); }
+  .topbar-in { max-width: 1120px; margin: 0 auto; padding: 10px 24px; display: flex; gap: 18px; align-items: baseline; overflow-x: auto; scrollbar-width: none; }
+  .topbar-in::-webkit-scrollbar { display: none; }
+  .topbar a, .topbar strong { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; text-decoration: none; color: var(--muted); }
+  .topbar strong { color: var(--ink); font-weight: 700; }
+  .topbar a:hover { color: var(--ink); }
+
+  .mast { padding: 60px 0 34px; border-bottom: 1px solid var(--rule); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
+  h1 { font-family: var(--mono); font-weight: 700; letter-spacing: -.02em; font-size: clamp(28px,5vw,42px); line-height: 1.12; margin: 0 0 18px; max-width: 24ch; }
+  .standfirst { font-size: 18px; line-height: 1.5; color: var(--muted); max-width: 62ch; margin: 0; }
+
+  section { padding-top: 52px; scroll-margin-top: 56px; }
+  h2 { font-family: var(--mono); font-weight: 700; font-size: 20px; margin: 0 0 6px; display: flex; gap: 13px; align-items: baseline; }
+  h2 .num { font-size: 11px; letter-spacing: .12em; color: var(--faint); border: 1px solid var(--rule-hi); border-radius: 3px; padding: 2px 6px; flex: none; }
+  h3 { font-family: var(--mono); font-size: 14px; margin: 30px 0 10px; letter-spacing: .01em; }
+  .dek { color: var(--muted); margin: 0 0 24px; max-width: 64ch; font-size: 15.5px; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+
+  code { font-family: var(--mono); font-size: .875em; background: color-mix(in srgb, var(--ink) 6%, transparent); border-radius: 3px; padding: .1em .34em; word-break: break-word; }
+  .path { font-family: var(--mono); font-size: .85em; color: var(--muted); word-break: break-all; }
+
+  .chip { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; white-space: nowrap; font-weight: 600; }
+  .chip.real { color: var(--real); background: var(--real-bg); border: 1px solid color-mix(in srgb, var(--real) 35%, transparent); }
+  .chip.fake { color: var(--fake); background: var(--fake-bg); border: 1px solid color-mix(in srgb, var(--fake) 35%, transparent); }
+  .chip.nx   { color: var(--muted); background: color-mix(in srgb, var(--ink) 6%, transparent); border: 1px solid var(--rule-hi); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 26px; align-items: center; }
+  .legend span.t { font-size: 14px; color: var(--muted); }
+
+  figure { margin: 30px 0 34px; }
+  .figbox { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 20px 18px 12px; overflow-x: auto; box-shadow: var(--shadow); }
+  figure svg { display: block; width: 100%; min-width: 660px; height: auto; color: var(--ink); }
+  figcaption { font-size: 13.5px; color: var(--muted); margin-top: 11px; max-width: 68ch; padding-left: 13px; border-left: 2px solid var(--rule-hi); }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  .box { border: 1px solid var(--rule-hi); border-left: 3px solid var(--real); background: var(--panel); border-radius: 4px; padding: 16px 18px; margin: 22px 0; max-width: 68ch; }
+  .box .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--real); display: block; margin-bottom: 7px; font-weight: 700; }
+  .box p:last-child, .box ul:last-child { margin-bottom: 0; }
+  .box.w { border-left-color: var(--warn); background: var(--warn-bg); }
+  .box.w .lbl { color: var(--warn); }
+  .box.f { border-left-color: var(--fake); background: var(--fake-bg); }
+  .box.f .lbl { color: var(--fake); }
+
+  .scroller { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); margin: 22px 0 28px; box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 720px; }
+  th, td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: color-mix(in srgb, var(--ink) 3%, transparent); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.n { font-family: var(--mono); color: var(--faint); font-variant-numeric: tabular-nums; width: 1%; white-space: nowrap; }
+  td.c { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.5; }
+  td.c b { color: var(--ink); font-weight: 600; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .steps { margin: 20px 0 0; }
+  .step { display: grid; grid-template-columns: 28px 1fr; gap: 0 13px; padding: 11px 0; border-top: 1px solid var(--rule); }
+  .step .k { font-family: var(--mono); font-size: 11px; color: var(--faint); padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .step .b { min-width: 0; }
+  .step .t { font-size: 15px; margin: 0 0 3px; max-width: 66ch; }
+  .step .p { font-family: var(--mono); font-size: 11.5px; color: var(--muted); word-break: break-all; line-height: 1.5; }
+  .step.hi { background: var(--real-bg); margin: 0 -11px; padding-left: 11px; padding-right: 11px; border-radius: 3px; }
+  .step.hi .k { color: var(--real); font-weight: 700; }
+  .step.hf { background: var(--fake-bg); margin: 0 -11px; padding-left: 11px; padding-right: 11px; border-radius: 3px; }
+  .step.hf .k { color: var(--fake); font-weight: 700; }
+
+  ul.tight { padding-left: 20px; margin: 0 0 16px; max-width: 68ch; }
+  ul.tight li { margin-bottom: 8px; }
+
+  pre.code {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 16px 18px; overflow-x: auto; margin: 20px 0 26px; box-shadow: var(--shadow);
+  }
+  pre.code b { color: var(--real); font-weight: 700; }
+  pre.code i { color: var(--faint); font-style: normal; }
+  pre.code u { color: var(--fake); text-decoration: none; font-weight: 700; }
+
+  /* verbatim source quotes */
+  .src { margin: 10px 0 6px; border: 1px solid var(--rule); border-radius: 4px; background: var(--panel); max-width: 100%; }
+  .src .srcpath { padding: 4px 11px; border-bottom: 1px solid var(--rule); font-family: var(--mono); font-size: 10.5px; color: var(--muted); word-break: break-all; }
+  .src .srcpath b { color: var(--ink); font-weight: 600; }
+  .src pre { margin: 0; padding: 9px 11px; overflow-x: auto; font-family: var(--mono); font-size: 11.5px; line-height: 1.55; }
+  .src.quote pre { white-space: pre-wrap; font-family: var(--sans); font-size: 13px; font-style: italic; color: var(--muted); }
+
+  hr.sep { border: none; border-top: 1px solid var(--rule); margin: 52px 0 0; }
+  footer { padding-top: 30px; color: var(--faint); font-size: 13px; font-family: var(--mono); max-width: 70ch; }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 18px 70px; }
+    .topbar-in { padding: 10px 18px; }
+    .mast { padding: 40px 0 26px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-in">
+    <strong>Networking Mock</strong>
+    <a href="#s00">00 Goal</a>
+    <a href="#sr">★ The plan</a>
+    <a href="#sav">★★ The two duties</a>
+    <a href="#s01">01 Contract</a>
+    <a href="#s02">02 Messages</a>
+    <a href="#s03">03 Traffic</a>
+    <a href="#s04">04 Blocks</a>
+    <a href="#s05">05 Topics</a>
+    <a href="#s06">06 Send</a>
+    <a href="#s07">07 Receive</a>
+    <a href="#s08">08 Fork choice</a>
+    <a href="#s09">09 Stubs</a>
+    <a href="#s10">10 Traps</a>
+    <a href="#s11">11 Out of scope</a>
+    <a href="#s12">12 Clocks</a>
+    <a href="#s13">13 Run it</a>
+    <a href="#s14">14 Order</a>
+    <a href="#s15">15 Warnings</a>
+    <a href="#s16">16 Not implemented</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="eyebrow">Prysm · Decoupled Consensus · Implementation Plan</p>
+  <h1>What to change in Prysm to test the networking of decoupled consensus</h1>
+  <p class="standfirst">Decoupled consensus adds one new gossip topic and raises the vote rate
+  four times. This document lists the code you must change to put that on the wire. The consensus
+  logic can be wrong. The network behaviour must be correct.</p>
+</header>
+
+<div class="legend" style="margin-top:26px">
+  <span class="chip real">Must be real</span>
+  <span class="t">The network sees it. Get it right.</span>
+  <span class="chip fake">Safe to stub</span>
+  <span class="t">The network does not see it. Any value is acceptable.</span>
+</div>
+
+<div class="box" style="max-width:none;margin-top:26px">
+  <span class="lbl">How to read this</span>
+  <p>Section 00 states the goal. The ★ section gives the plan and two options. The ★★ section
+  gives the two attestation duties and the one new topic. Sections 01 to 15 give the detail: what
+  must be exact, what to stub, what to change file by file, and how to run it.</p>
+  <p style="margin-bottom:0">Sources: the LaTeX papers in
+  <span class="path">../decoupled-consensus-networking/finality_gadget_specs/</span> prove the
+  protocol; the executable specification in
+  <span class="path">.../consensus-specs/specs/_features/simplex/</span> fixes the messages,
+  containers, and topics. When the two disagree about anything on the wire, follow the executable
+  specification.</p>
+</div>
+
+<!-- ============================================================ 00 -->
+<section id="s00">
+  <h2><span class="num">00</span> The goal</h2>
+  <p class="dek">You want to measure the network cost of decoupled consensus. You do not want to
+  implement it.</p>
+
+  <p>Decoupled consensus has two parts. Goldfish is the available chain. It selects the head.
+  A finality gadget confirms blocks. The finality gadget is not Casper FFG.</p>
+
+  <p>Today one attestation carries three things at once: the head vote, the source checkpoint, and
+  the target checkpoint. Decoupled consensus splits that. The head vote goes to Goldfish. The
+  finality vote goes to the finality gadget. They become two separate messages with two separate
+  schedules.</p>
+
+  <p>The rate changes as well. A validator attests once per epoch, which is 32 slots. A validator
+  casts one finality vote per voting round. A voting round has m sub-rounds, and one sub-round is
+  one available-chain slot. With m = 8, a validator votes once per 8 slots. That is 4 times the
+  attestation rate.</p>
+
+  <div class="box">
+    <span class="lbl">The question to answer</span>
+    <p>The finality vote replaces today's attestation, on the same subnets, at 4 times the rate.
+    The Goldfish head vote is the added stream. Can the network carry both? At which validator
+    count does it fail? These are networking questions. You can answer them with wrong consensus
+    values.</p>
+  </div>
+
+  <p>So the plan is: build the real message path, and stub everything behind it. A validator
+  signs a vote with correct field sizes and incorrect field contents. It sends the vote at the
+  correct time on the correct topic. The receiver checks the signature, puts the vote in a map,
+  and does nothing more. The network cannot tell the difference.</p>
+</section>
+
+<!-- ============================================================ R -->
+<section id="sr">
+  <h2><span class="num">★</span> The plan — clone the attestation path</h2>
+  <p class="dek">The finality gadget vote has the same network shape as an Ethereum attestation.
+  Do not build a new path. Copy the one that exists. Sections 05 to 07 give the file-level steps
+  that this plan uses.</p>
+
+  <p>Three facts in the specification make this possible. Each one has a direct equivalent in
+  Prysm today.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>The specification says</th><th>Prysm already has</th><th>Same shape?</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>"A voting round may be subdivided into m sub-rounds."
+          <span class="path">finality_gadget_specs/full/height_filter_and_timeouts.tex:1156</span></td>
+          <td>An epoch of 32 slots.</td>
+          <td><span class="chip real">Yes</span> Only the period differs.</td>
+        </tr>
+        <tr>
+          <td>"The validator set is partitioned across the m sub-rounds."
+          <span class="path">finality_gadget_specs/full/height_filter_and_timeouts.tex:1157</span></td>
+          <td>Committee assignment. Each validator attests in exactly one slot of the epoch.</td>
+          <td><span class="chip real">Yes</span> Exact match.</td>
+        </tr>
+        <tr>
+          <td>"The votes cast across all m sub-rounds together account for exactly one vote per
+          validator." <span class="path">finality_gadget_specs/full/height_filter_and_timeouts.tex:1158</span></td>
+          <td>One attestation per validator per epoch.</td>
+          <td><span class="chip real">Yes</span> Exact match.</td>
+        </tr>
+        <tr>
+          <td>Finality votes aggregate into blocks.</td>
+          <td><code>SingleAttestation</code> on subnets, aggregators produce
+          <code>Attestation</code> with <code>aggregation_bits</code>, blocks carry the
+          aggregates.</td>
+          <td><span class="chip real">Yes</span> Exact match.</td>
+        </tr>
+        <tr>
+          <td>"The two votes are paired ... emitted (or not) together."
+          <span class="path">finality_gadget_specs/full/height_filter_and_timeouts.tex:1161</span></td>
+          <td>—</td>
+          <td><span class="chip fake">Fold in</span> Put the stability target in the same
+          message.</td>
+        </tr>
+        <tr>
+          <td>The Goldfish head vote.</td>
+          <td>—</td>
+          <td><span class="chip real">New topic</span> <code>available_attestation</code>. See the
+          next section. It is the only new gossip path.</td>
+        </tr>
+        <tr>
+          <td>Syncer view-merge.</td>
+          <td>—</td>
+          <td><span class="chip fake">Out of scope</span> The re-gossip duty is removed and is
+          expected to stay removed. Build nothing. See section 11.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box">
+    <span class="lbl">The whole design difference is one number</span>
+    <p>A voting round of m = 8 sub-rounds means a validator votes once per 8 slots. Today a
+    validator attests once per 32 slots. That is 4 times the rate. Every other property of the
+    message path is the same.</p>
+  </div>
+
+  <h3>Option A — change the period. No new code.</h3>
+  <p>Set <code>SlotsPerEpoch = 8</code>. Each validator then attests once per 8 slots. The
+  per-slot message count becomes n/8 instead of n/32. That is the 4× target, on the real path,
+  with real subnets, real aggregation, real block inclusion, and real fork choice.</p>
+
+  <ul class="tight">
+    <li>The minimal preset already sets this value. You can run it today.
+<div class="src"><div class="srcpath"><b>config/params/minimal_config.go:47-48 — verbatim</b></div><pre>minimalConfig.SlotsPerEpoch = 8
+minimalConfig.SqrRootSlotsPerEpoch = 2</pre></div></li>
+    <li>It does not model two streams. You get one vote stream at 4×, not Goldfish head votes at
+    1× plus gadget votes at 4×.</li>
+    <li>It changes epoch meaning as well: the finalisation rate, the shuffling period, and the
+    aggregator count per slot. For a networking simulation this does not matter.</li>
+    <li>Effort: one configuration value.</li>
+  </ul>
+
+  <div class="box">
+    <span class="lbl">Do this first</span>
+    <p>Option A gives you a real 4× measurement in one afternoon. If the mesh carries it, you know
+    the answer before you write any new code. If it does not, you know that too, and Option B
+    cannot make it better.</p>
+    <p>Note the limit: Option A covers only the finality stream. It does not model the Goldfish
+    vote. The <code>available_attestation</code> topic adds 512 messages per slot on top, at any
+    validator count. Option B and the ★★ section add that stream.</p>
+  </div>
+
+  <h3>Option B — clone the attestation topics. Recommended.</h3>
+  <p>Keep the chain on its normal epoch. Add one new message type that copies the attestation
+  path exactly, with an assignment period of 8 slots.</p>
+  <p>Be clear about one simplification. In the target protocol, the finality attestation
+  <em>replaces</em> today's attestation — the old message does not survive. In the Option B mock,
+  today's attestations keep running, because they keep the chain finalising and healthy. The mock
+  therefore carries one extra stream at n/32, which overcounts traffic by a small, known amount.
+  Subtract it, or ignore it: at 4 times the rate, the new stream dominates.</p>
+
+  <div class="box">
+    <span class="lbl">Option B tests a timing that Option A cannot</span>
+    <p>The finality vote's fields freeze at the round start: "Its FG fields are selected once in
+    the round's first slot" (<span class="path">validator.md:259</span>). The vote does not
+    depend on the current slot's block. So it can go out at the start of the slot. Today's
+    attestations wait for one third of the slot, so they do not compete with the block. A
+    slot-start vote shares the wire with block propagation. Option B has its own producer, so it
+    can publish at slot start and measure that collision. Option A cannot: it reuses the
+    attestation duty, which is fixed to the attestation deadline.</p>
+    <p>One caveat: the head field inside the vote "is read live when the assigned duty is
+    emitted" (<span class="path">validator.md:71</span>). A slot-start vote therefore names the
+    previous head. The mock accepts this — the content can be wrong, the timing cannot.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="k">B1</div><div class="b">
+      <p class="t">Copy the proto shapes. <code>FinalityVote</code> copies
+      <code>SingleAttestation</code>. <code>AggregatedFinalityVote</code> copies
+      <code>Attestation</code>. Add the stability target to the data container.</p>
+      <p class="p">proto/prysm/v1alpha1/</p></div></div>
+    <div class="step"><div class="k">B2</div><div class="b">
+      <p class="t">Add two topic formats: a subnet topic and an aggregate topic.</p>
+      <p class="p">beacon-chain/p2p/topics.go, then gossip_topic_mappings.go</p></div></div>
+    <div class="step"><div class="k">B3</div><div class="b">
+      <p class="t">Add two score cases. Reuse
+      <code>defaultAggregateSubnetTopicParams()</code> and
+      <code>defaultAggregateTopicParams()</code>. Do not write new ones.</p>
+      <p class="p">beacon-chain/p2p/gossip_scoring_params.go</p></div></div>
+    <div class="step"><div class="k">B4</div><div class="b">
+      <p class="t">Register two subscribers. Use <code>subscribeWithParameters()</code> for the
+      subnets and <code>subscribe()</code> for the aggregate topic. Copy the attestation lines.</p>
+      <p class="p">beacon-chain/sync/subscriber.go:215</p></div></div>
+    <div class="step"><div class="k">B5</div><div class="b">
+      <p class="t">Copy the two validators. Delete the fork choice reads from each copy. Keep the
+      decode step, the seen-cache, and the slot-window check.</p>
+      <p class="p">copy beacon-chain/sync/validate_beacon_attestation.go and
+      validate_aggregate_proof.go</p></div></div>
+    <div class="step"><div class="k">B6</div><div class="b">
+      <p class="t">Write two handlers. Each writes to a map and returns nil.</p>
+      <p class="p">new files in beacon-chain/sync/</p></div></div>
+    <div class="step hi"><div class="k">B7</div><div class="b">
+      <p class="t">Write the assignment function. It maps a validator index to one slot in an
+      8-slot window. Copy the committee assignment logic and change 32 to 8.</p>
+      <p class="p">model on beacon-chain/core/helpers/committee.go</p></div></div>
+    <div class="step"><div class="k">B8</div><div class="b">
+      <p class="t">Write the producer. It runs in the beacon node, wakes at the attestation
+      deadline, and publishes for the local validators assigned to this slot.</p>
+      <p class="p">see section 06</p></div></div>
+  </div>
+
+  <h3>What this removes from the rest of this document</h3>
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Earlier plan item</th><th>Status now</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>A separate gadget clock with sub-round offsets (section 12)</td>
+          <td><span class="chip real">Delete</span></td>
+          <td>A sub-round is one slot. Use <code>AttestationDueBPS</code> and
+          <code>AggregateDueBPS</code>.</td></tr>
+        <tr><td>A stability-vote topic (section 02)</td>
+          <td><span class="chip real">Delete</span></td>
+          <td>The two votes are paired. Send one message.</td></tr>
+        <tr><td>Block padding to fake vote payload (section 04)</td>
+          <td><span class="chip real">Delete</span></td>
+          <td>Real aggregation gives real block growth.</td></tr>
+        <tr><td>Designing an aggregation scheme</td>
+          <td><span class="chip real">Delete</span></td>
+          <td>The attestation aggregator code already does it.</td></tr>
+        <tr><td>Fork choice (section 08)</td>
+          <td><span class="chip nx">Keep</span></td>
+          <td>Goldfish replaces LMD-GHOST and the gadget replaces Casper FFG. The new topic exists
+          to feed Goldfish. Vote ephemerality is visible on the wire. See section 08.</td></tr>
+        <tr><td>Choosing a gossip layout (section 03)</td>
+          <td><span class="chip fake">Settled</span></td>
+          <td>Use subnets and aggregators, exactly as attestations do.</td></tr>
+        <tr><td>Everything about the syncer (section 11)</td>
+          <td><span class="chip real">Delete</span></td>
+          <td>No syncer topic, and the re-gossip duty is out of scope. Nothing to build.</td></tr>
+        <tr><td>The <code>available_attestation</code> topic</td>
+          <td><span class="chip nx">Add</span></td>
+          <td>The only genuinely new gossip path. See the next section.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box w">
+    <span class="lbl">Warning — one thing gets harder, not easier</span>
+    <p>You said all nodes run decoupled consensus, so you do not need backward compatibility. Good.
+    But if you take Option A, you change <code>SlotsPerEpoch</code> for the whole chain. Every
+    epoch-based constant then means something different: the aggregator count, the subnet
+    rotation, and the inactivity rules. Record the preset you used with every result.</p>
+  </div>
+</section>
+
+<!-- ============================================================ AV -->
+<section id="sav">
+  <h2><span class="num">★★</span> Available attestation — the one new topic</h2>
+  <p class="dek">An executable specification exists. It is more exact than the papers, and it
+  answers the topic question completely. Read it before you write code.</p>
+
+  <div class="box">
+    <span class="lbl">Source</span>
+    <p><span class="path">../decoupled-consensus-networking/consensus-specs/specs/_features/simplex/</span><br>
+    Five documents: <code>beacon-chain.md</code>, <code>fork-choice.md</code>,
+    <code>p2p-interface.md</code>, <code>validator.md</code>,
+    <code>weak-subjectivity.md</code>. The p2p document gives the topics, the containers, and the
+    gossip validation rules directly.</p>
+  </div>
+
+  <h3>The complete topic list</h3>
+  <p>The gossip section of <code>p2p-interface.md</code> lists five topics. Four are changes to
+  topics that already exist. One is new.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Topic</th><th>Status</th><th>Carries</th><th>Work for you</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>beacon_attestation_{subnet_id}</code></td>
+          <td><span class="chip real">Replaced</span></td>
+          <td>Today's message (head + source + target) does not survive. The finality attestation
+          takes this stream: beacon committees spread across the slots of a round, one vote per
+          validator per round.</td>
+          <td>Keep the topic name and map the new SSZ type at the new fork digest, as the
+          executable specification does. (New topic names work too; the choice does not matter.)
+          The change that matters is timing: this vote goes out at the <b>start of the slot</b>,
+          not at the attestation deadline. See the timing box in the ★ plan.</td></tr>
+        <tr><td><code>beacon_aggregate_and_proof</code></td>
+          <td><span class="chip real">Replaced</span></td>
+          <td>Finality attestation aggregates. The inner type is the new
+          <code>AttestationData</code>, so the old aggregate does not survive either.</td>
+          <td>Keep the name, map the new type. The aggregator machinery is unchanged.</td></tr>
+        <tr><td><code>beacon_block</code></td>
+          <td><span class="chip fake">Modified</span></td>
+          <td>Also carries the view-merge payload of the round syncer.</td>
+          <td>Nothing structural.</td></tr>
+        <tr><td><code>execution_payload</code></td>
+          <td><span class="chip fake">Modified</span></td>
+          <td>Unchanged in shape.</td>
+          <td>Nothing.</td></tr>
+        <tr><td><code>available_attestation</code></td>
+          <td><span class="chip real">New</span></td>
+          <td>The Goldfish head vote and the payload availability signal. A global topic. It
+          carries individual or aggregated votes.</td>
+          <td><b>This is the only new gossip path.</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box">
+    <span class="lbl">Direct answer</span>
+    <p>Yes, you still need the available attestation. It is a separate duty, a separate committee,
+    a separate rate, and the only new topic. The finality attestation does not cover it. But it is
+    the smaller job of the two, and it does not grow with validator count.</p>
+  </div>
+
+  <h3>The two duties side by side</h3>
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th></th><th>Finality attestation</th><th>Available attestation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><b>Container</b></td>
+          <td><code>Attestation</code> — the existing one, with changed data fields</td>
+          <td><code>AvailableAttestation</code> — new</td></tr>
+        <tr><td><b>Assignment</b></td>
+          <td>Beacon committees, spread across the slots of a round</td>
+          <td>A 512-member available committee, per slot</td></tr>
+        <tr><td><b>Rate</b></td>
+          <td class="num">1 per validator per round</td>
+          <td class="num">512 signers per slot, fixed</td></tr>
+        <tr><td><b>Scales with n?</b></td>
+          <td><span class="chip real">Yes</span> n/8 votes per slot at 8 slots per round</td>
+          <td><span class="chip nx">No</span> Always 512, at any validator count</td></tr>
+        <tr><td><b>Topic</b></td>
+          <td>The 64 attestation subnets, plus the aggregate topic</td>
+          <td>One global topic</td></tr>
+        <tr><td><b>Wire size</b></td>
+          <td class="num">≈ 248 B single</td>
+          <td class="num">201 B exactly</td></tr>
+        <tr><td><b>In blocks</b></td>
+          <td><code>attestations</code>, up to <code>MAX_ATTESTATIONS_ELECTRA</code></td>
+          <td>Up to <code>MAX_AVAILABLE_ATTESTATIONS</code> = 8, so 1.6 KB</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The sizes come from the containers in <code>beacon-chain.md</code>:</p>
+
+  <pre class="code"><b>AvailableAttestation</b>                              <i>fixed 201 bytes</i>
+    aggregation_bits  Bitvector[512]     <i>64 B</i>
+    data              slot 8 + payload_present 1 + beacon_block_root 32  <i>41 B</i>
+    signature         BLSSignature       <i>96 B</i>
+
+<b>AttestationData</b>  (Simplex)                          <i>136 bytes, was 128</i>
+    slot 8 · beacon_block_root 32 · target 40 · height 8
+    finality_target 40 · finality_height 8
+    <u>source removed</u>; height and the two finality fields added</pre>
+
+  <div class="box">
+    <span class="lbl">The load is constant</span>
+    <p>The Goldfish load is flat. <code>AVAILABLE_COMMITTEE_SIZE</code> is 512 at every validator
+    count. The worst case on the new topic is 512 messages of 201 bytes per slot. That is
+    103 KB per node per slot before aggregation. That does not change if you go from 4 000
+    validators to 1 000 000. All the growth is in the finality attestation.</p>
+  </div>
+
+  <div class="box w">
+    <span class="lbl">Warning — a global topic with 512 publishers per slot</span>
+    <p>Every node receives every available attestation, because the topic is global. At 512
+    publishers per slot that is about 43 messages per second, on top of the block topic and the
+    aggregate topic. Prysm has no global topic with this publish rate today. Measure it on its
+    own before you combine it with the finality load.</p>
+  </div>
+
+  <h3>What the mock needs</h3>
+  <ul class="tight">
+    <li>One new global topic and its message type. Follow the 8 steps in section 05.</li>
+    <li>A committee selection function that returns 512 indices for a slot. Stub the shuffling;
+    any deterministic choice works, because the network does not read it.</li>
+    <li>A producer that fires once per slot for the local validators in that committee.</li>
+    <li>A validator that decodes, checks the seen-cache, and returns ACCEPT. The specification's
+    real validator is long; almost all of it is consensus checks you can drop.</li>
+  </ul>
+
+  <p>One wire-visible rule to keep even in the stub — a validator with several committee seats
+  signs once and sets every seat bit:</p>
+<div class="src quote"><div class="srcpath"><b>consensus-specs/.../simplex/validator.md:1298-1301 — verbatim</b></div><pre>A balance-weighted committee can contain the same validator more than once. A
+validator signs `data` once and sets **every** position it occupies. Verifiers
+deduplicate the resulting validator identities before fast aggregate signature
+verification, while reward and Goldfish accounting credit every seat.</pre></div>
+
+  <div class="box f">
+    <span class="lbl">Safe to stub — nearly all of validate_available_attestation_gossip</span>
+    <p>The specification's gossip validator has about 15 checks. Keep three: the slot equality
+    check, the aggregation-bits length check, and the duplicate check against the seen-cache.
+    Drop the rest. They reject messages that a mock never produces, and each one you keep costs
+    build time for no networking difference.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 01 -->
+<section id="s01">
+  <h2><span class="num">01</span> The fidelity contract</h2>
+  <p class="dek">Five properties make a network test valid. Keep these five correct. Change
+  anything else.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 900 320" role="img" aria-label="Diagram of the fidelity boundary between stubbed consensus logic and the real network path">
+        <defs>
+          <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <!-- left stub zone -->
+        <rect x="10" y="40" width="180" height="200" rx="6" fill="var(--fake-bg)" stroke="var(--fake)" stroke-dasharray="5 4"/>
+        <text x="100" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--fake)">STUB — ORIGIN</text>
+        <text x="100" y="96" text-anchor="middle" font-size="12.5" fill="currentColor">Which height?</text>
+        <text x="100" y="118" text-anchor="middle" font-size="12.5" fill="currentColor">Which target?</text>
+        <text x="100" y="140" text-anchor="middle" font-size="12.5" fill="currentColor">Freshness rule</text>
+        <text x="100" y="162" text-anchor="middle" font-size="12.5" fill="currentColor">Timeout rule</text>
+        <text x="100" y="196" text-anchor="middle" font-size="11" fill="var(--muted)">Any answer is</text>
+        <text x="100" y="212" text-anchor="middle" font-size="11" fill="var(--muted)">acceptable here.</text>
+
+        <!-- centre real zone -->
+        <rect x="230" y="40" width="440" height="200" rx="6" fill="var(--real-bg)" stroke="var(--real)" stroke-width="1.6"/>
+        <text x="450" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">REAL — THE NETWORK PATH</text>
+        <line x1="250" y1="78" x2="650" y2="78" stroke="var(--real)" stroke-opacity=".35"/>
+        <text x="250" y="102" font-size="12.5" fill="currentColor"><tspan font-weight="700">1.</tspan>  Byte count of each message</text>
+        <text x="250" y="128" font-size="12.5" fill="currentColor"><tspan font-weight="700">2.</tspan>  Number of messages per round</text>
+        <text x="250" y="154" font-size="12.5" fill="currentColor"><tspan font-weight="700">3.</tspan>  Clock time of each publish</text>
+        <text x="250" y="180" font-size="12.5" fill="currentColor"><tspan font-weight="700">4.</tspan>  Topic name and mesh membership</text>
+        <text x="250" y="206" font-size="12.5" fill="currentColor"><tspan font-weight="700">5.</tspan>  Gossip result: accept, ignore, or reject</text>
+
+        <!-- right stub zone -->
+        <rect x="710" y="40" width="180" height="200" rx="6" fill="var(--fake-bg)" stroke="var(--fake)" stroke-dasharray="5 4"/>
+        <text x="800" y="66" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--fake)">STUB — SINK</text>
+        <text x="800" y="96" text-anchor="middle" font-size="12.5" fill="currentColor">Quorum count</text>
+        <text x="800" y="118" text-anchor="middle" font-size="12.5" fill="currentColor">Justification</text>
+        <text x="800" y="140" text-anchor="middle" font-size="12.5" fill="currentColor">Finalisation</text>
+        <text x="800" y="162" text-anchor="middle" font-size="12.5" fill="currentColor">getConfirmed</text>
+        <text x="800" y="196" text-anchor="middle" font-size="11" fill="var(--muted)">Write to a map.</text>
+        <text x="800" y="212" text-anchor="middle" font-size="11" fill="var(--muted)">Do nothing more.</text>
+
+        <line x1="192" y1="140" x2="226" y2="140" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar1)"/>
+        <line x1="672" y1="140" x2="706" y2="140" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar1)"/>
+
+        <text x="450" y="278" text-anchor="middle" font-size="13" fill="var(--muted)">The mesh sees only the centre. It never reads the value inside a message.</text>
+        <text x="450" y="300" text-anchor="middle" font-size="13" fill="var(--muted)">Therefore a wrong value costs nothing, and a wrong size, count, or time costs everything.</text>
+      </svg>
+    </div>
+    <figcaption><b>The fidelity boundary.</b> Gossipsub routes bytes. It does not read consensus
+    fields. Keep the five centre properties correct and the measurement is valid.</figcaption>
+  </figure>
+
+  <h3>Property 1 — byte count</h3>
+  <p>Prysm marshals a message to SSZ and then compresses it with Snappy. See
+  <span class="path">beacon-chain/p2p/encoder/ssz.go:37</span>. Signatures and roots do not
+  compress. So the wire size follows the SSZ size closely. Define the vote structures with the
+  real field widths. Do not shorten a root to 8 bytes to save work.</p>
+
+  <h3>Property 2 — message count</h3>
+  <p>One vote per validator per round is the whole point of the test. Do not send one vote per
+  node. A node runs many validators. Send one message for each validator that the node holds.</p>
+
+  <h3>Property 3 — publish time</h3>
+  <p>Gossipsub load is not flat. It arrives in bursts at the deadlines. If you publish at a
+  different time, you measure a different network. Use the real deadline even if the vote content
+  is random.</p>
+  <p>For this protocol, publish time is the defining change. The finality vote's fields freeze at
+  the round start, so the vote goes out at the <b>start of the slot</b>. Today's attestations
+  wait for one third of the slot, so they do not compete with the block. The slot-start vote
+  does compete with the block. That collision is one of the main things to measure.</p>
+
+  <h3>Property 4 — topic and mesh</h3>
+  <p>A new topic makes a new mesh. Each mesh holds D = 8 peers by default. See
+  <span class="path">beacon-chain/p2p/pubsub.go:23-36</span>. Three new topics add three meshes
+  to every node. That is more open streams and more heartbeat work. A global topic and a set of
+  subnet topics behave very differently. Decide which one the specification means, then build
+  that one.</p>
+
+  <h3>Property 5 — gossip result</h3>
+  <p>The topic validator returns ACCEPT, IGNORE, or REJECT. ACCEPT forwards the message. IGNORE
+  does not forward it. REJECT does not forward it and lowers the peer score. See
+  <span class="path">beacon-chain/sync/subscriber.go:514</span>. A stub that returns IGNORE
+  stops all propagation. The test then measures nothing. A stub that always returns ACCEPT
+  removes the duplicate filter and measures too much traffic.</p>
+
+  <div class="box w">
+    <span class="lbl">Warning</span>
+    <p>Property 5 is the easiest one to get wrong. A validator stub must still keep a
+    seen-message cache and return IGNORE for a repeat. Prysm does this for attestations. Copy
+    that pattern.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 02 -->
+<section id="s02">
+  <h2><span class="num">02</span> The messages in detail</h2>
+  <p class="dek">The candidate specification defines three message types. Each has a different
+  rate and a different size.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Message</th><th>Rate</th><th>Goes on chain?</th><th>Fields</th><th>Est. SSZ size</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Finality vote</b></td>
+          <td class="num">1 per validator<br>per voting round<br>(8 slots)</td>
+          <td><span class="chip real">Yes</span><br>As a BLS aggregate, like an attestation.</td>
+          <td class="c">validator u64 · height u64 · target root32 · finalizeHeight u64 · finalizeTarget root32 · signature 96</td>
+          <td class="num">184 B</td>
+        </tr>
+        <tr>
+          <td><b>Stability vote</b></td>
+          <td class="num">1 per validator<br>per voting round<br><b>paired with the
+          finality vote</b></td>
+          <td><span class="chip nx">No</span><br>Off chain only.</td>
+          <td class="c">validator u64 · round u64 · target root32 · signature 96 — but see below:
+          send it inside the finality vote instead</td>
+          <td class="num">+32 B<br>if folded in</td>
+        </tr>
+        <tr>
+          <td><b>Available attestation</b><br>(the Goldfish head vote)</td>
+          <td class="num">512 signers<br>per slot, fixed</td>
+          <td><span class="chip real">Yes</span><br>Up to 8 per block.</td>
+          <td class="c">aggregation_bits Bitvector[512] 64 · slot 8 · payload_present 1 ·
+          beacon_block_root 32 · signature 96</td>
+          <td class="num">201 B<br>exact</td>
+        </tr>
+        <tr>
+          <td><b>Round-start re-gossip</b></td>
+          <td class="num">—</td>
+          <td colspan="3">Removed from scope. Nothing to build. See section 11.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box f">
+    <span class="lbl">These sizes are design estimates</span>
+    <p>The specification defines a vote as a tuple, not as an SSZ container. The 184 and 144 byte
+    figures come from adding the field widths that Prysm uses for the same kinds of field. For
+    comparison, Prysm's <code>PayloadAttestationMessage</code> is exactly 146 bytes
+    (<span class="path">proto/prysm/v1alpha1/gloas.ssz.go:1221</span>) and
+    <code>SingleAttestation</code> is exactly 240 bytes
+    (<span class="path">proto/prysm/v1alpha1/electra.ssz.go:453</span>). So the estimates sit in
+    the normal range for this codebase.</p>
+  </div>
+
+  <h3>Votes aggregate on chain, as attestations do today</h3>
+  <p>Finality votes reach a block through BLS aggregation, exactly like attestations now. Votes
+  that name the same height and the same target combine into one signature and one bit field. A
+  block therefore carries a small number of aggregates, not one entry per validator.</p>
+
+  <p>Read the word "aggregate" in the specification text with care, because it has two senses.
+  In the timing proofs it means "the proposer collects votes into a block". That is the inclusion
+  step. The BLS combination is a different step. The specification does not describe it, because
+  it is an engineering detail below the level of the proofs.</p>
+
+  <h3>One thing changes: the period</h3>
+  <p>A validator attests once per epoch, which is 32 slots. A validator casts one finality vote
+  per voting round, which is m sub-rounds. One sub-round is one available-chain slot. With m = 8,
+  the period is 8 slots instead of 32, so the vote rate is 4 times the attestation rate.</p>
+
+  <p>The quorum counts over the whole electorate, not over a committee. The specification keeps
+  one target entry per validator: <code>targets[1..n]</code>
+  (<span class="path">full/height_filter_and_timeouts.tex:199</span>). The healing document says
+  that finality counts use the electorate V and never committee units
+  (<span class="path">height_filter_healing.tex:259</span>). Goldfish committees apply to the
+  available chain only.</p>
+
+  <div class="box">
+    <span class="lbl">This does not make each message larger</span>
+    <p>The quorum spans the electorate, but the votes do not all arrive together. The protocol
+    divides the validator set across the m sub-rounds
+    (<span class="path">full/height_filter_and_timeouts.tex:1157</span>). Each slot then carries
+    about n/8 votes, and each slot's aggregates cover about n/8 voters. This is the same shape as
+    a per-slot committee today, but 4 times wider. Section 04 has the numbers.</p>
+  </div>
+
+  <h3>Fold the stability vote into the finality vote</h3>
+  <p>The specification pairs the two votes: "A validator that fails to cast its finality vote in
+  voting round k also fails to cast a stability vote for round k; the two are emitted (or not)
+  together" (<span class="path">full/height_filter_and_timeouts.tex:1161</span>). They go out at
+  the same instant, from the same validator, for the same round.</p>
+
+  <p>So send one message with both targets in it. This costs 32 more bytes and removes a whole
+  topic, a whole validator, a whole handler, and a second set of subnets. The network sees the
+  same message count at the same times.</p>
+
+  <div class="box">
+    <span class="lbl">One exception to check</span>
+    <p>Stability votes never go on chain. Finality votes do. If your mock includes votes in blocks,
+    strip the stability field at inclusion time, or accept 32 extra bytes per voter in the block.
+    At test scale, accept it.</p>
+  </div>
+
+  <h3>Gossip aggregation — take the attestation design</h3>
+  <p>The specification defines no aggregator role and no subnets. Ethereum does: individual
+  attestations on 64 subnets, then chosen aggregators publish combined aggregates on one global
+  topic. Because the vote shape matches an attestation exactly, take that design unchanged. See
+  the ★ plan section.</p>
+</section>
+
+<!-- ============================================================ 03 -->
+<section id="s03">
+  <h2><span class="num">03</span> Traffic budget</h2>
+  <p class="dek">First question: what is added on top of today's gossip? Two of the four changes
+  add nothing new. Two do.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Topic</th><th>Today, per slot</th><th>With decoupled consensus</th><th>Added?</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>beacon_attestation_{subnet}</code></td>
+          <td class="num">n/32 singles</td>
+          <td class="num">n/8 singles</td>
+          <td><span class="chip nx">4×</span> Same stream, higher rate. The topic name can stay,
+          but the message type is new.</td>
+        </tr>
+        <tr>
+          <td><code>beacon_aggregate_and_proof</code></td>
+          <td class="num">≈ 1024 aggregates</td>
+          <td class="num">≈ 1024 aggregates,<br>4× wider bit fields</td>
+          <td><span class="chip nx">Bytes only</span> The message count does not change.</td>
+        </tr>
+        <tr>
+          <td><code>beacon_block</code></td>
+          <td class="num">1</td>
+          <td class="num">1, larger at round start</td>
+          <td><span class="chip nx">Bytes only</span></td>
+        </tr>
+        <tr>
+          <td><code>available_attestation</code></td>
+          <td class="num">—</td>
+          <td class="num">512 per slot</td>
+          <td><span class="chip real">New</span> Flat in n. See the ★★ section.</td>
+        </tr>
+        <tr>
+          <td><b>Round-start re-gossip</b><br>(on the existing topics)</td>
+          <td class="num">—</td>
+          <td class="num">—</td>
+          <td><span class="chip nx">Removed</span> Out of scope, and expected to stay out. See
+          section 11.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box">
+    <span class="lbl">Short answer</span>
+    <p>One thing is genuinely on top: the <code>available_attestation</code> topic, at 512 messages
+    per slot, flat in validator count. The finality attestation is not extra traffic — it is
+    today's attestation at 4 times the rate on the same topic. Nothing else adds a message.</p>
+  </div>
+
+  <div class="box f">
+    <span class="lbl">One large item is out of scope</span>
+    <p>A round-start re-gossip duty would have made the round proposer replay a whole round of
+    retained aggregate objects onto the existing topics. That would be by far the largest event in
+    the design. It is out of scope, and it is expected to stay out. Section 11 records what it is
+    and what to watch if it returns.</p>
+  </div>
+
+  <h3>The finality attestation rate</h3>
+  <p>The sub-round partition sets this. A sub-round is one slot, and only the validators assigned
+  to that sub-round vote at it. So n/8 validators vote per slot, not n.</p>
+
+  <pre class="code">votes per slot   =  n / m          where m = 8 sub-rounds per voting round
+today            =  n / 32         one attestation per validator per epoch
+ratio            =  32 / 8  =  4</pre>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 900 300" role="img" aria-label="Diagram of gossipsub fan-out arithmetic for one node">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <circle cx="180" cy="150" r="34" fill="var(--panel)" stroke="var(--real)" stroke-width="2"/>
+        <text x="180" y="147" text-anchor="middle" font-family="var(--mono)" font-size="12" font-weight="700" fill="var(--real)">node</text>
+        <text x="180" y="163" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--muted)">i</text>
+
+        <!-- 8 mesh peers -->
+        <g stroke="currentColor" stroke-opacity=".45" stroke-width="1.2">
+          <line x1="214" y1="150" x2="356" y2="46"  marker-end="url(#ar2)"/>
+          <line x1="214" y1="150" x2="356" y2="76"  marker-end="url(#ar2)"/>
+          <line x1="214" y1="150" x2="356" y2="106" marker-end="url(#ar2)"/>
+          <line x1="214" y1="150" x2="356" y2="136" marker-end="url(#ar2)"/>
+          <line x1="214" y1="150" x2="356" y2="166" marker-end="url(#ar2)"/>
+          <line x1="214" y1="150" x2="356" y2="196" marker-end="url(#ar2)"/>
+          <line x1="214" y1="150" x2="356" y2="226" marker-end="url(#ar2)"/>
+          <line x1="214" y1="150" x2="356" y2="256" marker-end="url(#ar2)"/>
+        </g>
+        <rect x="360" y="34" width="150" height="236" rx="5" fill="none" stroke="var(--rule-hi)" stroke-dasharray="4 4"/>
+        <text x="435" y="24" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--muted)">mesh, D = 8</text>
+        <g font-size="11.5" fill="var(--muted)" font-family="var(--mono)">
+          <text x="372" y="50">peer 1</text><text x="372" y="80">peer 2</text>
+          <text x="372" y="110">peer 3</text><text x="372" y="140">peer 4</text>
+          <text x="372" y="170">peer 5</text><text x="372" y="200">peer 6</text>
+          <text x="372" y="230">peer 7</text><text x="372" y="260">peer 8</text>
+        </g>
+
+        <line x1="516" y1="150" x2="556" y2="150" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar1)"/>
+
+        <rect x="562" y="60" width="326" height="180" rx="6" fill="var(--panel)" stroke="var(--rule-hi)"/>
+        <text x="580" y="88" font-family="var(--mono)" font-size="11.5" font-weight="700" fill="var(--real)">EGRESS PER ROUND</text>
+        <text x="580" y="112" font-family="var(--mono)" font-size="13" fill="currentColor">V × size × (D − 1)</text>
+        <line x1="580" y1="128" x2="870" y2="128" stroke="var(--rule)"/>
+        <text x="580" y="152" font-family="var(--mono)" font-size="11.5" font-weight="700" fill="var(--real)">INGRESS PER ROUND</text>
+        <text x="580" y="176" font-family="var(--mono)" font-size="13" fill="currentColor">V × size</text>
+        <text x="580" y="196" font-size="11.5" fill="var(--muted)">(the message-id cache drops repeats)</text>
+        <line x1="580" y1="208" x2="870" y2="208" stroke="var(--rule)"/>
+        <text x="580" y="228" font-size="11.5" fill="var(--muted)">V = validator count. Size = wire bytes.</text>
+      </svg>
+    </div>
+    <figcaption><b>Fan-out arithmetic.</b> A node forwards each new message to its other 7 mesh
+    peers. It receives each message about once, because the message-id cache
+    (<span class="path">beacon-chain/p2p/message_id.go:73</span>) drops repeats. So egress is
+    about 7 times ingress.</figcaption>
+  </figure>
+
+  <p>The table below uses a paired vote of 216 bytes: the finality fields plus the stability
+  target plus one signature. Compare <code>SingleAttestation</code> at 240 bytes. The figures are
+  per node, per 12-second slot, for a single global topic — the worst case, with no subnets.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Validators n</th><th>Votes / slot</th><th>Ingress / slot</th><th>Egress / slot</th><th>Egress rate</th><th>Verdict</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">512</td><td class="num">64</td><td class="num">14 KB</td><td class="num">97 KB</td><td class="num">8 KB/s</td><td>Too small to stress a mesh.</td></tr>
+        <tr><td class="num">4 096</td><td class="num">512</td><td class="num">111 KB</td><td class="num">774 KB</td><td class="num">65 KB/s</td><td>Good first target.</td></tr>
+        <tr><td class="num">16 384</td><td class="num">2 048</td><td class="num">442 KB</td><td class="num">3.1 MB</td><td class="num">258 KB/s</td><td>Heavy on one topic. Subnets fix this.</td></tr>
+        <tr><td class="num">131 072</td><td class="num">16 384</td><td class="num">3.5 MB</td><td class="num">24.8 MB</td><td class="num">2.1 MB/s</td><td>One global topic will not do this.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Divide the ingress by 32 if you use 64 subnets and each node joins 2, as attestations do.
+  That is the Option B design in the recommendation, and it is what makes the large rows
+  workable.</p>
+
+  <p>Two costs do not appear in the table. First, each node computes a SHA-256 message id for
+  every message it receives, on every topic. Second, gossipsub sends IHAVE and IWANT control
+  messages during each 700 ms heartbeat. Control traffic grows with message count, not with
+  message size.</p>
+
+  <div class="box w">
+    <span class="lbl">Warning — these are estimates, not measurements</span>
+    <p>The formula ignores duplicate arrivals before the mesh settles, ignores control traffic,
+    and assumes Snappy gives no gain on signature bytes. Use the table to choose a test size.
+    Do not report it as a result.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 04 -->
+<section id="s04">
+  <h2><span class="num">04</span> The block growth effect</h2>
+  <p class="dek">Finality votes go on chain as BLS aggregates. Blocks still get larger, but the
+  cost is the bit field, not the signatures.</p>
+
+  <p>An aggregate holds one signature for many voters plus one bit per voter. Each voter therefore
+  costs one bit on chain, whatever the aggregate grouping is. The block cost per slot is:</p>
+
+  <pre class="code">bit-field bytes per slot  =  (voters that slot) / 8
+
+gadget, m = 8 sub-rounds   =  (n/8)  / 8  =  n / 64   bytes
+today, 32-slot epoch       =  (n/32) / 8  =  n / 256  bytes
+ratio                      =  4
+
+plus 176 fixed bytes per aggregate (80 data + 96 signature)</pre>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Validators n</th><th>Bit field today / slot</th><th>Bit field with the gadget / slot</th><th>Added bytes / block</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">512</td><td class="num">2 B</td><td class="num">8 B</td><td class="num">6 B</td></tr>
+        <tr><td class="num">4 096</td><td class="num">16 B</td><td class="num">64 B</td><td class="num">48 B</td></tr>
+        <tr><td class="num">16 384</td><td class="num">64 B</td><td class="num">256 B</td><td class="num">192 B</td></tr>
+        <tr><td class="num">1 048 576</td><td class="num">4 KB</td><td class="num">16 KB</td><td class="num">12 KB</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box">
+    <span class="lbl">Block growth is not a problem</span>
+    <p>Sub-round partition puts only n/8 voters in each slot. BLS aggregation puts each voter in
+    one bit. The result is 4 times today's on-chain vote cost, and at one million validators that
+    is about 12 KB more per block. The 10 MiB cap
+    (<span class="path">config/params/mainnet_config.go:364</span>) is far away. Do not spend
+    effort here.</p>
+  </div>
+
+  <p>Two smaller costs go with it. Each aggregate adds 176 fixed bytes, so many small aggregates
+  cost more than few large ones. The stability target is the second cost. If you keep it inside
+  the vote and do not strip it at inclusion time, each voter adds 32 bytes to the block.</p>
+
+  <div class="box">
+    <span class="lbl">Where to look instead</span>
+    <p>The gossip load in section 03 is the real constraint, not block size. Measure that first.
+    Return to block size only if you run above 100 000 validators.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 05 -->
+<section id="s05">
+  <h2><span class="num">05</span> Change list A — add the gossip topics</h2>
+  <p class="dek">Prysm has a fixed sequence of files for a new gossip message type. Gloas added
+  four new topics recently. Follow that path exactly.</p>
+
+  <div class="box f">
+    <span class="lbl">Read the recommendation first</span>
+    <p>This section builds one plain global topic. The recommendation builds two topics that copy
+    the attestation path: a subnet topic and an aggregate topic. The file sequence below is the
+    same in both cases, so the steps still apply. Only the count changes.</p>
+  </div>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 900 260" role="img" aria-label="Diagram of the publish and receive path for a gossip message in Prysm">
+        <defs>
+          <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+        <!-- send row -->
+        <text x="12" y="30" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">SEND</text>
+        <g>
+          <rect x="12"  y="42" width="150" height="52" rx="5" fill="var(--panel)" stroke="var(--rule-hi)"/>
+          <text x="87" y="64" text-anchor="middle" font-size="12" fill="currentColor">build the vote</text>
+          <text x="87" y="81" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">your new timer</text>
+
+          <rect x="186" y="42" width="150" height="52" rx="5" fill="var(--panel)" stroke="var(--rule-hi)"/>
+          <text x="261" y="64" text-anchor="middle" font-size="12" fill="currentColor">Broadcast()</text>
+          <text x="261" y="81" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">broadcaster.go:42</text>
+
+          <rect x="360" y="42" width="150" height="52" rx="5" fill="var(--real-bg)" stroke="var(--real)" stroke-width="1.5"/>
+          <text x="435" y="64" text-anchor="middle" font-size="12" fill="currentColor">SSZ + Snappy</text>
+          <text x="435" y="81" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">encoder/ssz.go:37</text>
+
+          <rect x="534" y="42" width="150" height="52" rx="5" fill="var(--real-bg)" stroke="var(--real)" stroke-width="1.5"/>
+          <text x="609" y="64" text-anchor="middle" font-size="12" fill="currentColor">PublishToTopic</text>
+          <text x="609" y="81" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">pubsub.go:87</text>
+
+          <rect x="708" y="42" width="180" height="52" rx="5" fill="var(--real-bg)" stroke="var(--real)" stroke-width="1.5"/>
+          <text x="798" y="64" text-anchor="middle" font-size="12" fill="currentColor">gossipsub mesh</text>
+          <text x="798" y="81" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">D=8, heartbeat 700ms</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.3">
+          <line x1="164" y1="68" x2="182" y2="68" marker-end="url(#ar3)"/>
+          <line x1="338" y1="68" x2="356" y2="68" marker-end="url(#ar3)"/>
+          <line x1="512" y1="68" x2="530" y2="68" marker-end="url(#ar3)"/>
+          <line x1="686" y1="68" x2="704" y2="68" marker-end="url(#ar3)"/>
+        </g>
+
+        <!-- receive row -->
+        <text x="12" y="160" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">RECEIVE</text>
+        <g>
+          <rect x="12"  y="172" width="150" height="52" rx="5" fill="var(--real-bg)" stroke="var(--real)" stroke-width="1.5"/>
+          <text x="87" y="194" text-anchor="middle" font-size="12" fill="currentColor">message-id cache</text>
+          <text x="87" y="211" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">message_id.go:73</text>
+
+          <rect x="186" y="172" width="150" height="52" rx="5" fill="var(--real-bg)" stroke="var(--real)" stroke-width="1.5"/>
+          <text x="261" y="194" text-anchor="middle" font-size="12" fill="currentColor">topic validator</text>
+          <text x="261" y="211" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">subscriber.go:514</text>
+
+          <rect x="360" y="172" width="150" height="52" rx="5" fill="var(--panel)" stroke="var(--rule-hi)"/>
+          <text x="435" y="188" text-anchor="middle" font-size="12" fill="currentColor">ACCEPT →  forward</text>
+          <text x="435" y="205" text-anchor="middle" font-size="11" fill="var(--muted)">IGNORE / REJECT → stop</text>
+
+          <rect x="534" y="172" width="150" height="52" rx="5" fill="var(--fake-bg)" stroke="var(--fake)" stroke-dasharray="5 4"/>
+          <text x="609" y="194" text-anchor="middle" font-size="12" fill="currentColor">handler</text>
+          <text x="609" y="211" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">stub: write to a map</text>
+
+          <rect x="708" y="172" width="180" height="52" rx="5" fill="var(--fake-bg)" stroke="var(--fake)" stroke-dasharray="5 4"/>
+          <text x="798" y="194" text-anchor="middle" font-size="12" fill="currentColor">gadget store</text>
+          <text x="798" y="211" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--muted)">stub: never read</text>
+        </g>
+        <g stroke="currentColor" stroke-width="1.3">
+          <line x1="164" y1="198" x2="182" y2="198" marker-end="url(#ar3)"/>
+          <line x1="338" y1="198" x2="356" y2="198" marker-end="url(#ar3)"/>
+          <line x1="512" y1="198" x2="530" y2="198" marker-end="url(#ar3)"/>
+          <line x1="686" y1="198" x2="704" y2="198" marker-end="url(#ar3)"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>The path you must build.</b> Teal boxes are the network path — keep them real.
+    Dashed ochre boxes are the consensus path — stub them.</figcaption>
+  </figure>
+
+  <p>Add one topic first. Get it working end to end. Then copy the pattern for the other two.
+  Start with the finality vote, because it is the largest source of traffic.</p>
+
+  <div class="steps">
+    <div class="step"><div class="k">A1</div><div class="b">
+      <p class="t">Define the message in protobuf. Add the data container and the signed wrapper.
+      Run the SSZ generator. Model both on the Gloas payload attestation, which has the same
+      shape: index, small data container, 96-byte signature.</p>
+      <p class="p">proto/prysm/v1alpha1/ — a new .proto file, then the generated .ssz.go</p>
+<div class="src"><div class="srcpath"><b>proto/prysm/v1alpha1/gloas.proto:128, :163 — the model to copy</b></div><pre>message PayloadAttestationData {
+  bytes beacon_block_root = 1 [ (ethereum.eth.ext.ssz_size) = "32" ];
+  uint64 slot = 2 [ (ethereum.eth.ext.cast_type) = ".../primitives.Slot" ];
+  bool payload_present = 3;
+  ...
+}
+message PayloadAttestationMessage {
+  uint64 validator_index = 1 [ ... ];
+  PayloadAttestationData data = 2;
+  bytes signature = 3 [ (ethereum.eth.ext.ssz_size) = "96" ];
+}</pre></div>
+      <p class="t" style="margin-top:8px">The target containers come from the executable
+      specification:</p>
+<div class="src"><div class="srcpath"><b>consensus-specs/specs/_features/simplex/beacon-chain.md:424-439</b></div><pre>class AvailableAttestationData(Container):
+    slot: Slot
+    payload_present: boolean  # Payload availability signal
+    beacon_block_root: Root   # Goldfish attestation for fork choice
+
+class AvailableAttestation(Container):
+    aggregation_bits: Bitvector[AVAILABLE_COMMITTEE_SIZE]   # 512
+    data: AvailableAttestationData
+    signature: BLSSignature</pre></div></div></div>
+    <div class="step"><div class="k">A2</div><div class="b">
+      <p class="t">Add a message-type name constant and a topic format constant. The name constant
+      is the string the scoring switch matches on. The format constant carries the fork digest
+      placeholder.</p>
+      <p class="p">beacon-chain/p2p/topics.go — the const block at :13-55</p>
+<div class="src"><div class="srcpath"><b>beacon-chain/p2p/topics.go:49-51 — the pattern to copy</b></div><pre>// GossipPayloadAttestationMessageMessage is the name for the payload attestation message type.
+GossipPayloadAttestationMessageMessage = "payload_attestation_message"</pre></div></div></div>
+    <div class="step"><div class="k">A3</div><div class="b">
+      <p class="t">Add the topic to <code>allTopics()</code>. Give it a start epoch. Use the Gloas
+      fork epoch or a new fork epoch. Without this entry the topic is not in the allowed-topic
+      set, and the pubsub filter refuses subscriptions to it.</p>
+      <p class="p">beacon-chain/p2p/topics.go:155 — the <code>templates</code> slice</p>
+<div class="src"><div class="srcpath"><b>beacon-chain/p2p/topics.go:177-180 — the Gloas entries to imitate</b></div><pre>newTopic(gloas, future, empty, GossipPayloadAttestationMessageMessage),
+newTopic(gloas, future, empty, GossipExecutionPayloadEnvelopeMessage),
+newTopic(gloas, future, empty, GossipExecutionPayloadBidMessage),
+newTopic(gloas, future, empty, GossipSignedProposerPreferencesMessage),</pre></div></div></div>
+    <div class="step"><div class="k">A4</div><div class="b">
+      <p class="t">Map the topic format to the message type, in both directions. The forward map
+      lets the decoder pick the Go type from the topic string. The reverse map lets
+      <code>Broadcast(ctx, msg)</code> pick the topic from the Go type.</p>
+      <p class="p">beacon-chain/p2p/gossip_topic_mappings.go:16 (topic → type) and the
+      <code>init()</code> at the end of the file (type → topic)</p>
+<div class="src"><div class="srcpath"><b>beacon-chain/p2p/gossip_topic_mappings.go — both directions, Gloas model</b></div><pre>// forward, in gossipTopicMappings (:30):
+PayloadAttestationMessageTopicFormat: func() proto.Message { return &amp;ethpb.PayloadAttestationMessage{} },
+
+// reverse, in init() at the end of the file:
+GossipTypeMapping[reflect.TypeFor[*ethpb.PayloadAttestationMessage]()] = PayloadAttestationMessageTopicFormat</pre></div></div></div>
+    <div class="step hi"><div class="k">A5</div><div class="b">
+      <p class="t">Add a case to the topic-score switch. If you skip this step, the node returns
+      an error at start and never joins the topic. The failure is silent, because it happens
+      inside a subscribe goroutine.</p>
+      <p class="p">beacon-chain/p2p/gossip_scoring_params.go</p>
+<div class="src"><div class="srcpath"><b>beacon-chain/p2p/gossip_scoring_params.go:150 and the default case — copy the case, avoid the default</b></div><pre>case strings.Contains(topic, GossipPayloadAttestationMessageMessage):
+    // TODO: Revisit scoring params for payload attestation gossip.
+    return defaultBlockTopicParams(), nil
+...
+default:
+    return nil, errors.Errorf("unrecognized topic provided for parameter registration: %s", topic)</pre></div></div></div>
+    <div class="step"><div class="k">A6</div><div class="b">
+      <p class="t">Register a subscriber. Use the plain <code>subscribe()</code> form for a global
+      topic. Use <code>subscribeWithParameters()</code> only if the design uses subnets.
+      <code>subscribe</code> adds the digest and the encoding suffix for you.</p>
+      <p class="p">beacon-chain/sync/subscriber.go:215 <code>registerSubscribers</code>;
+      <code>subscribe</code> at :407</p>
+<div class="src"><div class="srcpath"><b>beacon-chain/sync/subscriber.go:221-223 — one registration, the pattern to copy</b></div><pre>s.spawn(func() {
+    s.subscribe(p2p.BlockSubnetTopicFormat, s.validateBeaconBlockPubSub, s.beaconBlockSubscriber, nse)
+})</pre></div></div></div>
+    <div class="step"><div class="k">A7</div><div class="b">
+      <p class="t">Write the topic validator. Return ACCEPT, IGNORE, or REJECT. Copy the shape of
+      the payload attestation validator: self-check, sync check, decode, type assert, then the
+      protocol checks.</p>
+      <p class="p">new file beacon-chain/sync/validate_available_attestation.go; model on
+      beacon-chain/sync/validate_payload_attestation.go:23</p>
+<div class="src"><div class="srcpath"><b>beacon-chain/sync/validate_payload_attestation.go:23-42 — the opening every validator shares</b></div><pre>func (s *Service) validatePayloadAttestation(...) (pubsub.ValidationResult, error) {
+    if pid == s.cfg.p2p.PeerID() { return pubsub.ValidationAccept, nil }
+    if s.cfg.initialSync.Syncing() { return pubsub.ValidationIgnore, nil }
+    ...
+    m, err := s.decodePubsubMessage(msg)
+    if err != nil { return pubsub.ValidationReject, err }
+    att, ok := m.(*eth.PayloadAttestationMessage)
+    if !ok { return pubsub.ValidationReject, errWrongMessage }</pre></div>
+      <p class="t" style="margin-top:8px">The protocol checks to port come from the executable
+      specification. Keep each check in its verdict class:</p>
+<div class="src"><div class="srcpath"><b>consensus-specs/.../simplex/p2p-interface.md:646-700 — validate_available_attestation_gossip, excerpt</b></div><pre>if data.slot != get_current_slot(store):
+    raise GossipIgnore("available attestation is not for the current slot")
+if data.beacon_block_root not in store.blocks:
+    raise GossipIgnore("block being voted for has not been seen")
+if data.beacon_block_root not in store.block_states:
+    raise GossipReject("block being voted for failed validation")
+...
+if len(attestation.aggregation_bits) != AVAILABLE_COMMITTEE_SIZE:
+    raise GossipReject("available aggregation bits have an incorrect length")
+...
+if not bls.FastAggregateVerify(pubkeys, signing_root, attestation.signature):
+    raise GossipReject("invalid available attestation signature")</pre></div></div></div>
+    <div class="step"><div class="k">A8</div><div class="b">
+      <p class="t">Write the handler. For the mock, it records the vote into the per-slot store
+      and returns nil.</p>
+      <p class="p">new file beacon-chain/sync/subscriber_available_attestation.go; model on
+      beacon-chain/sync/subscriber_payload_attestation.go:14</p>
+<div class="src"><div class="srcpath"><b>beacon-chain/sync/subscriber_payload_attestation.go:14-23 — the whole model handler</b></div><pre>func (s *Service) payloadAttestationSubscriber(ctx context.Context, msg proto.Message) error {
+    a, ok := msg.(*eth.PayloadAttestationMessage)
+    if !ok { return errWrongMessage }
+    if a == nil || a.Data == nil { return errNilMessage }
+    return s.processPayloadAttestationMessage(ctx, a)
+}</pre></div></div></div>
+  </div>
+
+  <div class="box">
+    <span class="lbl">Step A5 is the one people forget</span>
+    <p>Prysm computes gossipsub topic-score parameters for every topic it joins. An unknown topic
+    string falls to the default case and returns an error. The subscription then fails silently
+    in a goroutine. The symptom is a topic that no node ever joins, with no obvious error. Copy
+    the Gloas lines and use <code>defaultBlockTopicParams()</code> with a TODO comment. Gloas
+    does exactly this for its three new topics.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 06 -->
+<section id="s06">
+  <h2><span class="num">06</span> Change list B — send the messages</h2>
+  <p class="dek">Something must decide to publish. For a networking test, put that decision in
+  the beacon node, not in the validator client.</p>
+
+  <p>Prysm normally splits this work. The validator client asks for data over gRPC, signs it, and
+  submits it. The beacon node broadcasts it. That split costs you two more components to change
+  and adds gRPC round trips that the real design may not have.</p>
+
+  <div class="box">
+    <span class="lbl">Recommendation</span>
+    <p>Put a vote-producer goroutine inside the beacon node. Give the node a list of validator
+    indices and keys through a flag. The goroutine wakes at each sub-round deadline, builds one
+    vote per index, signs each one, and calls <code>Broadcast</code>. This removes the validator
+    client from the test completely and keeps publish timing exact.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step"><div class="k">B1</div><div class="b">
+      <p class="t">Add a new service to the beacon node, or a goroutine in the sync service. Give
+      it the p2p <code>Broadcaster</code> and the chain clock.</p>
+      <p class="p">beacon-chain/node/node.go registers services; the sync service already holds
+      both</p></div></div>
+    <div class="step"><div class="k">B2</div><div class="b">
+      <p class="t">Add flags: the number of local validators, the first index, and the gadget
+      round length. Fabricated keys are acceptable if signature checks are stubbed.</p>
+      <p class="p">cmd/beacon-chain/flags/</p></div></div>
+    <div class="step hi"><div class="k">B3</div><div class="b">
+      <p class="t">Make the finality-vote publish offset a flag, with slot start as the default.
+      The vote's fields freeze at the round start, so the vote can go out before the slot's block
+      arrives. Sweep the offset: 0 (slot start), 3333 (the attestation deadline), and values
+      between. Keep aggregates at the aggregate deadline. The constants are basis points of the
+      slot: 3333 is one third, 6667 is two thirds.</p>
+      <p class="p">config/params/mainnet_config.go:126-139</p>
+<div class="src"><div class="srcpath"><b>config/params/mainnet_config.go:126-139 — the deadline constants, verbatim</b></div><pre>// Time-based protocol parameters.
+ProposerReorgCutoffBPS:   primitives.BP(1667),
+AttestationDueBPS:        primitives.BP(3333),
+AggregateDueBPS:          primitives.BP(6667),
+...
+AttestationDueBPSGloas:   primitives.BP(2500),
+AggregateDueBPSGloas:     primitives.BP(5000),
+PayloadAttestationDueBPS: primitives.BP(7500),</pre></div></div></div>
+    <div class="step hi"><div class="k">B4</div><div class="b">
+      <p class="t">Publish one message for each local validator <em>assigned to this slot</em>, not
+      for every local validator. About one in eight of them vote each slot.</p>
+      <p class="p">your producer loop, gated by the 8-slot assignment function</p>
+<div class="src quote"><div class="srcpath"><b>consensus-specs/.../simplex/validator.md:258-259 — the duty rate, verbatim</b></div><pre>A validator assigned to a beacon committee at slot `S` attests once per round.
+Its FG fields are selected once in the round's first slot.</pre></div><div class="src quote"><div class="srcpath"><b>finality_gadget_specs/full/height_filter_and_timeouts.tex:1157-1158 — the partition, verbatim</b></div><pre>The validator set is partitioned across the $m$ sub-rounds of voting round~$k$, and only the
+validators assigned to a given sub-round cast their (single) vote at that sub-round's finality
+voting time [...] the votes cast across all $m$ sub-rounds of voting round~$k$ together account
+for exactly one vote per validator.</pre></div></div></div>
+    <div class="step"><div class="k">B5</div><div class="b">
+      <p class="t">Call <code>Broadcast(ctx, msg)</code>. It picks the topic from the Go type, adds
+      the current fork digest, encodes, and publishes.</p>
+      <p class="p">beacon-chain/p2p/broadcaster.go:42</p>
+<div class="src"><div class="srcpath"><b>beacon-chain/p2p/broadcaster.go:42-67 — Broadcast, abridged</b></div><pre>func (s *Service) Broadcast(ctx context.Context, msg proto.Message) error {
+    twoSlots := time.Duration(2*params.BeaconConfig().SecondsPerSlot) * time.Second
+    ctx, cancel := context.WithTimeout(ctx, twoSlots)
+    ...
+    forkDigest, err := s.currentForkDigest()
+    topic, ok := GossipTypeMapping[reflect.TypeOf(msg)]
+    if !ok { return ErrMessageNotMapped }
+    ...
+    return s.broadcastObject(ctx, castMsg, fmt.Sprintf(topic, forkDigest))
+}</pre></div><div class="src"><div class="srcpath"><b>beacon-chain/p2p/pubsub.go:87-104 — PublishToTopic waits for a peer</b></div><pre>func (s *Service) PublishToTopic(ctx ..., topic string, data []byte, ...) error {
+    topicHandle, err := s.JoinTopic(topic)
+    ...
+    for {
+        if len(topicHandle.ListPeers()) &gt; 0 || flags.Get().MinimumSyncPeers == 0 {
+            return topicHandle.Publish(ctx, data, opts...)
+        }
+        select {
+        case &lt;-ctx.Done(): return errors.Wrapf(ctx.Err(), "unable to find requisite number of peers ...")
+        default: time.Sleep(100 * time.Millisecond)
+        }
+    }
+}</pre></div></div></div>
+  </div>
+
+  <h3>Two behaviours of the publish path to know about</h3>
+  <ul class="tight">
+    <li><b>Publish blocks until a peer exists.</b> <code>PublishToTopic</code> loops with a 100 ms
+    sleep until the topic has at least one peer
+    (<span class="path">beacon-chain/p2p/pubsub.go:93-104</span>). At node start this delays the
+    first votes. Discard the first epoch of measurements.</li>
+    <li><b>The publish deadline is two slots.</b> <code>Broadcast</code> sets a context timeout of
+    2 × SecondsPerSlot (<span class="path">broadcaster.go:46</span>). A vote that cannot publish in
+    two slots is dropped with an error, not queued.</li>
+  </ul>
+
+  <div class="box f">
+    <span class="lbl">Safe to stub — signing</span>
+    <p>BLS signing costs about 1 ms per signature. At 512 validators on one node that is 512 ms
+    per round, which distorts publish timing. Two options: sign once at start and reuse the same
+    96 bytes in every vote, or use a fixed 96-byte constant. Both keep the wire size exact. The
+    second also removes signature verification cost on the receiver. Choose based on whether you
+    want to measure verification load.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 07 -->
+<section id="s07">
+  <h2><span class="num">07</span> Change list C — receive the messages</h2>
+  <p class="dek">The validator decides whether the message propagates. This is the part of the
+  stub that most affects the measurement.</p>
+
+  <p>A Prysm topic validator does four things in order. Keep the first three. Stub the fourth.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Check</th><th>Keep or stub</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Decode the SSZ message</td>
+          <td><span class="chip real">Keep</span></td>
+          <td>It costs CPU on every hop. It also rejects malformed input. Removing it changes the
+          measurement.</td>
+        </tr>
+        <tr>
+          <td>Duplicate check against a seen-cache</td>
+          <td><span class="chip real">Keep</span></td>
+          <td>Without it, the node re-accepts a message it already forwarded. Traffic grows without
+          bound.</td>
+        </tr>
+        <tr>
+          <td>Slot or height window check</td>
+          <td><span class="chip real">Keep</span></td>
+          <td>It bounds the seen-cache and stops old messages circulating. Use a fixed window; the
+          exact rule can be wrong.</td>
+        </tr>
+        <tr>
+          <td>Signature verification</td>
+          <td><span class="chip fake">Your choice</span></td>
+          <td>Keep it to measure CPU load. Stub it to isolate bandwidth. State which you did.</td>
+        </tr>
+        <tr>
+          <td>Freshness rule, height rule, target validity</td>
+          <td><span class="chip fake">Stub</span></td>
+          <td>Return ACCEPT. These are consensus rules. They only matter if they would reject
+          messages, and a mock has nothing correct to reject.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The seen-cache</h3>
+  <p>Prysm keeps a per-topic cache keyed by the fields that identify a message. For a finality
+  vote, key it on validator index and round. Bound it by round, and prune old rounds. Prysm
+  has a helper for exactly this shape:
+  <span class="path">beacon-chain/sync/slot_aware_cache.go:53</span>
+  <code>pruneSlotsBefore</code>.</p>
+
+  <p>The executable specification changes the cache rule, and the change is gossip-visible. This
+  is the source:</p>
+<div class="src quote"><div class="srcpath"><b>consensus-specs/.../simplex/p2p-interface.md:100-108 — Modified Seen, verbatim</b></div><pre>The epoch-keyed attestation caches are replaced by round-keyed caches. The
+single-attestation cache retains the first data root and permits one distinct
+second message so that receivers can learn and forward round-equivocation
+evidence. Further messages from a known round equivocator are ignored. The
+marker is conservative and absorbing: a signer with two distinct validated round
+messages supplies no TSQ support [...]</pre></div>
+
+  <div class="box w">
+    <span class="lbl">Warning — do not return IGNORE by default</span>
+    <p>A stub validator that returns IGNORE looks harmless. It is not. IGNORE stops the message.
+    No peer forwards it. The mesh carries the message one hop and stops. Your traffic figures
+    then come out far too low and look like a success.</p>
+  </div>
+
+  <h3>The handler</h3>
+  <p>The handler runs after ACCEPT. For the mock it appends the vote to a slice or writes it to a
+  map under a lock, and returns nil. Nothing reads that map. Keep it anyway — it holds memory the
+  same way the real store would, and memory growth is a real networking result.</p>
+
+  <pre class="code"><i>// beacon-chain/sync/subscriber_finality_vote.go</i>
+func (s *Service) finalityVoteSubscriber(ctx context.Context, msg proto.Message) error {
+    v, ok := msg.(*eth.FinalityVote)
+    if !ok {
+        return fmt.Errorf("wrong message type %T", msg)
+    }
+    <u>// STUB: no quorum count, no justification, no finalisation.</u>
+    <u>// Hold the vote so memory growth is realistic, and stop.</u>
+    s.gadgetStore.put(v.Height, v.ValidatorIndex, v)
+    return nil
+}</pre>
+</section>
+
+<!-- ============================================================ 08 -->
+<section id="s08">
+  <h2><span class="num">08</span> Change list D — the head rule is Goldfish</h2>
+  <p class="dek">Decoupled consensus replaces both halves of Prysm's fork choice. Goldfish is the
+  head rule, in place of LMD-GHOST. The finality gadget confirms blocks, in place of Casper FFG.
+  Neither of the old rules survives.</p>
+
+  <div class="box">
+    <span class="lbl">What Goldfish is, in one paragraph</span>
+    <p>Goldfish (GHOST-Eph) picks the head from votes, like LMD-GHOST, with one change that matters
+    for everything else: the votes are <b>ephemeral</b>. Only the current slot's votes count. A
+    vote does not carry forward. LMD-GHOST does the opposite — it keeps each validator's latest
+    message and reuses it every slot until the validator votes again.</p>
+  </div>
+
+  <h3>Goldfish votes are the available attestations</h3>
+  <p>The ★★ section already describes the message. <code>AvailableAttestation</code> carries
+  <code>beacon_block_root</code>, which is the Goldfish head vote, from a 512-member committee, once
+  per slot, on one global topic. That is the whole Goldfish input.</p>
+
+  <p>So Goldfish is not extra work on top of the plan. It is what the new topic is <em>for</em>.
+  If the handler for that topic writes to a map that nothing reads, you have built the message but
+  not the protocol.</p>
+
+  <h3>Ephemerality is visible on the wire</h3>
+  <p>This part reaches the network. The specification's gossip validator drops each message that
+  is not for the current slot:</p>
+
+  <pre class="code"><i># consensus-specs/.../simplex/p2p-interface.md — validate_available_attestation_gossip</i>
+if data.slot != get_current_slot(store):
+    raise GossipIgnore(<u>"available attestation is not for the current slot"</u>)</pre>
+
+  <p>Compare Prysm today. An attestation is valid for gossip across a much wider window, and the
+  seen-cache spans slots. A Goldfish vote is valid for exactly one slot. Three consequences:</p>
+
+  <ul class="tight">
+    <li>The seen-cache for this topic is one slot deep. It is cheap, and it must be pruned every
+    slot.</li>
+    <li>A late vote is not merely useless, it is dropped. So delivery latency turns directly into
+    lost votes. That is a networking result you can measure.</li>
+    <li>There is no pending queue worth having for this topic. A vote whose block has not arrived
+    is dead by the next slot.</li>
+  </ul>
+
+  <div class="box w">
+    <span class="lbl">Warning — this is the measurement Goldfish makes interesting</span>
+    <p>Under LMD-GHOST a slow vote still counts later. Under Goldfish it does not count at all.
+    So the fraction of available attestations that miss their slot <em>is</em> the health of the
+    available chain. Record it at every validator count and every latency setting.</p>
+  </div>
+
+  <h3>What the mock needs</h3>
+  <div class="steps">
+    <div class="step hi"><div class="k">D1</div><div class="b">
+      <p class="t">Feed the available attestations into the Goldfish gate. The rule is a majority
+      gate, not a weight comparison. A child block is viable only when its score from the
+      <em>previous</em> slot's votes exceeds half of that slot's participants
+      (<code>is_available_attestation_viable</code>, <code>get_available_majority_threshold</code>).
+      The denominator is the count of committee members that voted, not 512.</p>
+      <p class="p">consensus-specs/.../simplex/fork-choice.md:1166, :1254 — keep votes per slot,
+      read slot − 1, prune older</p>
+<div class="src"><div class="srcpath"><b>consensus-specs/.../simplex/fork-choice.md:1254-1268 — is_available_attestation_viable, verbatim</b></div><pre>def is_available_attestation_viable(store: Store, child: ForkChoiceNode) -&gt; bool:
+    if is_ptc_decision_node(store, child):
+        return True
+    if store.blocks[child.root].slot == get_current_slot(store):
+        block_round = compute_round_at_slot(store.blocks[child.root].slot)
+        return store.blocks[child.root].slot != compute_start_slot_at_round(block_round)
+    return get_available_attestation_score(store, child) &gt; get_available_majority_threshold(store)</pre></div><div class="src"><div class="srcpath"><b>consensus-specs/.../simplex/fork-choice.md:1169-1191 — get_available_majority_threshold, abridged</b></div><pre>previous_slot = Slot(current_slot - 1)
+previous_votes = store.available_votes[previous_slot]
+previous_committee = store.available_committees.get(previous_slot, [])
+participant_count = uint64(len([index for index in previous_committee if index in previous_votes]))
+return participant_count // 2</pre></div></div></div>
+    <div class="step hi"><div class="k">D2</div><div class="b">
+      <p class="t">Drop the accumulated latest-message state. Prysm keeps one vote per validator
+      and reuses it. Goldfish does not.</p>
+      <p class="p">beacon-chain/forkchoice/doubly-linked-tree/types.go — the votes slice and
+      Vote.currentRoot / nextRoot</p></div></div>
+    <div class="step"><div class="k">D3</div><div class="b">
+      <p class="t">Point the head walk root at the gadget instead of the justified checkpoint.</p>
+      <p class="p">beacon-chain/forkchoice/doubly-linked-tree/store.go:32</p></div></div>
+    <div class="step hi"><div class="k">D4</div><div class="b">
+      <p class="t">The seen cache must allow one second copy, so receivers can forward
+      round-equivocation evidence. Prysm IGNOREs every repeat today. Forwarding a conflicting copy
+      on purpose is new gossip traffic.</p>
+      <p class="p">spec: p2p-interface.md:100-108 — Prysm: validate_beacon_attestation.go:108</p>
+<div class="src quote"><div class="srcpath"><b>consensus-specs/.../simplex/p2p-interface.md:102-105 — the second-copy rule, verbatim</b></div><pre>The single-attestation cache retains the first data root and permits one distinct
+second message so that receivers can learn and forward round-equivocation
+evidence. Further messages from a known round equivocator are ignored.</pre></div><div class="src"><div class="srcpath"><b>beacon-chain/sync/validate_beacon_attestation.go:107-110 — what Prysm does today instead</b></div><pre>// Verify this the first attestation received for the participating validator for the slot. ...
+if s.hasSeenUnaggregatedAtt(attKey) {
+    return pubsub.ValidationIgnore, nil
+}</pre></div></div></div>
+  </div>
+
+  <h3>The gossip verdict depends on all of this</h3>
+  <p>Section 01 says the ACCEPT, IGNORE, or REJECT decision must be correct, because it decides
+  what propagates. That decision is computed from fork choice state. So fork choice is inside the
+  networking path, not outside it. Prysm's attestation validator reads it four times:</p>
+
+  <div class="scroller">
+    <table>
+      <thead><tr><th>Site</th><th>Reads</th><th>Verdict on failure</th></tr></thead>
+      <tbody>
+        <tr><td><span class="path">validate_beacon_attestation.go:108</span></td>
+          <td><code>hasSeenUnaggregatedAtt</code></td><td class="num">IGNORE</td></tr>
+        <tr><td><span class="path">validate_beacon_attestation.go:129</span></td>
+          <td><code>InForkchoice</code></td><td class="num">IGNORE</td></tr>
+        <tr><td><span class="path">validate_beacon_attestation.go:133</span></td>
+          <td><code>VerifyLmdFfgConsistency</code></td><td class="num">REJECT</td></tr>
+        <tr><td><span class="path">validate_beacon_attestation.go:139</span></td>
+          <td><code>AttestationTargetState</code></td><td class="num">IGNORE</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>The aggregate validator reads the same three in a different order
+  (<span class="path">validate_aggregate_proof.go:164, :171, :176</span>). Under a different head
+  rule these return different answers, so the set of messages that propagate is different.</p>
+
+  <div class="box w">
+    <span class="lbl">Warning — keep the chain alive while you measure</span>
+    <p>This is an operational caution, not a reason to keep the old rules. If nothing finalises,
+    Prysm stops pruning, the states grow, the database grows, and the nodes slow down. A slow node
+    produces a bad network measurement. So give the gadget a confirmation rule that advances, even
+    a trivial one, rather than leaving it returning a fixed root for a long run.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 09 -->
+<section id="s09">
+  <h2><span class="num">09</span> The stub table</h2>
+  <p class="dek">For each stub, ask four questions. If all four answers are "no", the stub is
+  free. If any answer is "yes", the stub changes your result.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr>
+          <th>Stub</th>
+          <th>Changes<br>bytes?</th>
+          <th>Changes<br>count?</th>
+          <th>Changes<br>timing?</th>
+          <th>Changes<br>verdict?</th>
+          <th>Safe?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Vote target is a random 32 bytes</td><td>No</td><td>No</td><td>No</td><td>No</td><td><span class="chip real">Free</span></td></tr>
+        <tr><td>Height is a slot counter</td><td>No</td><td>No</td><td>No</td><td>No</td><td><span class="chip real">Free</span></td></tr>
+        <tr><td>No quorum counting</td><td>No</td><td>No</td><td>No</td><td>No</td><td><span class="chip real">Free</span></td></tr>
+        <tr><td>No justification or finalisation</td><td>No</td><td>No</td><td>No</td><td>No</td><td><span class="chip real">Free</span></td></tr>
+        <tr><td><code>getConfirmed</code> returns the justified root</td><td>No</td><td>No</td><td>No</td><td>Steady state: no<br>Under partition: <b>yes</b></td><td><span class="chip fake">Free until nodes disagree</span></td></tr>
+        <tr><td>Seen cache ignores every repeat, as today</td><td>No</td><td><b>Yes</b></td><td>No</td><td><b>Yes</b></td><td><span class="chip nx">Not safe</span> The spec forwards one conflicting copy on purpose.</td></tr>
+        <tr><td>Reuse one signature for every vote</td><td>No</td><td>No</td><td>No</td><td>No</td><td><span class="chip real">Free</span></td></tr>
+        <tr><td>Skip signature verification</td><td>No</td><td>No</td><td>No</td><td>No</td><td><span class="chip fake">Changes CPU only</span></td></tr>
+        <tr><td>Shorten the target to 8 bytes</td><td><b>Yes</b></td><td>No</td><td>No</td><td>No</td><td><span class="chip nx">Not safe</span></td></tr>
+        <tr><td>Vote once per node, not per validator</td><td>No</td><td><b>Yes</b></td><td>No</td><td>No</td><td><span class="chip nx">Not safe</span></td></tr>
+        <tr><td>Publish at a convenient time</td><td>No</td><td>No</td><td><b>Yes</b></td><td>No</td><td><span class="chip nx">Not safe</span></td></tr>
+        <tr><td>Validator returns IGNORE by default</td><td>No</td><td><b>Yes</b></td><td>No</td><td><b>Yes</b></td><td><span class="chip nx">Not safe</span></td></tr>
+        <tr><td>Validator returns ACCEPT always, no seen-cache</td><td>No</td><td><b>Yes</b></td><td>No</td><td><b>Yes</b></td><td><span class="chip nx">Not safe</span></td></tr>
+        <tr><td>Skip SSZ decode, forward raw bytes</td><td>No</td><td>No</td><td><b>Yes</b></td><td>No</td><td><span class="chip nx">Not safe</span></td></tr>
+        <tr><td>Fake the vote aggregate instead of computing it</td><td>No</td><td>No</td><td>No</td><td>No</td><td><span class="chip real">Free</span></td></tr>
+        <tr><td>Leave the vote aggregate out of blocks</td><td><b>Yes</b></td><td>No</td><td><b>Yes</b></td><td>No</td><td><span class="chip fake">Small below 100k validators</span></td></tr>
+        <tr><td>Use one topic instead of subnets</td><td>No</td><td>No</td><td>No</td><td>No</td><td><span class="chip fake">Changes mesh shape</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="s10">
+  <h2><span class="num">10</span> Fidelity traps</h2>
+  <p class="dek">These changes look like harmless stubs. Each one silently changes the network.</p>
+
+  <div class="steps">
+    <div class="step"><div class="k">T1</div><div class="b">
+      <p class="t"><b>One node, many validators, one message.</b> The easiest mistake. A test
+      network of 8 nodes with 512 validators must send 512 messages per round, not 8. Check the
+      message counter before you trust any result.</p></div></div>
+    <div class="step"><div class="k">T2</div><div class="b">
+      <p class="t"><b>All nodes publish at the same instant.</b> Real validators have clock skew
+      and different processing delays. A test where every node publishes at exactly the same
+      microsecond creates a burst that the real network would not see. Add a small random spread,
+      or accept that you measure a worst case and say so.</p></div></div>
+    <div class="step"><div class="k">T3</div><div class="b">
+      <p class="t"><b>Snappy compresses fake data.</b> If every vote carries the same constant
+      root, Snappy compresses it far better than a real root. Fill root fields with random bytes.
+      Signature fields too.</p>
+      <p class="p">beacon-chain/p2p/encoder/ssz.go:48</p></div></div>
+    <div class="step"><div class="k">T4</div><div class="b">
+      <p class="t"><b>The topic never gets joined.</b> A missing topic-score case makes the
+      subscribe goroutine fail. The node runs, logs nothing obvious, and sends nothing. Check the
+      joined-topic list on a running node before you measure.</p>
+      <p class="p">beacon-chain/p2p/gossip_scoring_params.go, the default case</p></div></div>
+    <div class="step"><div class="k">T5</div><div class="b">
+      <p class="t"><b>Peer scoring punishes your stub.</b> If the validator returns REJECT for
+      messages that other honest nodes send, gossipsub lowers those peers' scores and eventually
+      removes them from the mesh. The network then partitions and traffic drops. Never return
+      REJECT in a mock unless the message truly fails to decode.</p></div></div>
+    <div class="step"><div class="k">T6</div><div class="b">
+      <p class="t"><b>Two slots is the publish deadline, not a queue.</b> Under load, votes that
+      cannot publish within two slots are dropped. Your send counter and your receive counter then
+      disagree, and the difference is the real result. Log both.</p>
+      <p class="p">beacon-chain/p2p/broadcaster.go:46</p></div></div>
+    <div class="step"><div class="k">T7</div><div class="b">
+      <p class="t"><b>The validate queue has a fixed size.</b> Prysm sizes the pubsub validate
+      queue from the maximum payload size. Under a message flood the queue fills and pubsub drops
+      messages before your validator sees them. That is a real result, but you must know it is
+      happening.</p>
+      <p class="p">beacon-chain/p2p/pubsub.go:279</p></div></div>
+  </div>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="s11">
+  <h2><span class="num">11</span> The syncer — out of scope</h2>
+  <p class="dek">The syncer adds no gossip traffic in the version you are building. The
+  re-gossip duty is removed for now, and it is expected to stay removed. Do not build it. This
+  section records what it was, so you recognise it if it returns.</p>
+
+  <div class="box">
+    <span class="lbl">Status</span>
+    <p><span class="chip nx">Removed</span> Build nothing for the syncer. If a later revision of
+    the specification brings back a view-merge relay, come back to this section and to the traffic
+    arithmetic in section 03.</p>
+  </div>
+
+  <h3>What a syncer is</h3>
+  <p>Honest validators do not always hold the same view. One validator sees a block; another does
+  not. If they vote from different views, they vote for different things, and the protocol makes
+  no progress even when nobody is faulty. This is a liveness problem, not a safety problem.</p>
+
+  <p>View-merge removes it. Once per voting round, one chosen validator sends everyone its view.
+  All validators then vote on the same merged view. That validator is the syncer. The syncer of a
+  round is the available-chain proposer of the slot that starts it
+  (<span class="path">full/height_filter_and_timeouts.tex:1643</span>), so it is not a new
+  role.</p>
+
+  <p>The mechanism has three instants
+  (<span class="path">full/height_filter_and_timeouts.tex:2427-2437</span>). Every validator
+  freezes a snapshot at start(k) − Δ. The syncer sends its unfrozen store at start(k). Everyone
+  votes on snapshot ∪ syncer store at start(k) + Δ. The freeze makes it work. A snapshot taken
+  Δ early holds only messages that already reached the syncer. The merge then equals the syncer's
+  store, and every honest validator gets the same view.</p>
+
+  <h3>What was removed</h3>
+  <p>The executable specification realised view-merge as message re-gossip rather than as a
+  certificate. The round proposer replayed the round's retained aggregate objects onto the
+  existing attestation topics:</p>
+
+  <blockquote class="box f">
+    <span class="lbl">validator.md:1108 — no longer in scope</span>
+    <p>"It re-gossips every valid support-round head and every conflicting copy it knows, including
+    messages excluded from support, together with each named block and the ancestry needed to
+    validate and project the messages. The proposal carries no TSQ root, quorum, signer list, vote
+    bundle, or certificate."</p>
+  </blockquote>
+
+  <p>Related text, by topic:</p>
+  <ul class="tight">
+    <li><span class="path">p2p-interface.md:121-129</span> — the relay pool, the bounded
+    dependency queue, and the rule that overflow makes a round uncounted for TSQ liveness.</li>
+    <li><span class="path">validator.md:261</span> — every round was a synchronisation round.</li>
+    <li><span class="path">validator.md:1114</span> — the attestation pool had to retain concrete
+    signed gossip objects, not Store data.</li>
+  </ul>
+
+  <div class="box">
+    <span class="lbl">Why it mattered</span>
+    <p>One node would have published thousands of retained objects inside one slot, against a hard
+    deadline, in the same slot it proposed a block. That is the only part of the design with no
+    equivalent in Ethereum today. With it removed, the networking delta is small.</p>
+  </div>
+
+  <h3>What to watch if it returns</h3>
+  <ul class="tight">
+    <li>The publisher pays D times the unique payload, because gossipsub pushes to every mesh peer
+    before the duplicate check runs.</li>
+    <li>The publisher is also the block proposer for that slot. Prysm reorgs a late block.</li>
+    <li>Total-bytes measurements do not answer the real question. The nodes that need the replay
+    are the ones whose peers already hold it and drop it. Measure per-node delivery of the messages
+    that node was missing.</li>
+    <li>Prysm's attestation pool does not retain the signed wire object today. Any relay design
+    needs that first.</li>
+  </ul>
+
+  <h3>Round-start blocks may still be larger</h3>
+  <p>This part does not depend on the re-gossip. The round-start block carries the round's finality
+  aggregates. An ordinary block carries one slot of votes.</p>
+
+  <div class="box w">
+    <span class="lbl">Warning — the block holds exactly one round and no more</span>
+    <p><code>MaxAttestationsElectra</code> is 8
+    (<span class="path">config/params/mainnet_config.go:177</span>). One Electra attestation covers
+    all 64 committees of one slot, because <code>committee_bits</code> is a
+    <code>Bitvector[64]</code>. So a block holds 8 slots of votes, and a round of 8 slots fits
+    exactly, with no headroom. Aggregates must have identical complete
+    <code>AttestationData</code>, so votes naming different targets cannot merge. After asynchrony
+    honest validators hold different targets, so the round needs more entries at the moment the
+    block can hold fewer. Keep this on the list even with the re-gossip removed.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 12 -->
+<section id="s12">
+  <h2><span class="num">12</span> Clocks</h2>
+  <p class="dek">A sub-round is one available-chain slot. So the gadget clock is the slot clock.
+  You do not need a new ticker.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 900 270" role="img" aria-label="Timeline of one 8-slot voting round showing which validator cohort votes in each slot">
+        <line x1="50" y1="150" x2="860" y2="150" stroke="currentColor" stroke-width="1.4"/>
+        <text x="50" y="34" font-family="var(--mono)" font-size="10.5" font-weight="700" fill="var(--fake)">ONE VOTING ROUND = 8 SUB-ROUNDS = 8 SLOTS</text>
+
+        <g>
+          <rect x="52"  y="60" width="94" height="70" rx="4" fill="var(--fake-bg)" stroke="var(--fake)"/>
+          <rect x="152" y="60" width="94" height="70" rx="4" fill="var(--fake-bg)" stroke="var(--fake)"/>
+          <rect x="252" y="60" width="94" height="70" rx="4" fill="var(--fake-bg)" stroke="var(--fake)"/>
+          <rect x="352" y="60" width="94" height="70" rx="4" fill="var(--fake-bg)" stroke="var(--fake)"/>
+          <rect x="452" y="60" width="94" height="70" rx="4" fill="var(--fake-bg)" stroke="var(--fake)"/>
+          <rect x="552" y="60" width="94" height="70" rx="4" fill="var(--fake-bg)" stroke="var(--fake)"/>
+          <rect x="652" y="60" width="94" height="70" rx="4" fill="var(--fake-bg)" stroke="var(--fake)"/>
+          <rect x="752" y="60" width="94" height="70" rx="4" fill="var(--fake-bg)" stroke="var(--fake)"/>
+        </g>
+        <g font-family="var(--mono)" font-size="10.5" fill="var(--muted)" text-anchor="middle">
+          <text x="99"  y="80">slot 0</text><text x="199" y="80">slot 1</text>
+          <text x="299" y="80">slot 2</text><text x="399" y="80">slot 3</text>
+          <text x="499" y="80">slot 4</text><text x="599" y="80">slot 5</text>
+          <text x="699" y="80">slot 6</text><text x="799" y="80">slot 7</text>
+        </g>
+        <g font-size="12" fill="currentColor" text-anchor="middle" font-weight="600">
+          <text x="99"  y="104">n/8</text><text x="199" y="104">n/8</text>
+          <text x="299" y="104">n/8</text><text x="399" y="104">n/8</text>
+          <text x="499" y="104">n/8</text><text x="599" y="104">n/8</text>
+          <text x="699" y="104">n/8</text><text x="799" y="104">n/8</text>
+        </g>
+        <g font-size="10" fill="var(--muted)" text-anchor="middle">
+          <text x="99"  y="121">voters</text><text x="199" y="121">voters</text>
+          <text x="299" y="121">voters</text><text x="399" y="121">voters</text>
+          <text x="499" y="121">voters</text><text x="599" y="121">voters</text>
+          <text x="699" y="121">voters</text><text x="799" y="121">voters</text>
+        </g>
+
+        <g stroke="var(--real)" stroke-width="2">
+          <line x1="99" y1="144" x2="99" y2="156"/><line x1="199" y1="144" x2="199" y2="156"/>
+          <line x1="299" y1="144" x2="299" y2="156"/><line x1="399" y1="144" x2="399" y2="156"/>
+          <line x1="499" y1="144" x2="499" y2="156"/><line x1="599" y1="144" x2="599" y2="156"/>
+          <line x1="699" y1="144" x2="699" y2="156"/><line x1="799" y1="144" x2="799" y2="156"/>
+        </g>
+        <text x="455" y="182" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">EACH TICK = THE ATTESTATION DEADLINE OF THAT SLOT  (AttestationDueBPS)</text>
+        <text x="455" y="212" text-anchor="middle" font-size="13" fill="var(--muted)">Every validator votes exactly once per round, in its assigned slot.</text>
+        <text x="455" y="234" text-anchor="middle" font-size="13" fill="var(--muted)">This is the same shape as committee assignment across an epoch, with 8 in place of 32.</text>
+        <text x="455" y="258" text-anchor="middle" font-size="12.5" fill="var(--muted)">Today: one attestation per validator per 32 slots.  Gadget: one vote per validator per 8 slots.  Ratio 4.</text>
+      </svg>
+    </div>
+    <figcaption><b>One voting round.</b> The validator set is partitioned across the sub-rounds
+    (<span class="path">full/height_filter_and_timeouts.tex:1157</span>), so each slot carries
+    about n/8 votes. Prysm's committee assignment already has exactly this shape. Reuse the
+    attestation deadline; do not build a second clock.</figcaption>
+  </figure>
+
+  <p>Practical rules for the mock:</p>
+  <ul class="tight">
+    <li>Assign each validator to one slot of the 8-slot window. Copy the committee assignment
+    logic and replace 32 with 8.</li>
+    <li>Make the finality-vote publish offset a flag. Slot start is the default, because the
+    vote's fields freeze at the round start and do not need the slot's block. Publish aggregates
+    at the existing aggregate deadline.
+    <span class="path">config/params/mainnet_config.go:128-139</span> holds the deadlines as
+    basis points.</li>
+    <li>Make m a flag. Traffic per round does not change with m, but the per-slot burst height
+    falls as 1/m. m = 8 gives 4 times the attestation rate; m = 4 gives 8 times.</li>
+    <li>Drive everything from genesis time, as Prysm does, so every node fires together. Do not
+    drive it from node start time.</li>
+    <li>Do not attach the gadget publish to <code>NewSlot</code>
+    (<span class="path">beacon-chain/forkchoice/doubly-linked-tree/on_tick.go:32</span>). That is
+    the only slot-boundary hook Prysm has, and it runs under the fork choice lock.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 13 -->
+<section id="s13">
+  <h2><span class="num">13</span> How to run it</h2>
+  <p class="dek">Prysm's built-in end-to-end test is a correctness harness. It is too small for a
+  networking measurement.</p>
+
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>Harness</th><th>Nodes</th><th>Good for</th><th>Not good for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>Prysm e2e</b><br><span class="path">testing/endtoend/</span></td>
+          <td class="num">2 beacon<br>+ 2 lighthouse</td>
+          <td>Checking that the topic joins, votes flow, and the chain still finalises.
+          Run this first.</td>
+          <td>Any traffic figure. With 2 nodes the mesh degree is 1. There is no
+          fan-out.</td>
+        </tr>
+        <tr>
+          <td><b>Kurtosis</b><br><span class="path">testing/endtoend/kurtosis/</span></td>
+          <td class="num">tens</td>
+          <td>A realistic multi-client network on real containers.</td>
+          <td>Hundreds of nodes on one machine. Real time only.</td>
+        </tr>
+        <tr>
+          <td><b>Shadow</b><br>(your simctl tooling)</td>
+          <td class="num">hundreds<br>to thousands</td>
+          <td>The actual measurement. Deterministic, controlled latency, faster than
+          real time.</td>
+          <td>Anything that needs a real execution client.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><span class="path">testing/endtoend/params/params.go:115</span> sets
+  <code>StandardBeaconCount = 2</code>. With two nodes each mesh has one link, so nothing you
+  measure there generalises. Use e2e to prove the code works, then move to Shadow to measure it.</p>
+
+  <div class="box">
+    <span class="lbl">What to record</span>
+    <ul class="tight">
+      <li>Messages published, per topic, per round — at the sender.</li>
+      <li>Messages accepted, ignored, and rejected, per topic — at the receiver.</li>
+      <li>Bytes in and out per node per round, per topic.</li>
+      <li>Time from publish to last-node delivery, as a distribution, not a mean.</li>
+      <li>Publish errors from the two-slot deadline.</li>
+      <li>Validate-queue drops.</li>
+      <li>Block arrival time against block size.</li>
+      <li>Block arrival time with the finality votes at slot start against block arrival time with
+      the votes at the attestation deadline. The difference is the cost of the collision.</li>
+    </ul>
+  </div>
+
+  <p>Prysm already exports most of these as Prometheus metrics per topic. Check
+  <span class="path">beacon-chain/p2p/monitoring.go</span> before you add new counters.</p>
+</section>
+
+<!-- ============================================================ 14 -->
+<section id="s14">
+  <h2><span class="num">14</span> Build order</h2>
+  <p class="dek">Each step gives a result on its own. Stop at any step and you still have
+  something.</p>
+
+  <figure>
+    <div class="figbox">
+      <svg viewBox="0 0 900 300" role="img" aria-label="Diagram of the seven-step build order">
+        <g font-size="12.5">
+          <rect x="30" y="20" width="700" height="34" rx="4" fill="var(--real-bg)" stroke="var(--real)"/>
+          <text x="46" y="42" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">1</text>
+          <text x="72" y="42" fill="currentColor">Option A: set SlotsPerEpoch = 8 and run it. A 4x measurement with no new code.</text>
+          <text x="746" y="42" font-size="11" fill="var(--muted)">today</text>
+
+          <rect x="30" y="60" width="700" height="34" rx="4" fill="var(--real-bg)" stroke="var(--real)"/>
+          <text x="46" y="82" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">2</text>
+          <text x="72" y="82" fill="currentColor">Option B: clone the attestation topics with an 8-slot period. Prove they join.</text>
+          <text x="746" y="82" font-size="11" fill="var(--muted)">e2e, 2 nodes</text>
+
+          <rect x="30" y="100" width="700" height="34" rx="4" fill="var(--real-bg)" stroke="var(--real)"/>
+          <text x="46" y="122" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">3</text>
+          <text x="72" y="122" fill="currentColor">Add counters. Check that published count equals accepted count.</text>
+          <text x="746" y="122" font-size="11" fill="var(--muted)">e2e</text>
+
+          <rect x="30" y="140" width="700" height="34" rx="4" fill="var(--real-bg)" stroke="var(--real)"/>
+          <text x="46" y="162" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">4</text>
+          <text x="72" y="162" fill="currentColor">Move to Shadow. Sweep the validator count: 512, 4096, 16384.</text>
+          <text x="746" y="162" font-size="11" fill="var(--muted)">the real result</text>
+
+          <rect x="30" y="180" width="700" height="34" rx="4" fill="var(--panel)" stroke="var(--rule-hi)"/>
+          <text x="46" y="202" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--muted)">5</text>
+          <text x="72" y="202" fill="currentColor">Sweep m: 4, 8, 16. This changes burst height without changing total traffic.</text>
+
+          <rect x="30" y="220" width="700" height="34" rx="4" fill="var(--real-bg)" stroke="var(--real)"/>
+          <text x="46" y="242" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--real)">6</text>
+          <text x="72" y="242" fill="currentColor">Measure round-start block arrival separately: it carries the whole round's votes.</text>
+
+          <rect x="30" y="260" width="700" height="34" rx="4" fill="var(--fake-bg)" stroke="var(--fake)" stroke-dasharray="5 4"/>
+          <text x="46" y="282" font-family="var(--mono)" font-size="11" font-weight="700" fill="var(--fake)">7</text>
+          <text x="72" y="282" fill="currentColor">Partition tests: now the stubbed fork choice stops being safe. See section 08.</text>
+          <text x="746" y="282" font-size="11" fill="var(--muted)">only if needed</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>Build order.</b> Step 1 needs no code. Steps 2 to 4 answer the main question.
+    Steps 5 and 6 add the remaining variables. Step 7 is optional and touches fork choice.
+    </figcaption>
+  </figure>
+
+  <p>Step 1 needs no code. Do it before you write code. Step 4 gives the main answer. After step 4
+  you can say if the mesh can carry the attestation stream at 4 times today's rate. You can also
+  say at which validator count it fails.</p>
+</section>
+
+<!-- ============================================================ 15 -->
+<section id="s15">
+  <h2><span class="num">15</span> Warnings</h2>
+  <p class="dek">Read these before you start. Each one has caused a wrong measurement.</p>
+
+  <div class="box w">
+    <span class="lbl">Warning 1 — a silent stub is worse than a wrong stub</span>
+    <p>A stub that returns IGNORE, or a topic that no node joins, shows almost zero traffic. This
+    result looks correct and is not. Always compare the sender's published count with the
+    receivers' accepted count. If the two counts do not agree within the expected duplicate
+    factor, the path is broken.</p>
+  </div>
+
+  <div class="box w">
+    <span class="lbl">Warning 2 — two nodes are not a network</span>
+    <p>Prysm's e2e harness runs 2 beacon nodes. Mesh degree D is 8. With 2 nodes, every gossipsub
+    property you care about is absent. Use e2e to prove the code compiles and runs. Do not take a
+    number from it.</p>
+  </div>
+
+  <div class="box w">
+    <span class="lbl">Warning 3 — the specification is not finished</span>
+    <p>The candidate document lists seven properties as unproven. The syncer count, the syncer
+    period, the sub-round count m, and the round length are all open. Any traffic figure you
+    produce is conditional on the values you choose. Record them with every result.</p>
+  </div>
+
+  <div class="box w">
+    <span class="lbl">Warning 4 — do not build a new message path</span>
+    <p>The finality gadget vote has the same network shape as an attestation. Both have one vote
+    per validator per period. Both divide the validators across the period's slots. Both use BLS
+    aggregation, subnets, aggregators, and block inclusion. Only the period differs: 8 slots in
+    place of 32. If you start to design an aggregation scheme or a sub-round clock, stop. Read the
+    ★ plan section again.</p>
+  </div>
+
+  <div class="box w">
+    <span class="lbl">Warning 5 — the head rule is Goldfish, and it is not optional</span>
+    <p>Goldfish votes are ephemeral. A vote counts only in its own slot, and the gossip validator
+    drops each message that is not for the current slot. A late vote is lost, not delayed. Vote
+    timing is therefore a primary networking result, not a detail. If you build the
+    <code>available_attestation</code> topic but let LMD-GHOST select the head, you have the
+    messages without the protocol. The timing result then disappears.</p>
+  </div>
+
+  <div class="box w">
+    <span class="lbl">Warning 6 — check what is already measured</span>
+    <p>Prysm exports per-topic gossip metrics already. Adding a second counter that counts
+    something slightly different is a common source of contradictory results. Read
+    <span class="path">beacon-chain/p2p/monitoring.go</span> first.</p>
+  </div>
+</section>
+
+<!-- ============================================================ 16 -->
+<section id="s16">
+  <h2><span class="num">16</span> Explicitly not implemented</h2>
+  <p class="dek">Each row names what the specification asks for, where it asks, and the specific
+  thing we do not build. Read this list before you interpret any result. The mock is honest only
+  if these omissions stay visible.</p>
+
+  <h3>From the executable specification</h3>
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>The specification asks for</th><th>Where</th><th>What we do instead</th><th>Effect on the measurement</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>TSQ fixed-quorum root syncing.</b> Fork choice pins a <code>TSQSelection</code>
+          at the round boundary. <code>candidate_root</code> is the deepest candidate with
+          support of at least <code>q = ceil(2W/3)</code>. Receivers compute a fixed-quorum lock
+          from signed support-round data in frozen and current views.
+          <code>get_proposer_head</code> builds on the TSQ base.</td>
+          <td class="c">validator.md:1089-1146,<br>:258-283; fork-choice.md (TSQSelection,
+          freeze_tsq_selection)</td>
+          <td>Nothing. The stable root is the ordinary walk head.</td>
+          <td>None in the honest steady state. Under partition, real nodes would converge through
+          TSQ and the mock will not. Do not read healing behaviour from this mock.</td>
+        </tr>
+        <tr>
+          <td><b>The TSQ re-gossip relay.</b> The round-start proposer re-gossips every retained
+          support-round message, every conflicting copy, and each named block with its ancestry.
+          The attestation pool retains the concrete signed objects; a bounded dependency queue
+          retries messages whose block is unknown; signatures are never reconstructed.</td>
+          <td class="c">validator.md:1108-1119;<br>p2p-interface.md:121-135</td>
+          <td>Nothing. Removed from the simulation target on 2026-08-08. The final specification
+          is expected to drop it as well.</td>
+          <td>This was the largest single traffic event in the design (one publisher, thousands of
+          objects, one slot). Its absence removes that burst from every figure. If it returns,
+          re-run everything.</td>
+        </tr>
+        <tr>
+          <td><b>The finality vote state machine.</b> Three vote kinds, encoded via
+          <code>target</code> and <code>height</code>: justification, timeout, and empty. The
+          uniform confirmation gate on <code>get_safe_confirmed_head</code>. Durable signing
+          history with protected repeat. <code>current_height_target</code> tracking. The finality
+          piggyback.</td>
+          <td class="c">validator.md:60-101,<br>:102-174</td>
+          <td>Every validator emits one fixed-kind vote with correct field sizes and arbitrary
+          target and height values.</td>
+          <td>None for byte count, message count, or timing. The mix of vote kinds does not change
+          the wire shape: all three kinds are the same container.</td>
+        </tr>
+        <tr>
+          <td><b>Justification, timeout certificates, and finalisation.</b>
+          <code>process_attestation</code> reads <code>target</code>, <code>height</code>,
+          <code>finality_target</code>, <code>finality_height</code>; quorums fire cert events;
+          state height advances.</td>
+          <td class="c">beacon-chain.md<br>(process_attestation,<br>process height events)</td>
+          <td>The handler records the vote and returns. A stub confirmation rule advances so
+          pruning keeps working.</td>
+          <td>None on gossip. The operational risk is the opposite: if the stub does not advance,
+          states grow and slow nodes corrupt the run.</td>
+        </tr>
+        <tr>
+          <td><b>Slashing.</b> The timeout-versus-finalize conflict rule;
+          <code>RoundDoubleVoteEvidence</code> with
+          <code>MAX_ROUND_DOUBLE_VOTE_EVIDENCE = 1</code> per block; E1 and E2 avoidance in the
+          validator.</td>
+          <td class="c">validator.md ("Timeout votes are slashable", "How to avoid slashing");
+          beacon-chain.md (RoundDoubleVoteEvidence)</td>
+          <td>No evidence pool, no evidence in blocks, no signing-history checks.</td>
+          <td>None, with one exception we DO build: the seen-cache forwards one conflicting copy
+          per signer per round, because that is gossip-visible
+          (p2p-interface.md:100-108). The evidence just goes nowhere afterwards.</td>
+        </tr>
+        <tr>
+          <td><b>Balance-weighted available committees.</b> A seeded, balance-weighted 512-member
+          committee per slot; the committee window across epoch boundaries; the fail-closed
+          committee-convergence check before signing.</td>
+          <td class="c">beacon-chain.md:1090-1145<br>(get_available_committee,
+          initialize_available_committee_window); validator.md:1276-1296</td>
+          <td>A deterministic stub picks 512 indices per slot. Same size, same duplicate-seat bit
+          semantics, no balance weighting, no fail-closed check.</td>
+          <td>None. The network reads the bits and the sizes, not the selection. Keep duplicate
+          seats: one signer setting several bits is wire-visible.</td>
+        </tr>
+        <tr>
+          <td><b>Rewards and payments.</b> <code>process_available_attestation</code> sets
+          TIMELY_HEAD, pays each seat once, and records builder-payment committee seats.</td>
+          <td class="c">beacon-chain.md:2379-2430,<br>:460-470</td>
+          <td>Nothing. Block inclusion is a no-op that carries the bytes.</td>
+          <td>None.</td>
+        </tr>
+        <tr>
+          <td><b>Stabilisation-gadget grades.</b> The two-thirds grade-1 fallback and the
+          one-third conflict veto over live latest messages, with the 128-slot expiry window
+          feeding <code>get_safe_confirmed_head</code>.</td>
+          <td class="c">fork-choice.md:156-166,<br>:215 (LATEST_MESSAGE_EXPIRY_SLOTS)</td>
+          <td>A stub <code>get_safe_confirmed_head</code> returns the head or a lagging root by
+          flag. The previous-slot Goldfish majority gate IS built — it is the head rule, not the
+          grade layer.</td>
+          <td>None on traffic. The grades gate vote kinds, and vote kinds do not change the wire
+          shape.</td>
+        </tr>
+        <tr>
+          <td><b>The Gloas fork transition.</b>
+          <code>upgrade_forkchoice_store_to_simplex</code>; the activation-epoch transition
+          receipt for residual builder payments; Status v3 in Req/Resp; modified response
+          mappings.</td>
+          <td class="c">fork-choice.md:447-537;<br>validator.md (transition rules);<br>
+          p2p-interface.md:799-860</td>
+          <td>All nodes start on decoupled consensus at genesis. No transition, no receipts, no
+          Status v3.</td>
+          <td>None for the simulation. Nothing here transfers to a real fork rollout.</td>
+        </tr>
+        <tr>
+          <td><b>Light client and weak subjectivity.</b></td>
+          <td class="c">simplex/light-client/;<br>weak-subjectivity.md</td>
+          <td>Nothing.</td>
+          <td>None.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>From the papers</h3>
+  <div class="scroller">
+    <table>
+      <thead>
+        <tr><th>The papers ask for</th><th>Where</th><th>What we do instead</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>The inactivity leak.</b> Per-validator penalty units, leak tightness, the honest
+          voting rule, and leak fairness. The leak also needs a repair under sub-round
+          partitioning. That repair has three candidate fixes and no selected fix.</td>
+          <td class="c">full/height_filter_and_timeouts.tex<br>(sec. leak; :1165-1169 for the
+          sub-round problem)</td>
+          <td>Nothing. The papers themselves leave the sub-round repair open.</td>
+        </tr>
+        <tr>
+          <td><b>The stability-vote window filter.</b> Stability votes held in a sliding window of
+          &eta; rounds; the filtered <code>getConfirmed</code> takes the majority-supported
+          block.</td>
+          <td class="c">:1035-1104, :1125-1146</td>
+          <td>Nothing. The selection criterion is explicitly abstract in the papers, and the
+          executable profile replaced the separate stability vote with the attestation's head
+          field.</td>
+        </tr>
+        <tr>
+          <td><b>View-merge and the syncer.</b> Freeze at start(k) &minus; &Delta;, syncer store
+          broadcast at start(k), vote on the merged view at start(k) + &Delta;; the syncer's
+          per-height timeout votes.</td>
+          <td class="c">:1620-1650, :2422-2447</td>
+          <td>Nothing. Its executable realisation was the TSQ re-gossip, which is out of scope
+          (see the first table).</td>
+        </tr>
+        <tr>
+          <td><b>Healing after asynchrony.</b> The vote pool &Sigma;.V, per-vote height closure,
+          syncer and post-syncer voting rules, the recovery-round structure of the healing
+          document.</td>
+          <td class="c">:1706-1799;<br>height_filter_healing.tex</td>
+          <td>Nothing. Seven properties there are marked unproven in the papers.</td>
+        </tr>
+        <tr>
+          <td><b>The prefix variant.</b> Prefix justification and finalisation counts.</td>
+          <td class="c">prefix_height_filter_and_timeouts.tex</td>
+          <td>Nothing. It is an alternative candidate, not the chosen one.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="box w">
+    <span class="lbl">Warning — the omissions bound what the result can claim</span>
+    <p>With this list, the simulation can answer three questions. Can the network carry the
+    steady-state message load of decoupled consensus? At which validator count does it fail? What
+    are the latency tails? It cannot answer questions about healing, TSQ convergence, incentives,
+    or slashing. Put this list, and the run's flags, next to every published figure.</p>
+  </div>
+</section>
+
+<hr class="sep">
+<footer>
+  Written against the Prysm tree at commit 4a9884d6d5. Line numbers move; the file names are
+  stable. Read the ★ and ★★ sections first. The numbered sections give the detail. Section 16
+  lists what we do not implement, with specification citations. Finality-vote sizes are design
+  estimates, not measured values. The papers define votes as tuples, not as SSZ containers, and
+  they do not describe the BLS aggregation step. Traffic figures in section 03 are arithmetic
+  from those estimates, from m = 8 sub-rounds, and from D = 8, for a single global topic. They
+  are not measurements. Companion document: gossip-forkchoice.html.
+</footer>
+
+</div>
+
+<script>
+(function () {
+  var saved = null;
+  try { saved = localStorage.getItem('dcn-theme'); } catch (e) {}
+  if (saved) { document.documentElement.setAttribute('data-theme', saved); }
+})();
+</script>
+
+</body>
+</html>

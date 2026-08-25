@@ -1,0 +1,1539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gossipsub and Fork Choice in Prysm</title>
+<style>
+  ::selection { background: var(--ink); color: var(--ground); }
+
+  *,*::before,*::after { box-sizing: border-box; }
+  :root {
+    --ground:#F5F6F4; --panel:#FFFFFF; --ink:#14181A; --muted:#5C666B; --faint:#8A9499;
+    --rule:#DBE0DD; --rule-hi:#C2C9C5;
+    --lmd:#0F6E6B; --lmd-bg:#0F6E6B14;
+    --ffg:#8A5A0B; --ffg-bg:#8A5A0B14;
+    --warn:#A32A1C; --warn-bg:#A32A1C12;
+    --shadow: 0 1px 2px rgba(20,24,26,.05), 0 8px 24px -16px rgba(20,24,26,.25);
+    --mono: ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground:#0E1113; --panel:#161A1C; --ink:#E4E9E9; --muted:#98A3A7; --faint:#6E787C;
+      --rule:#262C2E; --rule-hi:#3A4245;
+      --lmd:#4FC2BC; --lmd-bg:#4FC2BC1A;
+      --ffg:#D3A24A; --ffg-bg:#D3A24A1A;
+      --warn:#E8735F; --warn-bg:#E8735F14;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+    }
+  }
+  :root[data-theme="light"]{--ground:#F5F6F4;--panel:#FFFFFF;--ink:#14181A;--muted:#5C666B;--faint:#8A9499;--rule:#DBE0DD;--rule-hi:#C2C9C5;--lmd:#0F6E6B;--lmd-bg:#0F6E6B14;--ffg:#8A5A0B;--ffg-bg:#8A5A0B14;--warn:#A32A1C;--warn-bg:#A32A1C12;}
+  :root[data-theme="dark"]{--ground:#0E1113;--panel:#161A1C;--ink:#E4E9E9;--muted:#98A3A7;--faint:#6E787C;--rule:#262C2E;--rule-hi:#3A4245;--lmd:#4FC2BC;--lmd-bg:#4FC2BC1A;--ffg:#D3A24A;--ffg-bg:#D3A24A1A;--warn:#E8735F;--warn-bg:#E8735F14;}
+
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16.5px; line-height: 1.6;
+    margin: 0; overflow-x: hidden;
+  }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: var(--rule-hi); }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--lmd); outline-offset: 3px; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px 100px; }
+
+  /* nav */
+  .topbar { position: sticky; top: 0; z-index: 20; background: var(--ground); border-bottom: 1px solid var(--rule); }
+  .topbar-in { max-width: 1120px; margin: 0 auto; padding: 10px 24px; display: flex; gap: 18px; align-items: baseline; overflow-x: auto; scrollbar-width: none; }
+  .topbar-in::-webkit-scrollbar { display: none; }
+  .topbar a, .topbar strong { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; text-decoration: none; color: var(--muted); }
+  .topbar strong { color: var(--ink); font-weight: 700; }
+  .topbar a:hover { color: var(--ink); }
+
+  /* masthead */
+  .mast { padding: 60px 0 34px; border-bottom: 1px solid var(--rule); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
+  h1 { font-family: var(--mono); font-weight: 700; letter-spacing: -.02em; font-size: clamp(28px,5vw,42px); line-height: 1.12; margin: 0 0 18px; max-width: 22ch; }
+  .standfirst { font-size: 18px; line-height: 1.5; color: var(--muted); max-width: 60ch; margin: 0; }
+
+  section { padding-top: 52px; scroll-margin-top: 56px; }
+  h2 { font-family: var(--mono); font-weight: 700; font-size: 20px; margin: 0 0 6px; display: flex; gap: 13px; align-items: baseline; }
+  h2 .num { font-size: 11px; letter-spacing: .12em; color: var(--faint); border: 1px solid var(--rule-hi); border-radius: 3px; padding: 2px 6px; flex: none; }
+  .dek { color: var(--muted); margin: 0 0 24px; max-width: 64ch; font-size: 15.5px; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+
+  code { font-family: var(--mono); font-size: .875em; background: color-mix(in srgb, var(--ink) 6%, transparent); border-radius: 3px; padding: .1em .34em; word-break: break-word; }
+  .path { font-family: var(--mono); font-size: .85em; color: var(--muted); word-break: break-all; }
+
+  .chip { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; white-space: nowrap; font-weight: 600; }
+  .chip.lmd { color: var(--lmd); background: var(--lmd-bg); border: 1px solid color-mix(in srgb, var(--lmd) 35%, transparent); }
+  .chip.ffg { color: var(--ffg); background: var(--ffg-bg); border: 1px solid color-mix(in srgb, var(--ffg) 35%, transparent); }
+  .chip.nx  { color: var(--muted); background: color-mix(in srgb, var(--ink) 6%, transparent); border: 1px solid var(--rule-hi); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 26px; align-items: center; }
+  .legend span.t { font-size: 14px; color: var(--muted); }
+
+  /* figures */
+  figure { margin: 30px 0 34px; }
+  .figbox { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 20px 18px 12px; overflow-x: auto; box-shadow: var(--shadow); }
+  figure svg { display: block; width: 100%; min-width: 640px; height: auto; color: var(--ink); }
+  figcaption { font-size: 13.5px; color: var(--muted); margin-top: 11px; max-width: 68ch; padding-left: 13px; border-left: 2px solid var(--rule-hi); }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  /* facts + warnings */
+  .box { border: 1px solid var(--rule-hi); border-left: 3px solid var(--lmd); background: var(--panel); border-radius: 4px; padding: 16px 18px; margin: 22px 0; max-width: 68ch; }
+  .box .lbl { font-family: var(--mono); font-size: 10.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--lmd); display: block; margin-bottom: 7px; font-weight: 700; }
+  .box p:last-child { margin-bottom: 0; }
+  .box.w { border-left-color: var(--warn); background: var(--warn-bg); }
+  .box.w .lbl { color: var(--warn); }
+
+  /* tables */
+  .scroller { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); margin: 22px 0 28px; box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 700px; }
+  th, td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: color-mix(in srgb, var(--ink) 3%, transparent); position: sticky; top: 0; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.n { font-family: var(--mono); color: var(--faint); font-variant-numeric: tabular-nums; width: 1%; white-space: nowrap; }
+  td.c { font-family: var(--mono); font-size: 12px; color: var(--muted); line-height: 1.5; }
+  td.c b { color: var(--ink); font-weight: 600; }
+
+  /* numbered steps */
+  .steps { margin: 20px 0 0; }
+  .step { display: grid; grid-template-columns: 28px 1fr; gap: 0 13px; padding: 11px 0; border-top: 1px solid var(--rule); }
+  .step .k { font-family: var(--mono); font-size: 11px; color: var(--faint); padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .step .b { min-width: 0; }
+  .step .t { font-size: 15px; margin: 0 0 3px; max-width: 66ch; }
+  .step .p { font-family: var(--mono); font-size: 11.5px; color: var(--muted); word-break: break-all; line-height: 1.5; }
+  .step.hi { background: var(--lmd-bg); margin: 0 -11px; padding-left: 11px; padding-right: 11px; border-radius: 3px; }
+  .step.hi .k { color: var(--lmd); font-weight: 700; }
+  .step.hf { background: var(--ffg-bg); margin: 0 -11px; padding-left: 11px; padding-right: 11px; border-radius: 3px; }
+  .step.hf .k { color: var(--ffg); font-weight: 700; }
+
+  /* read order */
+  ol.reading { list-style: none; counter-reset: r; padding: 0; margin: 20px 0 0; }
+  ol.reading > li { counter-increment: r; position: relative; padding: 12px 0 12px 44px; border-top: 1px solid var(--rule); }
+  ol.reading > li::before { content: counter(r, decimal-leading-zero); position: absolute; left: 0; top: 14px; font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  ol.reading .f { font-family: var(--mono); font-size: 13px; font-weight: 600; display: block; margin-bottom: 3px; word-break: break-all; }
+  ol.reading .w { font-size: 14.5px; color: var(--muted); display: block; max-width: 70ch; }
+
+  ul.tight { padding-left: 20px; margin: 0 0 16px; max-width: 68ch; }
+  ul.tight li { margin-bottom: 8px; }
+
+  hr.sep { border: none; border-top: 1px solid var(--rule); margin: 52px 0 0; }
+  footer { padding-top: 30px; color: var(--faint); font-size: 13px; font-family: var(--mono); max-width: 68ch; }
+
+  /* part divider */
+  .part { margin: 90px 0 0; padding: 28px 0 0; border-top: 3px double var(--rule-hi); }
+  .part .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin: 0 0 10px; }
+  .part h2 { font-size: 25px; display: block; margin-bottom: 12px; }
+  .part p { font-size: 16.5px; color: var(--muted); max-width: 66ch; }
+  .topbar a.p2 { color: var(--ffg); }
+  .topbar a.p2:hover { color: var(--ink); }
+
+  /* pseudocode */
+  pre.code {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.65;
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 16px 18px; overflow-x: auto; margin: 20px 0 26px; box-shadow: var(--shadow);
+  }
+  pre.code b { color: var(--lmd); font-weight: 700; }
+  pre.code i { color: var(--faint); font-style: normal; }
+  pre.code u { color: var(--ffg); text-decoration: none; font-weight: 700; }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 0 18px 70px; }
+    .topbar-in { padding: 10px 18px; }
+    .mast { padding: 40px 0 26px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="topbar-in">
+    <strong>gossip &rarr; fork choice</strong>
+    <a href="#summary">summary</a>
+    <a href="#block">block path</a>
+    <a href="#att">attestation path</a>
+    <a href="#clock">timing</a>
+    <a href="#ffg">ffg limits</a>
+    <a href="#read">read order</a>
+    <a href="#conn">connections</a>
+    <a href="#change">changes</a>
+    <a href="#sym">symbols</a>
+    <a href="#warn">warnings</a>
+    <a href="#layers" class="p2">&#9679; two layers</a>
+    <a href="#gadget" class="p2">gadget</a>
+    <a href="#algo" class="p2">algorithm</a>
+    <a href="#iface" class="p2">interface</a>
+    <a href="#swap" class="p2">the swap</a>
+    <a href="#fgclock" class="p2">fg timing</a>
+    <a href="#variants" class="p2">variants</a>
+    <a href="#open" class="p2">not settled</a>
+    <a href="#mvp" class="p2">minimum mock</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">Prysm &middot; beacon-chain &middot; code map</p>
+    <h1>Gossipsub and fork choice</h1>
+    <p class="standfirst">
+      This document shows how a gossip message becomes a fork choice weight in Prysm.
+      It shows where to change the code for a mock client. The mock client uses Goldfish and
+      a finality gadget that is not Casper FFG. All line numbers come from commit
+      <code>4a9884d6d5</code>.
+    </p>
+  </header>
+
+  <!-- ================= SUMMARY ================= -->
+  <section id="summary">
+    <h2><span class="num">00</span> Summary</h2>
+    <p class="dek">Gossipsub and fork choice connect in three ways. The three ways are different from each other.</p>
+
+    <ul class="tight">
+      <li><b>A block goes into fork choice from the gossip goroutine.</b> The state transition runs on
+          this path. One write lock holds for the full operation.</li>
+      <li><b>An attestation does not go into fork choice from gossip.</b> The handler writes the
+          attestation to a pool. Two timers move the attestation into fork choice about one slot later.
+          <code>blockchain.AttestationReceiver</code> has no insert method.</li>
+      <li><b>The gossip validator reads fork choice many times. It writes fork choice one time.</b>
+          The reads are <code>InForkchoice</code>, <code>FinalizedCheckpt</code>,
+          <code>ShouldIgnoreData</code>, <code>VerifyLmdFfgConsistency</code> and
+          <code>AttestationTargetState</code>. The write is
+          <code>RecordBlockForEquivocation</code>. A feature flag controls the write.</li>
+    </ul>
+
+    <div class="box">
+      <span class="lbl">Primary fact</span>
+      <p>Prysm has no <code>filter_block_tree</code> function. Casper FFG limits LMD-GHOST at four
+      locations. The first location is one boolean expression at
+      <span class="path">forkchoice/doubly-linked-tree/node.go:25</span>. The second location is the
+      start point of the tree search at <span class="path">store.go:32</span>. The rest of the package
+      is weight arithmetic. Weight arithmetic does not know which finality gadget made the numbers.</p>
+    </div>
+
+    <div class="legend">
+      <span class="chip lmd">LMD-GHOST &middot; head selection</span>
+      <span class="chip ffg">Casper FFG &middot; justification and finality</span>
+      <span class="chip nx">transport</span>
+      <span class="t">&mdash; the colors are the same in all figures and tables.</span>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 268" role="img" aria-label="A block moves from libp2p pubsub through the gossip validator, the subscriber and ReceiveBlock into the fork choice store. A return arrow shows that the validator reads the same store.">
+          <defs>
+            <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker>
+            <marker id="m1f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ffg)"/></marker>
+          </defs>
+
+          <path d="M 926 62 L 926 26 L 300 26 L 300 58" fill="none" stroke="var(--ffg)" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#m1f)"/>
+          <text x="613" y="18" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--ffg)">the validator reads the store that it writes &mdash; InForkchoice &middot; FinalizedCheckpt &middot; ShouldIgnoreData &middot; VerifyLmdFfgConsistency</text>
+
+          <g stroke="currentColor" stroke-width="1.2" fill="none" opacity=".55">
+            <rect x="16" y="62" width="146" height="52" rx="4"/>
+            <rect x="208" y="62" width="184" height="52" rx="4"/>
+            <rect x="438" y="62" width="146" height="52" rx="4"/>
+            <rect x="630" y="62" width="196" height="52" rx="4"/>
+          </g>
+          <rect x="872" y="62" width="112" height="52" rx="4" fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.6"/>
+
+          <g font-family="var(--mono)" font-size="12.5" fill="currentColor" text-anchor="middle">
+            <text x="89" y="93">libp2p pubsub</text>
+            <text x="300" y="93">gossip validator</text>
+            <text x="511" y="93">subscriber</text>
+            <text x="728" y="93">ReceiveBlock</text>
+          </g>
+          <text x="928" y="93" text-anchor="middle" font-family="var(--mono)" font-size="12.5" font-weight="700" fill="var(--lmd)">Store</text>
+
+          <g font-family="var(--mono)" font-size="10" fill="currentColor" opacity=".55" text-anchor="middle">
+            <text x="89" y="132">p2p/pubsub.go:162</text>
+            <text x="300" y="132">validate_beacon_blocks.go:45</text>
+            <text x="511" y="132">subscriber.go:451</text>
+            <text x="728" y="132">receive_block.go:74</text>
+            <text x="928" y="132">forkchoice.go:123</text>
+          </g>
+
+          <g stroke="currentColor" stroke-width="1.4" marker-end="url(#m1)" opacity=".8">
+            <line x1="162" y1="88" x2="200" y2="88"/>
+            <line x1="392" y1="88" x2="430" y2="88"/>
+            <line x1="584" y1="88" x2="622" y2="88"/>
+            <line x1="826" y1="88" x2="864" y2="88"/>
+          </g>
+          <g font-family="var(--mono)" font-size="10" fill="currentColor" opacity=".7" text-anchor="middle">
+            <text x="181" y="80">validateQ</text>
+            <text x="411" y="74">ACCEPT</text>
+            <text x="411" y="86">and send</text>
+            <text x="603" y="74">new goroutine</text>
+            <text x="603" y="86">no limit</text>
+            <text x="845" y="74">InsertNode</text>
+            <text x="845" y="86">Head()</text>
+          </g>
+
+          <path d="M 300 114 L 300 152" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".45" marker-end="url(#m1)"/>
+          <g font-family="var(--mono)" font-size="11" fill="currentColor" opacity=".75">
+            <text x="222" y="172">IGNORE &mdash; the node drops the message. It sends nothing.</text>
+            <text x="222" y="190">REJECT &mdash; the node drops the message. It lowers the peer score.</text>
+            <text x="222" y="208">ACCEPT &mdash; the node sends the message and calls the handler.</text>
+          </g>
+
+          <rect x="630" y="222" width="354" height="32" rx="3" fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1" stroke-dasharray="3 3"/>
+          <text x="807" y="242" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--lmd)">the write lock holds from receive_block.go:124 to the return</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 1. The connection is a loop.</b> The gossip validator reads the same fork
+      choice store that the handler writes. If you change what &ldquo;in fork choice&rdquo; means, you
+      also change which messages the node sends to its peers.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ================= BLOCK PATH ================= -->
+  <section id="block">
+    <h2><span class="num">01</span> Block path</h2>
+    <p class="dek">This path is synchronous. Steps with an ochre mark are Casper FFG checks. Steps with a teal mark are head selection.</p>
+
+    <div class="steps">
+      <div class="step"><span class="k">01</span><div class="b"><p class="t">The node builds the GossipSub router one time at start.</p><p class="p">p2p/service.go:185 &middot; p2p/pubsub.go:162</p></div></div>
+      <div class="step"><span class="k">02</span><div class="b"><p class="t">The node registers one validator and one handler for each topic. The list is manual.</p><p class="p">sync/subscriber.go:216 &middot; block topic at :222</p></div></div>
+      <div class="step"><span class="k">03</span><div class="b"><p class="t"><code>subscribeWithBase</code> registers the validator, subscribes to the topic, then starts the message loop.</p><p class="p">sync/subscriber.go:423 &rarr; :433, :438, :507</p></div></div>
+      <div class="step"><span class="k">04</span><div class="b"><p class="t">The pubsub library reads its queue. It runs the validator in a new goroutine.</p><p class="p">go-libp2p-pubsub validation.go</p></div></div>
+      <div class="step"><span class="k">05</span><div class="b"><p class="t">The wrapper rejects a nil topic. It ignores the message if the chain did not start. It ignores a wrong fork digest.</p><p class="p">sync/subscriber.go:514 &rarr; :522, :527, :531, :549</p></div></div>
+      <div class="step"><span class="k">06</span><div class="b"><p class="t">The block validator starts. <b>One mutex holds for the full function body.</b> All block validation is thus sequential.</p><p class="p">sync/validate_beacon_blocks.go:45 &middot; lock at :67</p></div></div>
+      <div class="step"><span class="k">07</span><div class="b"><p class="t">The validator reads the cache of seen (slot, proposer) pairs. A second block starts the equivocation check.</p><p class="p">validate_beacon_blocks.go:102, :575, :651</p></div></div>
+      <div class="step"><span class="k">08</span><div class="b"><p class="t">The validator ignores a block from a future slot. <b>It does not put the block in a queue.</b></p><p class="p">validate_beacon_blocks.go:117</p></div></div>
+      <div class="step hf"><span class="k">09</span><div class="b"><p class="t">FFG check 1. The validator ignores a block at or below the start of the finalized epoch.</p><p class="p">validate_beacon_blocks.go:154 &rarr; chain_info.go:149</p></div></div>
+      <div class="step hf"><span class="k">10</span><div class="b"><p class="t">FFG check 2. <code>ShouldIgnoreData</code> reads the parent slot, the justified checkpoint and the canonical status of the parent.</p><p class="p">validate_beacon_blocks.go:167 &rarr; chain_info.go:650&ndash;669</p></div></div>
+      <div class="step"><span class="k">11</span><div class="b"><p class="t">If the parent is unknown, the validator puts the block in the pending queue. Then it ignores the block. Note that <code>chain.HasBlock</code> reads the database, not fork choice.</p><p class="p">validate_beacon_blocks.go:174 &rarr; receive_block.go:458</p></div></div>
+      <div class="step hi"><span class="k">12</span><div class="b"><p class="t">Fork choice check. <code>InForkchoice(parentRoot)</code> calls <code>HasNode</code>. This means &ldquo;the parent comes from the finalized root&rdquo;. A failure gives REJECT.</p><p class="p">validate_beacon_blocks.go:311&ndash;312 &rarr; chain_info.go:435</p></div></div>
+      <div class="step"><span class="k">13</span><div class="b"><p class="t">The validator selects a state. It uses the head state if the parent is the head. If not, it uses <code>GetBlockPreState</code>.</p><p class="p">validate_beacon_blocks.go:338 &rarr; process_block_helpers.go:227, :285</p></div></div>
+      <div class="step"><span class="k">14</span><div class="b"><p class="t">The validator sets <code>ValidatorData</code> and returns ACCEPT. The library then sends the block to the mesh peers and to the handler.</p><p class="p">validate_beacon_blocks.go:242</p></div></div>
+      <div class="step"><span class="k">15</span><div class="b"><p class="t">The message loop starts one goroutine for each message. <b>The number of goroutines has no limit.</b></p><p class="p">sync/subscriber.go:499, :503, :451</p></div></div>
+      <div class="step"><span class="k">16</span><div class="b"><p class="t">The handler marks the block as seen. Then it calls <code>chain.ReceiveBlock</code>.</p><p class="p">sync/subscriber_beacon_blocks.go:28, :37, :67</p></div></div>
+      <div class="step"><span class="k">17</span><div class="b"><p class="t"><code>ReceiveBlock</code> runs the state transition and <code>engine_newPayload</code> together. Then it waits for data availability.</p><p class="p">blockchain/receive_block.go:74, :109, :220, :115</p></div></div>
+      <div class="step hi"><span class="k">18</span><div class="b"><p class="t"><code>ReceiveBlock</code> takes the fork choice write lock. The lock holds until the function returns. The database write occurs before the tree insert.</p><p class="p">receive_block.go:124, :126 &rarr; process_block.go:658</p></div></div>
+      <div class="step hi"><span class="k">19</span><div class="b"><p class="t"><code>InsertNode</code> adds the node. It reads the justified and finalized checkpoints from the post-state. Then <code>pullTips</code> calculates the unrealized checkpoints.</p><p class="p">process_block.go:79 &rarr; forkchoice.go:123 &middot; store.go:72 &middot; unrealized_justification.go:62, :80</p></div></div>
+      <div class="step hi"><span class="k">20</span><div class="b"><p class="t"><code>handleBlockAttestations</code> calls <code>ProcessAttestation</code> for each attestation in the block. <b>This is the second write path. There is no pool and no delay.</b></p><p class="p">process_block.go:578 &middot; write at :595</p></div></div>
+      <div class="step hi"><span class="k">21</span><div class="b"><p class="t"><code>Head()</code> calculates the new head. The cost is O(nodes) for each call.</p><p class="p">process_block.go:102 &rarr; forkchoice.go:54 (:62, :66, :70, :73, :78, :81)</p></div></div>
+      <div class="step hf"><span class="k">22</span><div class="b"><p class="t"><code>store.head</code> starts the search at the justified root, <b>not at the tree root</b>. It follows the <code>bestDescendant</code> pointers. It gives an error if the result fails <code>viableForHead</code>.</p><p class="p">store.go:22&ndash;57</p></div></div>
+      <div class="step hf"><span class="k">23</span><div class="b"><p class="t"><code>sendFCU</code> sends <code>engine_forkchoiceUpdated</code>. <code>SafeBlockHash</code> comes from the unrealized justified checkpoint. <code>FinalizedBlockHash</code> comes from the finalized checkpoint.</p><p class="p">forkchoice_update_execution.go:61 &middot; execution_engine.go:37, :64&ndash;65</p></div></div>
+      <div class="step"><span class="k">24</span><div class="b"><p class="t"><code>saveHead</code> finds reorgs and sends the head events. Then the node writes the checkpoints to the database.</p><p class="p">head.go:60 &middot; receive_block.go:140, :587, :603</p></div></div>
+    </div>
+
+    <div class="box w">
+      <span class="lbl">Warning &mdash; a second entry point</span>
+      <p>Blocks from the <code>BeaconBlocksByRoot</code> RPC go directly into the pending queue at
+      <span class="path">sync/rpc_beacon_blocks_by_root.go:59</span>. This path does none of the gossip
+      checks above. If you add a rule only to the gossip validator, this path goes around the rule.</p>
+    </div>
+  </section>
+
+  <!-- ================= ATTESTATION PATH ================= -->
+  <section id="att">
+    <h2><span class="num">02</span> Attestation path</h2>
+    <p class="dek">Steps 1 to 5 and 15 to 16 above are the same. The steps after the handler are different.</p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1040 336" role="img" aria-label="Two lanes. A block goes from gossip through the state transition into the fork choice store in the same millisecond. An attestation waits in two pools and two timers release it about one slot later.">
+          <defs><marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+
+          <text x="16" y="26" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--lmd)" font-weight="700">BLOCK &mdash; SYNCHRONOUS</text>
+          <text x="16" y="196" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--ffg)" font-weight="700">ATTESTATION &mdash; DELAYED, ONE SLOT OR MORE</text>
+
+          <g stroke="currentColor" stroke-width="1.2" fill="none" opacity=".5">
+            <rect x="16" y="42" width="108" height="46" rx="4"/>
+            <rect x="160" y="42" width="130" height="46" rx="4"/>
+            <rect x="326" y="42" width="104" height="46" rx="4"/>
+          </g>
+          <rect x="466" y="42" width="182" height="46" rx="4" fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.5"/>
+          <g font-family="var(--mono)" font-size="11.5" fill="currentColor" text-anchor="middle">
+            <text x="70" y="70">gossip in</text><text x="225" y="70">validate block</text><text x="378" y="70">handler</text>
+          </g>
+          <text x="557" y="65" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--lmd)" font-weight="700">state transition</text>
+          <text x="557" y="79" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--lmd)">receive_block.go:74</text>
+          <g stroke="currentColor" stroke-width="1.3" marker-end="url(#m2)" opacity=".75">
+            <line x1="124" y1="65" x2="152" y2="65"/><line x1="290" y1="65" x2="318" y2="65"/>
+            <line x1="430" y1="65" x2="458" y2="65"/><line x1="648" y1="65" x2="806" y2="65"/>
+          </g>
+          <text x="727" y="57" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--lmd)">InsertNode &mdash; same millisecond</text>
+
+          <rect x="814" y="118" width="210" height="96" rx="5" fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.8"/>
+          <text x="919" y="152" text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="700" fill="var(--lmd)">fork choice</text>
+          <text x="919" y="170" text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="700" fill="var(--lmd)">Store</text>
+          <text x="919" y="192" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--lmd)">doubly-linked-tree</text>
+
+          <g stroke="currentColor" stroke-width="1.2" fill="none" opacity=".5">
+            <rect x="16" y="212" width="108" height="46" rx="4"/>
+            <rect x="160" y="212" width="130" height="46" rx="4"/>
+            <rect x="326" y="212" width="104" height="46" rx="4"/>
+          </g>
+          <rect x="466" y="212" width="118" height="46" rx="4" fill="var(--ffg-bg)" stroke="var(--ffg)" stroke-width="1.4"/>
+          <rect x="642" y="212" width="140" height="46" rx="4" fill="var(--ffg-bg)" stroke="var(--ffg)" stroke-width="1.4"/>
+          <g font-family="var(--mono)" font-size="11.5" fill="currentColor" text-anchor="middle">
+            <text x="70" y="240">gossip in</text><text x="225" y="240">validate att</text><text x="378" y="240">handler</text>
+          </g>
+          <text x="525" y="234" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--ffg)" font-weight="700">pool 1</text>
+          <text x="525" y="248" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">operations/attestations</text>
+          <text x="712" y="234" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--ffg)" font-weight="700">pool 2</text>
+          <text x="712" y="248" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">no expiry</text>
+
+          <g stroke="currentColor" stroke-width="1.3" marker-end="url(#m2)" opacity=".75">
+            <line x1="124" y1="235" x2="152" y2="235"/><line x1="290" y1="235" x2="318" y2="235"/><line x1="430" y1="235" x2="458" y2="235"/>
+          </g>
+          <g stroke="var(--ffg)" stroke-width="1.6" marker-end="url(#m2)" fill="none" color="var(--ffg)">
+            <line x1="584" y1="235" x2="634" y2="235"/>
+            <path d="M 782 235 L 900 235 L 900 222"/>
+          </g>
+          <line x1="609" y1="258" x2="609" y2="272" stroke="var(--ffg)" stroke-width="1.2" stroke-dasharray="3 3"/>
+          <text x="609" y="284" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ffg)">timer A</text>
+          <text x="609" y="298" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ffg)">7.0 / 9.5 / 11.8 s</text>
+          <line x1="841" y1="258" x2="841" y2="272" stroke="var(--ffg)" stroke-width="1.2" stroke-dasharray="3 3"/>
+          <text x="841" y="284" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ffg)">timer B</text>
+          <text x="841" y="298" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ffg)">0 s / 10 s</text>
+
+          <text x="520" y="322" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="currentColor" opacity=".7">an attestation that arrives at t = 3 s of slot N first counts at t = 10 s, and only if the node has validators</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 2. The two paths are different.</b> A block goes into fork choice on the
+      gossip goroutine. An attestation waits in two pools. Two timers release it. The timers do not know
+      about each other. No timer starts when an attestation arrives.</figcaption>
+    </figure>
+
+    <div class="steps">
+      <div class="step"><span class="k">06</span><div class="b"><p class="t">The node subscribes to attestation subnets. It calculates the subnet list again at each slot.</p><p class="p">sync/subscriber.go:237&ndash;245, :599, :633</p></div></div>
+      <div class="step"><span class="k">07</span><div class="b"><p class="t">The validator accepts an attestation from this node. It ignores all attestations during initial sync.</p><p class="p">sync/validate_beacon_attestation.go:39, :49, :54</p></div></div>
+      <div class="step"><span class="k">08</span><div class="b"><p class="t"><code>ValidateAttestationTime</code> accepts the full current epoch and the full previous epoch. This is EIP-7045.</p><p class="p">validate_beacon_attestation.go:88 &rarr; core/helpers/attestation.go:131</p></div></div>
+      <div class="step"><span class="k">09</span><div class="b"><p class="t">The cache of seen attestations uses the key slot + committee index + attester index. It is an LRU cache with 20&thinsp;000 entries. <b>The <code>--slasher</code> flag disables this check.</b></p><p class="p">validate_beacon_attestation.go:99, :105&ndash;118 &middot; key at :404</p></div></div>
+      <div class="step"><span class="k">10</span><div class="b"><p class="t">If the block is unknown, the validator saves the attestation in a queue. Then it ignores the attestation. There is no penalty.</p><p class="p">validate_beacon_attestation.go:122, :125 &rarr; pending_attestations_queue.go:394</p></div></div>
+      <div class="step hi"><span class="k">11</span><div class="b"><p class="t">Fork choice read 1. <code>InForkchoice(blockRoot)</code>. A failure gives IGNORE.</p><p class="p">validate_beacon_attestation.go:129</p></div></div>
+      <div class="step hf"><span class="k">12</span><div class="b"><p class="t">Fork choice read 2. <code>VerifyLmdFfgConsistency</code>. A failure gives <b>REJECT</b>. This check is not in the specification. A comment in the code says this.</p><p class="p">validate_beacon_attestation.go:133 &rarr; receive_attestation.go:56 &rarr; forkchoice.go:846</p></div></div>
+      <div class="step hf"><span class="k">13</span><div class="b"><p class="t">Fork choice read 3. <code>AttestationTargetState</code>. It takes the read lock and checks <code>IsViableForCheckpoint</code>. It can start a full state regeneration. It does all this to get one committee.</p><p class="p">validate_beacon_attestation.go:139 &rarr; process_attestation_helpers.go:23, :94, :133</p></div></div>
+      <div class="step"><span class="k">14</span><div class="b"><p class="t">The validator calculates the subnet again from the pre-state. A different subnet gives REJECT. Then it checks the committee, the attester index and the signature.</p><p class="p">validate_beacon_attestation.go:145, :243 &middot; :150, :156, :191</p></div></div>
+      <div class="step"><span class="k">15</span><div class="b"><p class="t"><b>The handler writes the attestation to a pool. It does nothing else.</b> There is no call to fork choice.</p><p class="p">sync/subscriber_beacon_attestation.go:18</p></div></div>
+      <div class="step hf"><span class="k">16</span><div class="b"><p class="t">Timer A groups attestations by <code>AttestationData</code> at 7.0 s, 9.5 s and 11.8 s. It writes them to pool 2.</p><p class="p">operations/attestations/prepare_forkchoice.go:21, :61, :114</p></div></div>
+      <div class="step hf"><span class="k">17</span><div class="b"><p class="t">Timer B runs at 0 s and at 10 s. The 10 s value is <code>SecondsPerSlot</code> minus 2 s.</p><p class="p">blockchain/receive_attestation.go:68, :92&ndash;93</p></div></div>
+      <div class="step hf"><span class="k">18</span><div class="b"><p class="t">At 0 s, <code>NewSlot</code> sets the proposer boost to zero. At an epoch start it also updates the unrealized checkpoints and prunes the tree. Then <code>UpdateHead</code> runs.</p><p class="p">receive_attestation.go:105&ndash;111 &rarr; on_tick.go:32</p></div></div>
+      <div class="step"><span class="k">19</span><div class="b"><p class="t">At 10 s, <code>UpdateHead</code> runs <b>only if the node has validators</b>. A node without validators never runs this step.</p><p class="p">receive_attestation.go:100&ndash;103</p></div></div>
+      <div class="step"><span class="k">20</span><div class="b"><p class="t"><code>processAttestations</code> reads pool 2. It skips an attestation if slot + 1 is not in the past. It skips an attestation if the block or the state is absent. If not, it removes the attestation, then processes it.</p><p class="p">receive_attestation.go:190, :203, :207&ndash;211, :214, :217</p></div></div>
+      <div class="step"><span class="k">21</span><div class="b"><p class="t"><code>OnAttestation</code> gets the pre-state and calculates the committees. <b>It does not do the target-root, LMD/FFG or signature checks.</b> Comments say that the gossip validator did them.</p><p class="p">blockchain/process_attestation.go:42 &middot; comments at :54, :75, :96</p></div></div>
+      <div class="step hi"><span class="k">22</span><div class="b"><p class="t"><b>The vote write.</b> <code>ProcessAttestation</code> writes <code>votes[i].nextRoot</code> and <code>votes[i].nextSlot</code>. It changes no weight. The replacement rule uses epochs, not slots.</p><p class="p">process_attestation.go:116 &rarr; forkchoice.go:86, :112</p></div></div>
+      <div class="step hi"><span class="k">23</span><div class="b"><p class="t"><code>Head()</code> calls <code>updateBalances</code>. This moves the balance of each validator from the old node to the new node. <b>The vote becomes weight here.</b></p><p class="p">receive_attestation.go:138 &rarr; forkchoice.go:54, :298</p></div></div>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 250" role="img" aria-label="ProcessAttestation writes only the next fields of a Vote record. The balance transfer that makes a vote into a node weight happens later, inside updateBalances during Head.">
+          <defs><marker id="m3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+
+          <text x="16" y="24" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="currentColor" opacity=".6">INPUT &mdash; NO WEIGHT CHANGE</text>
+          <text x="560" y="24" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--lmd)" font-weight="700">Head() &mdash; THE WEIGHT CHANGES HERE</text>
+
+          <rect x="16" y="40" width="230" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".55"/>
+          <text x="131" y="62" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="currentColor">ProcessAttestation</text>
+          <text x="131" y="78" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="currentColor" opacity=".6">forkchoice.go:86</text>
+
+          <rect x="300" y="40" width="200" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".35"/>
+          <text x="350" y="62" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="currentColor" opacity=".55">currentRoot</text>
+          <text x="350" y="78" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="currentColor" opacity=".55">currentSlot</text>
+          <rect x="400" y="40" width="100" height="52" fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.4"/>
+          <text x="450" y="62" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--lmd)" font-weight="700">nextRoot</text>
+          <text x="450" y="78" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--lmd)" font-weight="700">nextSlot</text>
+          <text x="400" y="112" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="currentColor" opacity=".6">votes[validatorIndex] &mdash; types.go</text>
+
+          <line x1="246" y1="66" x2="292" y2="66" stroke="currentColor" stroke-width="1.4" marker-end="url(#m3)" opacity=".8"/>
+          <text x="269" y="58" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="currentColor" opacity=".7">writes</text>
+
+          <rect x="560" y="40" width="424" height="52" rx="4" fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.5"/>
+          <text x="772" y="62" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--lmd)" font-weight="700">updateBalances: subtract from the old node, add to the new node</text>
+          <text x="772" y="78" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--lmd)">forkchoice.go:298, called from Head() at :62 &mdash; then current := next</text>
+          <line x1="500" y1="66" x2="552" y2="66" stroke="var(--lmd)" stroke-width="1.6" marker-end="url(#m3)" color="var(--lmd)"/>
+
+          <rect x="560" y="132" width="424" height="46" rx="4" fill="var(--ffg-bg)" stroke="var(--ffg)" stroke-width="1.4" stroke-dasharray="4 3"/>
+          <text x="772" y="152" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">the balances come from the FFG justified state</text>
+          <text x="772" y="167" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ffg)">updateJustifiedBalances &mdash; forkchoice.go:768 &middot; it also sets committeeWeight at :774</text>
+          <line x1="772" y1="92" x2="772" y2="126" stroke="var(--ffg)" stroke-width="1.4" marker-end="url(#m3)" color="var(--ffg)"/>
+
+          <text x="16" y="216" font-family="var(--mono)" font-size="11.5" fill="currentColor" opacity=".8">Put the Goldfish vote expiry in ProcessAttestation (forkchoice.go:86).</text>
+          <text x="16" y="234" font-family="var(--mono)" font-size="11.5" fill="currentColor" opacity=".8">Both write paths go through that one function &mdash; the gossip path and the block path (process_block.go:595).</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 3. A vote is not a weight.</b> The input step writes two fields of a
+      <code>Vote</code> record. The <code>current</code> and <code>next</code> pair is already a
+      two-phase buffer. The replacement rule at <span class="path">forkchoice.go:112</span> compares
+      epochs. Goldfish needs it to compare slots.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ================= TIMING ================= -->
+  <section id="clock">
+    <h2><span class="num">03</span> Timing</h2>
+    <p class="dek">There is no central scheduler. Each slot action has its own goroutine and its own timer. All timers use one genesis time. A deadline is a fraction of the slot in basis points. On a 12 s slot, 3333 BP is 4 s.</p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 292" role="img" aria-label="A twelve second slot. Above the line: the proposer publishes at zero seconds, the attestation is due at four seconds, the aggregate is due at eight seconds. Below the line: fork choice runs NewSlot and UpdateHead at zero seconds, and UpdateHead again at ten seconds if the node has validators.">
+          <defs><marker id="m4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+
+          <text x="16" y="22" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="currentColor" opacity=".6">WHAT A VALIDATOR DOES</text>
+
+          <rect x="60" y="112" width="293" height="26" fill="var(--lmd-bg)"/>
+          <text x="206" y="129" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--lmd)">proposer boost window &mdash; store.go:190</text>
+
+          <line x1="60" y1="112" x2="940" y2="112" stroke="currentColor" stroke-width="1.6"/>
+          <g stroke="currentColor" stroke-width="1.2" opacity=".5">
+            <line x1="60" y1="106" x2="60" y2="118"/><line x1="207" y1="106" x2="207" y2="118"/>
+            <line x1="353" y1="106" x2="353" y2="118"/><line x1="647" y1="106" x2="647" y2="118"/>
+            <line x1="940" y1="106" x2="940" y2="118"/>
+          </g>
+          <g font-family="var(--mono)" font-size="10" fill="currentColor" opacity=".6" text-anchor="middle">
+            <text x="60" y="156">0 s</text><text x="207" y="156">2 s &middot; 1667 BP</text>
+            <text x="353" y="156">4 s &middot; 3333 BP</text><text x="647" y="156">8 s &middot; 6667 BP</text><text x="940" y="156">12 s</text>
+          </g>
+
+          <g stroke="currentColor" stroke-width="1.3" opacity=".8" marker-end="url(#m4)">
+            <line x1="60" y1="72" x2="60" y2="104"/><line x1="353" y1="72" x2="353" y2="104"/><line x1="647" y1="72" x2="647" y2="104"/>
+          </g>
+          <g font-family="var(--mono)" font-size="11" fill="currentColor" text-anchor="middle">
+            <text x="60" y="64">the proposer sends the block</text>
+            <text x="353" y="64">the attestation is due</text>
+            <text x="647" y="64">the aggregate is due</text>
+          </g>
+          <text x="207" y="90" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="currentColor" opacity=".55">reorg cutoff</text>
+
+          <text x="16" y="196" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--lmd)" font-weight="700">WHAT FORK CHOICE DOES</text>
+
+          <g stroke="var(--lmd)" stroke-width="1.6" color="var(--lmd)" marker-end="url(#m4)">
+            <line x1="60" y1="120" x2="60" y2="204"/><line x1="793" y1="120" x2="793" y2="204"/>
+          </g>
+          <g stroke="var(--ffg)" stroke-width="1.3" stroke-dasharray="4 3" color="var(--ffg)" marker-end="url(#m4)">
+            <line x1="573" y1="120" x2="573" y2="228"/><line x1="757" y1="120" x2="757" y2="228"/><line x1="925" y1="120" x2="925" y2="228"/>
+          </g>
+
+          <text x="60" y="222" font-family="var(--mono)" font-size="11" fill="var(--lmd)" font-weight="700">NewSlot, then UpdateHead</text>
+          <text x="60" y="236" font-family="var(--mono)" font-size="9.5" fill="var(--lmd)">on_tick.go:32 &mdash; it clears the boost; at an epoch start it also prunes</text>
+          <text x="793" y="248" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--lmd)" font-weight="700">UpdateHead(slot+1)</text>
+          <text x="793" y="262" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--lmd)">10 s &mdash; only with validators</text>
+          <text x="757" y="246" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">timer A</text>
+          <text x="757" y="259" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">7.0 / 9.5 / 11.8 s</text>
+
+          <line x1="60" y1="282" x2="940" y2="282" stroke="currentColor" stroke-width="1" opacity=".2"/>
+          <text x="500" y="278" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="currentColor" opacity=".75">a vote from slot N is not usable until slot N+1 &mdash; two rules do this: receive_attestation.go:203 and process_attestation.go:79</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 4. The slot.</b> Above the line are the validator deadlines. Below the line
+      are the two times that fork choice calculates a new head. <b>Nothing calculates a new head when an
+      attestation arrives.</b> Two rules make a slot-N vote unusable until slot N+1. These two rules
+      stop single-slot confirmation. Both rules are in <code>blockchain</code>, not in <code>sync</code>.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ================= FFG LIMITS ================= -->
+  <section id="ffg">
+    <h2><span class="num">04</span> Where Casper FFG limits LMD-GHOST</h2>
+    <p class="dek">There are four locations. The ochre items go away with a new finality gadget. The teal items are weight arithmetic and do not change.</p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 400" role="img" aria-label="A block tree with four marked locations. The tree search starts at the justified root. viableForHead removes a candidate. The weights come from the justified-state balances. The prune operation uses the finalized checkpoint.">
+          <defs><marker id="m5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ffg)"/></marker></defs>
+
+          <g stroke="var(--lmd)" stroke-width="1.8" fill="none">
+            <line x1="170" y1="150" x2="290" y2="150"/><line x1="290" y1="150" x2="410" y2="110"/>
+            <line x1="290" y1="150" x2="410" y2="212"/><line x1="410" y1="110" x2="530" y2="110"/>
+            <line x1="530" y1="110" x2="650" y2="110"/><line x1="410" y1="212" x2="530" y2="212"/>
+          </g>
+          <g fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.8">
+            <circle cx="170" cy="150" r="20"/><circle cx="290" cy="150" r="20"/><circle cx="410" cy="110" r="20"/>
+            <circle cx="530" cy="110" r="20"/><circle cx="650" cy="110" r="20"/><circle cx="410" cy="212" r="20"/>
+          </g>
+          <circle cx="530" cy="212" r="20" fill="none" stroke="var(--ffg)" stroke-width="1.8" stroke-dasharray="4 3"/>
+          <g font-family="var(--mono)" font-size="10.5" fill="var(--lmd)" text-anchor="middle" font-weight="700">
+            <text x="170" y="154">J</text><text x="290" y="154">n1</text><text x="410" y="114">n2</text>
+            <text x="530" y="114">n3</text><text x="650" y="114">n4</text><text x="410" y="216">n5</text>
+          </g>
+          <text x="530" y="216" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--ffg)" font-weight="700">n6</text>
+          <text x="650" y="80" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--lmd)" font-weight="700">HEAD</text>
+          <text x="650" y="146" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--lmd)">bestDescendant chain</text>
+
+          <line x1="170" y1="196" x2="170" y2="176" stroke="var(--ffg)" stroke-width="1.5" marker-end="url(#m5)"/>
+          <text x="170" y="216" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">1. the search starts here</text>
+          <text x="170" y="231" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">emptyNodeByRoot[justifiedCheckpoint.Root]</text>
+          <text x="170" y="244" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">store.go:32 &mdash; not the tree root</text>
+
+          <g stroke="var(--ffg)" stroke-width="2">
+            <line x1="521" y1="203" x2="539" y2="221"/><line x1="539" y1="203" x2="521" y2="221"/>
+          </g>
+          <line x1="590" y1="245" x2="552" y2="222" stroke="var(--ffg)" stroke-width="1.5" marker-end="url(#m5)"/>
+          <text x="600" y="256" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">2. viableForHead &mdash; this is all of filter_block_tree</text>
+          <text x="600" y="271" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">node.go:25 &nbsp; n.justifiedEpoch == justifiedEpoch || n.justifiedEpoch+2 &gt;= currentEpoch</text>
+          <text x="600" y="285" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">one boolean; it does not read finalizedEpoch</text>
+
+          <rect x="770" y="150" width="214" height="66" rx="4" fill="var(--ffg-bg)" stroke="var(--ffg)" stroke-width="1.4"/>
+          <text x="877" y="172" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">3. the source of the numbers</text>
+          <text x="877" y="188" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">justifiedBalances := balancesByRoot(justifiedRoot)</text>
+          <text x="877" y="202" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">forkchoice.go:768 &mdash; it also sets committeeWeight</text>
+          <line x1="770" y1="160" x2="676" y2="122" stroke="var(--ffg)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#m5)"/>
+
+          <line x1="60" y1="150" x2="146" y2="150" stroke="var(--lmd)" stroke-width="1.8" stroke-dasharray="5 4"/>
+          <line x1="103" y1="120" x2="103" y2="142" stroke="var(--ffg)" stroke-width="2"/>
+          <line x1="103" y1="158" x2="103" y2="180" stroke="var(--ffg)" stroke-width="2"/>
+          <text x="60" y="108" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">4. prune point</text>
+          <text x="60" y="94" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">store.prune uses the finalized checkpoint</text>
+          <text x="60" y="80" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">store.go:270 &mdash; with no gadget, the memory has no limit</text>
+
+          <line x1="16" y1="322" x2="984" y2="322" stroke="currentColor" stroke-width="1" opacity=".18"/>
+          <text x="16" y="346" font-family="var(--mono)" font-size="11.5" fill="var(--lmd)" font-weight="700">Teal: weight propagation, bestDescendant, and the Node/PayloadNode recursion. These do not change.</text>
+          <text x="16" y="366" font-family="var(--mono)" font-size="11.5" fill="var(--ffg)" font-weight="700">Ochre: Casper FFG at four locations &mdash; store.go:32, node.go:25, forkchoice.go:768, store.go:270.</text>
+          <text x="16" y="388" font-family="var(--mono)" font-size="11" fill="currentColor" opacity=".65">One more file goes away: unrealized_justification.go, 110 lines. It calls precompute.UnrealizedCheckpoints on a beacon state.</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 5. The four locations.</b> Location 3 gives the most result for the least
+      work. Change <code>balancesByRooter</code> to point at a different state. All the users of
+      <code>store.committeeWeight</code> then continue to work with no more changes. These users are the
+      proposer boost size and the two reorg limits.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ================= READ ORDER ================= -->
+  <section id="read">
+    <h2><span class="num">05</span> Read order</h2>
+    <p class="dek">Read these 20 files in this order. Each file is easier to understand after the file before it.</p>
+
+    <ol class="reading">
+      <li><span class="f">forkchoice/interfaces.go</span><span class="w">The full contract. <code>InsertNode</code> takes a <code>state.BeaconState</code>. That one parameter is why fork choice needs the state transition.</span></li>
+      <li><span class="f">forkchoice/doubly-linked-tree/types.go</span><span class="w"><code>Store</code>, <code>Node</code>, <code>PayloadNode</code> and <code>Vote</code>. The children are on <code>PayloadNode</code>, not on <code>Node</code>. <code>Vote</code> has no expiry field. Goldfish must add one.</span></li>
+      <li><span class="f">forkchoice/doubly-linked-tree/forkchoice.go</span><span class="w"><code>Head</code> (:54), <code>ProcessAttestation</code> (:86), <code>InsertNode</code> (:123), <code>updateBalances</code> (:298), <code>updateJustifiedBalances</code> (:768).</span></li>
+      <li><span class="f">forkchoice/doubly-linked-tree/store.go</span><span class="w"><code>head</code> (:22) and <code>insert</code> (:72). The proposer boost block is at :176 to :208.</span></li>
+      <li><span class="f">forkchoice/doubly-linked-tree/node.go</span><span class="w">30 lines. <code>viableForHead</code> is all of <code>filter_block_tree</code>. Read it two times.</span></li>
+      <li><span class="f">forkchoice/doubly-linked-tree/gloas.go</span><span class="w">The GHOST recursion and the weight propagation after the Gloas fork (:73, :96, :190, :237, :563).</span></li>
+      <li><span class="f">forkchoice/doubly-linked-tree/unrealized_justification.go</span><span class="w">All of the Casper FFG code that is inside fork choice. 110 lines. A decoupled design deletes this file.</span></li>
+      <li><span class="f">forkchoice/doubly-linked-tree/on_tick.go</span><span class="w">50 lines. The only slot hook in the package. Put the Goldfish vote expiry here.</span></li>
+      <li><span class="f">blockchain/receive_attestation.go</span><span class="w">The timer and the pool reader. The timer at :92 to :93 is the schedule that Goldfish replaces.</span></li>
+      <li><span class="f">blockchain/process_attestation.go</span><span class="w">One function. The vote write is at :116.</span></li>
+      <li><span class="f">blockchain/receive_block.go</span><span class="w">Block input, the checkpoint compare at :170, :587 and :603, and the lock at :124.</span></li>
+      <li><span class="f">blockchain/process_block.go</span><span class="w"><code>postBlockProcess</code> (:63) and the second attestation write path (:578). The second path is easy to miss.</span></li>
+      <li><span class="f">sync/subscriber.go</span><span class="w">The manual topic list (:216) and the input code (:423, :514).</span></li>
+      <li><span class="f">sync/validate_beacon_attestation.go</span><span class="w">The location with the most connections between gossip, fork choice and FFG.</span></li>
+      <li><span class="f">sync/validate_aggregate_proof.go</span><span class="w">The same three fork choice reads in a <b>different order</b> (:164 before :171). If you change one read, check both files.</span></li>
+      <li><span class="f">sync/validate_beacon_blocks.go</span><span class="w">The two FFG checks on block admission (:154, :167).</span></li>
+      <li><span class="f">blockchain/chain_info.go</span><span class="w">The implementation of each of those reads. <code>ShouldIgnoreData</code> (:650) is the worst one.</span></li>
+      <li><span class="f">operations/attestations/prepare_forkchoice.go</span><span class="w">The 7.0, 9.5 and 11.8 s stage. This is the minimum latency for fast confirmation.</span></li>
+      <li><span class="f">core/blocks/attestation.go</span><span class="w"><code>VerifyAttestationNoVerifySignature</code> (:52). Lines 75 to 83 are the FFG rule from the specification: the source must equal the justified checkpoint of the state. The gossip validator never checks this.</span></li>
+      <li><span class="f">forkchoice/doubly-linked-tree/reorg_late_blocks.go</span><span class="w">The nearest thing in the tree to view-merge. <code>ShouldOverrideFCU</code> (:34) and <code>GetProposerHead</code> (:105).</span></li>
+    </ol>
+  </section>
+
+  <!-- ================= CONNECTIONS ================= -->
+  <section id="conn">
+    <h2><span class="num">06</span> Connection table</h2>
+    <p class="dek">Each connection between head selection <span class="chip lmd">a</span>, Casper FFG <span class="chip ffg">b</span>, the gossip validator <span class="chip nx">c</span> and the state transition <span class="chip nx">d</span>.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>#</th><th>Connection</th><th>Location</th><th>Strength</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td><b>b&rarr;a</b> The weights are the balances of the FFG justified state</td><td class="c">forkchoice.go:768; used at :299 and through <b>store.committeeWeight</b> :774&ndash;780</td><td><b>Very strong.</b> It also sets the proposer boost size (proposer_boost.go:50) and the two reorg limits (reorg_late_blocks.go:78, :92)</td><td>Change this first. Point <code>balancesByRooter</code> at the head state or at a Goldfish checkpoint. The rest is arithmetic and needs no change.</td></tr>
+          <tr><td class="n">2</td><td><b>b&rarr;a</b> The tree search starts at the justified root</td><td class="c">store.go:30&ndash;44</td><td>Strong, one location</td><td>Change it to the Goldfish confirmed root. Keep the genesis fallback or the node does not start.</td></tr>
+          <tr><td class="n">3</td><td><b>b&rarr;a</b> <code>viableForHead</code> filters each candidate by justified epoch</td><td class="c">node.go:18&ndash;26; used at gloas.go:204</td><td><b>Strong, but one boolean.</b> It does not read finalizedEpoch</td><td>Delete it, or write a Goldfish predicate. This function <i>is</i> <code>filter_block_tree</code>.</td></tr>
+          <tr><td class="n">4</td><td><b>b&rarr;a</b> The prune operation uses finalization</td><td class="c">store.go:270, called from forkchoice.go:171 and on_tick.go:45</td><td>Strong but mechanical</td><td>The new gadget must give an irreversibility signal. If not, the tree memory has no limit.</td></tr>
+          <tr><td class="n">5</td><td><b>b&rarr;a</b> The reorg rules use the epochs since finalization</td><td class="c">reorg_late_blocks.go:61, :133</td><td>Weak</td><td>Point it somewhere else, or delete it.</td></tr>
+          <tr><td class="n">6</td><td><b>d&rarr;b</b> <code>InsertNode</code> takes a full <code>BeaconState</code></td><td class="c">interfaces.go:49; forkchoice.go:127&ndash;136</td><td><b>Strong. It is the interface signature</b></td><td>Reduce it to <code>(root, parentRoot, slot, proposerIndex, arrivalTime)</code> plus the Goldfish fields. This is the most useful change for a mock.</td></tr>
+          <tr><td class="n">7</td><td><b>d&rarr;b</b> <code>pullTips</code> calls <code>precompute.UnrealizedCheckpoints(state)</code></td><td class="c">unrealized_justification.go:80</td><td>Strong</td><td>Delete the file. Note the fault at :92&ndash;95: the finalization branch always writes the unrealized justified checkpoint. It can make the value lower.</td></tr>
+          <tr><td class="n">8</td><td><b>d&rarr;b</b> The attestation source must equal the justified checkpoint of the state</td><td class="c">core/blocks/attestation.go:75&ndash;83</td><td><b>Strong. This is the FFG rule from the specification</b></td><td>If your votes have no source and target, delete this block. You cannot see it from the gossip layer, so it is easy to miss.</td></tr>
+          <tr><td class="n">9</td><td><b>c&rarr;b</b> Block gossip uses the finalized slot as a lower limit</td><td class="c">validate_beacon_blocks.go:154</td><td>Weak</td><td>Point it at the irreversible root of the new gadget.</td></tr>
+          <tr><td class="n">10</td><td><b>c&rarr;b+a</b> <code>ShouldIgnoreData</code> mixes justification, canonical status and gossip admission</td><td class="c">validate_beacon_blocks.go:167 &rarr; chain_info.go:650&ndash;669; it also gates data columns at validate_data_column.go:80</td><td><b>The strongest gossip-to-FFG connection in the tree</b></td><td>There is no direct translation. Delete it first. This also changes how data availability messages move, so measure that.</td></tr>
+          <tr><td class="n">11</td><td><b>c&rarr;a+b</b> <code>InForkchoice</code> has three meanings: &ldquo;imported&rdquo;, &ldquo;comes from the finalized root&rdquo; and &ldquo;not pruned&rdquo;</td><td class="c">validate_beacon_attestation.go:129, validate_aggregate_proof.go:171, validate_beacon_blocks.go:312, pending_attestations_queue.go:50/72/166</td><td><b>Strong because the meanings are mixed</b></td><td>Divide it into two functions: &ldquo;do I have the block&rdquo; and &ldquo;does the block come from the confirmed root&rdquo;. With slot-scoped prune, the two answers are different.</td></tr>
+          <tr><td class="n">12</td><td><b>c&rarr;a+b</b> <code>VerifyLmdFfgConsistency</code> gives REJECT when the vote and the FFG target do not agree</td><td class="c">validate_beacon_attestation.go:133, validate_aggregate_proof.go:164 &rarr; receive_attestation.go:56</td><td>Strong, but <b>not in the specification</b>. A comment in the code says this</td><td>Delete it. Do not write it again. A Goldfish vote has no FFG target. It gives REJECT, so a partly-correct version lowers the score of correct peers.</td></tr>
+          <tr><td class="n">13</td><td><b>c&rarr;b+d</b> <code>AttestationTargetState</code> takes the read lock, checks <code>IsViableForCheckpoint</code>, and can regenerate a state</td><td class="c">validate_beacon_attestation.go:139 &rarr; process_attestation_helpers.go:94, :133</td><td><b>Three connections in one call. The worst location in the tree</b></td><td>Replace it with a shuffle provider that reads neither fork choice nor checkpoint status. The code after it needs only a <code>ReadOnlyBeaconState</code>.</td></tr>
+          <tr><td class="n">14</td><td><b>c&rarr;d</b> The subnet comes from the active validator count of the target-epoch state</td><td class="c">validate_beacon_attestation.go:243&ndash;253</td><td>Medium</td><td>Slot-scoped votes need a different source. Note that this code has its own fork digest rule, different from the wrapper.</td></tr>
+          <tr><td class="n">15</td><td><b>c&rarr;a</b> Bid admission reads <code>s.head</code> directly and does not use the fork choice store</td><td class="c">blockchain/gloas.go:25, used at validate_execution_payload_bid.go:137</td><td><b>Strong, and it has a race with view-merge</b></td><td>A head change in the middle of a slot breaks this. View-merge causes such a change. Copy the head value, or use the view from before the flush.</td></tr>
+          <tr><td class="n">16</td><td><b>c&rarr;a</b> Block validation uses the head state as a source of shuffles and signatures</td><td class="c">validate_beacon_blocks.go:338&ndash;389</td><td>Weak. The head is a source here, not a weight</td><td>Safe with any head rule. But the fast path for <code>parentRoot == headRoot</code> has a race if the head can move in the middle of a slot. Always use the <code>GetBlockPreState</code> path.</td></tr>
+          <tr><td class="n">17</td><td><b>a&rarr;d</b> Block attestations need committees from the post-state</td><td class="c">process_block.go:578&ndash;586</td><td>Medium</td><td>No change. Every gadget needs committees.</td></tr>
+          <tr><td class="n">18</td><td><b>a&rarr;c</b> The one fork choice <b>write</b> from a gossip validator</td><td class="c">validate_beacon_blocks.go:651&ndash;661 &rarr; process_block.go:650 &rarr; forkchoice.go:501, controlled by features.TrackEquivocations</td><td>Narrow, and <b>the shape is already correct</b></td><td>Use this as the buffer-flush hook. It is already early in the slot, keyed by (slot, proposer), with a BP deadline, and it writes fork choice. Careful: <code>InsertNode</code> writes the same table at forkchoice.go:141. A hook here sees only half of the writes.</td></tr>
+          <tr><td class="n">19</td><td><b>b&rarr;c</b> Minor uses</td><td class="c">p2p/gossip_scoring_params.go:170 (topic scores from the finalized state); sync/service.go:569 (column cache prune on finality)</td><td>Very weak</td><td>Point them at any irreversibility signal.</td></tr>
+          <tr><td class="n">20</td><td><b>timing</b> A vote is usable only from slot+1. Two rules do this</td><td class="c">receive_attestation.go:203, process_attestation.go:79</td><td><b>This stops single-slot confirmation</b></td><td>Change both rules. They are in <code>blockchain</code>, not in <code>sync</code>. You will not find them if you look only in <code>sync</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= CHANGES ================= -->
+  <section id="change">
+    <h2><span class="num">07</span> Files to change</h2>
+    <p class="dek">The minimum file set for a mock client, in order of importance.</p>
+
+    <ol class="reading">
+      <li><span class="f">forkchoice/doubly-linked-tree/ &mdash; the full package</span><span class="w">Replace <code>Head</code> (:54), <code>ProcessAttestation</code> (:86), <code>updateBalances</code> (:298), <code>store.head</code> (store.go:22) and <code>viableForHead</code> (node.go:18). Delete <code>unrealized_justification.go</code> and <code>proposer_boost.go</code>. <b>Keep</b> the two-level Node and PayloadNode recursion in <code>gloas.go</code>. The payload availability vote is separate from FFG and does not change.</span></li>
+      <li><span class="f">forkchoice/interfaces.go</span><span class="w">Remove <code>state.BeaconState</code> from <code>InsertNode</code> (:49). Keep the <code>Lock</code> and <code>Unlock</code> methods in the interface. The callers in <code>blockchain</code> control all locks. A change here causes problems.</span></li>
+      <li><span class="f">blockchain/receive_attestation.go</span><span class="w">Change the timer values (:92&ndash;93), the validator condition (:100) and the slot+1 rule (:203). Then add a trigger that calculates the head when an attestation arrives. <b>Today nothing does this.</b></span></li>
+      <li><span class="f">operations/attestations/prepare_forkchoice.go</span><span class="w">The 7.0, 9.5 and 11.8 s values are the minimum latency for fast confirmation. Also, pool 2 has <b>no expiry</b>. <code>DeleteForkchoiceAttestation</code> has only two callers, both in <code>receive_attestation.go</code>. <code>pruneExpiredAtts</code> does not touch pool 2. Correct this before you add slot-scoped votes.</span></li>
+      <li><span class="f">sync/validate_beacon_attestation.go and validate_aggregate_proof.go</span><span class="w">Delete <code>VerifyLmdFfgConsistency</code>. Replace <code>AttestationTargetState</code> with a shuffle provider. Move the seen-cache from the LRU (:404, :437) to <code>sync/slot_aware_cache.go</code>. That file is already a slot-scoped store. It is in use for bids and data columns. Watch the <code>!s.slasherEnabled</code> condition at :105. The aggregate file is worse: its key is (target epoch, aggregator index).</span></li>
+      <li><span class="f">sync/validate_beacon_blocks.go</span><span class="w">Delete the <code>FinalizedCheckpt</code> limit (:154) and the <code>ShouldIgnoreData</code> call (:167). Point <code>InForkchoice</code> (:312) somewhere else. Always use the <code>GetBlockPreState</code> path at :338, because view-merge causes a race in the head fast paths.</span></li>
+      <li><span class="f">blockchain/chain_info.go</span><span class="w">Delete <code>ShouldIgnoreData</code> (:650) or write it again. Divide <code>InForkchoice</code> (:435) into two functions.</span></li>
+      <li><span class="f">blockchain/receive_block.go</span><span class="w"><code>saveCurrentCheckpoints</code> (:170), <code>updateJustificationOnBlock</code> (:587) and <code>updateFinalizationOnBlock</code> (:603) read only fork choice and the state. They never read the tree. <b>This is the best place for an independent finality gadget.</b> Replace all three and do not touch the head selection code.</span></li>
+      <li><span class="f">blockchain/execution_engine.go</span><span class="w"><code>SafeBlockHash</code> and <code>FinalizedBlockHash</code> (:64&ndash;65) must come from the new gadget. After the Gloas fork there is a second user at <code>receive_execution_payload_envelope.go:420</code>.</span></li>
+      <li><span class="f">blockchain/process_block.go</span><span class="w"><code>handleBlockAttestations</code> (:578) is the other fork choice write. It is synchronous. It has no gossip checks and no slot delay. Put the vote expiry in <code>ForkChoice.ProcessAttestation</code> instead. That function is the one point that both paths use.</span></li>
+      <li><span class="f">sync/subscriber.go</span><span class="w"><code>registerSubscribers</code> (:216) is a manual list of <code>s.subscribe(...)</code> calls. Add the Goldfish topics here. Delete the FFG topics here. Put a buffer-flush stage between <code>pipeline</code> (:451) and the handler. Add your &ldquo;vote expired&rdquo; error to <code>errorIsIgnored</code> (:947), or the logs fill up at each slot.</span></li>
+    </ol>
+
+    <div class="box w">
+      <span class="lbl">Warning &mdash; a new topic needs five changes</span>
+      <p>Change these five files, or the topic does not work.
+      One: <code>p2p/topics.go</code> — the format constant and an entry in <code>allTopics</code>.
+      Two: <code>p2p/gossip_topic_mappings.go</code> — <code>subscribe</code> panics if the map
+      entry is nil.
+      Three: <b><code>p2p/gossip_scoring_params.go</code></b>.
+      Four: <code>sync/decode_pubsub.go</code>, if the topic has subnets.
+      Five: <code>p2p/subnets.go</code>.
+      The third file is the dangerous one. Its default branch gives an error,
+      <code>SubscribeToTopic</code> then fails, and <code>subscribeWithBase</code> writes a log line and
+      returns nil. The result is a topic that is registered but never subscribed, with no clear failure.</p>
+    </div>
+
+    <div class="box">
+      <span class="lbl">Three items that need no change</span>
+      <p><code>chain.HasBlock</code> (receive_block.go:458) reads the database and the initial sync cache.
+      It does not read fork choice, so the pending queue continues to work.
+      The data availability wait (receive_block.go:115) runs before the lock and before
+      <code>InsertNode</code>. Availability is thus already a barrier before the insert.
+      The initial sync path (process_block.go:185) never calls <code>Head()</code>. Your Goldfish code
+      must be correct only on the live gossip path.</p>
+    </div>
+  </section>
+
+  <!-- ================= SYMBOLS ================= -->
+  <section id="sym">
+    <h2><span class="num">08</span> Symbol table</h2>
+    <p class="dek">All paths start at the repository root. All line numbers come from commit <code>4a9884d6d5</code>.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Symbol</th><th>File : line</th><th>Function</th></tr></thead>
+        <tbody>
+          <tr><td class="c"><b>registerSubscribers</b></td><td class="c">sync/subscriber.go:216</td><td>The topic list with a validator and a handler for each entry. The list is manual. It is the only registration point. Block :222, aggregate :225, attestation subnets :237.</td></tr>
+          <tr><td class="c"><b>subscribeWithBase</b></td><td class="c">sync/subscriber.go:423</td><td>Registers the validator (:433), subscribes (:438), sets up the pipeline (:451), starts the message loop (:507). It skips messages from this node (:499). It starts one goroutine for each message with no limit (:503).</td></tr>
+          <tr><td class="c"><b>wrapAndReportValidation</b></td><td class="c">sync/subscriber.go:514</td><td>The common checks before each validator: nil topic gives REJECT (:522), no chain start gives IGNORE (:527), wrong digest gives IGNORE (:531). A REJECT becomes IGNORE if the context expired (:549).</td></tr>
+          <tr><td class="c"><b>validateBeaconBlockPubSub</b></td><td class="c">sync/validate_beacon_blocks.go:45</td><td>The block validator. One mutex for all blocks (:67). FFG checks at :154 and :167. ACCEPT at :242.</td></tr>
+          <tr><td class="c"><b>validateCommitteeIndexBeaconAttestation</b></td><td class="c">sync/validate_beacon_attestation.go:39</td><td>Three fork choice reads: InForkchoice (:129), VerifyLmdFfgConsistency (:133), AttestationTargetState (:139). The cache key is at :404.</td></tr>
+          <tr><td class="c"><b>validateAggregatedAtt</b></td><td class="c">sync/validate_aggregate_proof.go:151</td><td>The same three reads in a different order: VerifyLmdFfgConsistency (:164) before InForkchoice (:171), then AttestationTargetState (:176).</td></tr>
+          <tr><td class="c"><b>ShouldIgnoreData</b></td><td class="c">blockchain/chain_info.go:650</td><td>The strongest FFG-to-gossip connection. It mixes the parent slot, the justified checkpoint and the canonical status into one admission rule. It also gates data columns.</td></tr>
+          <tr><td class="c"><b>InForkchoice</b></td><td class="c">blockchain/chain_info.go:435</td><td>It calls <code>HasNode</code>. It has three meanings at the same time. Six or more gossip locations read it.</td></tr>
+          <tr><td class="c"><b>IsBidCompatibleWithHead</b></td><td class="c">blockchain/gloas.go:25</td><td>It reads <code>s.head</code> directly and does not use the fork choice store. It gates bid admission. This is the strongest head-to-gossip connection. View-merge breaks it.</td></tr>
+          <tr><td class="c"><b>ReceiveBlock</b></td><td class="c">blockchain/receive_block.go:74</td><td>Checkpoint copy (:109), availability wait (:115, before the lock), write lock (:124, held to the end), checkpoint update (:140).</td></tr>
+          <tr><td class="c"><b>postBlockProcess</b></td><td class="c">blockchain/process_block.go:63</td><td>InsertNode (:79), handleBlockAttestations (:86), SetOptimisticToValid (:95), Head (:102), sendFCU (:112) or saveHeadIfNeeded (:114).</td></tr>
+          <tr><td class="c"><b>handleBlockAttestations</b></td><td class="c">blockchain/process_block.go:578</td><td>The second attestation write (:595). It is synchronous during block import. It has no pool, no slot+1 delay and no gossip checks. It is easy to miss.</td></tr>
+          <tr><td class="c"><b>spawnProcessAttestationsRoutine</b></td><td class="c">blockchain/receive_attestation.go:68</td><td>The only fork choice timer. The values are 0 s and <code>SecondsPerSlot</code> minus 2 s (:92&ndash;93). NewSlot is at :106. The 10 s step needs validators (:100).</td></tr>
+          <tr><td class="c"><b>processAttestations</b></td><td class="c">blockchain/receive_attestation.go:190</td><td>Reads pool 2. The slot+1 rule is at :203. It removes each attestation before it processes it (:214, :217). These are the only two callers of <code>DeleteForkchoiceAttestation</code>.</td></tr>
+          <tr><td class="c"><b>OnAttestation</b></td><td class="c">blockchain/process_attestation.go:42</td><td>The vote write is at :116. Comments at :54, :75 and :96 list the three checks that it does not do. There is no second check.</td></tr>
+          <tr><td class="c"><b>ForkChoice.ProcessAttestation</b></td><td class="c">forkchoice/doubly-linked-tree/forkchoice.go:86</td><td>It writes only the <code>next</code> fields of the vote. The replacement rule at :112 uses epochs. Both write paths use this function. Put the slot expiry here.</td></tr>
+          <tr><td class="c"><b>ForkChoice.Head</b></td><td class="c">forkchoice/doubly-linked-tree/forkchoice.go:54</td><td>The vote becomes weight here, not at input. updateBalances (:62), applyProposerBoostScore (:66), applyWeightChanges (:70), updateBestDescendant (:78), store.head (:81). Cost is O(nodes) for each call.</td></tr>
+          <tr><td class="c"><b>updateJustifiedBalances</b></td><td class="c">forkchoice/doubly-linked-tree/forkchoice.go:768</td><td><b>The FFG-to-LMD connection.</b> It reads the balances at the FFG justified root. It calculates <code>committeeWeight</code> (:774&ndash;780). That value sets the proposer boost size and the two reorg limits.</td></tr>
+          <tr><td class="c"><b>Store.head</b></td><td class="c">forkchoice/doubly-linked-tree/store.go:22</td><td>The GHOST search starts at <code>emptyNodeByRoot[justifiedCheckpoint.Root]</code> (:32), not at the tree root. One line to change for a different anchor.</td></tr>
+          <tr><td class="c"><b>Node.viableForHead</b></td><td class="c">forkchoice/doubly-linked-tree/node.go:18</td><td>All of <code>filter_block_tree</code>, in one expression at :25. It does not read <code>finalizedEpoch</code>. Used through <code>leadsToViableHead</code> at gloas.go:204.</td></tr>
+          <tr><td class="c"><b>ForkChoice.NewSlot</b></td><td class="c">forkchoice/doubly-linked-tree/on_tick.go:32</td><td>The only slot hook. It clears <code>proposerBoostRoot</code>. At an epoch start it also updates the unrealized checkpoints and prunes. Put the slot vote expiry here.</td></tr>
+          <tr><td class="c"><b>pullTips</b></td><td class="c">forkchoice/doubly-linked-tree/unrealized_justification.go:62</td><td>It calls <code>precompute.UnrealizedCheckpoints(state)</code> at :80. Fork choice thus calls epoch processing. There is a fault at :92&ndash;95: it can make the unrealized justified checkpoint lower.</td></tr>
+          <tr><td class="c"><b>BlockProcessor.InsertNode</b></td><td class="c">forkchoice/interfaces.go:49</td><td>The <code>state.BeaconState</code> parameter is the full state transition dependency of fork choice. <code>AttestationProcessor</code> (:59) has one method.</td></tr>
+          <tr><td class="c"><b>blockchainService</b></td><td class="c">sync/service.go:123</td><td>Everything that <code>sync</code> needs from the chain: 15 interfaces. Supplied with <code>WithChainService</code>. Replace this to install a mock fork choice.</td></tr>
+          <tr><td class="c"><b>VerifyAttestationNoVerifySignature</b></td><td class="c">core/blocks/attestation.go:52</td><td>The FFG rule from the specification, at :75&ndash;83: the attestation source must equal the justified checkpoint of the state. It is in the state transition. The gossip validator never checks it.</td></tr>
+          <tr><td class="c"><b>prepareForkChoiceAtts</b></td><td class="c">operations/attestations/prepare_forkchoice.go:21</td><td>The 7.0, 9.5 and 11.8 s stage. It sets the minimum latency for single-slot confirmation. Its output pool has no expiry.</td></tr>
+          <tr><td class="c"><b>recordEarlyEquivocation</b></td><td class="c">sync/validate_beacon_blocks.go:651</td><td>The only fork choice write from a gossip validator. <code>features.TrackEquivocations</code> controls it. Its shape is already correct for a buffer flush: a BP deadline, keyed by (slot, proposer).</td></tr>
+          <tr><td class="c"><b>ShouldOverrideFCU, GetProposerHead</b></td><td class="c">forkchoice/doubly-linked-tree/reorg_late_blocks.go:34, :105</td><td>The nearest thing to view-merge. FFG liveness check at :61 and :133. The weight limits are percentages of <code>committeeWeight</code> at :78 and :92.</td></tr>
+          <tr><td class="c"><b>ProcessAttestationsThreshold</b></td><td class="c">forkchoice/doubly-linked-tree/node.go:13</td><td>A constant of 10 s. On mainnet it equals <code>SecondsPerSlot</code> minus 2 s. The reorg code uses it to know if the current-slot attestations are counted.</td></tr>
+          <tr><td class="c"><b>slotAwareCache.pruneSlotsBefore</b></td><td class="c">sync/slot_aware_cache.go:53</td><td>Slot-scoped expiry that already exists. Bids and data columns use it. Use it in place of the LRU attestation caches.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= WARNINGS ================= -->
+  <section id="warn">
+    <h2><span class="num">09</span> Warnings</h2>
+    <p class="dek">These items cause faults that are difficult to find.</p>
+
+    <div class="box w">
+      <span class="lbl">Feature flags change the validation path</span>
+      <p>The attestation seen-cache and the bad-block check at
+      <span class="path">validate_beacon_attestation.go:105&ndash;118</span> are inside an
+      <code>if !s.slasherEnabled</code> block. With the <code>--slasher</code> flag, neither check runs.
+      The one gossip write to fork choice needs <code>features.TrackEquivocations</code>. The attestation
+      pool has two different implementations. <code>EnableExperimentalAttestationPool</code> selects one.</p>
+    </div>
+
+    <div class="box w">
+      <span class="lbl">A new topic can fail with no clear message</span>
+      <p>If you do not add the case to <span class="path">p2p/gossip_scoring_params.go</span>, the default
+      branch gives an error. <code>SubscribeToTopic</code> then fails.
+      <code>subscribeWithBase</code> writes a log line and returns nil. The topic is registered but never
+      subscribed. There is no clear failure. If you forget the <code>gossip_topic_mappings.go</code>
+      entry, <code>subscribe</code> panics, which is easier to find.</p>
+    </div>
+
+    <div class="box w">
+      <span class="lbl">Some code looks live but is dead</span>
+      <p><code>Service.CanSubscribe</code>, <code>checkSubscribable</code> and
+      <code>FilterIncomingSubscriptions</code> in <span class="path">p2p/pubsub_filter.go</span> are not
+      connected to the router. <code>pubsubOptions</code> uses the library filter instead.
+      On the Gloas path, no code satisfies <code>RequireMessageNotSeen</code>. Therefore
+      <code>PayloadAttMsgVerifier.VerifiedPayloadAttestation()</code> can never return a value on the
+      gossip path. The real check is inline.</p>
+    </div>
+
+    <div class="box w">
+      <span class="lbl">The lock rules are not the same everywhere</span>
+      <p><code>ReceiveBlock</code> holds the write lock from :124 to the return.
+      But <code>validateExecutionOnBlock</code> takes the same lock from inside an errgroup goroutine
+      (:669&ndash;676). At that point <code>ReceiveBlock</code> does not hold the lock. If you take the
+      lock earlier, the node deadlocks. Also, <code>sendFCU</code> releases the lock and takes it again.
+      It then starts a goroutine that takes the lock a third time. The engine call therefore occurs after
+      <code>ReceiveBlock</code> returns.</p>
+    </div>
+
+    <div class="box w">
+      <span class="lbl">Two validators use two different orders</span>
+      <p><code>validate_beacon_attestation.go</code> does <code>InForkchoice</code>, then
+      <code>VerifyLmdFfgConsistency</code>, then <code>AttestationTargetState</code>.
+      <code>validate_aggregate_proof.go</code> does <code>VerifyLmdFfgConsistency</code>, then
+      <code>InForkchoice</code>, then <code>AttestationTargetState</code>. If you change one call, check
+      both orders.</p>
+    </div>
+
+    <div class="box w">
+      <span class="lbl">Pool 2 has no expiry</span>
+      <p><code>DeleteForkchoiceAttestation</code> has two callers. Both are in the read loop.
+      <code>pruneExpiredAtts</code> does not touch pool 2. An attestation that fails the
+      &ldquo;block and state present&rdquo; test stays in the pool with no limit. With slot-scoped
+      Goldfish votes, this becomes a memory fault and a correctness fault.</p>
+    </div>
+
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- ==================== PART TWO ============================== -->
+  <!-- ============================================================ -->
+
+  <div class="part">
+    <p class="lbl">Part two</p>
+    <h2>The protocol to build</h2>
+    <p>Part one described the Prysm code as it is today. Part two describes the protocol that replaces
+    Casper FFG, and maps it onto the sites in part one. The source is
+    <span class="path">/home/sukun/dev/decoupled-consensus-networking/finality_gadget_specs</span>.
+    All line numbers below refer to <span class="path">full/height_filter_and_timeouts.tex</span> unless
+    stated otherwise. Twelve agents read the six specifications. A second agent checked each reading
+    against the LaTeX source.</p>
+    <div class="box w" style="margin-top:18px">
+      <span class="lbl">Update, 2026-08-08 — an executable specification supersedes this part for the wire</span>
+      <p>An executable profile now exists at
+      <span class="path">../decoupled-consensus-networking/consensus-specs/specs/_features/simplex/</span>.
+      For wire formats, topics, and gossip rules, follow it, not the papers. Four of its decisions
+      change this part. One: a sub-round is one slot and the round is 8 slots, so no second clock
+      is necessary. Two: the stability vote is not a separate message — the attestation's head
+      field feeds the stabilisation grades. Three: the syncer broadcast is not a wire message, and
+      the TSQ re-gossip that realised it is out of scope. Four: the Goldfish head vote is the new
+      <code>available_attestation</code> topic. The current implementation plan is
+      <span class="path">decoupled-consensus-networking-mock.html</span>.</p>
+    </div>
+  </div>
+
+  <!-- ================= TWO LAYERS ================= -->
+  <section id="layers">
+    <h2><span class="num">10</span> The two layers</h2>
+    <p class="dek">The system has two layers. Each layer has its own protocol. One function connects them.</p>
+
+    <ul class="tight">
+      <li><b>The available chain (AC) is Goldfish.</b> It makes one block for each slot. It gives fast
+          confirmation. The finality gadget treats it as a black box. The specification says so at
+          <span class="path">:1225</span>: &ldquo;We treat the AC's internal structure as a black box; see,
+          e.g., the Goldfish protocol for a concrete instantiation.&rdquo;
+          <span class="path">height_filter_healing.tex:75, :97, :250</span> builds on Goldfish directly,
+          including Goldfish committees and Goldfish view-merge.</li>
+      <li><b>The finality gadget (FG) is Fresh Simplex with Height Filter and Timeouts.</b> It counts
+          heights, not slots. It makes blocks irreversible.</li>
+      <li><b>The connection is one function: <code>getConfirmed(store, &Omega;)</code></b> at
+          <span class="path">:559</span>. The gadget supplies the walk-from block and the set of allowed
+          blocks. Goldfish supplies <code>&Omega;</code>, which selects one block from that set.</li>
+    </ul>
+
+    <div class="box">
+      <span class="lbl">This is the decoupling</span>
+      <p>The specification says at <span class="path">:512</span>: &ldquo;<code>&Omega;</code> represents
+      the state of the available chain &mdash; whatever extra information the validator uses to
+      disambiguate among viable descendants of the walk-from block.&rdquo; And at
+      <span class="path">:517&ndash;518</span>: &ldquo;The choice among admissible descendants is left to
+      <code>&Omega;</code>. Different validators may pass different <code>&Omega;</code>.&rdquo;
+      In Prysm terms: <code>getConfirmed</code> is <code>store.head</code>
+      (<span class="path">store.go:22</span>). The walk-from block is the anchor at
+      <span class="path">store.go:32</span>. <code>&Omega;</code> is what <code>bestDescendant</code>
+      does today.</p>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 340" role="img" aria-label="Two layers. The available chain, Goldfish, makes one block per slot. The finality gadget, Fresh Simplex, counts heights. One function, getConfirmed of store and Omega, connects them. The gadget supplies the walk-from block and the viable set. Goldfish supplies Omega.">
+          <defs>
+            <marker id="m6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker>
+            <marker id="m6l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--lmd)"/></marker>
+            <marker id="m6f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ffg)"/></marker>
+          </defs>
+
+          <text x="16" y="24" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--lmd)" font-weight="700">AVAILABLE CHAIN (AC) &mdash; GOLDFISH &middot; ONE BLOCK PER SLOT &middot; FAST CONFIRMATION</text>
+          <rect x="16" y="36" width="968" height="78" rx="5" fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.4" stroke-dasharray="6 4"/>
+          <g stroke="var(--lmd)" stroke-width="1.6">
+            <line x1="103" y1="76" x2="217" y2="76"/><line x1="243" y1="76" x2="357" y2="76"/>
+            <line x1="383" y1="76" x2="497" y2="76"/><line x1="523" y1="76" x2="637" y2="76"/>
+            <line x1="663" y1="76" x2="777" y2="76"/><line x1="803" y1="76" x2="917" y2="76"/>
+          </g>
+          <g fill="var(--ground)" stroke="var(--lmd)" stroke-width="1.8">
+            <circle cx="90" cy="76" r="13"/><circle cx="230" cy="76" r="13"/><circle cx="370" cy="76" r="13"/>
+            <circle cx="510" cy="76" r="13"/><circle cx="650" cy="76" r="13"/><circle cx="790" cy="76" r="13"/><circle cx="930" cy="76" r="13"/>
+          </g>
+          <text x="500" y="106" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--lmd)">slot k &nbsp; k+1 &nbsp; k+2 &nbsp; k+3 &nbsp; k+4 &nbsp; k+5 &nbsp; k+6</text>
+
+          <rect x="340" y="146" width="320" height="58" rx="5" fill="var(--panel)" stroke="var(--ffg)" stroke-width="2"/>
+          <text x="500" y="170" text-anchor="middle" font-family="var(--mono)" font-size="14" font-weight="700" fill="var(--ffg)">getConfirmed(store, &Omega;)</text>
+          <text x="500" y="190" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ffg)">height_filter_and_timeouts.tex:559</text>
+
+          <line x1="170" y1="228" x2="170" y2="122" stroke="var(--ffg)" stroke-width="1.8" marker-end="url(#m6f)" color="var(--ffg)"/>
+          <text x="186" y="158" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">the gadget gives:</text>
+          <text x="186" y="174" font-family="var(--mono)" font-size="10.5" fill="var(--ffg)">store.F is irreversible</text>
+          <text x="186" y="188" font-family="var(--mono)" font-size="10.5" fill="var(--ffg)">R = the walk-from block</text>
+          <text x="186" y="202" font-family="var(--mono)" font-size="10.5" fill="var(--ffg)">viable(store) = the allowed set</text>
+
+          <line x1="830" y1="122" x2="830" y2="228" stroke="var(--lmd)" stroke-width="1.8" marker-end="url(#m6l)" color="var(--lmd)"/>
+          <text x="814" y="158" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--lmd)" font-weight="700">Goldfish gives:</text>
+          <text x="814" y="174" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--lmd)">&Omega; &mdash; the AC state</text>
+          <text x="814" y="188" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--lmd)">it selects one block</text>
+          <text x="814" y="202" text-anchor="end" font-family="var(--mono)" font-size="10.5" fill="var(--lmd)">from the allowed set</text>
+
+          <rect x="16" y="236" width="968" height="78" rx="5" fill="var(--ffg-bg)" stroke="var(--ffg)" stroke-width="1.4" stroke-dasharray="6 4"/>
+          <text x="16" y="330" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--ffg)" font-weight="700">FINALITY GADGET (FG) &mdash; FRESH SIMPLEX WITH HEIGHT FILTER AND TIMEOUTS &middot; COUNTS HEIGHTS, NOT SLOTS</text>
+          <g stroke="var(--ffg)" stroke-width="1.6" fill="none">
+            <rect x="60" y="252" width="230" height="42" rx="4"/>
+            <rect x="330" y="252" width="310" height="42" rx="4"/>
+            <rect x="680" y="252" width="250" height="42" rx="4"/>
+          </g>
+          <text x="175" y="270" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--ffg)" font-weight="700">height h</text>
+          <text x="175" y="286" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">justification quorum &ge; 2n/3</text>
+          <text x="485" y="270" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--ffg)" font-weight="700">height h+1</text>
+          <text x="485" y="286" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">timeout quorum &ge; 2n/3 &mdash; no target block</text>
+          <text x="805" y="270" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--ffg)" font-weight="700">height h+2</text>
+          <text x="805" y="286" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">still open</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 6. Two layers and one function.</b> A height covers a variable number of slots.
+      The gadget never chooses a block from inside the allowed set. Goldfish makes that choice through
+      <code>&Omega;</code>. This is why the two protocols can be replaced one at a time.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ================= THE GADGET ================= -->
+  <section id="gadget">
+    <h2><span class="num">11</span> The gadget: state and messages</h2>
+    <p class="dek">The model is <code>n</code> validators, of which at most <code>f</code> are adversarial, with <code>n &ge; 3f + 1</code>. A quorum is <code>&ge; 2n/3</code> validators. Two quorums share more than <code>f</code> validators, so they share at least one honest validator. <span class="path">:155&ndash;157</span></p>
+
+    <div class="box w">
+      <span class="lbl">Warning &mdash; the quorum counts validators, not stake</span>
+      <p>Every threshold in the specification counts validators: <code>|{i : targets[i] = T}| &ge; 2n/3</code>.
+      Prysm counts effective balance everywhere. A mock must choose one. If you keep balances, you must
+      restate all the safety arguments in balance terms. If you count validators, the mock is not
+      comparable to mainnet numbers.</p>
+    </div>
+
+    <h3>Messages</h3>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Message</th><th>Fields</th><th>When a validator sends it</th><th>Validity</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="c"><b>Finality vote</b><br>on-chain</td>
+            <td class="c">(validator, height, target, finalizeHeight, finalizeTarget)<br><span style="opacity:.7">:177&ndash;186</span></td>
+            <td class="c">One per validator per voting round, at its assigned sub-round. Produced by <code>getFinalVote(&Delta;, getBaseVote(store, &Omega;))</code> and signed. <span style="opacity:.7">:881&ndash;884, :1155&ndash;1158</span></td>
+            <td class="c">The target and the finalize target must already exist on the chain. A block cannot include a vote that names the block itself. <span style="opacity:.7">:185&ndash;186</span></td>
+          </tr>
+          <tr>
+            <td class="c"><b>Timeout vote</b><br>a finality vote with <code>target = nil</code></td>
+            <td class="c">(validator, height, nil, ...)<br><span style="opacity:.7">:183</span></td>
+            <td class="c">When the validator voted at this height before and is not locked. A syncer also sends timeout votes for every height from its vote height + 1 to <code>hMax + 1</code>. <span style="opacity:.7">:905&ndash;907, :1719&ndash;1723</span></td>
+            <td class="c">Fresh on a chain if <code>state.h = vote.height</code>. Nothing else. <span style="opacity:.7">:222</span></td>
+          </tr>
+          <tr>
+            <td class="c"><b>Stability vote</b><br><b>off-chain</b><br><span style="opacity:.7">(papers only — the executable profile uses the attestation's head field instead of a separate message)</span></td>
+            <td class="c">(validator, target, votingRound)<br><span style="opacity:.7">:1035&ndash;1041</span></td>
+            <td class="c">Always paired with the finality vote, at the same instant. If a validator misses the finality vote, it also misses the stability vote. <span style="opacity:.7">:1160&ndash;1163</span></td>
+            <td class="c">The target must lie on the canonical chain between the finality-vote target and <code>getConfirmed</code>. Kept only for a window of <code>&eta;</code> voting rounds. <span style="opacity:.7">:1043&ndash;1044, :1092&ndash;1097</span></td>
+          </tr>
+          <tr>
+            <td class="c"><b>Block</b></td>
+            <td class="c">parent, slot, a set of finality votes<br><span style="opacity:.7">:164&ndash;168</span></td>
+            <td class="c">One per AC slot, by the Goldfish proposer.</td>
+            <td class="c">Slots strictly increase along parent links. An honest proposer must order the votes so that a vote at height <code>h</code> appears only when the running state is at height <code>h</code>. <span style="opacity:.7">:167, :1738</span></td>
+          </tr>
+          <tr>
+            <td class="c"><b>Syncer broadcast</b><br>view-merge<br><span style="opacity:.7">(papers only — not a wire message in the executable profile; its TSQ re-gossip realisation is out of scope)</span></td>
+            <td class="c">the syncer's whole local store: blocks and votes</td>
+            <td class="c">At <code>start(k)</code> of a syncer voting round. Syncer rounds are <code>k mod S = 0</code>. <span style="opacity:.7">:1626&ndash;1628</span></td>
+            <td class="c">On receipt, the receiver folds the new blocks through <code>onBlock</code> in ancestor-first order, and adds the votes to its vote pool. <span style="opacity:.7">:1714&ndash;1715</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="box">
+      <span class="lbl">Two vote types, two transports</span>
+      <p>The finality vote goes <b>into blocks</b>. It drives every state change. The stability vote is
+      <b>gossip only</b>. It never enters the state transition. Its only effect is a filter inside
+      <code>getConfirmed</code>. <span class="path">:1074&ndash;1079</span>. In Prysm, the finality vote
+      behaves like an attestation. The stability vote behaves like a bid, and
+      <code>sync/slot_aware_cache.go</code> already has the correct shape for it.</p>
+    </div>
+
+    <h3>Per-chain state</h3>
+    <p>Each accepted block holds its own post-state. The specification writes it <code>&sigma;[B]</code>.
+    In Prysm this is the per-<code>Node</code> data in <code>types.go</code>.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Meaning</th><th>Prysm equivalent today</th></tr></thead>
+        <tbody>
+          <tr><td class="c"><b>L</b></td><td class="c">block</td><td>The chain head. <code>L = B</code> after the node processes <code>B</code>.</td><td class="c">the node itself</td></tr>
+          <tr><td class="c"><b>s</b></td><td class="c">slot</td><td>The current AC slot. Only <code>processSlot</code> increments it.</td><td class="c"><code>Node.slot</code></td></tr>
+          <tr><td class="c"><b>h</b></td><td class="c">height</td><td>The current gadget height. Genesis height is 1.</td><td class="c">no equivalent &mdash; new</td></tr>
+          <tr><td class="c"><b>sH</b></td><td class="c">slot</td><td>The slot at which <code>h</code> last advanced on this chain. 0 if it never advanced.</td><td class="c">no equivalent &mdash; new</td></tr>
+          <tr><td class="c"><b>targets[n]</b></td><td class="c">array of block</td><td>For each validator, its justification-vote target at the current height. <code>nil</code> if none.</td><td class="c">no equivalent &mdash; new, and it is per node</td></tr>
+          <tr><td class="c"><b>timeouts[n]</b></td><td class="c">array of bool</td><td>True if this validator's vote at the current height set the timeout marker.</td><td class="c">no equivalent &mdash; new, and it is per node</td></tr>
+          <tr><td class="c"><b>J, hJ</b></td><td class="c">block, height</td><td>The most recently justified block and its height.</td><td class="c"><code>Node.justifiedEpoch</code></td></tr>
+          <tr><td class="c"><b>F</b></td><td class="c">block</td><td>The most recently finalized block.</td><td class="c"><code>Node.finalizedEpoch</code></td></tr>
+          <tr><td class="c"><b>P</b></td><td class="c">set of validator index</td><td>Validators that committed to finalize <code>(hJ, J)</code>.</td><td class="c">no equivalent &mdash; new</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Node state (the store)</h3>
+    <p>The store is node-local. The specification writes it <code>&Sigma;</code>. It has six fields.
+    <span class="path">:462&ndash;478</span></p>
+
+    <pre class="code">store = (
+    state    <i>// map from block to its per-chain post-state</i>
+    tree     <i>// the set of accepted blocks</i>
+    F        <i>// the store-finalized block</i>
+    J        <i>// the store root: the block of the highest-key justification ever seen</i>
+    hJ       <i>// the height of that justification</i>
+    hMax     <i>// the maximum state height over ALL blocks in the tree</i>
+)
+<i>genesis: tree = {genesis}, F = J = genesis, hJ = 0, hMax = 1</i>
+
+<i>// the stability gadget adds two more fields</i>
+    S        <i>// stability votes from the last eta voting rounds</i>
+    r        <i>// the current voting round index</i>
+<i>// the healing modification adds one more</i>
+    Rprime   <i>// the walk-from block, snapshotted at each voting time</i></pre>
+
+    <div class="box w">
+      <span class="lbl">Warning &mdash; hMax is over all blocks, not over leaves</span>
+      <p><span class="path">:474</span> says &ldquo;<code>hMax</code> is the maximum state-height over
+      <code>B</code> in the tree&rdquo;. A sister specification,
+      <span class="path">full/fresh_simplex_with_timeouts.tex:440</span>, takes the maximum over leaves
+      only. The two give different values. Use the candidate's definition.</p>
+    </div>
+  </section>
+
+  <!-- ================= ALGORITHM ================= -->
+  <section id="algo">
+    <h2><span class="num">12</span> The algorithm</h2>
+    <p class="dek">The rules in order. The branch order is normative. <span class="path">:246&ndash;247, :275</span></p>
+
+    <h3>Height advances by exactly 1, in two ways</h3>
+    <p>A height is not a slot. A height covers as many slots as it needs. Only two things advance it:
+    a justification quorum, or a timeout quorum. <span class="path">:159&ndash;162</span></p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 246" role="img" aria-label="A row of AC slots above a row of gadget heights. One height covers three slots and ends with a justification quorum. The next covers four slots and ends with a timeout quorum, which advances the height but sets no justified block. The third is still open.">
+          <defs><marker id="m7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ffg)"/></marker></defs>
+
+          <text x="16" y="22" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--lmd)" font-weight="700">AC SLOTS &mdash; ONE GOLDFISH BLOCK EACH</text>
+          <g fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.3">
+            <rect x="60" y="34" width="66" height="30" rx="3"/><rect x="130" y="34" width="66" height="30" rx="3"/>
+            <rect x="200" y="34" width="66" height="30" rx="3"/><rect x="270" y="34" width="66" height="30" rx="3"/>
+            <rect x="340" y="34" width="66" height="30" rx="3"/><rect x="410" y="34" width="66" height="30" rx="3"/>
+            <rect x="480" y="34" width="66" height="30" rx="3"/><rect x="550" y="34" width="66" height="30" rx="3"/>
+            <rect x="620" y="34" width="66" height="30" rx="3"/><rect x="690" y="34" width="66" height="30" rx="3"/>
+            <rect x="760" y="34" width="66" height="30" rx="3"/><rect x="830" y="34" width="66" height="30" rx="3"/>
+          </g>
+          <g font-family="var(--mono)" font-size="10" fill="var(--lmd)" text-anchor="middle">
+            <text x="93" y="54">s</text><text x="163" y="54">s+1</text><text x="233" y="54">s+2</text><text x="303" y="54">s+3</text>
+            <text x="373" y="54">s+4</text><text x="443" y="54">s+5</text><text x="513" y="54">s+6</text><text x="583" y="54">s+7</text>
+            <text x="653" y="54">s+8</text><text x="723" y="54">s+9</text><text x="793" y="54">s+10</text><text x="863" y="54">s+11</text>
+          </g>
+
+          <text x="16" y="106" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--ffg)" font-weight="700">FG HEIGHTS &mdash; VARIABLE LENGTH</text>
+          <g fill="var(--ffg-bg)" stroke="var(--ffg)" stroke-width="1.6">
+            <rect x="60" y="118" width="206" height="40" rx="4"/>
+            <rect x="270" y="118" width="276" height="40" rx="4"/>
+            <rect x="550" y="118" width="346" height="40" rx="4"/>
+          </g>
+          <text x="163" y="143" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--ffg)" font-weight="700">height h</text>
+          <text x="408" y="143" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--ffg)" font-weight="700">height h+1</text>
+          <text x="723" y="143" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="var(--ffg)" font-weight="700">height h+2 &mdash; still open</text>
+
+          <line x1="266" y1="178" x2="266" y2="162" stroke="var(--ffg)" stroke-width="1.5" marker-end="url(#m7)"/>
+          <text x="180" y="196" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">justification quorum</text>
+          <text x="180" y="210" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">&ge; 2n/3 votes name the SAME target T</text>
+          <text x="180" y="223" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">J &larr; T &nbsp; hJ &larr; h &nbsp; P &larr; empty &nbsp; h &larr; h+1 &nbsp; sH &larr; s</text>
+
+          <line x1="546" y1="178" x2="546" y2="162" stroke="var(--ffg)" stroke-width="1.5" marker-end="url(#m7)"/>
+          <text x="560" y="196" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">timeout quorum</text>
+          <text x="560" y="210" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">&ge; 2n/3 timeout markers set</text>
+          <text x="560" y="223" font-family="var(--mono)" font-size="9.5" fill="var(--ffg)">h &larr; h+1 &nbsp; sH &larr; s &nbsp; <tspan font-weight="700">J, hJ, P and F do not change</tspan></text>
+
+          <text x="16" y="240" font-family="var(--mono)" font-size="10.5" fill="currentColor" opacity=".65">A justification vote also sets the timeout marker. A justification quorum therefore implies a timeout quorum. The branches run in order, so justification wins. :246-247</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 7. Slot and height are different counters.</b> A timeout advances the height
+      with no target block. This is what lets the chain make progress when the validators do not agree,
+      and it is why <code>hMax</code> can move ahead of <code>hJ</code>.</figcaption>
+    </figure>
+
+    <h3>The state machine</h3>
+    <pre class="code"><b>stateTransition</b>(st, B):                          <i>// per-block entry point, :289</i>
+    <b>while</b> st.s &lt; B.slot: st = processSlot(st)      <i>// advance through empty slots</i>
+    st = processBlock(st, B)
+    st = processHeight(st)                          <i>// close events that B's own votes enabled</i>
+    <b>return</b> st                                       <i>// now st.s = B.slot and st.L = B</i>
+
+<b>processSlot</b>(st):                                    <i>// the ONLY place s increments, :299</i>
+    <b>if</b> st.L.slot &lt; st.s: st = processHeight(st)     <i>// this slot is empty on this chain</i>
+    st.s = st.s + 1
+    <b>return</b> st
+
+<b>processBlock</b>(st, B):                                <i>// :308</i>
+    assert st.s == B.slot
+    st.L = B
+    <b>for</b> v <b>in</b> B.votes: st = processVote(st, v)
+    <b>return</b> st
+
+<b>processVote</b>(st, v):                                 <i>// :316</i>
+    i = v.validator
+    <b>if</b> v.target == nil:                             <i>// timeout vote</i>
+        <b>if</b> v.height == st.h: st.timeouts[i] = true
+    <b>else</b>:                                           <i>// justification vote</i>
+        <u>fresh = v.height == st.h</u>
+            <u>&amp;&amp; isStrictAncestor(v.target, st.L)</u>    <i>// STRICT. not "or equal".</i>
+            <u>&amp;&amp; v.target.slot &gt;= st.sH</u>              <i>// target is inside the current height</i>
+        <b>if</b> fresh:
+            st.targets[i]  = v.target
+            st.timeouts[i] = true                   <i>// a justification also sets the timeout marker</i>
+    <i>// the P gate runs for EVERY vote, timeout votes included, and ignores freshness</i>
+    <b>if</b> v.finalizeHeight == st.hJ &amp;&amp; v.finalizeTarget == st.J:
+        st.P = st.P + {i}
+    <b>return</b> st
+
+<b>processHeightEvents</b>(st):                            <i>// branch order is normative, :343</i>
+    <i>// (i) FINALITY -- falls through, does not return</i>
+    <b>if</b> |st.P| &gt;= 2n/3: st.F = st.J
+
+    <i>// (ii) JUSTIFICATION -- returns</i>
+    T = the target with the most entries in st.targets   <i>// nil if targets is empty</i>
+    <b>if</b> T != nil &amp;&amp; |{i : st.targets[i] == T}| &gt;= 2n/3:
+        st.J = T;  st.hJ = st.h;  st.P = {}          <i>// hJ takes the PRE-increment h</i>
+        st.h = st.h + 1;  st.sH = st.s
+        reset st.targets, st.timeouts
+        <b>return</b> st
+
+    <i>// (iii) TIMEOUT CERT</i>
+    <b>if</b> |{i : st.timeouts[i]}| &gt;= 2n/3:
+        st.h = st.h + 1;  st.sH = st.s
+        reset st.targets, st.timeouts
+        <i>// J, hJ, P and F are NOT touched</i>
+    <b>return</b> st</pre>
+
+    <div class="box w">
+      <span class="lbl">Warning &mdash; three details that are easy to get wrong</span>
+      <p>The freshness test uses a <b>strict</b> ancestor test. A vote for the head block itself does not
+      count. <span class="path">:323</span><br>
+      The finality branch <b>falls through</b>. It does not return. A single call can finalize and then
+      advance the height. <span class="path">:343&ndash;345</span><br>
+      <code>P</code> is cleared <b>only</b> in the justification branch. A timeout does not clear it.
+      <span class="path">:346&ndash;356</span></p>
+    </div>
+
+    <h3>The store</h3>
+    <pre class="code"><b>onBlock</b>(store, B):                                  <i>// :530 -- this is Prysm's InsertNode</i>
+    assert B.parent <b>in</b> store.tree
+    assert isAncestorOrSelf(store.F, B)             <i>// nothing below the finalized block is accepted</i>
+    store.tree = store.tree + {B}
+    st = stateTransition(store.state[B.parent], B)
+    store.state[B] = st
+    store.hMax = max(store.hMax, st.h)              <i>// BEFORE the two guards below</i>
+    store = updateJustified(store, st.J, st.hJ)
+    store = updateFinalized(store, st.F)
+    <b>return</b> store
+
+<b>updateJustified</b>(store, J2, h2):                     <i>// :543 -- F filter, then lex running max</i>
+    <b>if</b> isAncestorOrSelf(store.F, J2)
+       &amp;&amp; (h2, hash(J2)) &gt; (store.hJ, hash(store.J)):    <i>// lexicographic</i>
+        store.J = J2;  store.hJ = h2
+    <b>return</b> store
+
+<b>updateFinalized</b>(store, F2):                         <i>// :551 -- THREE guards</i>
+    <b>if</b> isStrictDescendant(F2, store.F)
+       &amp;&amp; isAncestorOrSelf(F2, store.J)
+       &amp;&amp; <u>isViable(store, F2)</u>:                     <i>// the viability guard</i>
+        store.F = F2
+    <b>return</b> store
+
+<b>isViable</b>(store, B):                                 <i>// :487 -- the height filter</i>
+    <i>// a leaf is viable if its state height is at most one behind the frontier</i>
+    <i>// an internal block is viable if any descendant of it is viable</i>
+    <b>return</b> exists leaf L &gt;= B with store.state[L].h &gt;= store.hMax - 1
+
+<b>getConfirmed</b>(store, omega):                         <i>// :559 -- Prysm's store.head</i>
+    <u>R = store.J <b>if</b> store.hMax == store.hJ + 1 <b>else</b> store.F</u>   <i>// the two-way cascade</i>
+    <b>return</b> a block B <b>in</b> viable(store) with
+        isAncestorOrSelf(R, B) <b>and</b> store.state[B].h &gt;= store.hMax - 1,
+        <b>selected by</b> omega                          <i>// &lt;-- Goldfish decides here</i></pre>
+
+    <div class="box">
+      <span class="lbl">Why the cascade has two branches</span>
+      <p>A justification at height <code>h</code> forces that chain to height <code>h + 1</code>. So
+      <code>hMax &ge; hJ + 1</code> always holds. The gate <code>hMax == hJ + 1</code> therefore holds
+      exactly when no timeout has pushed any chain past the justified block's height.
+      When the gate fails, <code>store.J</code> is stale, and the walk starts from <code>store.F</code>
+      instead. <span class="path">:511&ndash;518</span>. This one line is the whole difference from Prysm,
+      which always walks from the justified root.</p>
+    </div>
+
+    <h3>How a validator builds its vote</h3>
+    <p>The validator keeps a third state, called <code>&Delta;</code> in the specification. It holds only
+    the validator's own past votes. The specification is explicit that this belongs on the validator
+    client, and that the store belongs on the beacon client. <span class="path">:878</span></p>
+
+    <pre class="code"><b>getBaseVote</b>(store, omega):                          <i>// :892</i>
+    T  = getConfirmed(store, omega)                 <i>// the target IS the confirmed block</i>
+    <b>return</b> (me, store.state[T].h, T, store.state[T].hJ, store.state[T].J)
+    <i>// only the last three fields are read off the target's post-state</i>
+
+<b>getFinalVote</b>(delta, v):                             <i>// :899 -- runs on the VALIDATOR client</i>
+    (i, hc, T, hf, Tf) = v
+    assert hc &gt; hf
+    <b>if</b> delta.locked[hc]:      T = delta.target[hc]  <i>// locked: re-send the lock target</i>
+    <b>elif</b> delta.target[hc] != nil: T = nil           <i>// voted here before, not locked: time out</i>
+    <i>// the finalize gate -- identical in all three branches</i>
+    <b>if</b> delta.target[hf] != Tf <b>or</b> delta.timedOut[hf]:
+        (hf, Tf) = (nil, nil)                       <i>// cannot commit safely, so do not commit</i>
+    v2 = (i, hc, T, hf, Tf)
+    recordVote(delta, v2)
+    <b>return</b> v2
+
+<b>slashing, rule E1</b>:                                 <i>// :254 -- ONE rule, that is all</i>
+    a validator is slashable <b>if</b> it signed a and b with
+        b.finalizeTarget != nil
+        <b>and</b> a.height == b.finalizeHeight
+        <b>and</b> a.target != b.finalizeTarget
+    <i>// note: a timeout vote (target = nil) conflicts with any finalize commitment</i>
+    <i>// note: two justification votes at one height are NOT slashable by themselves</i></pre>
+  </section>
+
+  <!-- ================= INTERFACE ================= -->
+  <section id="iface">
+    <h2><span class="num">13</span> The fork choice interface</h2>
+    <p class="dek">This is the section that matters. Casper FFG gives Prysm four things. The Simplex gadget gives four different things. Each one is a small, local change.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>What the head rule needs</th><th>Casper FFG gives (today)</th><th>Simplex FG gives (new)</th><th>Prysm site</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>A block to start the search from</b></td>
+            <td class="c">justifiedCheckpoint.Root, always</td>
+            <td class="c"><b>The two-way cascade.</b> <code>store.J</code> when <code>hMax == hJ + 1</code>, otherwise <code>store.F</code>. <span style="opacity:.7">:560</span></td>
+            <td class="c">store.go:32</td>
+          </tr>
+          <tr>
+            <td><b>A test for which blocks may be head</b></td>
+            <td class="c"><code>n.justifiedEpoch == justifiedEpoch || n.justifiedEpoch+2 &gt;= currentEpoch</code></td>
+            <td class="c"><b>The height filter.</b> A leaf is viable if <code>state[B].h &ge; hMax &minus; 1</code>. An internal block is viable if any descendant is viable. <span style="opacity:.7">:487&ndash;496</span></td>
+            <td class="c">node.go:25</td>
+          </tr>
+          <tr>
+            <td><b>Numbers to weigh the votes</b></td>
+            <td class="c">Effective balances read at the FFG justified root; also sets <code>committeeWeight</code></td>
+            <td class="c"><b>Nothing.</b> The gadget counts validators, not stake, and it never weighs the head. Goldfish supplies all the weights, through <code>&Omega;</code>.</td>
+            <td class="c">forkchoice.go:768</td>
+          </tr>
+          <tr>
+            <td><b>A point to prune from</b></td>
+            <td class="c">finalizedCheckpoint</td>
+            <td class="c"><b><code>store.F</code></b>, guarded by three conditions, one of which is viability. <span style="opacity:.7">:551</span></td>
+            <td class="c">store.go:270</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 396" role="img" aria-label="A block tree with a state height on each node. The frontier hMax is 7. The viability filter keeps blocks whose leaf reaches height 6 or more. One branch falls behind and is cut. The store root J sits at the frontier, so the search starts there. Goldfish then selects one block from the allowed set.">
+          <defs>
+            <marker id="m8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ffg)"/></marker>
+            <marker id="m8l" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--lmd)"/></marker>
+          </defs>
+
+          <g stroke="var(--lmd)" stroke-width="1.8" fill="none">
+            <line x1="112" y1="150" x2="218" y2="150"/>
+            <line x1="242" y1="150" x2="348" y2="112"/>
+            <line x1="242" y1="150" x2="348" y2="230"/>
+            <line x1="372" y1="112" x2="478" y2="112"/>
+            <line x1="502" y1="112" x2="608" y2="86"/>
+            <line x1="502" y1="112" x2="608" y2="150"/>
+          </g>
+          <line x1="372" y1="230" x2="478" y2="230" stroke="var(--ffg)" stroke-width="1.8" stroke-dasharray="5 4"/>
+
+          <g fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.8">
+            <circle cx="90" cy="150" r="22"/><circle cx="230" cy="150" r="22"/><circle cx="360" cy="112" r="22"/>
+            <circle cx="490" cy="112" r="22"/><circle cx="630" cy="86" r="22"/><circle cx="630" cy="150" r="22"/>
+          </g>
+          <g fill="none" stroke="var(--ffg)" stroke-width="1.8" stroke-dasharray="4 3">
+            <circle cx="360" cy="230" r="22"/><circle cx="490" cy="230" r="22"/>
+          </g>
+
+          <g font-family="var(--mono)" font-size="11" text-anchor="middle" font-weight="700" fill="var(--lmd)">
+            <text x="90" y="154">h=4</text><text x="230" y="154">h=5</text><text x="360" y="116">h=6</text>
+            <text x="490" y="116">h=6</text><text x="630" y="90">h=7</text><text x="630" y="154">h=7</text>
+          </g>
+          <g font-family="var(--mono)" font-size="11" text-anchor="middle" font-weight="700" fill="var(--ffg)">
+            <text x="360" y="234">h=5</text><text x="490" y="234">h=5</text>
+          </g>
+
+          <text x="90" y="196" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ffg)" font-weight="700">store.F</text>
+          <text x="230" y="196" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ffg)" font-weight="700">store.J &nbsp; hJ = 6</text>
+
+          <line x1="700" y1="86" x2="740" y2="86" stroke="var(--lmd)" stroke-width="1.6" marker-end="url(#m8l)" color="var(--lmd)"/>
+          <line x1="700" y1="150" x2="740" y2="150" stroke="var(--lmd)" stroke-width="1.6" marker-end="url(#m8l)" color="var(--lmd)"/>
+          <rect x="748" y="60" width="236" height="116" rx="5" fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.6"/>
+          <text x="866" y="84" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="var(--lmd)" font-weight="700">the allowed set</text>
+          <text x="866" y="102" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--lmd)">viable, descends from R,</text>
+          <text x="866" y="116" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--lmd)">and h &ge; hMax &minus; 1</text>
+          <line x1="768" y1="126" x2="964" y2="126" stroke="var(--lmd)" stroke-width="1" opacity=".4"/>
+          <text x="866" y="146" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--lmd)" font-weight="700">&Omega; selects one</text>
+          <text x="866" y="164" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--lmd)">Goldfish decides here</text>
+
+          <line x1="686" y1="262" x2="686" y2="60" stroke="var(--ffg)" stroke-width="1.4" stroke-dasharray="6 4"/>
+          <text x="694" y="278" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">hMax = 7 &mdash; the frontier</text>
+          <line x1="546" y1="262" x2="546" y2="200" stroke="var(--ffg)" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <text x="554" y="278" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">hMax &minus; 1 = 6 &mdash; the viability cut</text>
+
+          <g stroke="var(--ffg)" stroke-width="2.4">
+            <line x1="478" y1="218" x2="502" y2="242"/><line x1="502" y1="218" x2="478" y2="242"/>
+          </g>
+          <text x="330" y="292" font-family="var(--mono)" font-size="11" fill="var(--ffg)" font-weight="700">this branch lags by more than one height &mdash; it is cut</text>
+
+          <line x1="16" y1="316" x2="984" y2="316" stroke="currentColor" stroke-width="1" opacity=".18"/>
+          <text x="16" y="340" font-family="var(--mono)" font-size="11.5" fill="var(--ffg)" font-weight="700">The cascade gate: hMax = 7 and hJ + 1 = 7, so the gate holds. The search starts at store.J.</text>
+          <text x="16" y="360" font-family="var(--mono)" font-size="11.5" fill="var(--ffg)">If a timeout had pushed hMax to 8, the gate would fail and the search would start at store.F instead.</text>
+          <text x="16" y="384" font-family="var(--mono)" font-size="11" fill="currentColor" opacity=".65">In Prysm today the search always starts at justifiedCheckpoint.Root. That is store.go:32, and it is one line.</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 8. The store, the height filter and the cascade gate.</b> The gadget narrows
+      the tree to a set. It never picks a block from that set. Compare with figure 5: the ochre parts
+      there are replaced by the ochre parts here, one for one.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ================= THE SWAP ================= -->
+  <section id="swap">
+    <h2><span class="num">14</span> The swap, site by site</h2>
+    <p class="dek">Each row is a site from part one. The last column is an estimate of the work.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Prysm site</th><th>Now</th><th>New</th><th>Work</th></tr></thead>
+        <tbody>
+          <tr><td class="c"><b>store.go:32</b><br>search anchor</td><td class="c">justifiedCheckpoint.Root</td><td class="c">R = store.J if hMax == hJ+1 else store.F</td><td>Small. One line, plus a new <code>hMax</code> field.</td></tr>
+          <tr><td class="c"><b>node.go:25</b><br>viableForHead</td><td class="c">justified-epoch comparison</td><td class="c">leaf: <code>state[B].h &ge; hMax &minus; 1</code>; internal: any viable descendant</td><td>Small in shape. But it needs <code>hMax</code> maintained on every insert, and the recursion is already there in <code>leadsToViableHead</code>.</td></tr>
+          <tr><td class="c"><b>forkchoice.go:768</b><br>updateJustifiedBalances</td><td class="c">balances at the justified root; sets <code>committeeWeight</code></td><td class="c">The gadget needs no balances. Goldfish supplies the weights.</td><td>Medium. You must decide validator count against stake, and <code>committeeWeight</code> has four other users.</td></tr>
+          <tr><td class="c"><b>store.go:270</b><br>prune</td><td class="c">finalizedCheckpoint</td><td class="c"><code>store.F</code></td><td>Small.</td></tr>
+          <tr><td class="c"><b>forkchoice.go:154</b><br>updateCheckpoints</td><td class="c">compares epochs</td><td class="c"><code>updateJustified</code>: ancestor filter, then lexicographic maximum on <code>(hJ, hash(J))</code>. <code>updateFinalized</code>: three guards.</td><td>Medium. The lexicographic key and the viability guard are both new.</td></tr>
+          <tr><td class="c"><b>forkchoice.go:123</b><br>InsertNode</td><td class="c">takes a full <code>state.BeaconState</code></td><td class="c"><code>onBlock</code>: two asserts, then <code>stateTransition</code></td><td><b>Large.</b> This replaces the FFG half of the state transition.</td></tr>
+          <tr><td class="c"><b>types.go</b><br>Node fields</td><td class="c">justifiedEpoch, unrealizedJustifiedEpoch, finalizedEpoch, unrealizedFinalizedEpoch</td><td class="c">L, s, h, sH, targets[n], timeouts[n], J, hJ, F, P</td><td><b>Large.</b> Two arrays of size <code>n</code> on every node. Plan the memory.</td></tr>
+          <tr><td class="c"><b>types.go</b><br>Vote</td><td class="c">currentRoot/nextRoot, epoch replacement</td><td class="c">Goldfish keeps this, with slot expiry. The finality vote is a separate type and travels in blocks.</td><td>Medium. Two vote types now exist.</td></tr>
+          <tr><td class="c"><b>on_tick.go:32</b><br>NewSlot</td><td class="c">clears boost; realizes FFG at epoch start</td><td class="c"><code>onVotingRoundTick</code> advances <code>r</code> and prunes the stability window. <code>onVotingTime</code> snapshots <code>Rprime</code>.</td><td>Medium. Two hooks where there was one, and they fire on the FG clock, not the slot clock.</td></tr>
+          <tr><td class="c"><b>unrealized_justification.go</b></td><td class="c">precompute.UnrealizedCheckpoints</td><td class="c"><b>Delete the file.</b> The gadget has no unrealized concept. A height advances only from votes that are already on the chain.</td><td>Delete.</td></tr>
+          <tr><td class="c"><b>execution_engine.go:64</b></td><td class="c">FinalizedPayloadBlockHash</td><td class="c"><code>store.F</code></td><td>Small.</td></tr>
+          <tr><td class="c"><b>slot_aware_cache.go:53</b></td><td class="c">bids, data columns</td><td class="c">The stability-vote window <code>store.S</code>, with parameter <code>&eta;</code></td><td>Reuse. The shape already matches.</td></tr>
+          <tr><td class="c"><b>subscriber.go:216</b><br>topic table</td><td class="c">attestation subnets, aggregates</td><td class="c">Add a finality-vote topic and a stability-vote topic. Delete the FFG-shaped ones.</td><td>Medium. See the five-file warning in section 07.</td></tr>
+          <tr><td class="c"><b>receive_block.go:170/587/603</b></td><td class="c">saveCurrentCheckpoints and the two update functions</td><td class="c"><code>updateJustified</code> and <code>updateFinalized</code></td><td>Small, and this is the cleanest place to attach the gadget. These functions never read the tree.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= FG TIMING ================= -->
+  <section id="fgclock">
+    <h2><span class="num">15</span> Gadget timing</h2>
+    <p class="dek">The gadget has its own clock. It is not the slot clock. A voting round has three ordered events and lasts at least three network delays.</p>
+
+    <figure>
+      <div class="figbox">
+        <svg viewBox="0 0 1000 300" role="img" aria-label="A finality gadget voting round. Freeze at start minus Delta, syncer broadcast at start, vote at start plus Delta. The round is at least three Delta long. Below, the AC slots divide the voting round, and the validator set is split across m sub-rounds.">
+          <defs><marker id="m9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+
+          <text x="16" y="22" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--ffg)" font-weight="700">FG VOTING ROUND k &mdash; VIEW-MERGE, :2427</text>
+
+          <line x1="60" y1="96" x2="940" y2="96" stroke="currentColor" stroke-width="1.6"/>
+          <g stroke="var(--ffg)" stroke-width="1.8" color="var(--ffg)" marker-end="url(#m9)">
+            <line x1="180" y1="56" x2="180" y2="88"/><line x1="400" y1="56" x2="400" y2="88"/><line x1="620" y1="56" x2="620" y2="88"/>
+          </g>
+          <g font-family="var(--mono)" font-size="11" fill="var(--ffg)" text-anchor="middle" font-weight="700">
+            <text x="180" y="34">FREEZE</text><text x="400" y="34">SYNCER</text><text x="620" y="34">VOTE</text>
+          </g>
+          <g font-family="var(--mono)" font-size="9.5" fill="var(--ffg)" text-anchor="middle">
+            <text x="180" y="48">snapshot the store</text>
+            <text x="400" y="48">broadcast the store</text>
+            <text x="620" y="48">merge, then vote</text>
+          </g>
+          <g font-family="var(--mono)" font-size="10" fill="currentColor" opacity=".65" text-anchor="middle">
+            <text x="180" y="116">start(k) &minus; &Delta;</text>
+            <text x="400" y="116">start(k)</text>
+            <text x="620" y="116">start(k) + &Delta;</text>
+            <text x="900" y="116">start(k+1)</text>
+          </g>
+          <line x1="900" y1="88" x2="900" y2="104" stroke="currentColor" stroke-width="1.4" opacity=".6"/>
+
+          <line x1="400" y1="140" x2="900" y2="140" stroke="var(--ffg)" stroke-width="1.2"/>
+          <line x1="400" y1="134" x2="400" y2="146" stroke="var(--ffg)" stroke-width="1.2"/>
+          <line x1="900" y1="134" x2="900" y2="146" stroke="var(--ffg)" stroke-width="1.2"/>
+          <text x="650" y="134" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ffg)">start(k+1) &minus; start(k) &ge; 3&Delta;</text>
+
+          <text x="16" y="180" font-family="var(--mono)" font-size="11" letter-spacing="1.4" fill="var(--lmd)" font-weight="700">AC SLOTS &mdash; THEY DIVIDE THE VOTING ROUND</text>
+          <g fill="var(--lmd-bg)" stroke="var(--lmd)" stroke-width="1.3">
+            <rect x="60" y="192" width="118" height="28" rx="3"/><rect x="182" y="192" width="118" height="28" rx="3"/>
+            <rect x="304" y="192" width="118" height="28" rx="3"/><rect x="426" y="192" width="118" height="28" rx="3"/>
+            <rect x="548" y="192" width="118" height="28" rx="3"/><rect x="670" y="192" width="118" height="28" rx="3"/>
+            <rect x="792" y="192" width="118" height="28" rx="3"/>
+          </g>
+          <text x="500" y="240" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="var(--lmd)">one Goldfish block per slot &middot; &Delta;(FG) = (c+1) &middot; &Delta;(AC) for an integer c &ge; 1 &middot; :1219</text>
+
+          <line x1="16" y1="258" x2="984" y2="258" stroke="currentColor" stroke-width="1" opacity=".18"/>
+          <text x="16" y="278" font-family="var(--mono)" font-size="11" fill="currentColor" opacity=".8">A voting round holds m sub-rounds. The validator set is split across them. Each validator votes once per round, at its own sub-round. :1155-1158</text>
+          <text x="16" y="294" font-family="var(--mono)" font-size="11" fill="currentColor" opacity=".8">A syncer runs only when k mod S = 0. The syncer is the AC proposer of the slot at start(k). :1626-1628, :1708</text>
+        </svg>
+      </div>
+      <figcaption><b>Figure 9. The gadget clock.</b> Compare with figure 4. Prysm has one 12-second slot
+      with deadlines at 4 s and 8 s. The gadget has a longer voting round with freeze, syncer and vote
+      events, and it splits the validator set across sub-rounds. Both clocks must run at once.</figcaption>
+    </figure>
+
+    <div class="box w">
+      <span class="lbl">Warning &mdash; the specification uses one name for two quantities</span>
+      <p>At <span class="path">:1225</span>, <code>&Delta;(AC)</code> is &ldquo;the duration of one AC slot,
+      taken to include confirmation&rdquo;. At <span class="path">:1641</span>, <code>&Delta;(AC)</code>
+      is &ldquo;the AC message-delay bound&rdquo;, and it calls <code>&Delta;(FG)</code> and
+      <code>&Delta;(AC)</code> &ldquo;independent design parameters&rdquo;. These are different quantities.
+      Choose one meaning and write it down before you set any timer.</p>
+    </div>
+  </section>
+
+  <!-- ================= VARIANTS ================= -->
+  <section id="variants">
+    <h2><span class="num">16</span> The six documents</h2>
+    <p class="dek">Build the candidate. Read the others only for the parts listed here.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Document</th><th>What it is</th><th>Use it for</th></tr></thead>
+        <tbody>
+          <tr><td class="c"><b>height_filter_and_timeouts</b><br>3172 lines</td><td><b>The candidate.</b> Fixed-target justification and timeouts advance the height. A height filter gates the vote targets.</td><td><b>Build this one.</b> It is the only document with the stability gadget, the healing argument and the liveness argument.</td></tr>
+          <tr><td class="c"><b>prefix_height_filter_and_timeouts</b><br>1131 lines</td><td>The candidate plus prefix counting. Votes on one chain that name different but comparable targets combine. A finalize vote also acts as a timeout.</td><td>Read it if the fixed-target rule justifies too slowly in your tests. The slashing rules reduce to three conditions.</td></tr>
+          <tr><td class="c"><b>finalization_as_notarization</b><br>699 lines</td><td>Three vote types: notarize, justify, finalize. The overview calls it the most internally consistent document.</td><td>The clearest statement of the quorum-intersection slashing argument. It states <b>no</b> synchrony model at all.</td></tr>
+          <tr><td class="c"><b>fresh_simplex_with_notarizations</b><br>2343 + 2218 lines</td><td>No timeouts and no snapshots. Prefix notarization is the second height-advance mechanism. The root is a lexicographic maximum over justification and notarization certificates.</td><td>Read it only if you drop timeouts. The non-obstruction file is a second variant of the same protocol.</td></tr>
+          <tr><td class="c"><b>portable_finalization</b><br>709 lines</td><td>Justification certificates move across forks. Two vote types.</td><td><b>Out of date.</b> The overview says so. It also has a real macro fault in the slashing definition at <span class="path">:184</span>.</td></tr>
+          <tr><td class="c"><b>rooted_timeouts</b><br>834 lines</td><td>Primary and secondary votes, rooted timeouts, slot monotonicity.</td><td><b>Out of date, and incomplete.</b> Its block definition at <span class="path">:119&ndash;122</span> gives a block no slot field, but the protocol reads <code>block.slot</code> in three places. Seven reviewer notes are still open.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= OPEN ================= -->
+  <section id="open">
+    <h2><span class="num">17</span> Not settled &mdash; stub these</h2>
+    <p class="dek">The specifications mark these parts as incomplete. Do not implement them from the text. Stub them and record the choice you made.</p>
+
+    <ul class="tight">
+      <li><b>Seven store properties have no proof.</b> The property environments at
+          <span class="path">:1817&ndash;1860</span> state compatibility, monotonicity, target dominance
+          and visibility of <code>getConfirmed</code>. No proof attaches to any of them anywhere in the
+          document. The liveness argument depends on them.</li>
+      <li><b>The liveness argument is marked WIP</b> in the overview
+          (<span class="path">main.tex:37</span>).</li>
+      <li><b><code>Rprime</code> has no initial value.</b> The healing modification adds the field and
+          only <code>onVotingTime</code> ever writes it. The modified <code>getConfirmed</code> reads it
+          without a guard. The genesis store at <span class="path">:526&ndash;527</span> does not set it.
+          <code>getConfirmed</code> is therefore undefined before the first voting time. Set it to
+          genesis.</li>
+      <li><b>The stability criterion is abstract.</b> <span class="path">:1043&ndash;1044</span> says
+          &ldquo;The selection criterion &mdash; e.g. depth past a state-height advance, observed-stability
+          duration, or another application-defined predicate &mdash; is left abstract here.&rdquo;
+          Pick the simplest one for a mock: the finality-vote target.</li>
+      <li><b>The inactivity leak needs a repair under sub-rounds.</b> <span class="path">:1165&ndash;1169</span>
+          says the penalty guards fire against validators whose sub-round has not yet come. It offers three
+          repairs and picks none. Leave the leak out of the first mock.</li>
+      <li><b><code>getStabilityVote</code> calls the vote path twice.</b> The figure at
+          <span class="path">:1052&ndash;1058</span> calls <code>getFinalVote</code>, which mutates
+          <code>&Delta;</code>. Since the two votes are co-emitted, a literal implementation runs that
+          path twice per voting time and the second call sees a changed <code>&Delta;</code>. Cache the
+          first result.</li>
+      <li><b>Timeout votes have no bound on how many a syncer sends.</b> <code>getSyncerVote</code> emits
+          one timeout vote for every height from its vote height + 1 up to <code>hMax + 1</code>. Cap this
+          in a mock, and log the cap.</li>
+    </ul>
+  </section>
+
+  <!-- ================= MVP ================= -->
+  <section id="mvp">
+    <h2><span class="num">18</span> The minimum mock</h2>
+    <p class="dek">The smallest version that shows real behaviour on a devnet. Build it in this order.</p>
+
+    <ol class="reading">
+      <li><span class="f">A new fork choice store, beside the old one</span><span class="w">Add <code>h</code>, <code>sH</code>, <code>targets</code>, <code>timeouts</code>, <code>J</code>, <code>hJ</code>, <code>F</code> and <code>P</code> to <code>Node</code>. Add <code>hMax</code> to <code>Store</code>. Do not remove the FFG fields yet. Run both and compare them in a log line. This gives you a working oracle for free.</span></li>
+      <li><span class="f">The state machine, with no clock</span><span class="w">Write <code>processVote</code>, <code>processHeightEvents</code> and <code>stateTransition</code>. Drive them from <code>handleBlockAttestations</code> (<code>process_block.go:578</code>), which already gives you every vote in a block. Unit-test the three branch orders. No gossip changes yet.</span></li>
+      <li><span class="f">The finality vote message</span><span class="w">One new gossip topic. Reuse the attestation shape: <code>(validator, height, target, finalizeHeight, finalizeTarget)</code>. Put it in blocks. Skip the stability vote for now, and use the plain <code>getConfirmed</code> at <span class="path">:559</span>, not the filtered one at <span class="path">:1125</span>.</span></li>
+      <li><span class="f">The four interface changes</span><span class="w">The cascade anchor (<code>store.go:32</code>), the height filter (<code>node.go:25</code>), the lexicographic update (<code>forkchoice.go:154</code>) and the prune point (<code>store.go:270</code>). At this point the head rule runs on the new gadget.</span></li>
+      <li><span class="f">Round math, not a second clock</span><span class="w">The executable profile aligns rounds to slots: a sub-round is one slot and the round is 8 slots. Add <code>compute_round_at_slot</code> and its inverse. Duties fire at the existing attestation and aggregate deadlines. Set <code>Rprime</code> to genesis at start.</span></li>
+      <li><span class="f">View-merge — out of scope</span><span class="w">In the executable profile, the papers' freeze, syncer broadcast, and merge became a TSQ re-gossip duty. That duty is out of scope for the simulation. Build nothing here.</span></li>
+    </ol>
+
+    <div class="box">
+      <span class="lbl">Leave out of version one</span>
+      <p>The inactivity leak (it needs a repair under sub-rounds). The stability gadget and its filtered
+      <code>getConfirmed</code> (the criterion is abstract). Slashing rule E1 (a validator that never sets
+      a finalize target cannot be slashed, so an honest mock never triggers it). The prefix variant.
+      Keep sub-rounds: in the executable profile a sub-round is one slot, and the 8-slot round is the
+      simulation target. The full not-implemented list, with specification citations, is in
+      <span class="path">decoupled-consensus-networking-mock.html</span>.</p>
+    </div>
+
+    <div class="box w">
+      <span class="lbl">Warning &mdash; two clocks and one lock</span>
+      <p>The gadget clock and the slot clock both write the fork choice store. Prysm holds the
+      fork choice write lock from <code>receive_block.go:124</code> to the return of
+      <code>ReceiveBlock</code>. <code>spawnProcessAttestationsRoutine</code>
+      (<code>receive_attestation.go:68</code>) takes the same lock from its own goroutine. A third
+      timer makes a third writer. Decide the lock order before you write the first timer.</p>
+    </div>
+
+    <hr class="sep">
+    <footer>
+      Part one: a 17-agent read of the Prysm tree at commit <code>4a9884d6d5</code>.
+      Part two: a 13-agent read of the six specifications in
+      <code>decoupled-consensus-networking</code> at commit <code>596955e</code>.
+      In both parts a second agent checked each claim against the source.
+      Line numbers change. Use them as markers, not as addresses.
+      Written in ASD-STE100 Simplified Technical English.
+    </footer>
+  </section>
+
+</div>
+</body>
+</html>
