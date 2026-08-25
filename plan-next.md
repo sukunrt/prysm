@@ -338,6 +338,11 @@ dynamics, not different traffic.
    attestation's existing BPS config is the sweep axis for head timing.
    Alternative: give the available attestation a names-which-block knob too
    — defer until a measurement needs it.
+   **ANSWERED by user 2026-08-20: go with the recommendation — slot-start
+   flag (and the forced naming rule that comes with it) for the FFG vote;
+   `AVAILABLE_ATTESTATION_DUE_BPS_HEZE` as the head-timing sweep axis. A
+   naming knob for the available attestation is explicitly deferred; can be
+   configured later if a measurement needs it.**
 3. **Payload-status tiebreaker.** Step 4 stubs it (PENDING for a same-slot
    vote, EMPTY otherwise, per decision 13). Promoting it to the spec's full
    rule is gadget-era work. Confirm the stub is acceptable for the first
