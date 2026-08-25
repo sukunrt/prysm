@@ -46,8 +46,12 @@ func (s *Service) processPendingAttsForBlock(ctx context.Context, bRoot [32]byte
 	ctx, span := trace.StartSpan(ctx, "processPendingAttsForBlock")
 	defer span.End()
 
-	// Confirm that the pending attestation's missing block arrived and the node processed the block.
-	if !s.cfg.beaconDB.HasBlock(ctx, bRoot) || !(s.cfg.beaconDB.HasState(ctx, bRoot) || s.cfg.beaconDB.HasStateSummary(ctx, bRoot)) || !s.cfg.chain.InForkchoice(bRoot) {
+	// Confirm the missing block arrived. Forkchoice membership is the whole
+	// test: it is set inside ReceiveBlock, before this runs, and every queued
+	// item revalidates itself anyway. Requiring the block's state summary in the
+	// database as well used to strand a queue here, because that write can still
+	// be outstanding at this point - and nothing else ever wakes the queue.
+	if !s.cfg.chain.InForkchoice(bRoot) {
 		return fmt.Errorf("could not process unknown block root %#x", bRoot)
 	}
 

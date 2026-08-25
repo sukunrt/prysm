@@ -1009,6 +1009,9 @@ func TestService_validateAvailableAttestation(t *testing.T) {
 	require.NoError(t, db.SaveState(ctx, savedState, validBlockRoot))
 	chain.State = savedState
 	chain.TargetRoot = validBlockRoot
+	// The vote queue is gated on forkchoice membership, because that is what
+	// block import sets before it drains the queue.
+	chain.ForkchoiceRoots = map[[32]byte]bool{validBlockRoot: true}
 
 	digest := s.currentForkDigest()
 	topic := fmt.Sprintf(p2p.AvailableAttestationTopicFormat, digest) + p.Encoding().ProtocolSuffix()

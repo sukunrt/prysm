@@ -586,18 +586,23 @@ func (s *Service) validateAvailableAttestation(
 
 	// No slashing required
 
-	// Verify the block being voted and the processed state is in beaconDB and the block has passed validation if it's in the beaconDB.
+	// Whether the node has the block being voted for. This asks forkchoice, not
+	// the database, and it has to: the queue below is woken by block import, and
+	// import puts the block in forkchoice before it drains the queue, while the
+	// block's state summary can still be unwritten at that point. Gating on the
+	// database instead left votes queued after their wake-up had already run,
+	// and nothing wakes them twice.
 	blockRoot := bytesutil.ToBytes32(data.BeaconBlockRoot)
-	if !s.hasBlockAndState(ctx, blockRoot) {
+	if !s.cfg.chain.InForkchoice(blockRoot) {
 		// The block has not arrived yet. Queue the vote so it is replayed once the
 		// block is imported, and ignore it for now so gossip does not penalize the
 		// peer that forwarded a vote we simply cannot check yet.
 		s.savePendingAvailableAtt(att)
 		s.logVote(att, voteQueued, "", arrived)
-		// The block can be imported, and its queue drained, between the check
-		// above and the insert. Nothing would wake the vote after that, so take a
-		// second look: whichever of the two sees the block last drains the queue.
-		if s.hasBlockAndState(ctx, blockRoot) {
+		// The block can still be imported, and its queue drained, between the
+		// check above and the insert. Take a second look so whichever of the two
+		// sees the block last is the one that drains it.
+		if s.cfg.chain.InForkchoice(blockRoot) {
 			go s.drainPendingAttsForBlock(s.ctx, blockRoot)
 		}
 		return pubsub.ValidationIgnore, nil
