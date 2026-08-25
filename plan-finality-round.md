@@ -71,8 +71,14 @@ AttestationData) is implemented here.
 - The Goldfish head vote, walk, gate, passthrough, round-start proposal
   stub, and the available-attestation stream: untouched. The stable root
   stays stubbed as the justified root — it simply advances per round now.
-- Committees, shuffling, seeds, proposer selection: epoch-keyed as today
-  (rounds already reuse the shuffle via slot-in-round; plan step 1).
+- Committee construction stays epoch-based (user, 2026-08-21, explicit).
+  The shuffle seed, active-set lookup, committee counts, duty enumeration,
+  and aggregator selection all keep their current epoch keying; the
+  round-repeat of the shuffle within an epoch is the already-executed
+  plan step 1 and is not touched here. This plan changes no committee
+  code at all — where an attestation's (now round-valued) target field
+  used to feed committee or domain lookups, the epoch is derived from the
+  attestation's slot instead (detailed steps 3.3, 3.5).
 - All of slashing (decision 2026-08-21: slashing out of scope):
   the surround/double-vote predicates, the slasher, and the EIP-3076
   protection gate are left with zero changes — they are unit-agnostic

@@ -63,6 +63,17 @@ justification on the devnet. The audit sections below (1.4, 2.6, 4.1-4.3)
 enumerate every known pairing site; the 8/32 unit tests are the net that
 catches the ones the enumeration missed.
 
+Corollary, stated explicitly (user, 2026-08-21): **committee construction
+stays epoch-based.** The shuffle seed (`get_seed` by epoch), the
+active-set lookups, `SlotCommitteeCount` / `BeaconCommittee`
+(`core/helpers/beacon_committee.go:56,265` — epoch-seeded, round-repeated
+since the executed plan step 1), duty enumeration, and aggregator
+selection are all untouched by this plan. FFG data changes unit; the
+committee machinery does not. The only committee-adjacent edits are the
+ones where a (now round-valued) `Target.Epoch` used to be BORROWED as an
+epoch for committee/domain/active-set lookups — those derive the epoch
+from the attestation's slot instead (3.3, 3.5).
+
 The second thing: **the state side and the forkchoice side of the target
 move together** (the plan-next 5.2 lesson). `helpers.FFGTargetRoot`
 (`beacon-chain/core/helpers/block.go:100`), the `node.target` assignment
