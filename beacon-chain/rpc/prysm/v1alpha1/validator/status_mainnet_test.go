@@ -12,6 +12,8 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	mockExecution "github.com/OffchainLabs/prysm/v7/beacon-chain/execution/testing"
 	state_native "github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native"
+	mockstategen "github.com/OffchainLabs/prysm/v7/beacon-chain/state/stategen/mock"
+	mockSync "github.com/OffchainLabs/prysm/v7/beacon-chain/sync/initial-sync/testing"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/container/trie"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
@@ -100,4 +102,53 @@ func generatePubkey(i uint64) []byte {
 	pubKey := make([]byte, params.BeaconConfig().BLSPubkeyLength)
 	binary.LittleEndian.PutUint64(pubKey, i)
 	return pubKey
+}
+
+// TestServer_CheckDoppelGanger_RecencyGateIsEpochWide pins the unit of the
+// recency gate against the unit of the evidence it protects. The evidence is the
+// epoch participation arrays of the head state and of a state one epoch back, so
+// the gate must be epoch-wide. At 8 slots per round inside a 32-slot epoch a
+// round-keyed gate is 4x narrower: a validator whose last attestation target is
+// 3 rounds old clears it, and its own participation bit is then read back as a
+// doppelganger.
+func TestServer_CheckDoppelGanger_RecencyGateIsEpochWide(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	// Head slot 127 is round 15 and epoch 3.
+	gs, keys := util.DeterministicGenesisStateAltair(t, 64)
+	hs := gs.Copy()
+	require.NoError(t, hs.SetSlot(127))
+	ps := gs.Copy()
+	require.NoError(t, ps.SetSlot(95))
+
+	// The validator's own attestation is in the head state's evidence.
+	currentIndices := make([]byte, 64)
+	currentIndices[0] = 1
+	require.NoError(t, hs.SetCurrentParticipationBits(currentIndices))
+
+	rb := mockstategen.NewReplayerBuilder()
+	rb.SetMockStateForSlot(ps, 95)
+	vs := &Server{
+		HeadFetcher:     &mockChain.ChainService{State: hs},
+		SyncChecker:     &mockSync.Sync{IsSyncing: false},
+		ReplayerBuilder: rb,
+	}
+
+	// Round 12 starts at slot 96, which lives in epoch 3 -- the head's own epoch.
+	pubKey := keys[0].PublicKey().Marshal()
+	got, err := vs.CheckDoppelGanger(t.Context(), &ethpb.DoppelGangerRequest{
+		ValidatorRequests: []*ethpb.DoppelGangerRequest_ValidatorRequest{
+			{PublicKey: pubKey, Epoch: 12, SignedRoot: []byte{'A'}},
+		},
+	})
+	require.NoError(t, err)
+	require.DeepEqual(t, &ethpb.DoppelGangerResponse{
+		Responses: []*ethpb.DoppelGangerResponse_ValidatorResponse{
+			{PublicKey: pubKey, DuplicateExists: false},
+		},
+	}, got)
 }

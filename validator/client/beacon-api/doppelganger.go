@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
@@ -102,13 +103,17 @@ func (c *beaconApiValidatorClient) checkDoppelGanger(ctx context.Context, in *et
 	}
 
 	headSlot := primitives.Slot(headSlotUint64)
-	// The liveness API below is epoch-keyed; the recency check compares stored
-	// attestation targets, which are ROUNDS.
 	currentEpoch := slots.ToEpoch(headSlot)
-	currentRound := slots.RoundAt(headSlot)
 
-	// Extract input pubkeys we did not validate for the 2 last rounds.
-	// If we detect onchain liveness for these keys during the 2 last rounds, a doppelganger may exist somewhere.
+	// Extract input pubkeys we did not validate for the 2 last epochs.
+	// If we detect onchain liveness for these keys during the 2 last epochs, a doppelganger may exist somewhere.
+	//
+	// The recency gate must be at least as wide as the evidence window below, which
+	// is the epoch-keyed liveness API over currentEpoch and currentEpoch-1. The
+	// stored value is an attestation target, i.e. a ROUND, so convert it to the epoch
+	// that holds it before comparing -- a round-vs-round gate would be 4x narrower
+	// than the evidence at 8/32 and would flag a restarting validator as its own
+	// doppelganger.
 	var notRecentStringPubKeys []string
 
 	for _, spk := range stringPubKeys {
@@ -117,7 +122,12 @@ func (c *beaconApiValidatorClient) checkDoppelGanger(ctx context.Context, in *et
 			return nil, errors.New("failed to retrieve doppelganger info from string public key")
 		}
 
-		if dph.validatorRound+2 < currentRound {
+		validatorEpoch, err := helpers.CheckpointEpoch(dph.validatorRound)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to convert validator round %d to an epoch", dph.validatorRound)
+		}
+
+		if validatorEpoch+2 < currentEpoch {
 			notRecentStringPubKeys = append(notRecentStringPubKeys, spk)
 		}
 	}
@@ -154,8 +164,9 @@ func (c *beaconApiValidatorClient) checkDoppelGanger(ctx context.Context, in *et
 	}
 
 	// Get validators liveness for the last epoch.
-	// We request a state 1 epoch ago. We are guaranteed to have currentEpoch > 2
-	// since we assume that we are not in phase0.
+	// We request a state 1 epoch ago. The gate above only reaches here when some
+	// validator satisfies validatorEpoch+2 < currentEpoch, so currentEpoch > 2 and
+	// the subtraction cannot underflow.
 	previousEpoch := currentEpoch - 1
 
 	indexToPreviousLiveness, err := c.indexToLiveness(ctx, previousEpoch, indexes)

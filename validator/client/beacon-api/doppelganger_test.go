@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/OffchainLabs/prysm/v7/api/server/structs"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
@@ -820,4 +821,72 @@ func TestCheckDoppelGanger_Errors(t *testing.T) {
 			require.ErrorContains(t, testCase.expectedErrorMessage, err)
 		})
 	}
+}
+
+// TestCheckDoppelGanger_RecencyGateMatchesEvidenceWindow pins the unit of the
+// recency gate against the unit of the evidence it protects. The liveness API is
+// epoch-keyed and spans the current and previous epoch, so the gate must be
+// epoch-wide too. At 8 slots per round inside a 32-slot epoch a round-keyed gate
+// would be 4x narrower: a validator whose last attestation target is 3 rounds old
+// would clear it, and the liveness lookup would then find that validator's own
+// vote and report it as its own doppelganger.
+func TestCheckDoppelGanger_RecencyGateMatchesEvidenceWindow(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	const stringPubKey = "0x80000e851c0f53c3246ff726d7ff7766661ca5e12a07c45c114d208d54f0f8233d4380b2e9aff759d69795d1df905526"
+	pubKey, err := hexutil.Decode(stringPubKey)
+	require.NoError(t, err)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	handler := mock.NewMockHandler(ctrl)
+
+	syncingResponseJson := structs.SyncStatusResponse{}
+	handler.EXPECT().Get(gomock.Any(), syncingEndpoint, &syncingResponseJson).Return(nil).SetArg(
+		2, structs.SyncStatusResponse{Data: &structs.SyncStatusResponseData{IsSyncing: false}},
+	).Times(1)
+
+	stateForkResponseJson := structs.GetStateForkResponse{}
+	handler.EXPECT().Get(gomock.Any(), forkEndpoint, &stateForkResponseJson).Return(nil).SetArg(
+		2, structs.GetStateForkResponse{Data: &structs.Fork{
+			PreviousVersion: "0x01000000", CurrentVersion: "0x02000000", Epoch: "2",
+		}},
+	).Times(1)
+
+	// Head slot 127 is round 15 and epoch 3.
+	blockHeadersResponseJson := structs.GetBlockHeadersResponse{}
+	handler.EXPECT().Get(gomock.Any(), headersEndpoint, &blockHeadersResponseJson).Return(nil).SetArg(
+		2, structs.GetBlockHeadersResponse{Data: []*structs.SignedBeaconBlockHeaderContainer{{
+			Header: &structs.SignedBeaconBlockHeader{
+				Message: &structs.BeaconBlockHeader{Slot: "127"},
+			},
+		}}},
+	).Times(1)
+
+	// No liveness Post and no StateValidators call may happen: the validator is
+	// recent, so the gate must return before either. gomock fails the test on any
+	// unexpected call, which is the assertion.
+	stateValidatorsProvider := mock.NewMockStateValidatorsProvider(ctrl)
+
+	validatorClient := beaconApiValidatorClient{
+		handler:                 handler,
+		stateValidatorsProvider: stateValidatorsProvider,
+	}
+
+	// Round 12 starts at slot 96, which lives in epoch 3 -- the current epoch, so
+	// squarely inside the liveness evidence window.
+	out, err := validatorClient.CheckDoppelGanger(t.Context(), &ethpb.DoppelGangerRequest{
+		ValidatorRequests: []*ethpb.DoppelGangerRequest_ValidatorRequest{{PublicKey: pubKey, Epoch: 12}},
+	})
+	require.NoError(t, err)
+	require.DeepEqual(t, &ethpb.DoppelGangerResponse{
+		Responses: []*ethpb.DoppelGangerResponse_ValidatorResponse{
+			{PublicKey: pubKey, DuplicateExists: false},
+		},
+	}, out)
 }

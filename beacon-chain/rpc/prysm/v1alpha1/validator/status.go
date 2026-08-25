@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/signing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/time"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
@@ -137,12 +138,15 @@ func (vs *Server) CheckDoppelGanger(ctx context.Context, req *ethpb.DoppelGanger
 	}
 
 	headSlot := headState.Slot()
-	currRound := slots.RoundAt(headSlot)
+	currEpoch := slots.ToEpoch(headSlot)
 
 	// If all provided keys are recent we skip this check
 	// as we are unable to effectively determine if a doppelganger
 	// is active.
-	isRecent, resp := checkValidatorsAreRecent(currRound, req)
+	isRecent, resp, err := checkValidatorsAreRecent(currEpoch, req)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "Could not convert a validator's round to an epoch")
+	}
 	if isRecent {
 		return resp, nil
 	}
@@ -180,11 +184,15 @@ func (vs *Server) CheckDoppelGanger(ctx context.Context, req *ethpb.DoppelGanger
 		Responses: []*ethpb.DoppelGangerResponse_ValidatorResponse{},
 	}
 	for _, v := range req.ValidatorRequests {
-		// If the validator's last recorded round was less than 1 round
-		// ago, the current doppelganger check will not be able to
-		// identify dopplelgangers since an attestation can take up to
-		// a round to be included.
-		if v.Epoch+2 >= currRound {
+		// If the validator's last recorded attestation target falls inside the
+		// participation evidence below, the check cannot tell the validator's own
+		// vote from a doppelganger's. The evidence spans epochs, so compare in
+		// epochs: the stored value is a ROUND.
+		valEpoch, err := helpers.CheckpointEpoch(v.Epoch)
+		if err != nil {
+			return nil, status.Error(codes.Internal, "Could not convert a validator's round to an epoch")
+		}
+		if valEpoch+2 >= currEpoch {
 			resp.Responses = append(resp.Responses,
 				&ethpb.DoppelGangerResponse_ValidatorResponse{
 					PublicKey:       v.PublicKey,
@@ -356,7 +364,10 @@ func (vs *Server) validatorStatus(
 	}
 }
 
-func checkValidatorsAreRecent(headRound primitives.Round, req *ethpb.DoppelGangerRequest) (bool, *ethpb.DoppelGangerResponse) {
+func checkValidatorsAreRecent(
+	headEpoch primitives.Epoch,
+	req *ethpb.DoppelGangerRequest,
+) (bool, *ethpb.DoppelGangerResponse, error) {
 	validatorsAreRecent := true
 	resp := &ethpb.DoppelGangerResponse{
 		Responses: []*ethpb.DoppelGangerResponse_ValidatorResponse{},
@@ -365,9 +376,14 @@ func checkValidatorsAreRecent(headRound primitives.Round, req *ethpb.DoppelGange
 		// Due to how balances are reflected for individual
 		// validators, we can only effectively determine if a
 		// validator voted or not if we are able to look
-		// back more than 2 rounds into the past. The request field carries an
-		// attestation target, which is a ROUND.
-		if v.Epoch+2 < headRound {
+		// back more than 2 epochs into the past. The evidence this gate protects is
+		// the epoch participation arrays, so the comparison happens in epochs; the
+		// request field carries an attestation target, which is a ROUND.
+		valEpoch, err := helpers.CheckpointEpoch(v.Epoch)
+		if err != nil {
+			return false, nil, err
+		}
+		if valEpoch+2 < headEpoch {
 			validatorsAreRecent = false
 			// Zero out response if we encounter non-recent validators to
 			// guard against potential misuse.
@@ -380,7 +396,7 @@ func checkValidatorsAreRecent(headRound primitives.Round, req *ethpb.DoppelGange
 				DuplicateExists: false,
 			})
 	}
-	return validatorsAreRecent, resp
+	return validatorsAreRecent, resp, nil
 }
 
 func statusForPubKey(headState state.ReadOnlyBeaconState, pubKey []byte) (ethpb.ValidatorStatus, primitives.ValidatorIndex, error) {
