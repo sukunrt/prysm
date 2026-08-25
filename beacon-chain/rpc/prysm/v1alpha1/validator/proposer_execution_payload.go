@@ -351,16 +351,23 @@ func (vs *Server) getParentBlockHash(ctx context.Context, st state.BeaconState, 
 		if slots.ToEpoch(parentSlot) < params.BeaconConfig().GloasForkEpoch {
 			return getParentBlockHashPostCapella(st)
 		}
-		bid, err := st.LatestExecutionPayloadBid()
-		if err != nil {
-			return nil, errors.Wrap(err, "could not get latest execution payload bid")
-		}
 		if parentFull {
+			bid, err := st.LatestExecutionPayloadBid()
+			if err != nil {
+				return nil, errors.Wrap(err, "could not get latest execution payload bid")
+			}
 			bh := bid.BlockHash()
 			return bh[:], nil
 		}
-		pbh := bid.ParentBlockHash()
-		return pbh[:], nil
+		// An empty parent builds on the last payload the chain delivered, which is what
+		// latest_block_hash tracks. It equals the bid's parent_block_hash everywhere except
+		// at genesis, whose bid points at the execution genesis block's own parent: the zero
+		// hash, which an execution client answers INVALID.
+		lbh, err := st.LatestBlockHash()
+		if err != nil {
+			return nil, errors.Wrap(err, "could not get latest block hash")
+		}
+		return lbh[:], nil
 	}
 	if st.Version() >= version.Capella {
 		return getParentBlockHashPostCapella(st)

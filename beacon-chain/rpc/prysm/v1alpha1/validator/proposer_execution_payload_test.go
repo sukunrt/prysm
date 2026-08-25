@@ -251,6 +251,8 @@ func TestServer_getParentBlockHash_Gloas_Empty(t *testing.T) {
 	st, err := util.NewBeaconStateGloas(func(state *ethpb.BeaconStateGloas) error {
 		state.LatestExecutionPayloadBid.BlockHash = blockHash[:]
 		state.LatestExecutionPayloadBid.ParentBlockHash = parentBlockHash[:]
+		// The last payload the chain delivered is the one an empty parent builds on.
+		state.LatestBlockHash = parentBlockHash[:]
 		return nil
 	})
 	require.NoError(t, err)
@@ -263,6 +265,35 @@ func TestServer_getParentBlockHash_Gloas_Empty(t *testing.T) {
 	got, err := vs.getParentBlockHash(context.Background(), st, 0, headRoot, false)
 	require.NoError(t, err)
 	require.DeepEqual(t, parentBlockHash[:], got)
+}
+
+// The genesis bid's parent_block_hash is the execution genesis block's own parent, the zero hash.
+// Sending that as headBlockHash makes the engine answer INVALID, so the slot-1 proposer never gets
+// a payload back.
+func TestServer_getParentBlockHash_Gloas_EmptyGenesis(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.GloasForkEpoch = 0
+	params.OverrideBeaconConfig(cfg)
+
+	genesisHash := bytesutil.ToBytes32([]byte("execution-genesis"))
+	headRoot := bytesutil.ToBytes32([]byte("genesis-root"))
+	st, err := util.NewBeaconStateGloas(func(state *ethpb.BeaconStateGloas) error {
+		state.LatestExecutionPayloadBid.BlockHash = genesisHash[:]
+		state.LatestExecutionPayloadBid.ParentBlockHash = make([]byte, 32)
+		state.LatestBlockHash = genesisHash[:]
+		return nil
+	})
+	require.NoError(t, err)
+
+	chain := &chainMock.ChainService{}
+	vs := &Server{
+		ForkchoiceFetcher: chain,
+		HeadFetcher:       chain,
+	}
+	got, err := vs.getParentBlockHash(context.Background(), st, 1, headRoot, false)
+	require.NoError(t, err)
+	require.DeepEqual(t, genesisHash[:], got)
 }
 
 func TestServer_applyParentExecutionPayloadToHead_PreGloas(t *testing.T) {

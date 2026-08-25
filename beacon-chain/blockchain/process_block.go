@@ -1212,13 +1212,20 @@ func (s *Service) lateBlockTasks(ctx context.Context) {
 	}
 
 	if headState.Version() >= version.Gloas {
-		bid, err := headState.LatestExecutionPayloadBid()
+		// An empty head builds on the last payload the chain delivered, which is what
+		// latest_block_hash tracks. The bid's parent_block_hash agrees everywhere except at
+		// genesis, where it is the execution genesis block's own parent: the zero hash.
+		bh, err := headState.LatestBlockHash()
 		if err != nil {
-			log.WithError(err).Debug("could not perform late block tasks: failed to retrieve execution payload bid")
+			log.WithError(err).Debug("late block tasks: could not get latest block hash")
 			return
 		}
-		bh := bid.ParentBlockHash()
 		if full {
+			bid, err := headState.LatestExecutionPayloadBid()
+			if err != nil {
+				log.WithError(err).Debug("late block tasks: could not get payload bid")
+				return
+			}
 			bh = bid.BlockHash()
 		}
 		id, err := s.notifyForkchoiceUpdateGloas(ctx, bh, attribute)
