@@ -102,6 +102,8 @@ func GossipTopicMappings(topic string, epoch primitives.Epoch) proto.Message {
 			return &ethpb.DataColumnSidecarGloas{}
 		}
 		return gossipMessage(topic)
+	case AvailableAttestationTopicFormat:
+		return &ethpb.AvailableAttestation{}
 	default:
 		return gossipMessage(topic)
 	}

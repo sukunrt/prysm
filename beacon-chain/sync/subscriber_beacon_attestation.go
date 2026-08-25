@@ -62,3 +62,12 @@ func attesterSubnetIndices(currentSlot primitives.Slot) map[uint64]bool {
 
 	return subnets
 }
+
+func (s *Service) availableAttestationSubscriber(_ context.Context, msg proto.Message) error {
+	_, ok := msg.(*eth.AvailableAttestation)
+	if !ok {
+		return fmt.Errorf("message was not type eth.Att, type=%T", msg)
+	}
+	// TODO: save to an attestation pool like committee attestations
+	return nil
+}

@@ -20,6 +20,8 @@ import (
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
@@ -834,6 +836,168 @@ func TestService_validateUnaggregatedAttTopic_SubnetMatch(t *testing.T) {
 			require.Equal(t, tt.want, res)
 			if tt.want == pubsub.ValidationAccept {
 				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestService_validateAvailableAttestation(t *testing.T) {
+	p := p2ptest.NewTestP2P(t)
+	db := dbtest.SetupDB(t)
+	// Two slots past genesis so that stale (slot 1) and current (slot 2) votes are
+	// both constructible without tripping the slot-0 special case.
+	currentSlot := primitives.Slot(2)
+	genesisOffset := time.Duration(uint64(currentSlot)*params.BeaconConfig().SecondsPerSlot) * time.Second
+	chain := &mockChain.ChainService{
+		Genesis:        time.Now().Add(-genesisOffset),
+		ValidatorsRoot: [32]byte{'A'},
+		DB:             db,
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	s := &Service{
+		ctx: ctx,
+		cfg: &config{
+			initialSync: &mockSync.Sync{IsSyncing: false},
+			p2p:         p,
+			beaconDB:    db,
+			chain:       chain,
+			clock:       startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
+		},
+		signatureChan: make(chan *signatureVerifier, verifierLimit),
+	}
+	s.initCaches()
+	go s.verifierRoutine()
+
+	blk := util.NewBeaconBlock()
+	blk.Block.Slot = currentSlot
+	util.SaveBlock(t, ctx, db, blk)
+	validBlockRoot, err := blk.Block.HashTreeRoot()
+	require.NoError(t, err)
+
+	validatorCount := uint64(64)
+	savedState, keys := util.DeterministicGenesisState(t, validatorCount)
+	require.NoError(t, savedState.SetSlot(currentSlot))
+	require.NoError(t, db.SaveState(ctx, savedState, validBlockRoot))
+	chain.State = savedState
+	chain.TargetRoot = validBlockRoot
+
+	digest := s.currentForkDigest()
+	topic := fmt.Sprintf(p2p.AvailableAttestationTopicFormat, digest) + p.Encoding().ProtocolSuffix()
+
+	seatBits := func(slot primitives.Slot, idx primitives.ValidatorIndex) bitfield.Bitvector512 {
+		bits := bitfield.NewBitvector512()
+		for _, seat := range decoupled.AvailableAttestationSeats(slot, idx, validatorCount) {
+			bits.SetBitAt(seat, true)
+		}
+		return bits
+	}
+	// A vote with the seat bits of validator idx, signed by signer over the mock domain.
+	vote := func(slot primitives.Slot, idx primitives.ValidatorIndex, signer bls.SecretKey,
+		blockRoot []byte) *ethpb.AvailableAttestation {
+		att := &ethpb.AvailableAttestation{
+			AggregationBits: seatBits(slot, idx),
+			Data: &ethpb.AvailableAttestationData{
+				Slot:            slot,
+				BeaconBlockRoot: blockRoot,
+			},
+		}
+		root, err := signing.ComputeSigningRoot(att.Data, decoupled.AvailableAttDomain)
+		require.NoError(t, err)
+		att.Signature = signer.Sign(root[:]).Marshal()
+		return att
+	}
+
+	twoSigners := vote(currentSlot, 5, keys[5], validBlockRoot[:])
+	for _, seat := range decoupled.AvailableAttestationSeats(currentSlot, 6, validatorCount) {
+		twoSigners.AggregationBits.SetBitAt(seat, true)
+	}
+	emptySeats := vote(currentSlot, 5, keys[5], validBlockRoot[:])
+	emptySeats.AggregationBits = bitfield.NewBitvector512()
+	unknownRoot := [32]byte{'m', 'i', 's', 's', 'i', 'n', 'g'}
+
+	tests := []struct {
+		name  string
+		att   *ethpb.AvailableAttestation
+		topic string
+		want  pubsub.ValidationResult
+	}{
+		{
+			name:  "valid vote",
+			att:   vote(currentSlot, 5, keys[5], validBlockRoot[:]),
+			topic: topic,
+			want:  pubsub.ValidationAccept,
+		},
+		{
+			name:  "wrong signer",
+			att:   vote(currentSlot, 5, keys[6], validBlockRoot[:]),
+			topic: topic,
+			want:  pubsub.ValidationReject,
+		},
+		{
+			name:  "seats of two validators",
+			att:   twoSigners,
+			topic: topic,
+			want:  pubsub.ValidationReject,
+		},
+		{
+			name:  "empty seat bits",
+			att:   emptySeats,
+			topic: topic,
+			want:  pubsub.ValidationReject,
+		},
+		{
+			name:  "stale slot",
+			att:   vote(currentSlot-1, 5, keys[5], validBlockRoot[:]),
+			topic: topic,
+			want:  pubsub.ValidationIgnore,
+		},
+		{
+			name:  "future slot",
+			att:   vote(currentSlot+3, 5, keys[5], validBlockRoot[:]),
+			topic: topic,
+			want:  pubsub.ValidationIgnore,
+		},
+		{
+			name:  "slot zero",
+			att:   vote(0, 5, keys[5], validBlockRoot[:]),
+			topic: topic,
+			want:  pubsub.ValidationIgnore,
+		},
+		{
+			name:  "unknown block root",
+			att:   vote(currentSlot, 5, keys[5], unknownRoot[:]),
+			topic: topic,
+			want:  pubsub.ValidationIgnore,
+		},
+		{
+			name:  "nil topic",
+			att:   vote(currentSlot, 5, keys[5], validBlockRoot[:]),
+			topic: "",
+			want:  pubsub.ValidationReject,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buf := new(bytes.Buffer)
+			_, err := p.Encoding().EncodeGossip(buf, tt.att)
+			require.NoError(t, err)
+			m := &pubsub.Message{
+				Message: &pubsubpb.Message{
+					Data:  buf.Bytes(),
+					Topic: &tt.topic,
+				},
+			}
+			if tt.topic == "" {
+				m.Message.Topic = nil
+			}
+
+			res, err := s.validateAvailableAttestation(ctx, "", m)
+			require.Equal(t, tt.want, res)
+			if tt.want == pubsub.ValidationAccept {
+				require.NoError(t, err)
+				require.NotNil(t, m.ValidatorData, "expected validator data to be set")
 			}
 		})
 	}

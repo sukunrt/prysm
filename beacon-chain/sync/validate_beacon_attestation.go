@@ -13,15 +13,19 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/operation"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/signing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/slasher/types"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	eth "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
@@ -347,6 +351,40 @@ func (s *Service) validateUnaggregatedAttWithState(ctx context.Context, a eth.At
 	return s.validateWithBatchVerifier(ctx, "attestation", set)
 }
 
+// This validates beacon available attestation using the given state, the validation consists of signature verification.
+func (s *Service) validateUnaggregatedAvailableAttWithState(
+	ctx context.Context,
+	a *ethpb.AvailableAttestation,
+	bs state.ReadOnlyBeaconState,
+) (pubsub.ValidationResult, error) {
+	ctx, span := trace.StartSpan(ctx, "sync.validateAvailableAtt")
+	defer span.End()
+
+	validatorCount := uint64(bs.NumValidators())
+	validatorIndices := decoupled.AvailableAttestationSeatsToValidatorIndices(a.Data.Slot, a.AggregationBits.BitIndices(), validatorCount)
+	if len(validatorIndices) != 1 {
+		return pubsub.ValidationReject, errors.New("invalid available attestation seats")
+	}
+	pk := bs.PubkeyAtIndex(validatorIndices[0])
+	bpk, err := bls.PublicKeyFromBytes(pk[:])
+	if err != nil {
+		return pubsub.ValidationReject, fmt.Errorf("invalid public key: %w", err)
+	}
+
+	root, err := signing.ComputeSigningRoot(a.GetData(), decoupled.AvailableAttDomain)
+	if err != nil {
+		return pubsub.ValidationReject, fmt.Errorf("invalid signing root: %w", err)
+	}
+	set := &bls.SignatureBatch{
+		Signatures:   [][]byte{a.GetSignature()},
+		PublicKeys:   []bls.PublicKey{bpk},
+		Messages:     [][32]byte{root},
+		Descriptions: []string{signing.AvailableAttestationSignature},
+	}
+
+	return s.validateWithBatchVerifier(ctx, "available attestation", set)
+}
+
 func validateAttestingIndex(
 	ctx context.Context,
 	attestingIndex primitives.ValidatorIndex,
@@ -472,4 +510,116 @@ func wrapAttestationError(err error, att eth.Att) error {
 		"attSlot: %d, attSlotInEpoch: %d, attOldCommitteeIndex: %d, attCommitteeIndex: %d, attBlockRoot: %s, attSource: {root: %s, epoch: %d}, attTarget: {root: %s, epoch: %d}",
 		slot, slotInEpoch, oldCommitteeIndex, committeeIndex, blockRoot, sourceRoot, sourceEpoch, targetRoot, targetEpoch,
 	)
+}
+
+// Validation
+// - The block being voted for (attestation.data.beacon_block_root) passes validation.
+// - The slot for the attestation is the current slot.
+// - The signature of attestation is valid.
+func (s *Service) validateAvailableAttestation(
+	ctx context.Context,
+	pid peer.ID,
+	msg *pubsub.Message,
+) (pubsub.ValidationResult, error) {
+	// start := time.Now()
+	defer func() {
+		// TODO(sukunrt): fix this with correct metrics
+		//		attestationVerificationGossipSummary.Observe(float64(time.Since(start).Milliseconds()))
+	}()
+
+	if pid == s.cfg.p2p.PeerID() {
+		return pubsub.ValidationAccept, nil
+	}
+	// Attestation processing requires the target block to be present in the database, so we'll skip
+	// validating or processing attestations until fully synced.
+	if s.cfg.initialSync.Syncing() {
+		return pubsub.ValidationIgnore, nil
+	}
+
+	ctx, span := trace.StartSpan(ctx, "sync.validateCommitteeIndexBeaconAttestation")
+	defer span.End()
+
+	if msg.Topic == nil {
+		return pubsub.ValidationReject, p2p.ErrInvalidTopic
+	}
+
+	m, err := s.decodePubsubMessage(msg)
+	if err != nil {
+		tracing.AnnotateError(span, err)
+		return pubsub.ValidationReject, err
+	}
+
+	att, ok := m.(*eth.AvailableAttestation)
+	if !ok {
+		return pubsub.ValidationReject, errWrongMessage
+	}
+	if att.AggregationBits == nil || att.Data == nil || att.Signature == nil ||
+		att.GetData().BeaconBlockRoot == nil {
+		return pubsub.ValidationReject, errors.New("nil fields in available attestation")
+	}
+
+	data := att.GetData()
+	// Do not process slot 0 attestations.
+	if data.Slot == 0 {
+		return pubsub.ValidationIgnore, nil
+	}
+
+	// only care about current slot
+	if err := helpers.ValidateAvailableAttestationTime(data.Slot, s.cfg.clock.GenesisTime(), earlyAttestationProcessingTolerance); err != nil {
+		tracing.AnnotateError(span, err)
+		return pubsub.ValidationIgnore, err
+	}
+
+	// // Generate cache key for unaggregated attestation tracking
+	// attKey, err := generateUnaggregatedAttCacheKey(att)
+	// if err != nil {
+	// 	log.WithError(err).Error("Could not generate cache key for attestation tracking")
+	// 	return pubsub.ValidationIgnore, nil
+	// }
+
+	// No slashing required
+
+	// Verify the block being voted and the processed state is in beaconDB and the block has passed validation if it's in the beaconDB.
+	blockRoot := bytesutil.ToBytes32(data.BeaconBlockRoot)
+	if !s.hasBlockAndState(ctx, blockRoot) {
+		// Block not yet available - save attestation to pending queue for later processing
+		// when the block arrives. Return ValidationIgnore so gossip doesn't potentially penalize the peer.
+		//
+		// TODO(sukunrt): save the attestation here
+		return pubsub.ValidationIgnore, nil
+	}
+	epoch := slots.ToEpoch(att.Data.Slot)
+	targetRoot, err := s.cfg.chain.TargetRootForEpoch(blockRoot, epoch)
+	if err != nil {
+		// We can reject this, it's an invalid attestation but there might be some reason the peer forwarded this.
+		return pubsub.ValidationIgnore, nil
+	}
+	state, err := s.cfg.chain.AttestationTargetState(ctx, &ethpb.Checkpoint{
+		Epoch: epoch,
+		Root:  targetRoot[:],
+	})
+	if err != nil {
+		return pubsub.ValidationIgnore, nil
+	}
+
+	// This is a goldfish attestation.
+	// The peer can vote for anything that's descended from finality.
+	// TODO(sukunrt): add validation for finality descendent block.
+	//
+	// Block exists - verify it's in forkchoice (i.e., it's a descendant of the finalized checkpoint)
+	//
+	// if !s.cfg.chain.InForkchoice(blockRoot) {
+	// 	tracing.AnnotateError(span, blockchain.ErrNotDescendantOfFinalized)
+	// 	return pubsub.ValidationIgnore, blockchain.ErrNotDescendantOfFinalized
+	// }
+
+	validationRes, err := s.validateUnaggregatedAvailableAttWithState(ctx, att, state)
+	if validationRes != pubsub.ValidationAccept {
+		return validationRes, err
+	}
+
+	msg.ValidatorData = att
+
+	// TODO(sukunrt): mark the attestation as seen
+	return pubsub.ValidationAccept, nil
 }

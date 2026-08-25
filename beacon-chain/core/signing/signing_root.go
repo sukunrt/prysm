@@ -42,6 +42,8 @@ const (
 	AggregatorSignature = "aggregator signature"
 	// AttestationSignature represents aggregated attestation signature
 	AttestationSignature = "attestation signature"
+	// AvailableAttestationSignature represents available attestation signature
+	AvailableAttestationSignature = "available attestation signature"
 	// BlsChangeSignature represents signature to BLSToExecutionChange
 	BlsChangeSignature = "blschange signature"
 	// SyncCommitteeSignature represents sync committee signature

@@ -187,6 +187,22 @@ func ValidateAttestationTime(attSlot primitives.Slot, genesis time.Time, clockDi
 	return nil
 }
 
+func ValidateAvailableAttestationTime(attSlot primitives.Slot, genesis time.Time, clockDisparity time.Duration) error {
+	currentSlot := slots.CurrentSlot(genesis)
+	if currentSlot > attSlot {
+		return errors.New("stale available attestation")
+	}
+	if currentSlot == attSlot {
+		return nil
+	}
+	slotStartTime := slots.UnsafeStartTime(genesis, attSlot)
+	now := time.Now()
+	if slotStartTime.Sub(now) < clockDisparity {
+		return nil
+	}
+	return errors.New("future available attestation")
+}
+
 // VerifyCheckpointEpoch is within current epoch and previous epoch
 // with respect to current time. Returns true if it's within, false if it's not.
 func VerifyCheckpointEpoch(c *ethpb.Checkpoint, genesis time.Time) bool {

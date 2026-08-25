@@ -65,7 +65,7 @@ func TestSubmitAvailableAttestation_Ok(t *testing.T) {
 		expectedBits.SetBitAt(s, true)
 	}
 
-	root, err := signing.ComputeSigningRoot(attData, availableAttDomain)
+	root, err := signing.ComputeSigningRoot(attData, decoupled.AvailableAttDomain)
 	require.NoError(t, err)
 	sig, err := validator.km.Sign(t.Context(), &validatorpb.SignRequest{
 		PublicKey:   pubKey[:],

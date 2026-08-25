@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"strings"
 	"time"
@@ -154,27 +153,19 @@ func (v *validator) SubmitAvailableAttestation(
 	}
 }
 
-var availableAttDomain []byte
-
-func init() {
-	const availableAttDomainString = "decoupled-mock-available-attestation"
-	var ad = sha256.Sum256([]byte(availableAttDomainString))
-	availableAttDomain = ad[:]
-}
-
 // Given validator's public key, this function returns the signature of an available attestation data and its signing root.
 func (v *validator) signAvailableAtt(ctx context.Context, pubKey [fieldparams.BLSPubkeyLength]byte, data *ethpb.AvailableAttestationData, slot primitives.Slot) ([]byte, [32]byte, error) {
 	ctx, span := trace.StartSpan(ctx, "validator.signAvailableAtt")
 	defer span.End()
 
-	root, err := signing.ComputeSigningRoot(data, availableAttDomain)
+	root, err := signing.ComputeSigningRoot(data, decoupled.AvailableAttDomain)
 	if err != nil {
 		return nil, [32]byte{}, err
 	}
 	sig, err := v.km.Sign(ctx, &validatorpb.SignRequest{
 		PublicKey:       pubKey[:],
 		SigningRoot:     root[:],
-		SignatureDomain: availableAttDomain,
+		SignatureDomain: decoupled.AvailableAttDomain,
 		Object:          &validatorpb.SignRequest_AvailableAttestationData{AvailableAttestationData: data},
 		SigningSlot:     slot,
 	})

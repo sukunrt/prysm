@@ -12,6 +12,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	coreTime "github.com/OffchainLabs/prysm/v7/beacon-chain/core/time"
 	"github.com/OffchainLabs/prysm/v7/config/params"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/pkg/errors"
@@ -156,6 +157,9 @@ func (s *Service) topicScoreParams(topic string) (*pubsub.TopicScoreParams, erro
 	case strings.Contains(topic, GossipSignedProposerPreferencesMessage):
 		// TODO: Revisit scoring params for signed proposer preferences gossip.
 		return defaultBlockTopicParams(), nil
+	case strings.Contains(topic, GossipAvailableAttestationMessage):
+		// TODO: Revisit scoring params for available attestation gossip.
+		return defaultAvailableAttestationTopicParams(), nil
 	default:
 		return nil, errors.Errorf("unrecognized topic provided for parameter registration: %s", topic)
 	}
@@ -239,6 +243,48 @@ func defaultAggregateTopicParams(activeValidators uint64) *pubsub.TopicScorePara
 	}
 	firstMessageWeight := maxFirstDeliveryScore / firstMessageCap
 	meshThreshold, err := decayThreshold(scoreDecay(1*oneEpochDuration()), float64(aggPerSlot)/dampeningFactor)
+	if err != nil {
+		log.WithError(err).Warn("Skipping initializing topic scoring")
+		return nil
+	}
+	meshWeight := -scoreByWeight(aggregateWeight, meshThreshold)
+	meshCap := 4 * meshThreshold
+	if !meshDeliveryIsScored {
+		// Set the mesh weight as zero as a temporary measure, so as to prevent
+		// the average nodes from being penalised.
+		meshWeight = 0
+	}
+	return &pubsub.TopicScoreParams{
+		TopicWeight:                     aggregateWeight,
+		TimeInMeshWeight:                maxInMeshScore / inMeshCap(),
+		TimeInMeshQuantum:               inMeshTime(),
+		TimeInMeshCap:                   inMeshCap(),
+		FirstMessageDeliveriesWeight:    firstMessageWeight,
+		FirstMessageDeliveriesDecay:     scoreDecay(1 * oneEpochDuration()),
+		FirstMessageDeliveriesCap:       firstMessageCap,
+		MeshMessageDeliveriesWeight:     meshWeight,
+		MeshMessageDeliveriesDecay:      scoreDecay(1 * oneEpochDuration()),
+		MeshMessageDeliveriesCap:        meshCap,
+		MeshMessageDeliveriesThreshold:  meshThreshold,
+		MeshMessageDeliveriesWindow:     2 * time.Second,
+		MeshMessageDeliveriesActivation: 1 * oneEpochDuration(),
+		MeshFailurePenaltyWeight:        meshWeight,
+		MeshFailurePenaltyDecay:         scoreDecay(1 * oneEpochDuration()),
+		InvalidMessageDeliveriesWeight:  -maxScore() / aggregateWeight,
+		InvalidMessageDeliveriesDecay:   scoreDecay(invalidDecayPeriod),
+	}
+}
+
+func defaultAvailableAttestationTopicParams() *pubsub.TopicScoreParams {
+	// One vote per distinct signer per slot, bounded by the seat count.
+	msgsPerSlot := uint64(decoupled.AvailableAttestationCommitteeSize)
+	firstMessageCap, err := decayLimit(scoreDecay(1*oneEpochDuration()), float64(msgsPerSlot*2/gossipSubD))
+	if err != nil {
+		log.WithError(err).Warn("Skipping initializing topic scoring")
+		return nil
+	}
+	firstMessageWeight := maxFirstDeliveryScore / firstMessageCap
+	meshThreshold, err := decayThreshold(scoreDecay(1*oneEpochDuration()), float64(msgsPerSlot)/dampeningFactor)
 	if err != nil {
 		log.WithError(err).Warn("Skipping initializing topic scoring")
 		return nil
