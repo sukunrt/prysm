@@ -1,4 +1,4 @@
-//go:build !minimal && !decoupled
+//go:build decoupled
 
 package eth
 
@@ -853,7 +853,7 @@ func (c *BeaconStateBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 9: Eth1DataVotes
-	if len(c.Eth1DataVotes) > 2048 {
+	if len(c.Eth1DataVotes) > 512 {
 		return nil, ssz.ErrListTooBig
 	}
 	for _, o := range c.Eth1DataVotes {
@@ -1058,8 +1058,8 @@ func (c *BeaconStateBellatrix) UnmarshalSSZ(buf []byte) error {
 			return fmt.Errorf("misaligned bytes: c.Eth1DataVotes length is %d, which is not a multiple of 72: %w", len(sszSlice9), ssz.ErrIncorrectListSize)
 		}
 		numElem := len(sszSlice9) / 72
-		if numElem > 2048 {
-			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 2048: %w", numElem, ssz.ErrListTooBig)
+		if numElem > 512 {
+			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 512: %w", numElem, ssz.ErrListTooBig)
 		}
 		c.Eth1DataVotes = make([]*Eth1Data, numElem)
 		for i := 0; i < numElem; i++ {
@@ -1288,7 +1288,7 @@ func (c *BeaconStateBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	}
 	// Field 9: Eth1DataVotes
 	{
-		if len(c.Eth1DataVotes) > 2048 {
+		if len(c.Eth1DataVotes) > 512 {
 			return ssz.ErrListTooBig
 		}
 		subIndx := hh.Index()
@@ -1297,7 +1297,7 @@ func (c *BeaconStateBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 				return fmt.Errorf("Eth1DataVotes: %w", err)
 			}
 		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 2048)
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 512)
 	}
 	// Field 10: Eth1DepositIndex
 	hh.PutUint64(c.Eth1DepositIndex)

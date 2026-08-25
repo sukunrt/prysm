@@ -1,4 +1,4 @@
-//go:build !minimal && !decoupled
+//go:build decoupled
 
 package v1
 

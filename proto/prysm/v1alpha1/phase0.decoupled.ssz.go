@@ -1,4 +1,4 @@
-//go:build !minimal && !decoupled
+//go:build decoupled
 
 package eth
 
@@ -1358,7 +1358,7 @@ func (c *BeaconState) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 9: Eth1DataVotes
-	if len(c.Eth1DataVotes) > 2048 {
+	if len(c.Eth1DataVotes) > 512 {
 		return nil, ssz.ErrListTooBig
 	}
 	for _, o := range c.Eth1DataVotes {
@@ -1386,7 +1386,7 @@ func (c *BeaconState) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 15: PreviousEpochAttestations
-	if len(c.PreviousEpochAttestations) > 4096 {
+	if len(c.PreviousEpochAttestations) > 1024 {
 		return nil, ssz.ErrListTooBig
 	}
 	{
@@ -1403,7 +1403,7 @@ func (c *BeaconState) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 16: CurrentEpochAttestations
-	if len(c.CurrentEpochAttestations) > 4096 {
+	if len(c.CurrentEpochAttestations) > 1024 {
 		return nil, ssz.ErrListTooBig
 	}
 	{
@@ -1560,8 +1560,8 @@ func (c *BeaconState) UnmarshalSSZ(buf []byte) error {
 			return fmt.Errorf("misaligned bytes: c.Eth1DataVotes length is %d, which is not a multiple of 72: %w", len(sszSlice9), ssz.ErrIncorrectListSize)
 		}
 		numElem := len(sszSlice9) / 72
-		if numElem > 2048 {
-			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 2048: %w", numElem, ssz.ErrListTooBig)
+		if numElem > 512 {
+			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 512: %w", numElem, ssz.ErrListTooBig)
 		}
 		c.Eth1DataVotes = make([]*Eth1Data, numElem)
 		for i := 0; i < numElem; i++ {
@@ -1656,8 +1656,8 @@ func (c *BeaconState) UnmarshalSSZ(buf []byte) error {
 				return fmt.Errorf("misaligned list bytes: when decoding c.PreviousEpochAttestations, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
 			}
 			listLen := startOffset / 4
-			if listLen > 4096 {
-				return fmt.Errorf("ssz-max exceeded: c.PreviousEpochAttestations has %d elements, ssz-max is 4096: %w", listLen, ssz.ErrListTooBig)
+			if listLen > 1024 {
+				return fmt.Errorf("ssz-max exceeded: c.PreviousEpochAttestations has %d elements, ssz-max is 1024: %w", listLen, ssz.ErrListTooBig)
 			}
 			totalVarBytes := uint64(len(sszSlice15))
 			if totalVarBytes < startOffset {
@@ -1706,8 +1706,8 @@ func (c *BeaconState) UnmarshalSSZ(buf []byte) error {
 				return fmt.Errorf("misaligned list bytes: when decoding c.CurrentEpochAttestations, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
 			}
 			listLen := startOffset / 4
-			if listLen > 4096 {
-				return fmt.Errorf("ssz-max exceeded: c.CurrentEpochAttestations has %d elements, ssz-max is 4096: %w", listLen, ssz.ErrListTooBig)
+			if listLen > 1024 {
+				return fmt.Errorf("ssz-max exceeded: c.CurrentEpochAttestations has %d elements, ssz-max is 1024: %w", listLen, ssz.ErrListTooBig)
 			}
 			totalVarBytes := uint64(len(sszSlice16))
 			if totalVarBytes < startOffset {
@@ -1847,7 +1847,7 @@ func (c *BeaconState) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	}
 	// Field 9: Eth1DataVotes
 	{
-		if len(c.Eth1DataVotes) > 2048 {
+		if len(c.Eth1DataVotes) > 512 {
 			return ssz.ErrListTooBig
 		}
 		subIndx := hh.Index()
@@ -1856,7 +1856,7 @@ func (c *BeaconState) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 				return fmt.Errorf("Eth1DataVotes: %w", err)
 			}
 		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 2048)
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 512)
 	}
 	// Field 10: Eth1DepositIndex
 	hh.PutUint64(c.Eth1DepositIndex)
@@ -1913,7 +1913,7 @@ func (c *BeaconState) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	}
 	// Field 15: PreviousEpochAttestations
 	{
-		if len(c.PreviousEpochAttestations) > 4096 {
+		if len(c.PreviousEpochAttestations) > 1024 {
 			return ssz.ErrListTooBig
 		}
 		subIndx := hh.Index()
@@ -1922,11 +1922,11 @@ func (c *BeaconState) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 				return fmt.Errorf("PreviousEpochAttestations: %w", err)
 			}
 		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.PreviousEpochAttestations)), 4096)
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.PreviousEpochAttestations)), 1024)
 	}
 	// Field 16: CurrentEpochAttestations
 	{
-		if len(c.CurrentEpochAttestations) > 4096 {
+		if len(c.CurrentEpochAttestations) > 1024 {
 			return ssz.ErrListTooBig
 		}
 		subIndx := hh.Index()
@@ -1935,7 +1935,7 @@ func (c *BeaconState) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 				return fmt.Errorf("CurrentEpochAttestations: %w", err)
 			}
 		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.CurrentEpochAttestations)), 4096)
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.CurrentEpochAttestations)), 1024)
 	}
 	// Field 17: JustificationBits
 	if len([]byte(c.JustificationBits)) != 1 {

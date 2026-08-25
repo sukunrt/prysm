@@ -1,4 +1,4 @@
-//go:build !minimal && !decoupled
+//go:build decoupled
 
 package eth
 
@@ -200,7 +200,7 @@ func (c *BeaconBlockContentsFulu) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 }
 
 func (c *BeaconStateFulu) SizeSSZ() int {
-	size := 2737225
+	size := 2736841
 	size += len(c.HistoricalRoots) * 32
 	size += len(c.Eth1DataVotes) * 72
 	size += len(c.Validators) * 121
@@ -226,7 +226,7 @@ func (c *BeaconStateFulu) MarshalSSZ() ([]byte, error) {
 
 func (c *BeaconStateFulu) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
-	offset := 2737225
+	offset := 2736841
 
 	// Field 0: GenesisTime
 	dst = binary.LittleEndian.AppendUint64(dst, c.GenesisTime)
@@ -444,7 +444,7 @@ func (c *BeaconStateFulu) MarshalSSZTo(dst []byte) ([]byte, error) {
 	offset += len(c.PendingConsolidations) * 16
 
 	// Field 37: ProposerLookahead
-	if len(c.ProposerLookahead) != 64 {
+	if len(c.ProposerLookahead) != 16 {
 		return nil, ssz.ErrBytesLength
 	}
 	for _, o := range c.ProposerLookahead {
@@ -465,7 +465,7 @@ func (c *BeaconStateFulu) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 9: Eth1DataVotes
-	if len(c.Eth1DataVotes) > 2048 {
+	if len(c.Eth1DataVotes) > 512 {
 		return nil, ssz.ErrListTooBig
 	}
 	for _, o := range c.Eth1DataVotes {
@@ -562,7 +562,7 @@ func (c *BeaconStateFulu) MarshalSSZTo(dst []byte) ([]byte, error) {
 func (c *BeaconStateFulu) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size < 2737225 {
+	if size < 2736841 {
 		return ssz.ErrSize
 	}
 
@@ -591,10 +591,10 @@ func (c *BeaconStateFulu) UnmarshalSSZ(buf []byte) error {
 	sszSlice31 := buf[2736677:2736685] // c.EarliestExitEpoch
 	sszSlice32 := buf[2736685:2736693] // c.ConsolidationBalanceToConsume
 	sszSlice33 := buf[2736693:2736701] // c.EarliestConsolidationEpoch
-	sszSlice37 := buf[2736713:2737225] // c.ProposerLookahead
+	sszSlice37 := buf[2736713:2736841] // c.ProposerLookahead
 
 	sszVarOffset7 := ssz.ReadOffset(buf[524464:524468]) // c.HistoricalRoots
-	if sszVarOffset7 != 2737225 {
+	if sszVarOffset7 != 2736841 {
 		return ssz.ErrInvalidVariableOffset
 	}
 	if sszVarOffset7 > size {
@@ -739,8 +739,8 @@ func (c *BeaconStateFulu) UnmarshalSSZ(buf []byte) error {
 			return fmt.Errorf("misaligned bytes: c.Eth1DataVotes length is %d, which is not a multiple of 72: %w", len(sszSlice9), ssz.ErrIncorrectListSize)
 		}
 		numElem := len(sszSlice9) / 72
-		if numElem > 2048 {
-			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 2048: %w", numElem, ssz.ErrListTooBig)
+		if numElem > 512 {
+			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 512: %w", numElem, ssz.ErrListTooBig)
 		}
 		c.Eth1DataVotes = make([]*Eth1Data, numElem)
 		for i := 0; i < numElem; i++ {
@@ -1009,8 +1009,8 @@ func (c *BeaconStateFulu) UnmarshalSSZ(buf []byte) error {
 
 	// Field 37: ProposerLookahead
 	{
-		c.ProposerLookahead = make([]primitives.ValidatorIndex, 64)
-		for i := 0; i < 64; i++ {
+		c.ProposerLookahead = make([]primitives.ValidatorIndex, 16)
+		for i := 0; i < 16; i++ {
 			var tmp primitives.ValidatorIndex
 
 			tmpSlice := sszSlice37[i*8 : (1+i)*8]
@@ -1103,7 +1103,7 @@ func (c *BeaconStateFulu) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	}
 	// Field 9: Eth1DataVotes
 	{
-		if len(c.Eth1DataVotes) > 2048 {
+		if len(c.Eth1DataVotes) > 512 {
 			return ssz.ErrListTooBig
 		}
 		subIndx := hh.Index()
@@ -1112,7 +1112,7 @@ func (c *BeaconStateFulu) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 				return fmt.Errorf("Eth1DataVotes: %w", err)
 			}
 		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 2048)
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 512)
 	}
 	// Field 10: Eth1DepositIndex
 	hh.PutUint64(c.Eth1DepositIndex)
@@ -1315,7 +1315,7 @@ func (c *BeaconStateFulu) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	}
 	// Field 37: ProposerLookahead
 	{
-		if len(c.ProposerLookahead) != 64 {
+		if len(c.ProposerLookahead) != 16 {
 			return ssz.ErrVectorLength
 		}
 		subIndx := hh.Index()

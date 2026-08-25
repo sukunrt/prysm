@@ -1,4 +1,4 @@
-//go:build !minimal && !decoupled
+//go:build decoupled
 
 package eth
 
@@ -8,24 +8,23 @@ import (
 
 	go_bitfield "github.com/OffchainLabs/go-bitfield"
 	ssz "github.com/OffchainLabs/methodical-ssz/ssz"
-	v1 "github.com/OffchainLabs/prysm/v7/proto/engine/v1"
 )
 
-func (c *BeaconBlockBellatrix) SizeSSZ() int {
+func (c *BeaconBlockAltair) SizeSSZ() int {
 	size := 84
 	if c.Body == nil {
-		c.Body = new(BeaconBlockBodyBellatrix)
+		c.Body = new(BeaconBlockBodyAltair)
 	}
 	size += c.Body.SizeSSZ()
 	return size
 }
 
-func (c *BeaconBlockBellatrix) MarshalSSZ() ([]byte, error) {
+func (c *BeaconBlockAltair) MarshalSSZ() ([]byte, error) {
 	buf := make([]byte, c.SizeSSZ())
 	return c.MarshalSSZTo(buf[:0])
 }
 
-func (c *BeaconBlockBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
+func (c *BeaconBlockAltair) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
 	offset := 84
 
@@ -53,7 +52,7 @@ func (c *BeaconBlockBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
 
 	// Field 4: Body
 	if c.Body == nil {
-		c.Body = new(BeaconBlockBodyBellatrix)
+		c.Body = new(BeaconBlockBodyAltair)
 	}
 	dst = ssz.WriteOffset(dst, offset)
 	offset += c.Body.SizeSSZ()
@@ -65,7 +64,7 @@ func (c *BeaconBlockBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
 	return dst, err
 }
 
-func (c *BeaconBlockBellatrix) UnmarshalSSZ(buf []byte) error {
+func (c *BeaconBlockAltair) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
 	if size < 84 {
@@ -105,14 +104,14 @@ func (c *BeaconBlockBellatrix) UnmarshalSSZ(buf []byte) error {
 	c.StateRoot = append(c.StateRoot, sszSlice3...)
 
 	// Field 4: Body
-	c.Body = new(BeaconBlockBodyBellatrix)
+	c.Body = new(BeaconBlockBodyAltair)
 	if err = c.Body.UnmarshalSSZ(sszSlice4); err != nil {
 		return fmt.Errorf("Body: %w", err)
 	}
 	return err
 }
 
-func (c *BeaconBlockBellatrix) HashTreeRoot() ([32]byte, error) {
+func (c *BeaconBlockAltair) HashTreeRoot() ([32]byte, error) {
 	hh := ssz.DefaultHasherPool.Get()
 	if err := c.HashTreeRootWith(hh); err != nil {
 		ssz.DefaultHasherPool.Put(hh)
@@ -123,7 +122,7 @@ func (c *BeaconBlockBellatrix) HashTreeRoot() ([32]byte, error) {
 	return root, err
 }
 
-func (c *BeaconBlockBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+func (c *BeaconBlockAltair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
 	// Field 0: Slot
 	if err := c.Slot.HashTreeRootWith(hh); err != nil {
@@ -151,8 +150,8 @@ func (c *BeaconBlockBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	return nil
 }
 
-func (c *BeaconBlockBodyBellatrix) SizeSSZ() int {
-	size := 384
+func (c *BeaconBlockBodyAltair) SizeSSZ() int {
+	size := 380
 	size += len(c.ProposerSlashings) * 416
 	for _, o := range c.AttesterSlashings {
 		size += 4
@@ -164,21 +163,17 @@ func (c *BeaconBlockBodyBellatrix) SizeSSZ() int {
 	}
 	size += len(c.Deposits) * 1240
 	size += len(c.VoluntaryExits) * 112
-	if c.ExecutionPayload == nil {
-		c.ExecutionPayload = new(v1.ExecutionPayload)
-	}
-	size += c.ExecutionPayload.SizeSSZ()
 	return size
 }
 
-func (c *BeaconBlockBodyBellatrix) MarshalSSZ() ([]byte, error) {
+func (c *BeaconBlockBodyAltair) MarshalSSZ() ([]byte, error) {
 	buf := make([]byte, c.SizeSSZ())
 	return c.MarshalSSZTo(buf[:0])
 }
 
-func (c *BeaconBlockBodyBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
+func (c *BeaconBlockBodyAltair) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
-	offset := 384
+	offset := 380
 
 	// Field 0: RandaoReveal
 	if len(c.RandaoReveal) != 96 {
@@ -233,13 +228,6 @@ func (c *BeaconBlockBodyBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
 	if dst, err = c.SyncAggregate.MarshalSSZTo(dst); err != nil {
 		return nil, fmt.Errorf("SyncAggregate: %w", err)
 	}
-
-	// Field 9: ExecutionPayload
-	if c.ExecutionPayload == nil {
-		c.ExecutionPayload = new(v1.ExecutionPayload)
-	}
-	dst = ssz.WriteOffset(dst, offset)
-	offset += c.ExecutionPayload.SizeSSZ()
 
 	// Field 3: ProposerSlashings
 	if len(c.ProposerSlashings) > 16 {
@@ -304,18 +292,13 @@ func (c *BeaconBlockBodyBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
 			return nil, fmt.Errorf("VoluntaryExits: %w", err)
 		}
 	}
-
-	// Field 9: ExecutionPayload
-	if dst, err = c.ExecutionPayload.MarshalSSZTo(dst); err != nil {
-		return nil, fmt.Errorf("ExecutionPayload: %w", err)
-	}
 	return dst, err
 }
 
-func (c *BeaconBlockBodyBellatrix) UnmarshalSSZ(buf []byte) error {
+func (c *BeaconBlockBodyAltair) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size < 384 {
+	if size < 380 {
 		return ssz.ErrSize
 	}
 
@@ -325,7 +308,7 @@ func (c *BeaconBlockBodyBellatrix) UnmarshalSSZ(buf []byte) error {
 	sszSlice8 := buf[220:380] // c.SyncAggregate
 
 	sszVarOffset3 := ssz.ReadOffset(buf[200:204]) // c.ProposerSlashings
-	if sszVarOffset3 != 384 {
+	if sszVarOffset3 != 380 {
 		return ssz.ErrInvalidVariableOffset
 	}
 	if sszVarOffset3 > size {
@@ -347,16 +330,11 @@ func (c *BeaconBlockBodyBellatrix) UnmarshalSSZ(buf []byte) error {
 	if sszVarOffset7 > size || sszVarOffset7 < sszVarOffset6 {
 		return ssz.ErrOffset
 	}
-	sszVarOffset9 := ssz.ReadOffset(buf[380:384]) // c.ExecutionPayload
-	if sszVarOffset9 > size || sszVarOffset9 < sszVarOffset7 {
-		return ssz.ErrOffset
-	}
 	sszSlice3 := buf[sszVarOffset3:sszVarOffset4] // c.ProposerSlashings
 	sszSlice4 := buf[sszVarOffset4:sszVarOffset5] // c.AttesterSlashings
 	sszSlice5 := buf[sszVarOffset5:sszVarOffset6] // c.Attestations
 	sszSlice6 := buf[sszVarOffset6:sszVarOffset7] // c.Deposits
-	sszSlice7 := buf[sszVarOffset7:sszVarOffset9] // c.VoluntaryExits
-	sszSlice9 := buf[sszVarOffset9:]              // c.ExecutionPayload
+	sszSlice7 := buf[sszVarOffset7:]              // c.VoluntaryExits
 
 	// Field 0: RandaoReveal
 	c.RandaoReveal = make([]byte, 0, 96)
@@ -540,16 +518,10 @@ func (c *BeaconBlockBodyBellatrix) UnmarshalSSZ(buf []byte) error {
 	if err = c.SyncAggregate.UnmarshalSSZ(sszSlice8); err != nil {
 		return fmt.Errorf("SyncAggregate: %w", err)
 	}
-
-	// Field 9: ExecutionPayload
-	c.ExecutionPayload = new(v1.ExecutionPayload)
-	if err = c.ExecutionPayload.UnmarshalSSZ(sszSlice9); err != nil {
-		return fmt.Errorf("ExecutionPayload: %w", err)
-	}
 	return err
 }
 
-func (c *BeaconBlockBodyBellatrix) HashTreeRoot() ([32]byte, error) {
+func (c *BeaconBlockBodyAltair) HashTreeRoot() ([32]byte, error) {
 	hh := ssz.DefaultHasherPool.Get()
 	if err := c.HashTreeRootWith(hh); err != nil {
 		ssz.DefaultHasherPool.Put(hh)
@@ -560,7 +532,7 @@ func (c *BeaconBlockBodyBellatrix) HashTreeRoot() ([32]byte, error) {
 	return root, err
 }
 
-func (c *BeaconBlockBodyBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+func (c *BeaconBlockBodyAltair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
 	// Field 0: RandaoReveal
 	if len(c.RandaoReveal) != 96 {
@@ -645,16 +617,12 @@ func (c *BeaconBlockBodyBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) 
 	if err := c.SyncAggregate.HashTreeRootWith(hh); err != nil {
 		return fmt.Errorf("SyncAggregate: %w", err)
 	}
-	// Field 9: ExecutionPayload
-	if err := c.ExecutionPayload.HashTreeRootWith(hh); err != nil {
-		return fmt.Errorf("ExecutionPayload: %w", err)
-	}
 	hh.Merkleize(indx)
 	return nil
 }
 
-func (c *BeaconStateBellatrix) SizeSSZ() int {
-	size := 2736633
+func (c *BeaconStateAltair) SizeSSZ() int {
+	size := 2736629
 	size += len(c.HistoricalRoots) * 32
 	size += len(c.Eth1DataVotes) * 72
 	size += len(c.Validators) * 121
@@ -662,21 +630,17 @@ func (c *BeaconStateBellatrix) SizeSSZ() int {
 	size += len(c.PreviousEpochParticipation)
 	size += len(c.CurrentEpochParticipation)
 	size += len(c.InactivityScores) * 8
-	if c.LatestExecutionPayloadHeader == nil {
-		c.LatestExecutionPayloadHeader = new(v1.ExecutionPayloadHeader)
-	}
-	size += c.LatestExecutionPayloadHeader.SizeSSZ()
 	return size
 }
 
-func (c *BeaconStateBellatrix) MarshalSSZ() ([]byte, error) {
+func (c *BeaconStateAltair) MarshalSSZ() ([]byte, error) {
 	buf := make([]byte, c.SizeSSZ())
 	return c.MarshalSSZTo(buf[:0])
 }
 
-func (c *BeaconStateBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
+func (c *BeaconStateAltair) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
-	offset := 2736633
+	offset := 2736629
 
 	// Field 0: GenesisTime
 	dst = binary.LittleEndian.AppendUint64(dst, c.GenesisTime)
@@ -834,13 +798,6 @@ func (c *BeaconStateBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
 		return nil, fmt.Errorf("NextSyncCommittee: %w", err)
 	}
 
-	// Field 24: LatestExecutionPayloadHeader
-	if c.LatestExecutionPayloadHeader == nil {
-		c.LatestExecutionPayloadHeader = new(v1.ExecutionPayloadHeader)
-	}
-	dst = ssz.WriteOffset(dst, offset)
-	offset += c.LatestExecutionPayloadHeader.SizeSSZ()
-
 	// Field 7: HistoricalRoots
 	if len(c.HistoricalRoots) > 16777216 {
 		return nil, ssz.ErrListTooBig
@@ -853,7 +810,7 @@ func (c *BeaconStateBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 9: Eth1DataVotes
-	if len(c.Eth1DataVotes) > 2048 {
+	if len(c.Eth1DataVotes) > 512 {
 		return nil, ssz.ErrListTooBig
 	}
 	for _, o := range c.Eth1DataVotes {
@@ -899,18 +856,13 @@ func (c *BeaconStateBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
 	for _, o := range c.InactivityScores {
 		dst = binary.LittleEndian.AppendUint64(dst, o)
 	}
-
-	// Field 24: LatestExecutionPayloadHeader
-	if dst, err = c.LatestExecutionPayloadHeader.MarshalSSZTo(dst); err != nil {
-		return nil, fmt.Errorf("LatestExecutionPayloadHeader: %w", err)
-	}
 	return dst, err
 }
 
-func (c *BeaconStateBellatrix) UnmarshalSSZ(buf []byte) error {
+func (c *BeaconStateAltair) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size < 2736633 {
+	if size < 2736629 {
 		return ssz.ErrSize
 	}
 
@@ -933,7 +885,7 @@ func (c *BeaconStateBellatrix) UnmarshalSSZ(buf []byte) error {
 	sszSlice23 := buf[2712005:2736629] // c.NextSyncCommittee
 
 	sszVarOffset7 := ssz.ReadOffset(buf[524464:524468]) // c.HistoricalRoots
-	if sszVarOffset7 != 2736633 {
+	if sszVarOffset7 != 2736629 {
 		return ssz.ErrInvalidVariableOffset
 	}
 	if sszVarOffset7 > size {
@@ -963,18 +915,13 @@ func (c *BeaconStateBellatrix) UnmarshalSSZ(buf []byte) error {
 	if sszVarOffset21 > size || sszVarOffset21 < sszVarOffset16 {
 		return ssz.ErrOffset
 	}
-	sszVarOffset24 := ssz.ReadOffset(buf[2736629:2736633]) // c.LatestExecutionPayloadHeader
-	if sszVarOffset24 > size || sszVarOffset24 < sszVarOffset21 {
-		return ssz.ErrOffset
-	}
 	sszSlice7 := buf[sszVarOffset7:sszVarOffset9]    // c.HistoricalRoots
 	sszSlice9 := buf[sszVarOffset9:sszVarOffset11]   // c.Eth1DataVotes
 	sszSlice11 := buf[sszVarOffset11:sszVarOffset12] // c.Validators
 	sszSlice12 := buf[sszVarOffset12:sszVarOffset15] // c.Balances
 	sszSlice15 := buf[sszVarOffset15:sszVarOffset16] // c.PreviousEpochParticipation
 	sszSlice16 := buf[sszVarOffset16:sszVarOffset21] // c.CurrentEpochParticipation
-	sszSlice21 := buf[sszVarOffset21:sszVarOffset24] // c.InactivityScores
-	sszSlice24 := buf[sszVarOffset24:]               // c.LatestExecutionPayloadHeader
+	sszSlice21 := buf[sszVarOffset21:]               // c.InactivityScores
 
 	// Field 0: GenesisTime
 	c.GenesisTime = binary.LittleEndian.Uint64(sszSlice0)
@@ -1058,8 +1005,8 @@ func (c *BeaconStateBellatrix) UnmarshalSSZ(buf []byte) error {
 			return fmt.Errorf("misaligned bytes: c.Eth1DataVotes length is %d, which is not a multiple of 72: %w", len(sszSlice9), ssz.ErrIncorrectListSize)
 		}
 		numElem := len(sszSlice9) / 72
-		if numElem > 2048 {
-			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 2048: %w", numElem, ssz.ErrListTooBig)
+		if numElem > 512 {
+			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 512: %w", numElem, ssz.ErrListTooBig)
 		}
 		c.Eth1DataVotes = make([]*Eth1Data, numElem)
 		for i := 0; i < numElem; i++ {
@@ -1199,16 +1146,10 @@ func (c *BeaconStateBellatrix) UnmarshalSSZ(buf []byte) error {
 	if err = c.NextSyncCommittee.UnmarshalSSZ(sszSlice23); err != nil {
 		return fmt.Errorf("NextSyncCommittee: %w", err)
 	}
-
-	// Field 24: LatestExecutionPayloadHeader
-	c.LatestExecutionPayloadHeader = new(v1.ExecutionPayloadHeader)
-	if err = c.LatestExecutionPayloadHeader.UnmarshalSSZ(sszSlice24); err != nil {
-		return fmt.Errorf("LatestExecutionPayloadHeader: %w", err)
-	}
 	return err
 }
 
-func (c *BeaconStateBellatrix) HashTreeRoot() ([32]byte, error) {
+func (c *BeaconStateAltair) HashTreeRoot() ([32]byte, error) {
 	hh := ssz.DefaultHasherPool.Get()
 	if err := c.HashTreeRootWith(hh); err != nil {
 		ssz.DefaultHasherPool.Put(hh)
@@ -1219,7 +1160,7 @@ func (c *BeaconStateBellatrix) HashTreeRoot() ([32]byte, error) {
 	return root, err
 }
 
-func (c *BeaconStateBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+func (c *BeaconStateAltair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
 	// Field 0: GenesisTime
 	hh.PutUint64(c.GenesisTime)
@@ -1288,7 +1229,7 @@ func (c *BeaconStateBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	}
 	// Field 9: Eth1DataVotes
 	{
-		if len(c.Eth1DataVotes) > 2048 {
+		if len(c.Eth1DataVotes) > 512 {
 			return ssz.ErrListTooBig
 		}
 		subIndx := hh.Index()
@@ -1297,7 +1238,7 @@ func (c *BeaconStateBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 				return fmt.Errorf("Eth1DataVotes: %w", err)
 			}
 		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 2048)
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 512)
 	}
 	// Field 10: Eth1DepositIndex
 	hh.PutUint64(c.Eth1DepositIndex)
@@ -1414,116 +1355,75 @@ func (c *BeaconStateBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	if err := c.NextSyncCommittee.HashTreeRootWith(hh); err != nil {
 		return fmt.Errorf("NextSyncCommittee: %w", err)
 	}
-	// Field 24: LatestExecutionPayloadHeader
-	if err := c.LatestExecutionPayloadHeader.HashTreeRootWith(hh); err != nil {
-		return fmt.Errorf("LatestExecutionPayloadHeader: %w", err)
-	}
 	hh.Merkleize(indx)
 	return nil
 }
 
-func (c *BlindedBeaconBlockBellatrix) SizeSSZ() int {
-	size := 84
-	if c.Body == nil {
-		c.Body = new(BlindedBeaconBlockBodyBellatrix)
-	}
-	size += c.Body.SizeSSZ()
+func (c *ContributionAndProof) SizeSSZ() int {
+	size := 264
+
 	return size
 }
 
-func (c *BlindedBeaconBlockBellatrix) MarshalSSZ() ([]byte, error) {
+func (c *ContributionAndProof) MarshalSSZ() ([]byte, error) {
 	buf := make([]byte, c.SizeSSZ())
 	return c.MarshalSSZTo(buf[:0])
 }
 
-func (c *BlindedBeaconBlockBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
+func (c *ContributionAndProof) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
-	offset := 84
 
-	// Field 0: Slot
-	if dst, err = c.Slot.MarshalSSZTo(dst); err != nil {
-		return nil, fmt.Errorf("Slot: %w", err)
+	// Field 0: AggregatorIndex
+	if dst, err = c.AggregatorIndex.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("AggregatorIndex: %w", err)
 	}
 
-	// Field 1: ProposerIndex
-	if dst, err = c.ProposerIndex.MarshalSSZTo(dst); err != nil {
-		return nil, fmt.Errorf("ProposerIndex: %w", err)
+	// Field 1: Contribution
+	if c.Contribution == nil {
+		c.Contribution = new(SyncCommitteeContribution)
+	}
+	if dst, err = c.Contribution.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("Contribution: %w", err)
 	}
 
-	// Field 2: ParentRoot
-	if len(c.ParentRoot) != 32 {
+	// Field 2: SelectionProof
+	if len(c.SelectionProof) != 96 {
 		return nil, ssz.ErrBytesLength
 	}
-	dst = append(dst, c.ParentRoot...)
+	dst = append(dst, c.SelectionProof...)
 
-	// Field 3: StateRoot
-	if len(c.StateRoot) != 32 {
-		return nil, ssz.ErrBytesLength
-	}
-	dst = append(dst, c.StateRoot...)
-
-	// Field 4: Body
-	if c.Body == nil {
-		c.Body = new(BlindedBeaconBlockBodyBellatrix)
-	}
-	dst = ssz.WriteOffset(dst, offset)
-	offset += c.Body.SizeSSZ()
-
-	// Field 4: Body
-	if dst, err = c.Body.MarshalSSZTo(dst); err != nil {
-		return nil, fmt.Errorf("Body: %w", err)
-	}
 	return dst, err
 }
 
-func (c *BlindedBeaconBlockBellatrix) UnmarshalSSZ(buf []byte) error {
+func (c *ContributionAndProof) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size < 84 {
+	if size != 264 {
 		return ssz.ErrSize
 	}
 
-	sszSlice0 := buf[0:8]   // c.Slot
-	sszSlice1 := buf[8:16]  // c.ProposerIndex
-	sszSlice2 := buf[16:48] // c.ParentRoot
-	sszSlice3 := buf[48:80] // c.StateRoot
+	sszSlice0 := buf[0:8]     // c.AggregatorIndex
+	sszSlice1 := buf[8:168]   // c.Contribution
+	sszSlice2 := buf[168:264] // c.SelectionProof
 
-	sszVarOffset4 := ssz.ReadOffset(buf[80:84]) // c.Body
-	if sszVarOffset4 != 84 {
-		return ssz.ErrInvalidVariableOffset
-	}
-	if sszVarOffset4 > size {
-		return ssz.ErrOffset
-	}
-	sszSlice4 := buf[sszVarOffset4:] // c.Body
-
-	// Field 0: Slot
-	if err = c.Slot.UnmarshalSSZ(sszSlice0); err != nil {
-		return fmt.Errorf("Slot: %w", err)
+	// Field 0: AggregatorIndex
+	if err = c.AggregatorIndex.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("AggregatorIndex: %w", err)
 	}
 
-	// Field 1: ProposerIndex
-	if err = c.ProposerIndex.UnmarshalSSZ(sszSlice1); err != nil {
-		return fmt.Errorf("ProposerIndex: %w", err)
+	// Field 1: Contribution
+	c.Contribution = new(SyncCommitteeContribution)
+	if err = c.Contribution.UnmarshalSSZ(sszSlice1); err != nil {
+		return fmt.Errorf("Contribution: %w", err)
 	}
 
-	// Field 2: ParentRoot
-	c.ParentRoot = make([]byte, 0, 32)
-	c.ParentRoot = append(c.ParentRoot, sszSlice2...)
-
-	// Field 3: StateRoot
-	c.StateRoot = make([]byte, 0, 32)
-	c.StateRoot = append(c.StateRoot, sszSlice3...)
-
-	// Field 4: Body
-	c.Body = new(BlindedBeaconBlockBodyBellatrix)
-	if err = c.Body.UnmarshalSSZ(sszSlice4); err != nil {
-		return fmt.Errorf("Body: %w", err)
-	}
+	// Field 2: SelectionProof
+	c.SelectionProof = make([]byte, 0, 96)
+	c.SelectionProof = append(c.SelectionProof, sszSlice2...)
 	return err
 }
 
-func (c *BlindedBeaconBlockBellatrix) HashTreeRoot() ([32]byte, error) {
+func (c *ContributionAndProof) HashTreeRoot() ([32]byte, error) {
 	hh := ssz.DefaultHasherPool.Get()
 	if err := c.HashTreeRootWith(hh); err != nil {
 		ssz.DefaultHasherPool.Put(hh)
@@ -1534,110 +1434,270 @@ func (c *BlindedBeaconBlockBellatrix) HashTreeRoot() ([32]byte, error) {
 	return root, err
 }
 
-func (c *BlindedBeaconBlockBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+func (c *ContributionAndProof) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
-	// Field 0: Slot
-	if err := c.Slot.HashTreeRootWith(hh); err != nil {
-		return fmt.Errorf("Slot: %w", err)
+	// Field 0: AggregatorIndex
+	if err := c.AggregatorIndex.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("AggregatorIndex: %w", err)
 	}
-	// Field 1: ProposerIndex
-	if err := c.ProposerIndex.HashTreeRootWith(hh); err != nil {
-		return fmt.Errorf("ProposerIndex: %w", err)
+	// Field 1: Contribution
+	if err := c.Contribution.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("Contribution: %w", err)
 	}
-	// Field 2: ParentRoot
-	if len(c.ParentRoot) != 32 {
+	// Field 2: SelectionProof
+	if len(c.SelectionProof) != 96 {
 		return ssz.ErrBytesLength
 	}
-	hh.PutBytes(c.ParentRoot)
-	// Field 3: StateRoot
-	if len(c.StateRoot) != 32 {
-		return ssz.ErrBytesLength
+	hh.PutBytes(c.SelectionProof)
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *LightClientHeaderAltair) SizeSSZ() int {
+	size := 112
+
+	return size
+}
+
+func (c *LightClientHeaderAltair) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *LightClientHeaderAltair) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: Beacon
+	if c.Beacon == nil {
+		c.Beacon = new(BeaconBlockHeader)
 	}
-	hh.PutBytes(c.StateRoot)
-	// Field 4: Body
-	if err := c.Body.HashTreeRootWith(hh); err != nil {
-		return fmt.Errorf("Body: %w", err)
+	if dst, err = c.Beacon.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("Beacon: %w", err)
+	}
+
+	return dst, err
+}
+
+func (c *LightClientHeaderAltair) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 112 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:112] // c.Beacon
+
+	// Field 0: Beacon
+	c.Beacon = new(BeaconBlockHeader)
+	if err = c.Beacon.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("Beacon: %w", err)
+	}
+	return err
+}
+
+func (c *LightClientHeaderAltair) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *LightClientHeaderAltair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: Beacon
+	if err := c.Beacon.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("Beacon: %w", err)
 	}
 	hh.Merkleize(indx)
 	return nil
 }
 
-func (c *BlindedBeaconBlockBodyBellatrix) SizeSSZ() int {
-	size := 384
-	size += len(c.ProposerSlashings) * 416
-	for _, o := range c.AttesterSlashings {
-		size += 4
-		size += o.SizeSSZ()
-	}
-	for _, o := range c.Attestations {
-		size += 4
-		size += o.SizeSSZ()
-	}
-	size += len(c.Deposits) * 1240
-	size += len(c.VoluntaryExits) * 112
-	if c.ExecutionPayloadHeader == nil {
-		c.ExecutionPayloadHeader = new(v1.ExecutionPayloadHeader)
-	}
-	size += c.ExecutionPayloadHeader.SizeSSZ()
+func (c *LightClientBootstrapAltair) SizeSSZ() int {
+	size := 24896
+
 	return size
 }
 
-func (c *BlindedBeaconBlockBodyBellatrix) MarshalSSZ() ([]byte, error) {
+func (c *LightClientBootstrapAltair) MarshalSSZ() ([]byte, error) {
 	buf := make([]byte, c.SizeSSZ())
 	return c.MarshalSSZTo(buf[:0])
 }
 
-func (c *BlindedBeaconBlockBodyBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
+func (c *LightClientBootstrapAltair) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
-	offset := 384
 
-	// Field 0: RandaoReveal
-	if len(c.RandaoReveal) != 96 {
+	// Field 0: Header
+	if c.Header == nil {
+		c.Header = new(LightClientHeaderAltair)
+	}
+	if dst, err = c.Header.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("Header: %w", err)
+	}
+
+	// Field 1: CurrentSyncCommittee
+	if c.CurrentSyncCommittee == nil {
+		c.CurrentSyncCommittee = new(SyncCommittee)
+	}
+	if dst, err = c.CurrentSyncCommittee.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("CurrentSyncCommittee: %w", err)
+	}
+
+	// Field 2: CurrentSyncCommitteeBranch
+	if len(c.CurrentSyncCommitteeBranch) != 5 {
 		return nil, ssz.ErrBytesLength
 	}
-	dst = append(dst, c.RandaoReveal...)
-
-	// Field 1: Eth1Data
-	if c.Eth1Data == nil {
-		c.Eth1Data = new(Eth1Data)
-	}
-	if dst, err = c.Eth1Data.MarshalSSZTo(dst); err != nil {
-		return nil, fmt.Errorf("Eth1Data: %w", err)
+	for _, o := range c.CurrentSyncCommitteeBranch {
+		if len(o) != 32 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, o...)
 	}
 
-	// Field 2: Graffiti
-	if len(c.Graffiti) != 32 {
+	return dst, err
+}
+
+func (c *LightClientBootstrapAltair) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 24896 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:112]       // c.Header
+	sszSlice1 := buf[112:24736]   // c.CurrentSyncCommittee
+	sszSlice2 := buf[24736:24896] // c.CurrentSyncCommitteeBranch
+
+	// Field 0: Header
+	c.Header = new(LightClientHeaderAltair)
+	if err = c.Header.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("Header: %w", err)
+	}
+
+	// Field 1: CurrentSyncCommittee
+	c.CurrentSyncCommittee = new(SyncCommittee)
+	if err = c.CurrentSyncCommittee.UnmarshalSSZ(sszSlice1); err != nil {
+		return fmt.Errorf("CurrentSyncCommittee: %w", err)
+	}
+
+	// Field 2: CurrentSyncCommitteeBranch
+	{
+		c.CurrentSyncCommitteeBranch = make([][]byte, 5)
+		for i := 0; i < 5; i++ {
+			var tmp []byte
+
+			tmpSlice := sszSlice2[i*32 : (1+i)*32]
+			tmp = make([]byte, 0, 32)
+			tmp = append(tmp, tmpSlice...)
+			c.CurrentSyncCommitteeBranch[i] = tmp
+		}
+	}
+	return err
+}
+
+func (c *LightClientBootstrapAltair) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *LightClientBootstrapAltair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: Header
+	if err := c.Header.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("Header: %w", err)
+	}
+	// Field 1: CurrentSyncCommittee
+	if err := c.CurrentSyncCommittee.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("CurrentSyncCommittee: %w", err)
+	}
+	// Field 2: CurrentSyncCommitteeBranch
+	{
+		if len(c.CurrentSyncCommitteeBranch) != 5 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.CurrentSyncCommitteeBranch {
+			if len(o) != 32 {
+				return ssz.ErrBytesLength
+			}
+			hh.Append(o)
+		}
+		hh.Merkleize(subIndx)
+	}
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *LightClientUpdateAltair) SizeSSZ() int {
+	size := 25368
+
+	return size
+}
+
+func (c *LightClientUpdateAltair) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *LightClientUpdateAltair) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: AttestedHeader
+	if c.AttestedHeader == nil {
+		c.AttestedHeader = new(LightClientHeaderAltair)
+	}
+	if dst, err = c.AttestedHeader.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("AttestedHeader: %w", err)
+	}
+
+	// Field 1: NextSyncCommittee
+	if c.NextSyncCommittee == nil {
+		c.NextSyncCommittee = new(SyncCommittee)
+	}
+	if dst, err = c.NextSyncCommittee.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("NextSyncCommittee: %w", err)
+	}
+
+	// Field 2: NextSyncCommitteeBranch
+	if len(c.NextSyncCommitteeBranch) != 5 {
 		return nil, ssz.ErrBytesLength
 	}
-	dst = append(dst, c.Graffiti...)
-
-	// Field 3: ProposerSlashings
-	dst = ssz.WriteOffset(dst, offset)
-	offset += len(c.ProposerSlashings) * 416
-
-	// Field 4: AttesterSlashings
-	dst = ssz.WriteOffset(dst, offset)
-	for _, o := range c.AttesterSlashings {
-		offset += 4
-		offset += o.SizeSSZ()
+	for _, o := range c.NextSyncCommitteeBranch {
+		if len(o) != 32 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, o...)
 	}
 
-	// Field 5: Attestations
-	dst = ssz.WriteOffset(dst, offset)
-	for _, o := range c.Attestations {
-		offset += 4
-		offset += o.SizeSSZ()
+	// Field 3: FinalizedHeader
+	if c.FinalizedHeader == nil {
+		c.FinalizedHeader = new(LightClientHeaderAltair)
+	}
+	if dst, err = c.FinalizedHeader.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("FinalizedHeader: %w", err)
 	}
 
-	// Field 6: Deposits
-	dst = ssz.WriteOffset(dst, offset)
-	offset += len(c.Deposits) * 1240
+	// Field 4: FinalityBranch
+	if len(c.FinalityBranch) != 6 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.FinalityBranch {
+		if len(o) != 32 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, o...)
+	}
 
-	// Field 7: VoluntaryExits
-	dst = ssz.WriteOffset(dst, offset)
-	offset += len(c.VoluntaryExits) * 112
-
-	// Field 8: SyncAggregate
+	// Field 5: SyncAggregate
 	if c.SyncAggregate == nil {
 		c.SyncAggregate = new(SyncAggregate)
 	}
@@ -1645,322 +1705,87 @@ func (c *BlindedBeaconBlockBodyBellatrix) MarshalSSZTo(dst []byte) ([]byte, erro
 		return nil, fmt.Errorf("SyncAggregate: %w", err)
 	}
 
-	// Field 9: ExecutionPayloadHeader
-	if c.ExecutionPayloadHeader == nil {
-		c.ExecutionPayloadHeader = new(v1.ExecutionPayloadHeader)
-	}
-	dst = ssz.WriteOffset(dst, offset)
-	offset += c.ExecutionPayloadHeader.SizeSSZ()
-
-	// Field 3: ProposerSlashings
-	if len(c.ProposerSlashings) > 16 {
-		return nil, ssz.ErrListTooBig
-	}
-	for _, o := range c.ProposerSlashings {
-		if dst, err = o.MarshalSSZTo(dst); err != nil {
-			return nil, fmt.Errorf("ProposerSlashings: %w", err)
-		}
+	// Field 6: SignatureSlot
+	if dst, err = c.SignatureSlot.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("SignatureSlot: %w", err)
 	}
 
-	// Field 4: AttesterSlashings
-	if len(c.AttesterSlashings) > 2 {
-		return nil, ssz.ErrListTooBig
-	}
-	{
-		offset = 4 * len(c.AttesterSlashings)
-		for _, o := range c.AttesterSlashings {
-			dst = ssz.WriteOffset(dst, offset)
-			offset += o.SizeSSZ()
-		}
-	}
-	for _, o := range c.AttesterSlashings {
-		if dst, err = o.MarshalSSZTo(dst); err != nil {
-			return nil, fmt.Errorf("AttesterSlashings: %w", err)
-		}
-	}
-
-	// Field 5: Attestations
-	if len(c.Attestations) > 128 {
-		return nil, ssz.ErrListTooBig
-	}
-	{
-		offset = 4 * len(c.Attestations)
-		for _, o := range c.Attestations {
-			dst = ssz.WriteOffset(dst, offset)
-			offset += o.SizeSSZ()
-		}
-	}
-	for _, o := range c.Attestations {
-		if dst, err = o.MarshalSSZTo(dst); err != nil {
-			return nil, fmt.Errorf("Attestations: %w", err)
-		}
-	}
-
-	// Field 6: Deposits
-	if len(c.Deposits) > 16 {
-		return nil, ssz.ErrListTooBig
-	}
-	for _, o := range c.Deposits {
-		if dst, err = o.MarshalSSZTo(dst); err != nil {
-			return nil, fmt.Errorf("Deposits: %w", err)
-		}
-	}
-
-	// Field 7: VoluntaryExits
-	if len(c.VoluntaryExits) > 16 {
-		return nil, ssz.ErrListTooBig
-	}
-	for _, o := range c.VoluntaryExits {
-		if dst, err = o.MarshalSSZTo(dst); err != nil {
-			return nil, fmt.Errorf("VoluntaryExits: %w", err)
-		}
-	}
-
-	// Field 9: ExecutionPayloadHeader
-	if dst, err = c.ExecutionPayloadHeader.MarshalSSZTo(dst); err != nil {
-		return nil, fmt.Errorf("ExecutionPayloadHeader: %w", err)
-	}
 	return dst, err
 }
 
-func (c *BlindedBeaconBlockBodyBellatrix) UnmarshalSSZ(buf []byte) error {
+func (c *LightClientUpdateAltair) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size < 384 {
+	if size != 25368 {
 		return ssz.ErrSize
 	}
 
-	sszSlice0 := buf[0:96]    // c.RandaoReveal
-	sszSlice1 := buf[96:168]  // c.Eth1Data
-	sszSlice2 := buf[168:200] // c.Graffiti
-	sszSlice8 := buf[220:380] // c.SyncAggregate
+	sszSlice0 := buf[0:112]       // c.AttestedHeader
+	sszSlice1 := buf[112:24736]   // c.NextSyncCommittee
+	sszSlice2 := buf[24736:24896] // c.NextSyncCommitteeBranch
+	sszSlice3 := buf[24896:25008] // c.FinalizedHeader
+	sszSlice4 := buf[25008:25200] // c.FinalityBranch
+	sszSlice5 := buf[25200:25360] // c.SyncAggregate
+	sszSlice6 := buf[25360:25368] // c.SignatureSlot
 
-	sszVarOffset3 := ssz.ReadOffset(buf[200:204]) // c.ProposerSlashings
-	if sszVarOffset3 != 384 {
-		return ssz.ErrInvalidVariableOffset
-	}
-	if sszVarOffset3 > size {
-		return ssz.ErrOffset
-	}
-	sszVarOffset4 := ssz.ReadOffset(buf[204:208]) // c.AttesterSlashings
-	if sszVarOffset4 > size || sszVarOffset4 < sszVarOffset3 {
-		return ssz.ErrOffset
-	}
-	sszVarOffset5 := ssz.ReadOffset(buf[208:212]) // c.Attestations
-	if sszVarOffset5 > size || sszVarOffset5 < sszVarOffset4 {
-		return ssz.ErrOffset
-	}
-	sszVarOffset6 := ssz.ReadOffset(buf[212:216]) // c.Deposits
-	if sszVarOffset6 > size || sszVarOffset6 < sszVarOffset5 {
-		return ssz.ErrOffset
-	}
-	sszVarOffset7 := ssz.ReadOffset(buf[216:220]) // c.VoluntaryExits
-	if sszVarOffset7 > size || sszVarOffset7 < sszVarOffset6 {
-		return ssz.ErrOffset
-	}
-	sszVarOffset9 := ssz.ReadOffset(buf[380:384]) // c.ExecutionPayloadHeader
-	if sszVarOffset9 > size || sszVarOffset9 < sszVarOffset7 {
-		return ssz.ErrOffset
-	}
-	sszSlice3 := buf[sszVarOffset3:sszVarOffset4] // c.ProposerSlashings
-	sszSlice4 := buf[sszVarOffset4:sszVarOffset5] // c.AttesterSlashings
-	sszSlice5 := buf[sszVarOffset5:sszVarOffset6] // c.Attestations
-	sszSlice6 := buf[sszVarOffset6:sszVarOffset7] // c.Deposits
-	sszSlice7 := buf[sszVarOffset7:sszVarOffset9] // c.VoluntaryExits
-	sszSlice9 := buf[sszVarOffset9:]              // c.ExecutionPayloadHeader
-
-	// Field 0: RandaoReveal
-	c.RandaoReveal = make([]byte, 0, 96)
-	c.RandaoReveal = append(c.RandaoReveal, sszSlice0...)
-
-	// Field 1: Eth1Data
-	c.Eth1Data = new(Eth1Data)
-	if err = c.Eth1Data.UnmarshalSSZ(sszSlice1); err != nil {
-		return fmt.Errorf("Eth1Data: %w", err)
+	// Field 0: AttestedHeader
+	c.AttestedHeader = new(LightClientHeaderAltair)
+	if err = c.AttestedHeader.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("AttestedHeader: %w", err)
 	}
 
-	// Field 2: Graffiti
-	c.Graffiti = make([]byte, 0, 32)
-	c.Graffiti = append(c.Graffiti, sszSlice2...)
+	// Field 1: NextSyncCommittee
+	c.NextSyncCommittee = new(SyncCommittee)
+	if err = c.NextSyncCommittee.UnmarshalSSZ(sszSlice1); err != nil {
+		return fmt.Errorf("NextSyncCommittee: %w", err)
+	}
 
-	// Field 3: ProposerSlashings
+	// Field 2: NextSyncCommitteeBranch
 	{
-		if len(sszSlice3)%416 != 0 {
-			return fmt.Errorf("misaligned bytes: c.ProposerSlashings length is %d, which is not a multiple of 416: %w", len(sszSlice3), ssz.ErrIncorrectListSize)
-		}
-		numElem := len(sszSlice3) / 416
-		if numElem > 16 {
-			return fmt.Errorf("ssz-max exceeded: c.ProposerSlashings has %d elements, ssz-max is 16: %w", numElem, ssz.ErrListTooBig)
-		}
-		c.ProposerSlashings = make([]*ProposerSlashing, numElem)
-		for i := 0; i < numElem; i++ {
-			var tmp *ProposerSlashing
-			tmp = new(ProposerSlashing)
-			tmpSlice := sszSlice3[i*416 : (1+i)*416]
-			if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
-				return fmt.Errorf("ProposerSlashings: %w", err)
-			}
-			c.ProposerSlashings[i] = tmp
+		c.NextSyncCommitteeBranch = make([][]byte, 5)
+		for i := 0; i < 5; i++ {
+			var tmp []byte
+
+			tmpSlice := sszSlice2[i*32 : (1+i)*32]
+			tmp = make([]byte, 0, 32)
+			tmp = append(tmp, tmpSlice...)
+			c.NextSyncCommitteeBranch[i] = tmp
 		}
 	}
 
-	// Field 4: AttesterSlashings
+	// Field 3: FinalizedHeader
+	c.FinalizedHeader = new(LightClientHeaderAltair)
+	if err = c.FinalizedHeader.UnmarshalSSZ(sszSlice3); err != nil {
+		return fmt.Errorf("FinalizedHeader: %w", err)
+	}
+
+	// Field 4: FinalityBranch
 	{
-		// empty lists are zero length, so make sure there is room for an offset
-		// before attempting to unmarshal it
-		if len(sszSlice4) > 3 {
-			startOffset := ssz.ReadOffset(sszSlice4[0:4])
-			if startOffset == 0 {
-				return fmt.Errorf("encountered invalid offset of 0 when decoding c.AttesterSlashings")
-			}
-			if startOffset%4 != 0 {
-				return fmt.Errorf("misaligned list bytes: when decoding c.AttesterSlashings, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
-			}
-			listLen := startOffset / 4
-			if listLen > 2 {
-				return fmt.Errorf("ssz-max exceeded: c.AttesterSlashings has %d elements, ssz-max is 2: %w", listLen, ssz.ErrListTooBig)
-			}
-			totalVarBytes := uint64(len(sszSlice4))
-			if totalVarBytes < startOffset {
-				return fmt.Errorf("list bytes too short to contain an offset when decoding c.AttesterSlashings")
-			}
-			c.AttesterSlashings = make([]*AttesterSlashing, listLen)
-			var tmpSlice []byte
-			for i := uint64(0); i < listLen; i++ {
-				var tmp *AttesterSlashing
-				tmp = new(AttesterSlashing)
-				endOffset := totalVarBytes
-				if i+1 != listLen {
-					endOffset = ssz.ReadOffset(sszSlice4[(i+1)*4 : (i+2)*4])
-					if totalVarBytes < endOffset {
-						return fmt.Errorf("offset %d points past the end of buffer when decoding c.AttesterSlashings", endOffset)
-					}
-				}
-				if endOffset < startOffset {
-					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.AttesterSlashings", endOffset, startOffset)
-				}
-				tmpSlice = sszSlice4[startOffset:endOffset]
-				if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
-					return fmt.Errorf("AttesterSlashings: %w", err)
-				}
-				c.AttesterSlashings[i] = tmp
-				startOffset = endOffset
-			}
-		} else {
-			if len(sszSlice4) > 0 {
-				return fmt.Errorf("list bytes too short to contain an offset when decoding c.AttesterSlashings")
-			}
-			c.AttesterSlashings = make([]*AttesterSlashing, 0)
+		c.FinalityBranch = make([][]byte, 6)
+		for i := 0; i < 6; i++ {
+			var tmp []byte
+
+			tmpSlice := sszSlice4[i*32 : (1+i)*32]
+			tmp = make([]byte, 0, 32)
+			tmp = append(tmp, tmpSlice...)
+			c.FinalityBranch[i] = tmp
 		}
 	}
 
-	// Field 5: Attestations
-	{
-		// empty lists are zero length, so make sure there is room for an offset
-		// before attempting to unmarshal it
-		if len(sszSlice5) > 3 {
-			startOffset := ssz.ReadOffset(sszSlice5[0:4])
-			if startOffset == 0 {
-				return fmt.Errorf("encountered invalid offset of 0 when decoding c.Attestations")
-			}
-			if startOffset%4 != 0 {
-				return fmt.Errorf("misaligned list bytes: when decoding c.Attestations, end-of-list offset is %d, which is not a multiple of 4 (offset size)", startOffset)
-			}
-			listLen := startOffset / 4
-			if listLen > 128 {
-				return fmt.Errorf("ssz-max exceeded: c.Attestations has %d elements, ssz-max is 128: %w", listLen, ssz.ErrListTooBig)
-			}
-			totalVarBytes := uint64(len(sszSlice5))
-			if totalVarBytes < startOffset {
-				return fmt.Errorf("list bytes too short to contain an offset when decoding c.Attestations")
-			}
-			c.Attestations = make([]*Attestation, listLen)
-			var tmpSlice []byte
-			for i := uint64(0); i < listLen; i++ {
-				var tmp *Attestation
-				tmp = new(Attestation)
-				endOffset := totalVarBytes
-				if i+1 != listLen {
-					endOffset = ssz.ReadOffset(sszSlice5[(i+1)*4 : (i+2)*4])
-					if totalVarBytes < endOffset {
-						return fmt.Errorf("offset %d points past the end of buffer when decoding c.Attestations", endOffset)
-					}
-				}
-				if endOffset < startOffset {
-					return fmt.Errorf("offset %d is not greater than start offset %d when decoding c.Attestations", endOffset, startOffset)
-				}
-				tmpSlice = sszSlice5[startOffset:endOffset]
-				if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
-					return fmt.Errorf("Attestations: %w", err)
-				}
-				c.Attestations[i] = tmp
-				startOffset = endOffset
-			}
-		} else {
-			if len(sszSlice5) > 0 {
-				return fmt.Errorf("list bytes too short to contain an offset when decoding c.Attestations")
-			}
-			c.Attestations = make([]*Attestation, 0)
-		}
-	}
-
-	// Field 6: Deposits
-	{
-		if len(sszSlice6)%1240 != 0 {
-			return fmt.Errorf("misaligned bytes: c.Deposits length is %d, which is not a multiple of 1240: %w", len(sszSlice6), ssz.ErrIncorrectListSize)
-		}
-		numElem := len(sszSlice6) / 1240
-		if numElem > 16 {
-			return fmt.Errorf("ssz-max exceeded: c.Deposits has %d elements, ssz-max is 16: %w", numElem, ssz.ErrListTooBig)
-		}
-		c.Deposits = make([]*Deposit, numElem)
-		for i := 0; i < numElem; i++ {
-			var tmp *Deposit
-			tmp = new(Deposit)
-			tmpSlice := sszSlice6[i*1240 : (1+i)*1240]
-			if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
-				return fmt.Errorf("Deposits: %w", err)
-			}
-			c.Deposits[i] = tmp
-		}
-	}
-
-	// Field 7: VoluntaryExits
-	{
-		if len(sszSlice7)%112 != 0 {
-			return fmt.Errorf("misaligned bytes: c.VoluntaryExits length is %d, which is not a multiple of 112: %w", len(sszSlice7), ssz.ErrIncorrectListSize)
-		}
-		numElem := len(sszSlice7) / 112
-		if numElem > 16 {
-			return fmt.Errorf("ssz-max exceeded: c.VoluntaryExits has %d elements, ssz-max is 16: %w", numElem, ssz.ErrListTooBig)
-		}
-		c.VoluntaryExits = make([]*SignedVoluntaryExit, numElem)
-		for i := 0; i < numElem; i++ {
-			var tmp *SignedVoluntaryExit
-			tmp = new(SignedVoluntaryExit)
-			tmpSlice := sszSlice7[i*112 : (1+i)*112]
-			if err = tmp.UnmarshalSSZ(tmpSlice); err != nil {
-				return fmt.Errorf("VoluntaryExits: %w", err)
-			}
-			c.VoluntaryExits[i] = tmp
-		}
-	}
-
-	// Field 8: SyncAggregate
+	// Field 5: SyncAggregate
 	c.SyncAggregate = new(SyncAggregate)
-	if err = c.SyncAggregate.UnmarshalSSZ(sszSlice8); err != nil {
+	if err = c.SyncAggregate.UnmarshalSSZ(sszSlice5); err != nil {
 		return fmt.Errorf("SyncAggregate: %w", err)
 	}
 
-	// Field 9: ExecutionPayloadHeader
-	c.ExecutionPayloadHeader = new(v1.ExecutionPayloadHeader)
-	if err = c.ExecutionPayloadHeader.UnmarshalSSZ(sszSlice9); err != nil {
-		return fmt.Errorf("ExecutionPayloadHeader: %w", err)
+	// Field 6: SignatureSlot
+	if err = c.SignatureSlot.UnmarshalSSZ(sszSlice6); err != nil {
+		return fmt.Errorf("SignatureSlot: %w", err)
 	}
 	return err
 }
 
-func (c *BlindedBeaconBlockBodyBellatrix) HashTreeRoot() ([32]byte, error) {
+func (c *LightClientUpdateAltair) HashTreeRoot() ([32]byte, error) {
 	hh := ssz.DefaultHasherPool.Get()
 	if err := c.HashTreeRootWith(hh); err != nil {
 		ssz.DefaultHasherPool.Put(hh)
@@ -1971,120 +1796,333 @@ func (c *BlindedBeaconBlockBodyBellatrix) HashTreeRoot() ([32]byte, error) {
 	return root, err
 }
 
-func (c *BlindedBeaconBlockBodyBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+func (c *LightClientUpdateAltair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
-	// Field 0: RandaoReveal
-	if len(c.RandaoReveal) != 96 {
-		return ssz.ErrBytesLength
+	// Field 0: AttestedHeader
+	if err := c.AttestedHeader.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("AttestedHeader: %w", err)
 	}
-	hh.PutBytes(c.RandaoReveal)
-	// Field 1: Eth1Data
-	if err := c.Eth1Data.HashTreeRootWith(hh); err != nil {
-		return fmt.Errorf("Eth1Data: %w", err)
+	// Field 1: NextSyncCommittee
+	if err := c.NextSyncCommittee.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("NextSyncCommittee: %w", err)
 	}
-	// Field 2: Graffiti
-	if len(c.Graffiti) != 32 {
-		return ssz.ErrBytesLength
-	}
-	hh.PutBytes(c.Graffiti)
-	// Field 3: ProposerSlashings
+	// Field 2: NextSyncCommitteeBranch
 	{
-		if len(c.ProposerSlashings) > 16 {
-			return ssz.ErrListTooBig
+		if len(c.NextSyncCommitteeBranch) != 5 {
+			return ssz.ErrVectorLength
 		}
 		subIndx := hh.Index()
-		for _, o := range c.ProposerSlashings {
-			if err := o.HashTreeRootWith(hh); err != nil {
-				return fmt.Errorf("ProposerSlashings: %w", err)
+		for _, o := range c.NextSyncCommitteeBranch {
+			if len(o) != 32 {
+				return ssz.ErrBytesLength
 			}
+			hh.Append(o)
 		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.ProposerSlashings)), 16)
+		hh.Merkleize(subIndx)
 	}
-	// Field 4: AttesterSlashings
+	// Field 3: FinalizedHeader
+	if err := c.FinalizedHeader.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("FinalizedHeader: %w", err)
+	}
+	// Field 4: FinalityBranch
 	{
-		if len(c.AttesterSlashings) > 2 {
-			return ssz.ErrListTooBig
+		if len(c.FinalityBranch) != 6 {
+			return ssz.ErrVectorLength
 		}
 		subIndx := hh.Index()
-		for _, o := range c.AttesterSlashings {
-			if err := o.HashTreeRootWith(hh); err != nil {
-				return fmt.Errorf("AttesterSlashings: %w", err)
+		for _, o := range c.FinalityBranch {
+			if len(o) != 32 {
+				return ssz.ErrBytesLength
 			}
+			hh.Append(o)
 		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.AttesterSlashings)), 2)
+		hh.Merkleize(subIndx)
 	}
-	// Field 5: Attestations
-	{
-		if len(c.Attestations) > 128 {
-			return ssz.ErrListTooBig
-		}
-		subIndx := hh.Index()
-		for _, o := range c.Attestations {
-			if err := o.HashTreeRootWith(hh); err != nil {
-				return fmt.Errorf("Attestations: %w", err)
-			}
-		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Attestations)), 128)
-	}
-	// Field 6: Deposits
-	{
-		if len(c.Deposits) > 16 {
-			return ssz.ErrListTooBig
-		}
-		subIndx := hh.Index()
-		for _, o := range c.Deposits {
-			if err := o.HashTreeRootWith(hh); err != nil {
-				return fmt.Errorf("Deposits: %w", err)
-			}
-		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Deposits)), 16)
-	}
-	// Field 7: VoluntaryExits
-	{
-		if len(c.VoluntaryExits) > 16 {
-			return ssz.ErrListTooBig
-		}
-		subIndx := hh.Index()
-		for _, o := range c.VoluntaryExits {
-			if err := o.HashTreeRootWith(hh); err != nil {
-				return fmt.Errorf("VoluntaryExits: %w", err)
-			}
-		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.VoluntaryExits)), 16)
-	}
-	// Field 8: SyncAggregate
+	// Field 5: SyncAggregate
 	if err := c.SyncAggregate.HashTreeRootWith(hh); err != nil {
 		return fmt.Errorf("SyncAggregate: %w", err)
 	}
-	// Field 9: ExecutionPayloadHeader
-	if err := c.ExecutionPayloadHeader.HashTreeRootWith(hh); err != nil {
-		return fmt.Errorf("ExecutionPayloadHeader: %w", err)
+	// Field 6: SignatureSlot
+	if err := c.SignatureSlot.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("SignatureSlot: %w", err)
 	}
 	hh.Merkleize(indx)
 	return nil
 }
 
-func (c *SignedBeaconBlockBellatrix) SizeSSZ() int {
+func (c *LightClientFinalityUpdateAltair) SizeSSZ() int {
+	size := 584
+
+	return size
+}
+
+func (c *LightClientFinalityUpdateAltair) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *LightClientFinalityUpdateAltair) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: AttestedHeader
+	if c.AttestedHeader == nil {
+		c.AttestedHeader = new(LightClientHeaderAltair)
+	}
+	if dst, err = c.AttestedHeader.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("AttestedHeader: %w", err)
+	}
+
+	// Field 1: FinalizedHeader
+	if c.FinalizedHeader == nil {
+		c.FinalizedHeader = new(LightClientHeaderAltair)
+	}
+	if dst, err = c.FinalizedHeader.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("FinalizedHeader: %w", err)
+	}
+
+	// Field 2: FinalityBranch
+	if len(c.FinalityBranch) != 6 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.FinalityBranch {
+		if len(o) != 32 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, o...)
+	}
+
+	// Field 3: SyncAggregate
+	if c.SyncAggregate == nil {
+		c.SyncAggregate = new(SyncAggregate)
+	}
+	if dst, err = c.SyncAggregate.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("SyncAggregate: %w", err)
+	}
+
+	// Field 4: SignatureSlot
+	if dst, err = c.SignatureSlot.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("SignatureSlot: %w", err)
+	}
+
+	return dst, err
+}
+
+func (c *LightClientFinalityUpdateAltair) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 584 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:112]   // c.AttestedHeader
+	sszSlice1 := buf[112:224] // c.FinalizedHeader
+	sszSlice2 := buf[224:416] // c.FinalityBranch
+	sszSlice3 := buf[416:576] // c.SyncAggregate
+	sszSlice4 := buf[576:584] // c.SignatureSlot
+
+	// Field 0: AttestedHeader
+	c.AttestedHeader = new(LightClientHeaderAltair)
+	if err = c.AttestedHeader.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("AttestedHeader: %w", err)
+	}
+
+	// Field 1: FinalizedHeader
+	c.FinalizedHeader = new(LightClientHeaderAltair)
+	if err = c.FinalizedHeader.UnmarshalSSZ(sszSlice1); err != nil {
+		return fmt.Errorf("FinalizedHeader: %w", err)
+	}
+
+	// Field 2: FinalityBranch
+	{
+		c.FinalityBranch = make([][]byte, 6)
+		for i := 0; i < 6; i++ {
+			var tmp []byte
+
+			tmpSlice := sszSlice2[i*32 : (1+i)*32]
+			tmp = make([]byte, 0, 32)
+			tmp = append(tmp, tmpSlice...)
+			c.FinalityBranch[i] = tmp
+		}
+	}
+
+	// Field 3: SyncAggregate
+	c.SyncAggregate = new(SyncAggregate)
+	if err = c.SyncAggregate.UnmarshalSSZ(sszSlice3); err != nil {
+		return fmt.Errorf("SyncAggregate: %w", err)
+	}
+
+	// Field 4: SignatureSlot
+	if err = c.SignatureSlot.UnmarshalSSZ(sszSlice4); err != nil {
+		return fmt.Errorf("SignatureSlot: %w", err)
+	}
+	return err
+}
+
+func (c *LightClientFinalityUpdateAltair) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *LightClientFinalityUpdateAltair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: AttestedHeader
+	if err := c.AttestedHeader.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("AttestedHeader: %w", err)
+	}
+	// Field 1: FinalizedHeader
+	if err := c.FinalizedHeader.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("FinalizedHeader: %w", err)
+	}
+	// Field 2: FinalityBranch
+	{
+		if len(c.FinalityBranch) != 6 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.FinalityBranch {
+			if len(o) != 32 {
+				return ssz.ErrBytesLength
+			}
+			hh.Append(o)
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 3: SyncAggregate
+	if err := c.SyncAggregate.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("SyncAggregate: %w", err)
+	}
+	// Field 4: SignatureSlot
+	if err := c.SignatureSlot.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("SignatureSlot: %w", err)
+	}
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *LightClientOptimisticUpdateAltair) SizeSSZ() int {
+	size := 280
+
+	return size
+}
+
+func (c *LightClientOptimisticUpdateAltair) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *LightClientOptimisticUpdateAltair) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: AttestedHeader
+	if c.AttestedHeader == nil {
+		c.AttestedHeader = new(LightClientHeaderAltair)
+	}
+	if dst, err = c.AttestedHeader.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("AttestedHeader: %w", err)
+	}
+
+	// Field 1: SyncAggregate
+	if c.SyncAggregate == nil {
+		c.SyncAggregate = new(SyncAggregate)
+	}
+	if dst, err = c.SyncAggregate.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("SyncAggregate: %w", err)
+	}
+
+	// Field 2: SignatureSlot
+	if dst, err = c.SignatureSlot.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("SignatureSlot: %w", err)
+	}
+
+	return dst, err
+}
+
+func (c *LightClientOptimisticUpdateAltair) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 280 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:112]   // c.AttestedHeader
+	sszSlice1 := buf[112:272] // c.SyncAggregate
+	sszSlice2 := buf[272:280] // c.SignatureSlot
+
+	// Field 0: AttestedHeader
+	c.AttestedHeader = new(LightClientHeaderAltair)
+	if err = c.AttestedHeader.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("AttestedHeader: %w", err)
+	}
+
+	// Field 1: SyncAggregate
+	c.SyncAggregate = new(SyncAggregate)
+	if err = c.SyncAggregate.UnmarshalSSZ(sszSlice1); err != nil {
+		return fmt.Errorf("SyncAggregate: %w", err)
+	}
+
+	// Field 2: SignatureSlot
+	if err = c.SignatureSlot.UnmarshalSSZ(sszSlice2); err != nil {
+		return fmt.Errorf("SignatureSlot: %w", err)
+	}
+	return err
+}
+
+func (c *LightClientOptimisticUpdateAltair) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *LightClientOptimisticUpdateAltair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: AttestedHeader
+	if err := c.AttestedHeader.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("AttestedHeader: %w", err)
+	}
+	// Field 1: SyncAggregate
+	if err := c.SyncAggregate.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("SyncAggregate: %w", err)
+	}
+	// Field 2: SignatureSlot
+	if err := c.SignatureSlot.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("SignatureSlot: %w", err)
+	}
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *SignedBeaconBlockAltair) SizeSSZ() int {
 	size := 100
 	if c.Block == nil {
-		c.Block = new(BeaconBlockBellatrix)
+		c.Block = new(BeaconBlockAltair)
 	}
 	size += c.Block.SizeSSZ()
 	return size
 }
 
-func (c *SignedBeaconBlockBellatrix) MarshalSSZ() ([]byte, error) {
+func (c *SignedBeaconBlockAltair) MarshalSSZ() ([]byte, error) {
 	buf := make([]byte, c.SizeSSZ())
 	return c.MarshalSSZTo(buf[:0])
 }
 
-func (c *SignedBeaconBlockBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
+func (c *SignedBeaconBlockAltair) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
 	offset := 100
 
 	// Field 0: Block
 	if c.Block == nil {
-		c.Block = new(BeaconBlockBellatrix)
+		c.Block = new(BeaconBlockAltair)
 	}
 	dst = ssz.WriteOffset(dst, offset)
 	offset += c.Block.SizeSSZ()
@@ -2102,7 +2140,7 @@ func (c *SignedBeaconBlockBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
 	return dst, err
 }
 
-func (c *SignedBeaconBlockBellatrix) UnmarshalSSZ(buf []byte) error {
+func (c *SignedBeaconBlockAltair) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
 	if size < 100 {
@@ -2121,7 +2159,7 @@ func (c *SignedBeaconBlockBellatrix) UnmarshalSSZ(buf []byte) error {
 	sszSlice0 := buf[sszVarOffset0:] // c.Block
 
 	// Field 0: Block
-	c.Block = new(BeaconBlockBellatrix)
+	c.Block = new(BeaconBlockAltair)
 	if err = c.Block.UnmarshalSSZ(sszSlice0); err != nil {
 		return fmt.Errorf("Block: %w", err)
 	}
@@ -2132,7 +2170,7 @@ func (c *SignedBeaconBlockBellatrix) UnmarshalSSZ(buf []byte) error {
 	return err
 }
 
-func (c *SignedBeaconBlockBellatrix) HashTreeRoot() ([32]byte, error) {
+func (c *SignedBeaconBlockAltair) HashTreeRoot() ([32]byte, error) {
 	hh := ssz.DefaultHasherPool.Get()
 	if err := c.HashTreeRootWith(hh); err != nil {
 		ssz.DefaultHasherPool.Put(hh)
@@ -2143,7 +2181,7 @@ func (c *SignedBeaconBlockBellatrix) HashTreeRoot() ([32]byte, error) {
 	return root, err
 }
 
-func (c *SignedBeaconBlockBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+func (c *SignedBeaconBlockAltair) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
 	// Field 0: Block
 	if err := c.Block.HashTreeRootWith(hh); err != nil {
@@ -2158,30 +2196,27 @@ func (c *SignedBeaconBlockBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error
 	return nil
 }
 
-func (c *SignedBlindedBeaconBlockBellatrix) SizeSSZ() int {
-	size := 100
-	if c.Block == nil {
-		c.Block = new(BlindedBeaconBlockBellatrix)
-	}
-	size += c.Block.SizeSSZ()
+func (c *SignedContributionAndProof) SizeSSZ() int {
+	size := 360
+
 	return size
 }
 
-func (c *SignedBlindedBeaconBlockBellatrix) MarshalSSZ() ([]byte, error) {
+func (c *SignedContributionAndProof) MarshalSSZ() ([]byte, error) {
 	buf := make([]byte, c.SizeSSZ())
 	return c.MarshalSSZTo(buf[:0])
 }
 
-func (c *SignedBlindedBeaconBlockBellatrix) MarshalSSZTo(dst []byte) ([]byte, error) {
+func (c *SignedContributionAndProof) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
-	offset := 100
 
-	// Field 0: Block
-	if c.Block == nil {
-		c.Block = new(BlindedBeaconBlockBellatrix)
+	// Field 0: Message
+	if c.Message == nil {
+		c.Message = new(ContributionAndProof)
 	}
-	dst = ssz.WriteOffset(dst, offset)
-	offset += c.Block.SizeSSZ()
+	if dst, err = c.Message.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("Message: %w", err)
+	}
 
 	// Field 1: Signature
 	if len(c.Signature) != 96 {
@@ -2189,35 +2224,23 @@ func (c *SignedBlindedBeaconBlockBellatrix) MarshalSSZTo(dst []byte) ([]byte, er
 	}
 	dst = append(dst, c.Signature...)
 
-	// Field 0: Block
-	if dst, err = c.Block.MarshalSSZTo(dst); err != nil {
-		return nil, fmt.Errorf("Block: %w", err)
-	}
 	return dst, err
 }
 
-func (c *SignedBlindedBeaconBlockBellatrix) UnmarshalSSZ(buf []byte) error {
+func (c *SignedContributionAndProof) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size < 100 {
+	if size != 360 {
 		return ssz.ErrSize
 	}
 
-	sszSlice1 := buf[4:100] // c.Signature
+	sszSlice0 := buf[0:264]   // c.Message
+	sszSlice1 := buf[264:360] // c.Signature
 
-	sszVarOffset0 := ssz.ReadOffset(buf[0:4]) // c.Block
-	if sszVarOffset0 != 100 {
-		return ssz.ErrInvalidVariableOffset
-	}
-	if sszVarOffset0 > size {
-		return ssz.ErrOffset
-	}
-	sszSlice0 := buf[sszVarOffset0:] // c.Block
-
-	// Field 0: Block
-	c.Block = new(BlindedBeaconBlockBellatrix)
-	if err = c.Block.UnmarshalSSZ(sszSlice0); err != nil {
-		return fmt.Errorf("Block: %w", err)
+	// Field 0: Message
+	c.Message = new(ContributionAndProof)
+	if err = c.Message.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("Message: %w", err)
 	}
 
 	// Field 1: Signature
@@ -2226,7 +2249,7 @@ func (c *SignedBlindedBeaconBlockBellatrix) UnmarshalSSZ(buf []byte) error {
 	return err
 }
 
-func (c *SignedBlindedBeaconBlockBellatrix) HashTreeRoot() ([32]byte, error) {
+func (c *SignedContributionAndProof) HashTreeRoot() ([32]byte, error) {
 	hh := ssz.DefaultHasherPool.Get()
 	if err := c.HashTreeRootWith(hh); err != nil {
 		ssz.DefaultHasherPool.Put(hh)
@@ -2237,13 +2260,478 @@ func (c *SignedBlindedBeaconBlockBellatrix) HashTreeRoot() ([32]byte, error) {
 	return root, err
 }
 
-func (c *SignedBlindedBeaconBlockBellatrix) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+func (c *SignedContributionAndProof) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 	indx := hh.Index()
-	// Field 0: Block
-	if err := c.Block.HashTreeRootWith(hh); err != nil {
-		return fmt.Errorf("Block: %w", err)
+	// Field 0: Message
+	if err := c.Message.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("Message: %w", err)
 	}
 	// Field 1: Signature
+	if len(c.Signature) != 96 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.Signature)
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *SyncAggregate) SizeSSZ() int {
+	size := 160
+
+	return size
+}
+
+func (c *SyncAggregate) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *SyncAggregate) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: SyncCommitteeBits
+	if len([]byte(c.SyncCommitteeBits)) != 64 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, []byte(c.SyncCommitteeBits)...)
+
+	// Field 1: SyncCommitteeSignature
+	if len(c.SyncCommitteeSignature) != 96 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.SyncCommitteeSignature...)
+
+	return dst, err
+}
+
+func (c *SyncAggregate) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 160 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:64]   // c.SyncCommitteeBits
+	sszSlice1 := buf[64:160] // c.SyncCommitteeSignature
+
+	// Field 0: SyncCommitteeBits
+	c.SyncCommitteeBits = make([]byte, 0, 64)
+	c.SyncCommitteeBits = append(c.SyncCommitteeBits, go_bitfield.Bitvector512(sszSlice0)...)
+
+	// Field 1: SyncCommitteeSignature
+	c.SyncCommitteeSignature = make([]byte, 0, 96)
+	c.SyncCommitteeSignature = append(c.SyncCommitteeSignature, sszSlice1...)
+	return err
+}
+
+func (c *SyncAggregate) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *SyncAggregate) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: SyncCommitteeBits
+	if len([]byte(c.SyncCommitteeBits)) != 64 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes([]byte(c.SyncCommitteeBits))
+	// Field 1: SyncCommitteeSignature
+	if len(c.SyncCommitteeSignature) != 96 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.SyncCommitteeSignature)
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *SyncAggregatorSelectionData) SizeSSZ() int {
+	size := 16
+
+	return size
+}
+
+func (c *SyncAggregatorSelectionData) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *SyncAggregatorSelectionData) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: Slot
+	if dst, err = c.Slot.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("Slot: %w", err)
+	}
+
+	// Field 1: SubcommitteeIndex
+	dst = binary.LittleEndian.AppendUint64(dst, c.SubcommitteeIndex)
+
+	return dst, err
+}
+
+func (c *SyncAggregatorSelectionData) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 16 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:8]  // c.Slot
+	sszSlice1 := buf[8:16] // c.SubcommitteeIndex
+
+	// Field 0: Slot
+	if err = c.Slot.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("Slot: %w", err)
+	}
+
+	// Field 1: SubcommitteeIndex
+	c.SubcommitteeIndex = binary.LittleEndian.Uint64(sszSlice1)
+	return err
+}
+
+func (c *SyncAggregatorSelectionData) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *SyncAggregatorSelectionData) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: Slot
+	if err := c.Slot.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("Slot: %w", err)
+	}
+	// Field 1: SubcommitteeIndex
+	hh.PutUint64(c.SubcommitteeIndex)
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *SyncCommittee) SizeSSZ() int {
+	size := 24624
+
+	return size
+}
+
+func (c *SyncCommittee) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *SyncCommittee) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: Pubkeys
+	if len(c.Pubkeys) != 512 {
+		return nil, ssz.ErrBytesLength
+	}
+	for _, o := range c.Pubkeys {
+		if len(o) != 48 {
+			return nil, ssz.ErrBytesLength
+		}
+		dst = append(dst, o...)
+	}
+
+	// Field 1: AggregatePubkey
+	if len(c.AggregatePubkey) != 48 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.AggregatePubkey...)
+
+	return dst, err
+}
+
+func (c *SyncCommittee) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 24624 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:24576]     // c.Pubkeys
+	sszSlice1 := buf[24576:24624] // c.AggregatePubkey
+
+	// Field 0: Pubkeys
+	{
+		c.Pubkeys = make([][]byte, 512)
+		for i := 0; i < 512; i++ {
+			var tmp []byte
+
+			tmpSlice := sszSlice0[i*48 : (1+i)*48]
+			tmp = make([]byte, 0, 48)
+			tmp = append(tmp, tmpSlice...)
+			c.Pubkeys[i] = tmp
+		}
+	}
+
+	// Field 1: AggregatePubkey
+	c.AggregatePubkey = make([]byte, 0, 48)
+	c.AggregatePubkey = append(c.AggregatePubkey, sszSlice1...)
+	return err
+}
+
+func (c *SyncCommittee) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *SyncCommittee) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: Pubkeys
+	{
+		if len(c.Pubkeys) != 512 {
+			return ssz.ErrVectorLength
+		}
+		subIndx := hh.Index()
+		for _, o := range c.Pubkeys {
+			if len(o) != 48 {
+				return ssz.ErrBytesLength
+			}
+			hh.PutBytes(o)
+		}
+		hh.Merkleize(subIndx)
+	}
+	// Field 1: AggregatePubkey
+	if len(c.AggregatePubkey) != 48 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.AggregatePubkey)
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *SyncCommitteeContribution) SizeSSZ() int {
+	size := 160
+
+	return size
+}
+
+func (c *SyncCommitteeContribution) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *SyncCommitteeContribution) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: Slot
+	if dst, err = c.Slot.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("Slot: %w", err)
+	}
+
+	// Field 1: BlockRoot
+	if len(c.BlockRoot) != 32 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.BlockRoot...)
+
+	// Field 2: SubcommitteeIndex
+	dst = binary.LittleEndian.AppendUint64(dst, c.SubcommitteeIndex)
+
+	// Field 3: AggregationBits
+	if len([]byte(c.AggregationBits)) != 16 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, []byte(c.AggregationBits)...)
+
+	// Field 4: Signature
+	if len(c.Signature) != 96 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.Signature...)
+
+	return dst, err
+}
+
+func (c *SyncCommitteeContribution) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 160 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:8]    // c.Slot
+	sszSlice1 := buf[8:40]   // c.BlockRoot
+	sszSlice2 := buf[40:48]  // c.SubcommitteeIndex
+	sszSlice3 := buf[48:64]  // c.AggregationBits
+	sszSlice4 := buf[64:160] // c.Signature
+
+	// Field 0: Slot
+	if err = c.Slot.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("Slot: %w", err)
+	}
+
+	// Field 1: BlockRoot
+	c.BlockRoot = make([]byte, 0, 32)
+	c.BlockRoot = append(c.BlockRoot, sszSlice1...)
+
+	// Field 2: SubcommitteeIndex
+	c.SubcommitteeIndex = binary.LittleEndian.Uint64(sszSlice2)
+
+	// Field 3: AggregationBits
+	c.AggregationBits = make([]byte, 0, 16)
+	c.AggregationBits = append(c.AggregationBits, go_bitfield.Bitvector128(sszSlice3)...)
+
+	// Field 4: Signature
+	c.Signature = make([]byte, 0, 96)
+	c.Signature = append(c.Signature, sszSlice4...)
+	return err
+}
+
+func (c *SyncCommitteeContribution) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *SyncCommitteeContribution) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: Slot
+	if err := c.Slot.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("Slot: %w", err)
+	}
+	// Field 1: BlockRoot
+	if len(c.BlockRoot) != 32 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.BlockRoot)
+	// Field 2: SubcommitteeIndex
+	hh.PutUint64(c.SubcommitteeIndex)
+	// Field 3: AggregationBits
+	if len([]byte(c.AggregationBits)) != 16 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes([]byte(c.AggregationBits))
+	// Field 4: Signature
+	if len(c.Signature) != 96 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.Signature)
+	hh.Merkleize(indx)
+	return nil
+}
+
+func (c *SyncCommitteeMessage) SizeSSZ() int {
+	size := 144
+
+	return size
+}
+
+func (c *SyncCommitteeMessage) MarshalSSZ() ([]byte, error) {
+	buf := make([]byte, c.SizeSSZ())
+	return c.MarshalSSZTo(buf[:0])
+}
+
+func (c *SyncCommitteeMessage) MarshalSSZTo(dst []byte) ([]byte, error) {
+	var err error
+
+	// Field 0: Slot
+	if dst, err = c.Slot.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("Slot: %w", err)
+	}
+
+	// Field 1: BlockRoot
+	if len(c.BlockRoot) != 32 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.BlockRoot...)
+
+	// Field 2: ValidatorIndex
+	if dst, err = c.ValidatorIndex.MarshalSSZTo(dst); err != nil {
+		return nil, fmt.Errorf("ValidatorIndex: %w", err)
+	}
+
+	// Field 3: Signature
+	if len(c.Signature) != 96 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.Signature...)
+
+	return dst, err
+}
+
+func (c *SyncCommitteeMessage) UnmarshalSSZ(buf []byte) error {
+	var err error
+	size := uint64(len(buf))
+	if size != 144 {
+		return ssz.ErrSize
+	}
+
+	sszSlice0 := buf[0:8]    // c.Slot
+	sszSlice1 := buf[8:40]   // c.BlockRoot
+	sszSlice2 := buf[40:48]  // c.ValidatorIndex
+	sszSlice3 := buf[48:144] // c.Signature
+
+	// Field 0: Slot
+	if err = c.Slot.UnmarshalSSZ(sszSlice0); err != nil {
+		return fmt.Errorf("Slot: %w", err)
+	}
+
+	// Field 1: BlockRoot
+	c.BlockRoot = make([]byte, 0, 32)
+	c.BlockRoot = append(c.BlockRoot, sszSlice1...)
+
+	// Field 2: ValidatorIndex
+	if err = c.ValidatorIndex.UnmarshalSSZ(sszSlice2); err != nil {
+		return fmt.Errorf("ValidatorIndex: %w", err)
+	}
+
+	// Field 3: Signature
+	c.Signature = make([]byte, 0, 96)
+	c.Signature = append(c.Signature, sszSlice3...)
+	return err
+}
+
+func (c *SyncCommitteeMessage) HashTreeRoot() ([32]byte, error) {
+	hh := ssz.DefaultHasherPool.Get()
+	if err := c.HashTreeRootWith(hh); err != nil {
+		ssz.DefaultHasherPool.Put(hh)
+		return [32]byte{}, err
+	}
+	root, err := hh.HashRoot()
+	ssz.DefaultHasherPool.Put(hh)
+	return root, err
+}
+
+func (c *SyncCommitteeMessage) HashTreeRootWith(hh *ssz.Hasher) (err error) {
+	indx := hh.Index()
+	// Field 0: Slot
+	if err := c.Slot.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("Slot: %w", err)
+	}
+	// Field 1: BlockRoot
+	if len(c.BlockRoot) != 32 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.BlockRoot)
+	// Field 2: ValidatorIndex
+	if err := c.ValidatorIndex.HashTreeRootWith(hh); err != nil {
+		return fmt.Errorf("ValidatorIndex: %w", err)
+	}
+	// Field 3: Signature
 	if len(c.Signature) != 96 {
 		return ssz.ErrBytesLength
 	}

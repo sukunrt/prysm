@@ -1,4 +1,4 @@
-//go:build !minimal && !decoupled
+//go:build decoupled
 
 package eth
 
@@ -1402,7 +1402,7 @@ func (c *BeaconBlockGloas) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 }
 
 func (c *BeaconStateGloas) SizeSSZ() int {
-	size := 3134845
+	size := 2837053
 	size += len(c.HistoricalRoots) * 32
 	size += len(c.Eth1DataVotes) * 72
 	size += len(c.Validators) * 121
@@ -1431,7 +1431,7 @@ func (c *BeaconStateGloas) MarshalSSZ() ([]byte, error) {
 
 func (c *BeaconStateGloas) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
-	offset := 3134845
+	offset := 2837053
 
 	// Field 0: GenesisTime
 	dst = binary.LittleEndian.AppendUint64(dst, c.GenesisTime)
@@ -1648,7 +1648,7 @@ func (c *BeaconStateGloas) MarshalSSZTo(dst []byte) ([]byte, error) {
 	offset += len(c.PendingConsolidations) * 16
 
 	// Field 37: ProposerLookahead
-	if len(c.ProposerLookahead) != 64 {
+	if len(c.ProposerLookahead) != 16 {
 		return nil, ssz.ErrBytesLength
 	}
 	for _, o := range c.ProposerLookahead {
@@ -1673,7 +1673,7 @@ func (c *BeaconStateGloas) MarshalSSZTo(dst []byte) ([]byte, error) {
 	dst = append(dst, c.ExecutionPayloadAvailability...)
 
 	// Field 41: BuilderPendingPayments
-	if len(c.BuilderPendingPayments) != 64 {
+	if len(c.BuilderPendingPayments) != 16 {
 		return nil, ssz.ErrBytesLength
 	}
 	for _, o := range c.BuilderPendingPayments {
@@ -1698,7 +1698,7 @@ func (c *BeaconStateGloas) MarshalSSZTo(dst []byte) ([]byte, error) {
 	offset += len(c.PayloadExpectedWithdrawals) * 44
 
 	// Field 45: PtcWindow
-	if len(c.PtcWindow) != 96 {
+	if len(c.PtcWindow) != 24 {
 		return nil, ssz.ErrBytesLength
 	}
 	for _, o := range c.PtcWindow {
@@ -1719,7 +1719,7 @@ func (c *BeaconStateGloas) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 
 	// Field 9: Eth1DataVotes
-	if len(c.Eth1DataVotes) > 2048 {
+	if len(c.Eth1DataVotes) > 512 {
 		return nil, ssz.ErrListTooBig
 	}
 	for _, o := range c.Eth1DataVotes {
@@ -1813,7 +1813,7 @@ func (c *BeaconStateGloas) MarshalSSZTo(dst []byte) ([]byte, error) {
 func (c *BeaconStateGloas) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size < 3134845 {
+	if size < 2837053 {
 		return ssz.ErrSize
 	}
 
@@ -1843,14 +1843,14 @@ func (c *BeaconStateGloas) UnmarshalSSZ(buf []byte) error {
 	sszSlice31 := buf[2736705:2736713] // c.EarliestExitEpoch
 	sszSlice32 := buf[2736713:2736721] // c.ConsolidationBalanceToConsume
 	sszSlice33 := buf[2736721:2736729] // c.EarliestConsolidationEpoch
-	sszSlice37 := buf[2736741:2737253] // c.ProposerLookahead
-	sszSlice39 := buf[2737257:2737265] // c.NextWithdrawalBuilderIndex
-	sszSlice40 := buf[2737265:2738289] // c.ExecutionPayloadAvailability
-	sszSlice41 := buf[2738289:2741617] // c.BuilderPendingPayments
-	sszSlice45 := buf[2741629:3134845] // c.PtcWindow
+	sszSlice37 := buf[2736741:2736869] // c.ProposerLookahead
+	sszSlice39 := buf[2736873:2736881] // c.NextWithdrawalBuilderIndex
+	sszSlice40 := buf[2736881:2737905] // c.ExecutionPayloadAvailability
+	sszSlice41 := buf[2737905:2738737] // c.BuilderPendingPayments
+	sszSlice45 := buf[2738749:2837053] // c.PtcWindow
 
 	sszVarOffset7 := ssz.ReadOffset(buf[524464:524468]) // c.HistoricalRoots
-	if sszVarOffset7 != 3134845 {
+	if sszVarOffset7 != 2837053 {
 		return ssz.ErrInvalidVariableOffset
 	}
 	if sszVarOffset7 > size {
@@ -1896,19 +1896,19 @@ func (c *BeaconStateGloas) UnmarshalSSZ(buf []byte) error {
 	if sszVarOffset36 > size || sszVarOffset36 < sszVarOffset35 {
 		return ssz.ErrOffset
 	}
-	sszVarOffset38 := ssz.ReadOffset(buf[2737253:2737257]) // c.Builders
+	sszVarOffset38 := ssz.ReadOffset(buf[2736869:2736873]) // c.Builders
 	if sszVarOffset38 > size || sszVarOffset38 < sszVarOffset36 {
 		return ssz.ErrOffset
 	}
-	sszVarOffset42 := ssz.ReadOffset(buf[2741617:2741621]) // c.BuilderPendingWithdrawals
+	sszVarOffset42 := ssz.ReadOffset(buf[2738737:2738741]) // c.BuilderPendingWithdrawals
 	if sszVarOffset42 > size || sszVarOffset42 < sszVarOffset38 {
 		return ssz.ErrOffset
 	}
-	sszVarOffset43 := ssz.ReadOffset(buf[2741621:2741625]) // c.LatestExecutionPayloadBid
+	sszVarOffset43 := ssz.ReadOffset(buf[2738741:2738745]) // c.LatestExecutionPayloadBid
 	if sszVarOffset43 > size || sszVarOffset43 < sszVarOffset42 {
 		return ssz.ErrOffset
 	}
-	sszVarOffset44 := ssz.ReadOffset(buf[2741625:2741629]) // c.PayloadExpectedWithdrawals
+	sszVarOffset44 := ssz.ReadOffset(buf[2738745:2738749]) // c.PayloadExpectedWithdrawals
 	if sszVarOffset44 > size || sszVarOffset44 < sszVarOffset43 {
 		return ssz.ErrOffset
 	}
@@ -2010,8 +2010,8 @@ func (c *BeaconStateGloas) UnmarshalSSZ(buf []byte) error {
 			return fmt.Errorf("misaligned bytes: c.Eth1DataVotes length is %d, which is not a multiple of 72: %w", len(sszSlice9), ssz.ErrIncorrectListSize)
 		}
 		numElem := len(sszSlice9) / 72
-		if numElem > 2048 {
-			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 2048: %w", numElem, ssz.ErrListTooBig)
+		if numElem > 512 {
+			return fmt.Errorf("ssz-max exceeded: c.Eth1DataVotes has %d elements, ssz-max is 512: %w", numElem, ssz.ErrListTooBig)
 		}
 		c.Eth1DataVotes = make([]*Eth1Data, numElem)
 		for i := 0; i < numElem; i++ {
@@ -2260,8 +2260,8 @@ func (c *BeaconStateGloas) UnmarshalSSZ(buf []byte) error {
 
 	// Field 37: ProposerLookahead
 	{
-		c.ProposerLookahead = make([]primitives.ValidatorIndex, 64)
-		for i := 0; i < 64; i++ {
+		c.ProposerLookahead = make([]primitives.ValidatorIndex, 16)
+		for i := 0; i < 16; i++ {
 			var tmp primitives.ValidatorIndex
 
 			tmpSlice := sszSlice37[i*8 : (1+i)*8]
@@ -2301,8 +2301,8 @@ func (c *BeaconStateGloas) UnmarshalSSZ(buf []byte) error {
 
 	// Field 41: BuilderPendingPayments
 	{
-		c.BuilderPendingPayments = make([]*BuilderPendingPayment, 64)
-		for i := 0; i < 64; i++ {
+		c.BuilderPendingPayments = make([]*BuilderPendingPayment, 16)
+		for i := 0; i < 16; i++ {
 			var tmp *BuilderPendingPayment
 			tmp = new(BuilderPendingPayment)
 			tmpSlice := sszSlice41[i*52 : (1+i)*52]
@@ -2357,8 +2357,8 @@ func (c *BeaconStateGloas) UnmarshalSSZ(buf []byte) error {
 
 	// Field 45: PtcWindow
 	{
-		c.PtcWindow = make([]*PTCs, 96)
-		for i := 0; i < 96; i++ {
+		c.PtcWindow = make([]*PTCs, 24)
+		for i := 0; i < 24; i++ {
 			var tmp *PTCs
 			tmp = new(PTCs)
 			tmpSlice := sszSlice45[i*4096 : (1+i)*4096]
@@ -2461,7 +2461,7 @@ func (c *BeaconStateGloas) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err erro
 	}
 	// Field 9: Eth1DataVotes
 	{
-		if len(c.Eth1DataVotes) > 2048 {
+		if len(c.Eth1DataVotes) > 512 {
 			return ssz.ErrListTooBig
 		}
 		subIndx := hh.Index()
@@ -2470,7 +2470,7 @@ func (c *BeaconStateGloas) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err erro
 				return fmt.Errorf("Eth1DataVotes: %w", err)
 			}
 		}
-		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 2048)
+		hh.MerkleizeWithMixin(subIndx, uint64(len(c.Eth1DataVotes)), 512)
 	}
 	// Field 10: Eth1DepositIndex
 	hh.PutUint64(c.Eth1DepositIndex)
@@ -2642,7 +2642,7 @@ func (c *BeaconStateGloas) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err erro
 	}
 	// Field 37: ProposerLookahead
 	{
-		if len(c.ProposerLookahead) != 64 {
+		if len(c.ProposerLookahead) != 16 {
 			return ssz.ErrVectorLength
 		}
 		subIndx := hh.Index()
@@ -2672,7 +2672,7 @@ func (c *BeaconStateGloas) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err erro
 	hh.PutBytes(c.ExecutionPayloadAvailability)
 	// Field 41: BuilderPendingPayments
 	{
-		if len(c.BuilderPendingPayments) != 64 {
+		if len(c.BuilderPendingPayments) != 16 {
 			return ssz.ErrVectorLength
 		}
 		subIndx := hh.Index()
@@ -2709,7 +2709,7 @@ func (c *BeaconStateGloas) ProgressiveHashTreeRootWith(hh *ssz.Hasher) (err erro
 	}
 	// Field 45: PtcWindow
 	{
-		if len(c.PtcWindow) != 96 {
+		if len(c.PtcWindow) != 24 {
 			return ssz.ErrVectorLength
 		}
 		subIndx := hh.Index()
