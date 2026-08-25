@@ -196,9 +196,12 @@ go_test(
     deps = common_deps,
 )
 
+# The five-epoch Heze runs need about twenty minutes of wall clock at the e2e
+# config's six-second slots, so they do not fit the "large" 900s budget. The
+# other full e2e targets are "enormous" (3600s) for the same reason.
 go_test(
     name = "go_heze_test",
-    size = "large",
+    size = "enormous",
     testonly = True,
     srcs = [
         "component_handler_test.go",
