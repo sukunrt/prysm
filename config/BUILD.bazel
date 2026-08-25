@@ -14,13 +14,6 @@ config_setting(
     },
 )
 
-config_setting(
-    name = "decoupled",
-    flag_values = {
-        "//proto:network": "decoupled",
-    },
-)
-
 go_library(
     name = "go_default_library",
     srcs = [

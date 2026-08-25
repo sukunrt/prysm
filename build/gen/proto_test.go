@@ -41,11 +41,10 @@ func TestApplyGenModes(t *testing.T) {
 	// All start at 0600 so the chmod effect is observable.
 	pbgo := writeFile(t, dir, "proto/eth/foo.pb.go", 0o600)
 	minimal := writeFile(t, dir, "proto/eth/foo.minimal.pb.go", 0o600)
-	decoupled := writeFile(t, dir, "proto/eth/foo.decoupled.pb.go", 0o600)
 	nested := writeFile(t, dir, "proto/eth/v1/bar.pb.go", 0o600)
 	other := writeFile(t, dir, "proto/eth/foo.go", 0o600)
 
-	require.NoError(t, applyGenModes(dir, []string{"minimal", "decoupled"}))
+	require.NoError(t, applyGenModes(dir, []string{"minimal"}))
 
 	mode := func(path string) os.FileMode {
 		info, err := os.Stat(path)
@@ -57,7 +56,6 @@ func TestApplyGenModes(t *testing.T) {
 	require.Equal(t, os.FileMode(0o755), mode(pbgo))
 	require.Equal(t, os.FileMode(0o755), mode(nested))
 	require.Equal(t, os.FileMode(0o644), mode(minimal))
-	require.Equal(t, os.FileMode(0o644), mode(decoupled))
 	// Not a .pb.go file: left at its original mode.
 	require.Equal(t, os.FileMode(0o600), mode(other))
 }

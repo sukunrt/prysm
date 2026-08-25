@@ -19,8 +19,8 @@ type presetCheck struct {
 // VerifyPreset checks that cfg agrees with the SSZ sizes this binary was built
 // with.
 //
-// The preset is fixed at compile time by the `minimal` / `decoupled` build tags
-// and determines every SSZ array length, while cfg can come from an arbitrary
+// The preset is fixed at compile time by the `minimal` build tag and
+// determines every SSZ array length, while cfg can come from an arbitrary
 // --chain-config-file. A disagreement does not crash anything: the node simply
 // computes wrong hash tree roots and silently forks off. So it has to be a loud
 // startup failure instead.

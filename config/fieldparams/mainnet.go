@@ -1,4 +1,4 @@
-//go:build !minimal && !decoupled
+//go:build !minimal
 
 package field_params
 

@@ -27,9 +27,3 @@ config_setting(
     },
 )
 
-config_setting(
-    name = "ssz_decoupled",
-    flag_values = {
-        "@prysm//proto:network": "decoupled",
-    },
-)

@@ -60,7 +60,7 @@ def _ssz_methodical_impl(ctx):
     # preset: its own tag). methodical emits no header on its own; both codegen
     # paths drive it through --go-build-constraint.
     network = ctx.attr._network[BuildSettingInfo].value
-    go_build_constraint = "!minimal && !decoupled"
+    go_build_constraint = "!minimal"
     if network != "mainnet":
         go_build_constraint = network
 

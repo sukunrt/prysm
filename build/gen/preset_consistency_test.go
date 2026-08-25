@@ -14,9 +14,8 @@ import (
 // config its SSZ sizes are derived from. Adding a preset without adding its
 // config here fails TestPresetSizesMatchChainConfigs.
 var presetConfigs = map[string]func() *params.BeaconChainConfig{
-	"mainnet":   params.MainnetConfig,
-	"minimal":   params.MinimalSpecConfig,
-	"decoupled": params.DecoupledConfig,
+	"mainnet": params.MainnetConfig,
+	"minimal": params.MinimalSpecConfig,
 }
 
 // TestPresetSizesMatchChainConfigs pins every SSZ size in ssz_proto_library.bzl

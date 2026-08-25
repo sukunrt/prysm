@@ -1,7 +1,6 @@
 load("@prysm//tools/go:def.bzl", "go_test")
 
 # gazelle:exclude geth_deps.go
-# gazelle:exclude decoupled_e2e_test.go
 # gazelle:exclude mainnet_e2e_test.go
 # gazelle:exclude mainnet_scenario_e2e_test.go
 # gazelle:exclude minimal_scenario_e2e_test.go
@@ -191,39 +190,6 @@ go_test(
         "exclusive",
         "manual",
         "minimal",
-        "requires-network",
-    ],
-    deps = common_deps,
-)
-
-go_test(
-    name = "go_decoupled_test",
-    size = "large",
-    testonly = True,
-    srcs = [
-        "component_handler_test.go",
-        "decoupled_e2e_test.go",
-        "endtoend_setup_test.go",
-        "endtoend_test.go",
-    ],
-    args = ["-test.v"],
-    data = [
-        "//:prysm_sh",
-        "//cmd/beacon-chain",
-        "//cmd/validator",
-        "//config/params:custom_configs",
-        "//tools/bootnode",
-        "@com_github_ethereum_go_ethereum//cmd/geth",
-        "@web3signer",
-    ],
-    eth_network = "decoupled",
-    flaky = True,
-    shard_count = 2,
-    tags = [
-        "e2e",
-        "exclusive",
-        "decoupled",
-        "manual",
         "requires-network",
     ],
     deps = common_deps,

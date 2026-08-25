@@ -9,9 +9,6 @@ def _go_test_transition_impl(settings, attr):
     if attr.eth_network == "minimal":
         settings["//proto:network"] = "minimal"
         settings["@io_bazel_rules_go//go/config:tags"] = ["minimal"] + settings["@io_bazel_rules_go//go/config:tags"]
-    elif attr.eth_network == "decoupled":
-        settings["//proto:network"] = "decoupled"
-        settings["@io_bazel_rules_go//go/config:tags"] = ["decoupled"] + settings["@io_bazel_rules_go//go/config:tags"]
     elif attr.eth_network == "mainnet":  # Default / optional
         settings["//proto:network"] = "mainnet"
         settings["@io_bazel_rules_go//go/config:tags"] = ["mainnet"] + settings["@io_bazel_rules_go//go/config:tags"]
@@ -44,7 +41,7 @@ def _go_test_transition_rule(**kwargs):
     kwargs = dict(kwargs)
     attrs = dict(kwargs["attrs"])
     attrs.update({
-        "eth_network": attr.string(values = ["mainnet", "minimal", "decoupled"]),
+        "eth_network": attr.string(values = ["mainnet", "minimal"]),
     })
     kwargs["attrs"] = attrs
     kwargs["cfg"] = go_test_transition

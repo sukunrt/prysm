@@ -104,25 +104,6 @@ func TestPassSpec(t *testing.T) {
 		require.DeepEqual(t, []string{"spectest/minimal/a", "spectest/minimal/b"}, pkgs)
 	})
 
-	t.Run("decoupled", func(t *testing.T) {
-		base := "github.com/OffchainLabs/prysm/v7"
-		list := strings.Join([]string{
-			base + "/config/params",
-			base + "/encoding/ssz/query",
-			base + "/proto/prysm/v1alpha1",
-		}, "\n")
-		goBin := fakeGo(t, list+"\n", "", 0)
-		pkgs, header, tagFlag, err := passSpec(goBin, decoupled)
-		require.NoError(t, err)
-		require.Equal(t, "=== decoupled pass (-tags=decoupled) ===", header)
-		require.Equal(t, "-tags=develop,decoupled", tagFlag)
-		// The mainnet-only packages are dropped.
-		require.DeepEqual(t, []string{
-			base + "/config/params",
-			base + "/proto/prysm/v1alpha1",
-		}, pkgs)
-	})
-
 	t.Run("unknown pass errors", func(t *testing.T) {
 		_, _, _, err := passSpec("go", kind("bogus"))
 		require.ErrorContains(t, "unknown pass", err)
@@ -133,7 +114,7 @@ func TestSelectKinds(t *testing.T) {
 	t.Run("no args runs every pass", func(t *testing.T) {
 		got, err := selectKinds(nil, false)
 		require.NoError(t, err)
-		require.DeepEqual(t, []kind{mainnet, mainnetSpectest, minimal, minimalSpectest, decoupled}, got)
+		require.DeepEqual(t, []kind{mainnet, mainnetSpectest, minimal, minimalSpectest}, got)
 	})
 
 	t.Run("no args with race runs the mainnet passes", func(t *testing.T) {

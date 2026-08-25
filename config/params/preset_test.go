@@ -16,8 +16,6 @@ func presetConfig(t *testing.T) *params.BeaconChainConfig {
 		return params.MainnetConfig().Copy()
 	case "minimal":
 		return params.MinimalSpecConfig()
-	case "decoupled":
-		return params.DecoupledConfig()
 	default:
 		t.Fatalf("no chain config for preset %q", fieldparams.Preset)
 

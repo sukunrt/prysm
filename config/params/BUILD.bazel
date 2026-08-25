@@ -8,7 +8,6 @@ go_library(
         "config_utils_develop.go",  # keep
         "config_utils_prod.go",
         "configset.go",
-        "decoupled_config.go",
         "errors.go",
         "fork.go",
         "init.go",
