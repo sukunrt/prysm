@@ -41,6 +41,32 @@ kurtosis service logs decoupled cl-1-prysm-geth --follow
 `participants[0].count` and lower `num_validator_keys_per_node` to keep the
 total near 128.
 
+## Measure
+
+```sh
+kurtosis/scrape.sh <enclave> <outdir> 6      # one metrics sample per slot
+kurtosis/summarize.py <outdir> --slot-seconds 6 --skip-slots 32
+kurtosis/vclogs.py <outdir>                  # needs docker logs vc-* > vc-*.log
+```
+
+`scrape.sh` polls every beacon node's `/metrics` and keeps only the families
+the measurements use; `summarize.py` differences the counters over the window
+and prints the same per-slot-per-node tables the ethshadow baseline
+(`decoupled-shadow-sim/data19/baseline.md`) reports, plus the Goldfish
+metrics, the slots at which `goldfish_gate_retreat` and `beacon_reorgs_total`
+moved, and the supernode's column-subnet state. `vclogs.py` reads the
+validator clients' logs for attesters per slot, per-round-offset flatness and
+the late-published slots.
+
+Prysm exports no received-bytes counter (`p2p_pubsub_rpc_recv_pub_bytes_total`
+is declared but never incremented), so received bytes are derived from the
+message count and the family's mean sent size — the same derivation the
+baseline used.
+
+`runs/` holds one directory per measurement run: the `network_params.yaml` it
+ran and a `summary.md` with its numbers. The bulky raw scrapes and node logs
+live outside the repo, in `~/dev/prysm2-run-logs/<run>/`.
+
 ## What had to be injected, and where
 
 The fork's config does not exist upstream, so every value has an injection
@@ -55,6 +81,7 @@ is not in the container.
 | single-entry `BLOB_SCHEDULE` | native: one non-default `bpo_1_*` |
 | Amsterdam at the EL genesis time | falls out of `gloas_fork_epoch: 0` |
 | `SLOTS_PER_ROUND: 8` | new line in the image's CL config template; `extra_env` overrides it |
+| `AVAILABLE_ATTESTATION_DUE_BPS_HEZE` | same route; it is the head-timing sweep axis |
 | Heze not mapped to an EL fork | `genesis_add_heze` patched out |
 | a Heze CL genesis state | `prysmctl` replaces `eth-genesis-state-generator` |
 
