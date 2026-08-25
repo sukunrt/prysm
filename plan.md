@@ -506,6 +506,29 @@ because Heze is CL-only; see `Dockerfile.genesis-gen`.
 
 ---
 
+### Executed 2026-08-19 <added by executor>
+
+Two pieces of step 5 are done ahead of the e2e work; full notes in
+`plan-detailed.md` 5.0a and 5.0b.
+
+- 5.0a: the four genesis block-production blockers. A single node now produces
+  blocks on a `--fork=heze` genesis.
+- 5.0b: the duty under-reporting from step 2, and the builder payment divisor.
+  The duty fan-out is client-side — the node keeps its epoch-shaped duties API
+  and the validator client expands the reported slot into its repeat slots with
+  `slots.RoundRepeats`. No proto or API change, and no change at all where
+  `SlotsPerRound == SlotsPerEpoch`. Aggregator selection was already slot-keyed
+  and stays that way. One thing the plan did not name: EIP-3076 local slashing
+  protection stores one target epoch per validator, so it refused every
+  attestation after the epoch's first round; it now covers the first round
+  only. `fulu-devnet.yaml` carries `SLOTS_PER_ROUND: 8`.
+
+  A local smoke run at 8/32 shows it working: the client's schedule reports
+  `attesterCount=1024` for 256 keys, and the same 32 pubkeys attest at slot k,
+  k+8 and k+16, with aggregates at each.
+
+Still open in step 5: the e2e replacement test and the Shadow run.
+
 ## Open questions for the user
 
 1. `builder_pending_payments` is sized `2 * SLOTS_PER_EPOCH` and stays

@@ -824,6 +824,155 @@ bid's `parent_block_hash` is zero, not `latest_block_hash` as in the
 PR #16821 canonical devnet genesis — nothing depends on it now that the
 parent is full.
 
+## 5.0b Executed 2026-08-19: duty fan-out and the payment divisor <added by executor>
+
+Four jj changes: `xutnklls` (builder payment divisor), `osqmuuow` (slot
+helpers), `rukuuvon` (validator client fan-out plus the gossip test),
+`zynzktnt` (devnet yaml `SLOTS_PER_ROUND: 8`).
+
+### The fan-out is client-side, and the duties API does not change
+
+Approach (b) of the two the step named. The node keeps its epoch-shaped
+`CommitteeAssignments` and its epoch-shaped `AttesterDuty`; the validator
+client expands the one reported slot into its repeat slots. Reasons:
+
+- No proto, no gRPC and no REST change, so the eth-API duty path
+  (`validator/client/beacon-api/duties.go`) and the deprecated gRPC path
+  (`rpc/prysm/v1alpha1/validator/duties.go`) both get the fan-out for free —
+  they meet in `ethpb.ValidatorDuty.AttesterSlot`.
+- `CommitteeAssignment` holds one slot. Reporting four would have meant a new
+  repeated field on two protos and edits in every duty consumer.
+- The committee, the committee index and the position in it are constant
+  across the epoch (5.0), so the extra slots carry no extra information. The
+  client can compute them from `SLOTS_PER_ROUND` alone.
+
+New in `time/slots/slottime.go`: `SinceRoundStarts`, `RoundRepeats(slot)`
+listing the epoch's slots at the same round offset, and `IsRoundRepeat(a, b)`.
+Under the identity config `RoundRepeats` returns the input slot alone, which is
+what makes every client site a no-op there.
+
+Four client sites take the fan-out:
+
+- `RolesAt` (`validator/client/validator.go`): `duty.AttesterSlot == slot`
+  becomes `slots.IsRoundRepeat(slot, duty.AttesterSlot)`. This is the site that
+  produces the 4x traffic; the aggregator check under it already keys on the
+  slot, so aggregation follows automatically.
+- `subscribeToSubnets` (`subnets.go`): the node's subnet cache
+  (`rpc/core/subnets.go`, `cache.SubnetIDs`) is keyed by slot, so each repeat
+  slot needs its own subscription and its own aggregator decision.
+- `distributedSelector.fetchSelectionProofs` (`aggregator_selector.go`): one
+  DVT selection proof per repeat slot.
+- `logDuties` (`duties.go`): the schedule log lists all four slots.
+
+### Aggregator selection is slot-keyed, and stays that way
+
+The selection proof is a BLS signature over the slot with
+`DOMAIN_SELECTION_PROOF` (`signSlotWithSelectionProof`), so a validator is
+selected independently in each round of the epoch. Nothing was epoch-keyed
+here: `localSelector.proofCache` and `ClaimAggregateSlot` are both
+`(slot, ...)`. The one epoch-keyed thing is
+`distributedSelector.refreshedEpoch`, which only decides when to refetch DVT
+proofs, and it refetches all four slots' proofs at once. The gossip-side dedup
+was already moved to the round in step 2
+(`hasSeenAggregatorIndexRound`).
+
+### Local slashing protection had to give way
+
+Not named by the plan, and it blocks the whole point of the step. Both
+validator DBs implement EIP-3076, which stores one source/target epoch pair per
+validator: `filesystem` refuses a target `<=` the recorded one, and `kv` calls
+a differing signing root at the same target a `DoubleVote`. All four
+attestations of an epoch share a target, so rounds 2 to 4 were refused and only
+one attestation per epoch would ever have gone out.
+
+`SubmitAttestation` now runs `SlashableAttestationCheck` only when the
+attestation falls in the epoch's first round
+(`slots.SinceEpochStarts(slot) < SlotsPerRound`). Under the identity config
+that is every attestation, so the existing double-vote, surround and surrounded
+tests pass untouched. The gate is written on the config rather than on
+`slot == duty.AttesterSlot` deliberately: three existing tests call
+`SubmitAttestation` at slot 30 with a duty whose `AttesterSlot` is 0, and a
+duty-based gate would have needed those expectations edited.
+
+Recorded as a deviation: a round-keyed slashing DB would be the real fix, and
+it would change the EIP-3076 interchange format. Out of scope for a networking
+mock.
+
+### Nothing else drops the repeats
+
+Checked, no change needed:
+
+- Gossip: `validateCommitteeIndexBeaconAttestation` resolves the committee with
+  `BeaconCommitteeFromState(state, data.Slot, index)`, which is round-aware
+  since step 2. The unaggregated seen-cache is `(slot, index, attester)`.
+  `ComputeSubnetForAttestation` keys on the slot's epoch offset, so each repeat
+  rides a different subnet — consistent on both sides because both compute it
+  the same way. New test
+  `TestService_validateCommitteeIndexBeaconAttestation_RepeatSlotsOfARound`
+  pins all of it at 8/32.
+- Attestation pool: `AttCaches` keys both the store and the seen-bits on the
+  attestation data id, which contains the slot.
+- `ProcessAttestation`'s inclusion window is `[slot+1, slot+SLOTS_PER_EPOCH]`,
+  so a repeat is includable like any other attestation.
+
+Known and accepted: only the first attestation of an epoch earns participation
+flags (`altair.ProcessAttestations` sets each flag once), and `MAX_ATTESTATIONS`
+is unchanged, so a block cannot carry four times the aggregates. Both are
+consensus accounting, not wire behaviour.
+
+### The builder payment divisor
+
+`builderQuorumThreshold` (`beacon-chain/core/gloas/pending_payment.go`) divides
+by `SlotsPerRound` now. The `<spec>` block above it is left verbatim, because
+`specrefs/functions.yml` pins its hash and `ethspecify check` compares them; the
+deviation is a comment underneath. New test
+`TestBuilderQuorumThreshold_ShortRound` shows the threshold is one slot's share
+at 8/32, that a slot's whole attesting balance clears it, and that the epoch
+divisor asked for four times as much.
+
+### Left alone on purpose
+
+- `ListValidatorAssignments` (`rpc/prysm/v1alpha1/beacon/assignments.go`) still
+  reports one attester slot per validator. It is a read-only inspection API and
+  nothing schedules from it; giving it the repeat slots means changing
+  `ValidatorAssignments` on the wire.
+- `CommitteeAssignment` keeps one slot, and `CommitteeAssignments` keeps its
+  epoch-shaped signature. 2.8 left this open; 5.0's clarification is what makes
+  keeping it correct.
+
+### Pre-existing failures, confirmed unchanged
+
+`beacon-chain/core/helpers` `TestCurrentEpochSyncSubcommitteeIndices_UsingCommittee`
+(passes alone, fails in package runs), `beacon-chain/sync/sync_fuzz_test.go` vet
+errors, and four `validator/client/runner.go` vet errors about discarded cancel
+functions. `runner.go` is byte-identical to its state at the step-5a head.
+
+### Smoke: the fan-out is visible on a running node
+
+The step-5a setup rerun with `SLOTS_PER_ROUND: 8`
+(`step5b-smoke.sh`, logs `step5b-smoke-*.log`): geth 1.17.6, one beacon node,
+one 256-key validator client, `prysmctl --fork=heze` genesis.
+
+- The client's epoch schedule reports `attesterCount=1024` — 256 validators
+  times 4 rounds — where the identity config reports 256.
+- 32 attesters per slot, and the pubkey set at slot k is identical to the sets
+  at k+8 and k+16, for every k checked.
+- `Submitted new attestations` at slots 0 to 16, 32 pubkeys each, with the
+  slot-k set equal to the slot-k+8 set. So the repeats are really signed and
+  sent, not just scheduled.
+- `Submitted new aggregate attestations` at every one of those slots, including
+  the second and third round's, so aggregation follows the fan-out.
+- Zero slashing-protection failures in the client log. Blocks produced for
+  slots 1 to 13, each including one aggregate.
+- Remaining log noise is the single-node kind step 5a already saw: "Failed to
+  find peers" and "Sync Committee Message is too old to broadcast".
+
+### Deferred to the e2e part
+
+- `testing/endtoend` still has no Heze/short-round config (5.2).
+- No devnet or Shadow run at `SLOTS_PER_ROUND: 8` beyond the local smoke above.
+- Per-slot byte counts on the attestation topics (5.4) need more than one node.
+
 ## 5.1 There is no devnet preset
 
 A preset is compile-time and fixes SSZ array sizes. `SLOTS_PER_ROUND` sizes
