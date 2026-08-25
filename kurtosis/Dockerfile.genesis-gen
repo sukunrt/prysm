@@ -13,6 +13,7 @@
 FROM ethpandaops/ethereum-genesis-generator:6.0.2
 
 ENV SLOTS_PER_ROUND=8
+ENV AVAILABLE_ATTESTATION_DUE_BPS_HEZE=2500
 
 COPY prysmctl /usr/local/bin/prysmctl
 COPY prysm-genesis-state.sh /usr/local/bin/prysm-genesis-state.sh

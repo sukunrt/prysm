@@ -35,6 +35,18 @@ sed -i "/^SECONDS_PER_SLOT:/i $comment1\n$comment2\nSLOTS_PER_ROUND: \$SLOTS_PER
     /config/cl/config.yaml
 grep -q '^SLOTS_PER_ROUND' /config/cl/config.yaml
 
+# AVAILABLE_ATTESTATION_DUE_BPS_HEZE is the head-timing sweep axis of the
+# step-6 measurements (plan-next.md step 6, open question 2). Same story as
+# SLOTS_PER_ROUND: the field is this fork's own, no upstream template knows
+# it, the image ENV holds the default and extra_env overrides it. Both the
+# beacon node and the VC read this file (the VC gets it as
+# --chain-config-file), so one line moves the whole run's vote deadline.
+comment3='# How far into the slot an available attestation is due, in basis'
+comment4='# points. The head-timing sweep axis.'
+sed -i "/^SECONDS_PER_SLOT:/i $comment3\n$comment4\nAVAILABLE_ATTESTATION_DUE_BPS_HEZE: \$AVAILABLE_ATTESTATION_DUE_BPS_HEZE" \
+    /config/cl/config.yaml
+grep -q '^AVAILABLE_ATTESTATION_DUE_BPS_HEZE' /config/cl/config.yaml
+
 # The CL genesis state: prysmctl, not eth-genesis-state-generator. See
 # prysm-genesis-state.sh for the why. Installing it under the upstream name
 # leaves the stock entrypoint untouched.
