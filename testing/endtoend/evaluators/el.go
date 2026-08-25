@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/OffchainLabs/prysm/v7/config/params"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	e2e "github.com/OffchainLabs/prysm/v7/testing/endtoend/params"
 	"github.com/OffchainLabs/prysm/v7/testing/endtoend/policies"
 	"github.com/OffchainLabs/prysm/v7/testing/endtoend/types"
@@ -24,18 +26,27 @@ import (
 
 // ELTransactionsCredit requires that transactions are included at all,
 // that not every one of them failed, and that at least one value-carrying
-// transfer succeeded and its recipient's balance shows it.
+// transfer succeeded and its recipient's balance shows it. It starts at
+// epoch 1: the generator needs a funding transaction mined before it sends
+// anything, which can eat most of epoch 0 on short-epoch configs.
 var ELTransactionsCredit = types.Evaluator{
 	Name:       "el_transactions_credit_%d",
-	Policy:     policies.AllEpochs,
+	Policy:     policies.AfterNthEpoch(0),
 	Evaluation: elTransactionsCredit,
 }
 
 // ELBlobsLand requires that at least one blob transaction landed: some
-// recent block consumed blob gas.
+// recent block consumed blob gas. It only fires once Deneb is scheduled and
+// blob epochs have begun, so it is safe to wire into every run flavor.
 var ELBlobsLand = types.Evaluator{
-	Name:       "el_blobs_land_%d",
-	Policy:     policies.AllEpochs,
+	Name: "el_blobs_land_%d",
+	Policy: func(currentEpoch primitives.Epoch) bool {
+		deneb := params.BeaconConfig().DenebForkEpoch
+		if deneb == params.BeaconConfig().FarFutureEpoch {
+			return false
+		}
+		return currentEpoch >= max(deneb, 1)
+	},
 	Evaluation: elBlobsLand,
 }
 

@@ -70,6 +70,9 @@ func e2eMinimal(t *testing.T, cfg *params.BeaconChainConfig, cfgo ...types.E2ECo
 	evals = addIfForkSet(evals, cfg.DenebForkEpoch, ev.BlobsIncludedInBlocks)
 	// BPO (Blob Parameter Optimization) evaluator - runs from Fulu onwards
 	evals = addIfForkSet(evals, cfg.FuluForkEpoch, ev.BlobLimitsRespected)
+	// EL-side content checks ask geth's own API, so they work at every CL
+	// fork, including ones the beacon gRPC block container cannot decode.
+	evals = append(evals, ev.ELTransactionsCredit, ev.ELBlobsLand)
 
 	testConfig := &types.E2EConfig{
 		BeaconFlags: []string{
@@ -163,6 +166,9 @@ func e2eMainnet(t *testing.T, usePrysmSh, useMultiClient bool, cfg *params.Beaco
 	evals = addIfForkSet(evals, cfg.DenebForkEpoch, ev.BlobsIncludedInBlocks)
 	// BPO (Blob Parameter Optimization) evaluator - runs from Fulu onwards
 	evals = addIfForkSet(evals, cfg.FuluForkEpoch, ev.BlobLimitsRespected)
+	// EL-side content checks ask geth's own API, so they work at every CL
+	// fork, including ones the beacon gRPC block container cannot decode.
+	evals = append(evals, ev.ELTransactionsCredit, ev.ELBlobsLand)
 
 	testConfig := &types.E2EConfig{
 		BeaconFlags: []string{
