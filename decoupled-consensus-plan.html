@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decoupled Consensus Plan</title>
+<style>
+  *,*::before,*::after { box-sizing: border-box; }
+  :root {
+    --ground:#F5F6F4; --panel:#FFFFFF; --ink:#14181A; --muted:#5C666B;
+    --rule:#DBE0DD; --accent:#0F6E6B; --warn:#A32A1C;
+    --mono: ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:#0E1113; --panel:#161A1C; --ink:#E4E9E9; --muted:#98A3A7;
+      --rule:#262C2E; --accent:#4FC2BC; --warn:#E8735F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground:#0E1113; --panel:#161A1C; --ink:#E4E9E9; --muted:#98A3A7;
+    --rule:#262C2E; --accent:#4FC2BC; --warn:#E8735F;
+  }
+  body { background:var(--ground); color:var(--ink); font-family:var(--sans);
+         font-size:16.5px; line-height:1.6; margin:0; }
+  .wrap { max-width:72ch; margin:0 auto; padding:48px 24px 90px; }
+  h1 { font-family:var(--mono); font-size:clamp(24px,4vw,34px); letter-spacing:-.02em;
+       line-height:1.15; margin:0 0 10px; }
+  .standfirst { color:var(--muted); margin:0 0 34px; }
+  h2 { font-family:var(--mono); font-size:17px; margin:36px 0 8px;
+       border-bottom:1px solid var(--rule); padding-bottom:6px; }
+  p, li { margin:0 0 10px; }
+  ol { padding-left:1.4em; }
+  code { font-family:var(--mono); font-size:.9em; background:var(--panel);
+         border:1px solid var(--rule); border-radius:4px; padding:1px 5px; }
+  .warn { color:var(--warn); }
+  strong { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Decoupled Consensus: The Final Plan</h1>
+<p class="standfirst">The real gadget, one cutover at the fork, no parallel FFG run.</p>
+
+<h2>Goal</h2>
+<p>Build the real finality gadget: Fresh Simplex, with the height filter and the
+timeouts. Use real vote content on the real beacon state. Measure the time to
+finality, the timeout rounds under loss, and the stalls under partition. The
+traffic measurement comes free.</p>
+
+<h2>The cutover</h2>
+<p>There is no parallel run. Before the Heze fork, FFG runs alone. At the fork,
+the attestation duty stops, and two new duties start. After the fork, the FFG
+code path serves the pre-fork slots only.</p>
+
+<h2>The two vote streams</h2>
+<p><strong>The available attestation</strong> is the head vote. It is built. It
+waits for the block, or for 25% of the slot. It is 201 bytes on one global
+topic.</p>
+<p><strong>The finality vote</strong> goes out at the slot start. Its fields
+freeze at the round start. It copies the attestation path: the types, the
+subnet and aggregate topics, the duties, and the block-body list. The
+seen-cache key changes from epoch to round. The slot-start collision with the
+block is a primary measurement.</p>
+
+<h2>The head rule</h2>
+<p>The Goldfish gate is the head input. Score the children with the votes from
+the previous slot. Then apply the majority gate. <span class="warn">The gate
+must be live at the fork. If it is not, all head weights are zero.</span></p>
+
+<h2>Build order</h2>
+<p>This is a code order, not a runtime order. Do not start a devnet before
+steps (a) to (d) are complete. Unit tests carry the correctness load.</p>
+<ol type="a">
+<li>Add the new store fields beside the FFG fields. Do not build a check
+that compares the gadget with FFG: after the fork, FFG gets no votes.</li>
+<li>Write the clockless state machine. Drive it from
+<code>handleBlockAttestations</code>. Unit-test the branch order.</li>
+<li>Add the finality vote message on the cloned attestation topics. One vote
+per validator per round.</li>
+<li>Make the four interface swaps: the anchor cascade, the height filter, the
+lexicographic updates, and the prune from <code>store.F</code>.</li>
+<li>Add the round math. A sub-round is one slot. A round is 8 slots. Do not
+build view-merge or the TSQ duty.</li>
+</ol>
+
+<h2>Rules</h2>
+<p>Quorums count validators. <code>targets</code> and <code>timeouts</code> are
+sparse maps. After the fork, only the gadget prunes. Until step (d) is in,
+nothing prunes and memory grows: keep the runs short. If the gadget stalls,
+pruning stops. Watch for it.</p>
+
+<h2>Open</h2>
+<p>Pad the registry with exited validators to get the mainnet state size.</p>
+
+<h2>Authority</h2>
+<p>The executable specification at
+<code>consensus-specs/specs/_features/simplex/</code> is the wire authority.
+This plan replaces the stub tables in
+<code>decoupled-consensus-networking-mock.html</code> and amends section 18 of
+<code>gossip-forkchoice.html</code>.</p>
+
+</div>
+</body>
+</html>
