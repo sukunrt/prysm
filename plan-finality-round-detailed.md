@@ -30,8 +30,9 @@ exist (`compute_round_at_slot` ↔ `slots.RoundAt`, etc.).
 
 ## The identity rule (applies to every step)
 
-`Checkpoint.epoch` keeps its proto shape and Go type; its VALUE becomes the
-round index. With `SlotsPerRound == SlotsPerEpoch` — the shipped mainnet
+`Checkpoint.epoch` keeps its wire/SSZ shape (uint64); its VALUE becomes
+the round index, and its Go type becomes `primitives.Round` via the proto
+`cast_type` (step 0) so the compiler enforces the unit. With `SlotsPerRound == SlotsPerEpoch` — the shipped mainnet
 (`config/params/mainnet_config.go:111`, value 32) and minimal
 (`minimal_config.go:48`, value 8) configs — `slots.RoundAt(s) ==
 slots.ToEpoch(s)` numerically at every slot and `RoundStart(r) ==
@@ -51,17 +52,22 @@ tests that override `SlotsPerRound` to 8 with `SlotsPerEpoch` 32 via
 `AttestationData.Target.Epoch`, `AttestationData.Source.Epoch`, the
 forkchoice `Checkpoint.Epoch` (`forkchoice/types/types.go:14`), and the
 node fields `justifiedEpoch` / `finalizedEpoch` / `unrealized*Epoch`
-(`forkchoice/doubly-linked-tree/types.go:64-67`) all carry ROUNDS. Wall
-clocks and duty machinery keep carrying EPOCHS (shuffling, seeds, domains,
-registry). Every comparison must pair like with like. A single leftover
-site that compares a round-valued checkpoint against a wall-clock epoch —
-for example the goldfish walk's viability inputs at
+(`forkchoice/doubly-linked-tree/types.go:64-67`) all carry ROUNDS — as
+the distinct type `primitives.Round`, per the answered typing question
+(step 0). Wall clocks and duty machinery keep carrying EPOCHS (shuffling,
+seeds, domains, registry). The retype makes every type-level mix a
+compile error — for example the goldfish walk's viability inputs at
 `forkchoice/doubly-linked-tree/goldfish.go:454,466-467`, which pair
-`s.justifiedCheckpoint.Epoch` with `slots.ToEpoch(current)` — is invisible
-under the identity configs and silently corrupts head selection or
-justification on the devnet. The audit sections below (1.4, 2.6, 4.1-4.3)
-enumerate every known pairing site; the 8/32 unit tests are the net that
-catches the ones the enumeration missed.
+`s.justifiedCheckpoint.Epoch` with `slots.ToEpoch(current)`, stop
+compiling until the wall-clock side becomes `slots.RoundAt(current)`.
+What the compiler CANNOT catch is a site "fixed" with a careless cast
+(`primitives.Round(someEpoch)`) instead of a real conversion — the audit
+sections below (1.4, 2.6, 4.1-4.3) enumerate the known pairing sites and
+the correct conversion for each, and the rule for the executor is: a bare
+`Round(...)` or `Epoch(...)` cast between the two units is FORBIDDEN
+outside the two named conversion helpers (`slots.RoundAt`-family and
+step 2.6's `helpers.CheckpointEpoch`); the 8/32 unit tests are the net
+under everything.
 
 Corollary, stated explicitly (user, 2026-08-21): **committee construction
 stays epoch-based.** The shuffle seed (`get_seed` by epoch), the
@@ -85,18 +91,103 @@ two layers from the cause.
 
 ---
 
+# Step 0 — the retype: checkpoints carry `primitives.Round`
+
+Answered question 2 (user, 2026-08-21): retype, so the compiler catches
+the bugs. The wire and SSZ encoding do not change — `cast_type` only
+changes the generated Go type, exactly how the same field already casts
+to `primitives.Epoch` today.
+
+## 0.1 The type change
+
+- [ ] `proto/prysm/v1alpha1/attestation.proto:95` — `Checkpoint.epoch`:
+      change the `cast_type` option from `primitives.Epoch` to
+      `primitives.Round`. Regenerate (`make gen proto ssz mode=force`).
+      The eth/v1 API mirror (`proto/eth/v1/attestation.proto:91`) is NOT
+      retyped — the API layer converts at its translation boundary,
+      keeping the public API surface stable.
+- [ ] `beacon-chain/forkchoice/types/types.go:14` —
+      `forkchoicetypes.Checkpoint.Epoch` becomes `primitives.Round`
+      (rename the field to `Round`).
+- [ ] `forkchoice/doubly-linked-tree/types.go:64-67` — the node fields
+      `justifiedEpoch`, `finalizedEpoch`, `unrealizedJustifiedEpoch`,
+      `unrealizedFinalizedEpoch` become `primitives.Round` (rename with
+      `Round` suffixes).
+- [ ] `consensus-types/primitives/round.go` — extend `Round` with
+      whatever the generated code and its consumers need beyond the
+      existing arithmetic (at minimum `String`; check what `Epoch`
+      provides that the Checkpoint codegen and log/trace call sites use,
+      and port only what compiles demand — `Epoch` is 152 lines, a subset
+      is enough, per task.md decision 10).
+
+## 0.2 The compile-error sweep IS the audit
+
+Every site that mixes a checkpoint value with an epoch now fails to
+compile — including the dormant pre-Heze fork paths (phase0/altair
+justification, slasher, validator protection db), because the proto
+Checkpoint is shared by all forks. The rule for fixing each error:
+
+- A wall-clock or duty value being compared to a checkpoint: convert the
+  WALL-CLOCK side with `slots.RoundAt(...)` (steps 1.4, 3.x name the
+  live-path sites).
+- A checkpoint value feeding epoch-typed logic (registry gating, leak,
+  API responses): convert the CHECKPOINT side with the step 2.6 helper
+  (`helpers.CheckpointEpoch`).
+- Dormant paths (phase0/pre-Altair processing, slasher, protection db):
+  mechanical conversions that preserve today's arithmetic — behavior
+  changes there are out of scope (step 6). Prefer keeping their internal
+  variables `Round`-typed end to end over sprinkling casts.
+- Bare cross-unit casts outside the two helper families are forbidden;
+  each one that seems necessary is a finding to record, not a fix.
+
+- [ ] Land step 0 together with step 1 (or immediately before it) in the
+      same jj stack — the tree does not compile with the retype alone
+      until the sweep is complete, so the retype change itself must
+      contain the full sweep. List the touched-package tally in the
+      executor note.
+- [ ] Accept: `go build ./...` green; full test suite green with zero
+      expectation edits (identity rule — the values are unchanged
+      everywhere; only types moved).
+
+---
+
 # Step 1 — the per-round target, state side and forkchoice side
 
 ## 1.1 `FFGTargetRoot` becomes round-keyed
 
 - [ ] `beacon-chain/core/helpers/block.go:100` — `FFGTargetRoot(state,
       epoch)` becomes `FFGTargetRoot(state, round primitives.Round)`:
-      `s := slots.RoundStart(round)`, minus one if `s > 0`, then
-      `BlockRootAtSlot`. Round 0 keeps the anchor/genesis-root arm (the
-      existing `if s > 0` guard generalizes unchanged). Update the doc
-      comment's pseudocode from `compute_start_slot_at_epoch` to
-      `compute_start_slot_at_round`. (Open question 1 covers `-1` vs `0`;
-      build `-1` unless the user overrides.)
+      `s := slots.RoundStart(round) - offset`, clamped at the anchor,
+      then `BlockRootAtSlot`. **The offset is configurable (answered
+      question 1):** a new config value `FFG_TARGET_OFFSET_SLOTS`
+      (`config/params/config.go`, `spec:"true"` so it is yaml-sweepable
+      per run like `AVAILABLE_ATTESTATION_DUE_BPS_HEZE`), default `1`
+      (target = the block at `RoundStart(R) - 1`); `0` targets the
+      round's own first slot. Underflow at any offset returns the
+      anchor/genesis root (the existing `if s > 0` guard generalizes to
+      the clamp). Config plumbing rows: `mainnet_config.go`,
+      `minimal_config.go` (both `1`), the `loader.go` print list,
+      `loader_test.go` assert list, `rpc/eth/config/handlers.go` + test —
+      the same eight-file pattern `SlotsPerRound` used (plan.md step 2).
+      Update the doc comment's pseudocode from
+      `compute_start_slot_at_epoch` to `compute_start_slot_at_round` with
+      the offset. **Both offsets are first-class** (decision 2026-08-21:
+      voting for the block at slot -1 or at slot 0 at round
+      start): both get unit tests AND a smoke run each (7.2). The
+      identity claim holds only at offset 1 (today's `StartSlot(E)-1`
+      shape), so the shipped default stays 1 and offset 0 is exercised in
+      the 8/32 runs.
+- [ ] Offset-0 interaction with vote timing, stated up front: at offset 0
+      the target is the round's own first block. A voter in the round's
+      FIRST slot that votes at slot start (the
+      `--decoupled-ffg-vote-at-slot-start` flag) cannot have seen that
+      block yet, so its target root resolves to the previous block and
+      the vote misses `is_matching_target` for that slot's committee —
+      1/8 of the round's weight at 8-slot rounds, so justification still
+      clears (the decision-12 arithmetic, now per round: 87.5% > 2/3).
+      Write this expectation into the offset-0 smoke's assertions rather
+      than discovering it as a surprise; the offset-0 run is precisely
+      the measurement of that loss.
 - [ ] Call sites, all pass the vote's round (`data.Target.Epoch`
       reinterpreted, or `time.CurrentRound/PrevRound` from step 2.2):
       `core/altair/attestation.go:365` (`MatchingStatus`),
@@ -118,6 +209,15 @@ two layers from the cause.
       slots.RoundAt(...)`. The anchor (`parent == nil → target = self`) and
       finalized re-anchor (`store.go:274-277`, pruned tree root is its own
       target) arms are unchanged.
+- [ ] **The target offset is a symmetric pair.** The `node.target`
+      inherit rule above encodes offset 1 (a round's blocks target the
+      deepest ancestor in an earlier round). At offset 0 the rule
+      changes: a round-start block is its own target and later blocks in
+      the round inherit it. Implement the offset once, read from the same
+      `FFG_TARGET_OFFSET_SLOTS` config in BOTH the helper (1.1) and the
+      insert rule here, with a unit test per offset asserting
+      `TargetRootForRound == FFGTargetRoot` on the same chain — if they
+      diverge, `VerifyLmdFfgConsistency` rejects every vote.
 - [ ] `forkchoice.go:861` — `targetRootForEpoch(root, epoch)` and its
       public wrapper `TargetRootForEpoch` (`:819`): the parameter is now a
       round value. Rename both to `targetRootForRound` /
@@ -236,21 +336,42 @@ Heze sorts above Gloas). Split it into a round part and an epoch part,
 under the identity configs they always do, which is what keeps every
 existing transition test green.
 
+**Answered question 3 (user, 2026-08-21): what moves to round cadence is
+justification and finalization (J&F) — nothing else.** Rewards,
+penalties, and inactivity scores stay at epoch cadence; committee
+selection stays epoch-based (charter). One technical dependency follows
+from correctness, not preference: per-round J&F needs per-round
+PARTICIPATION ROTATION, because the target bits J&F counts must belong to
+the round being justified — bits accumulated across a whole epoch would
+justify round R on round R-1's votes. And to preserve identity, rewards
+at an epoch boundary must still read the PRE-rotation arrays (today
+rotation runs late in epoch processing, after rewards, at `gloas.go:198`).
+Both constraints are satisfied by placing rotation per-boundary-kind:
+
 - [ ] Read `processEpochGloas` (`gloas.go:137` to end) and list its call
       order in the change description. The round part
-      (`processRoundGloas`, new) takes, in today's relative order:
+      (`processRoundGloas`, new) is exactly:
       `electra.InitializePrecomputeValidators` (`:144`),
-      `electra.ProcessEpochParticipation` (`:148`),
+      `electra.ProcessEpochParticipation` (`:148`) — the balance
+      precompute J&F consumes —,
       `precompute.ProcessJustificationAndFinalizationPreCompute` (`:152`),
-      the inactivity-score update and
-      rewards/penalties processing that read the same precomputed
-      balances (locate them between `:152` and `:198`), and
-      `electra.ProcessParticipationFlagUpdates` (`:198`). The epoch part
-      keeps everything else: registry updates, slashings, eth1-data reset,
+      and then `electra.ProcessParticipationFlagUpdates` (`:198`) **only
+      when the boundary is NOT also an epoch boundary**. The epoch part
+      keeps everything else in today's exact order — inactivity scores,
+      rewards/penalties, registry updates, slashings, eth1-data reset,
       pending deposits/consolidations, builder payments, effective
       balances, randao/historical/sync-committee/proposer-lookahead/PTC
-      window. (Open question 3 records the rewards/inactivity placement;
-      build the recommendation — they move with the arrays they read.)
+      window, and the rotation at its original position after rewards.
+      At a coinciding boundary the sequence is therefore: precompute,
+      J&F, then the whole remaining epoch body including its
+      late rotation — byte-identical to today under the identity
+      configs. At a pure round boundary: precompute, J&F, rotation.
+- [ ] Accounting consequence, accepted by charter and by answered
+      question 3: at 8/32, epoch rewards/penalties read the last round's
+      participation only. Consensus-accounting values may be wrong; the
+      finality mechanism itself may not — that is why the rotation
+      dependency above is not optional. One paragraph in the change
+      description states this.
 - [ ] `transition.go:293-308` (`ProcessSlotsCore`) — call
       `ProcessRound` for `version >= version.Heze` states when
       `CanProcessRound`, before `ProcessEpoch` (which now runs the slimmed
@@ -301,22 +422,27 @@ is called from the round part; its body is unchanged.
       because the fields' types and counts are untouched
       (`BeaconStateHezeFieldCount` stays 46, `mainnet_config.go:235`).
 
-## 2.5 Finality delay and the inactivity leak
+## 2.5 Finality delay and the inactivity leak — stays epoch-based
 
-- [ ] `core/helpers/rewards_penalties.go:190-192` — `FinalityDelay
-      (prevEpoch, finalizedEpoch)`: both inputs become rounds (callers
-      pass `PrevRound(state)` and the finalized checkpoint's round). No
-      underflow: rounds compare with rounds. `IsInInactivityLeak`
-      (`:180-182`) then means "more than `MinEpochsToInactivityPenalty`
-      ROUNDS without finality" — the leak arms after 4 unfinalized rounds
-      (~1 epoch wall clock at 8/32) instead of 4 epochs. Open question 4;
-      build the recommendation (raw rounds, documented) unless overridden.
-- [ ] Callers to convert: `core/altair/epoch_precompute.go:122,273` (the
-      electra/Heze path). The phase0 path
-      (`core/epoch/precompute/reward_penalty.go:100-149`) is pre-Altair
-      and unreachable at Heze — deliberately unchanged, say why.
-- [ ] 8/32 unit test: no leak while finality advances per round; leak
-      arms when finalized round stalls 5 rounds behind.
+**Answered question 4 (user, 2026-08-21): the leak stays epoch-based;
+simplest change.** The only edit is the one the step-0 retype forces:
+`FinalityDelay(prevEpoch, finalizedEpoch)`
+(`core/helpers/rewards_penalties.go:190-192`) now receives a
+round-valued finalized checkpoint, so its callers convert that one input
+with the step 2.6 helper — `FinalityDelay(prevEpoch,
+helpers.CheckpointEpoch(finalized))` — and everything else
+(`IsInInactivityLeak` `:180-182`, `MinEpochsToInactivityPenalty`, the
+epoch settlement cadence) is untouched. With per-round finality the
+finalized epoch advances at least as fast as before, so the leak arms no
+earlier than today.
+
+- [ ] Convert the finalized-round input at the callers:
+      `core/altair/epoch_precompute.go:122,273` (the electra/Heze path).
+      The phase0 path (`core/epoch/precompute/reward_penalty.go:100-149`)
+      is pre-Altair and unreachable at Heze — mechanical retype fixes
+      only, say why.
+- [ ] One unit test: delay 0 while finality advances per round; delay
+      counts epochs when it stalls.
 
 ## 2.6 Mixed-units audit, state-internal checkpoint readers
 
@@ -611,7 +737,7 @@ moves.
       meaningful. Add four new gauges carrying the raw rounds:
       `beacon_finalized_round`, `beacon_current_justified_round`,
       `beacon_previous_justified_round`, `head_finalized_round`.
-      (Open question 7; build the recommendation unless overridden.)
+      (Answered question 6: build exactly this.)
 - [ ] New headline metrics, landed WITH step 2 (the run-05 pattern —
       name them up front):
       - `finality_latency_slots` (gauge): `currentSlot -
@@ -634,15 +760,27 @@ moves.
       responses now carry rounds in `*Epoch` fields. No proto change
       (mock rule); one comment at the ChainHead construction site names
       the unit.
-- [ ] `testing/endtoend/evaluators/finality.go:18-61`
-      (`finalizationOccurs`) asserts `finalizedEpoch == currentEpoch-2`
-      and `justified == current-1` — write the rounds twin
-      `FinalizationOccursInRounds`: finalized round == wall-clock round
-      − 2 and justified == wall-clock round − 1 (steady state after the
-      epoch-2 genesis guard clears), computing the wall-clock round from
-      the head slot. Swap it into the Heze e2e runs
-      (`heze_e2e_test.go:58,123,157`) in place of the stock evaluator;
-      non-Heze suites keep the original.
+- [ ] **Verifying that justification/finalization is PROGRESSING is a
+      stated requirement (user, 2026-08-21), not a nice-to-have.** It is
+      asserted at every ladder tier:
+      - Unit (2.3): full participation justifies round R at the R→R+1
+        boundary and finalizes at R+1→R+2.
+      - Smoke: the chain-check script (the `w2a-chain-check.py` pattern)
+        reads the metrics dump and asserts the justified round advanced
+        at every round boundary after warmup and the finalized round
+        trails by exactly one — a stalled round is a failure, not a note.
+      - e2e: two evaluators. `FinalizationOccursInRounds` — the rounds
+        twin of `finalizationOccurs` (`finality.go:18-61`): finalized
+        round == wall-clock round − 2 and justified == wall-clock round
+        − 1 in steady state (after the epoch-2 genesis guard clears),
+        wall-clock round computed from the head slot. And
+        `JustificationAdvancesEveryRound` — run per epoch like
+        `AttestationsInEveryRound` (`evaluators/rounds.go:40`), asserting
+        the justified checkpoint's round increased in each of the epoch's
+        rounds (no gaps), so a single skipped round is caught even when
+        the endpoint check would still pass. Swap them into the Heze e2e
+        runs (`heze_e2e_test.go:58,123,157`) in place of the stock
+        evaluator; non-Heze suites keep the original.
 - [ ] `ValidatorsParticipating*` evaluators read participation via the
       API — per-round arrays still show ~full participation each epoch
       query; verify once at 8/32 and record (no change expected).
@@ -673,11 +811,14 @@ path: **change nothing.**
       protection db stores monotonically growing values either way. (A
       possible later cleanup — per-round targets would let the gate be
       removed — is noted here and deliberately not done.)
-- [ ] The only slashing-adjacent edit anywhere in this plan is the
-      signing-domain derivation in step 3.5, and that is needed for
-      signature validity, not slashing.
+- [ ] The only slashing-adjacent edits anywhere in this plan are (a) the
+      signing-domain derivation in step 3.5, needed for signature
+      validity, not slashing, and (b) the mechanical type fixes the
+      step-0 retype forces in the slasher and protection-db code —
+      value-preserving conversions only, per the step 0.2 rules; zero
+      behavior change.
 - [ ] Verify: `validator/client` and `slasher` suites compile and pass
-      untouched (identity rule).
+      with zero expectation edits (identity rule).
 
 ---
 
@@ -701,10 +842,17 @@ path: **change nothing.**
 - [ ] `TestEndToEnd_HezeGenesisShort` (1 epoch) — regression tier, after
       each step.
 - [ ] Full `TestEndToEnd_HezeGenesis` (5 epochs, 8/32) with
-      `FinalizationOccursInRounds`: justification advances ~every round,
-      finalization latency 2 rounds; the goldfish evaluators
-      (`AvailableAttestationsFlow`, `AttestationsInEveryRound`,
-      `ChainProducesBlocks`) unchanged and green.
+      `FinalizationOccursInRounds` and `JustificationAdvancesEveryRound`
+      (5.3): justification advances every round, finalization latency 2
+      rounds; the goldfish evaluators (`AvailableAttestationsFlow`,
+      `AttestationsInEveryRound`, `ChainProducesBlocks`) unchanged and
+      green.
+- [ ] Offset sweep (answered question 1): one smoke per target offset —
+      offset 1 (default) and offset 0 — each asserting per-round J/F
+      progression via the chain-check script; the offset-0 run
+      additionally records the first-slot target-miss fraction predicted
+      in 1.1. The offset is yaml (`FFG_TARGET_OFFSET_SLOTS`), so the
+      sweep is config-only, no build variants.
 - [ ] `TestEndToEnd_HezeGenesisCheckpointSync` — the cold-start witness
       for round-valued anchors (step 4.3).
 - [ ] `TestEndToEnd_HezeGenesisSlotStartFFG` — slot-start vote + rounds
@@ -773,40 +921,38 @@ pre-existing blockchain failures and the 32 pre-existing rpc failures
 (plan-next 5.7) stay the baseline. New files need BUILD entries; run
 gazelle on touched packages.
 
-# Open questions for the user
+# Open questions — all resolved, 2026-08-21
 
-1. **Target slot: `RoundStart(R) - 1` or `RoundStart(R)`?**
-   Recommendation: `-1`, as recorded in `plan-final.md` item 1 ("the
-   round starting at slot N targets the block at slot N-1") and as the
-   epoch mock already does. The `-1` target is votable by every voter in
-   the round including slot-start voters in the round's first slot; a
-   slot-0 target would ask the first slot's voters to name a block that
-   does not exist yet when the flag moves votes to slot start. Build `-1`
-   unless overridden.
-2. **Checkpoint unit typing.** Reinterpret the existing `Epoch`-typed
-   fields (this plan as written), or retype for compiler enforcement —
-   either the proto `cast_type` of `Checkpoint.epoch` to
-   `primitives.Round` (compiler finds every mixed-units site, but the
-   churn spreads through every dormant fork's code and the API protos,
-   hurting upstream rebases) or only the internal
-   `forkchoicetypes.Checkpoint`. Recommendation: reinterpretation only;
-   the audits in 1.4/2.6/4.x plus the 8/32 tests carry the load, and the
-   proto surface stays rebase-friendly.
-3. **What moves to round cadence.** J&F + participation rotation +
-   rewards/penalties + inactivity scores as one unit (recommended: they
-   read the arrays being rotated; splitting them leaves rewards reading
-   one round and calling it an epoch), or J&F + rotation only.
-4. **The inactivity leak.** With `FinalityDelay` in rounds, the leak arms
-   after `MinEpochsToInactivityPenalty` (4) unfinalized ROUNDS (~1 epoch
-   wall clock at 8/32). Recommendation: keep the raw number in rounds and
-   document it — a faster leak under a faster gadget is coherent, and
-   consensus values may be wrong by charter. Alternative: scale the
-   threshold by rounds-per-epoch to keep the wall-clock arming time.
-5. **Wire/pool retention.** Keep the slot-based gossip windows and
-   epoch-based pool pruning while state acceptance narrows to the round
-   pair (recommended — wire behavior stays real and unchanged), or narrow
-   the wire windows to match.
-6. **Metrics compatibility.** `*_epoch` gauges emit the epoch of the
-   round-start slot and new `*_round` gauges carry the raw rounds
-   (recommended — dashboards and scrape tooling keep meaning), or the
-   old names emit raw rounds with a breaking note.
+1. **Target slot.** ANSWERED: **configurable.** `FFG_TARGET_OFFSET_SLOTS`
+   config value (yaml-sweepable), default 1 (`RoundStart(R) - 1`), 0
+   targets the round's own first slot. Built in 1.1, with the forkchoice
+   twin honoring the same value (1.2).
+2. **Checkpoint unit typing.** ANSWERED: **retype, so the compiler
+   catches bugs** — step 0: proto `cast_type` of `Checkpoint.epoch` →
+   `primitives.Round`, plus the forkchoice checkpoint and node fields.
+   A follow-up question compared this with the simplex spec's own
+   direction — `Checkpoint{slot, root}` carrying the proposal slot, which
+   removes unit conversion structurally — and the user chose **smallest
+   change**: round-valued stands (identity trick intact, zero expectation
+   edits); slot-valued checkpoints are the gadget-era container change,
+   not this plan's.
+3. **What moves to round cadence.** ANSWERED: **justification and
+   finalization only.** Committee selection stays epoch-based;
+   rewards/penalties/inactivity stay epoch-based. The one dependency —
+   per-round participation rotation, needed so J&F counts the right
+   round's bits — is encoded in 2.2 with the boundary-kind placement that
+   keeps epoch rewards reading pre-rotation arrays (identity preserved).
+4. **The inactivity leak.** Resolved: stays epoch-based;
+   simplest change — one input conversion at the callers (2.5),
+   nothing else.
+5. **Wire/pool retention.** ANSWERED: **leave as is** — slot-based gossip
+   windows and epoch-based pool pruning unchanged while state acceptance
+   narrows to the round pair (3.3, 3.6).
+6. **Metrics.** ANSWERED: **new metrics are needed** — build 5.2 as
+   written: the new `beacon_*_round` gauges, `finality_latency_slots`,
+   and the round-advance counters, with the existing `*_epoch` gauges
+   emitting the epoch of the round-start slot so dashboards and the
+   scrape tooling keep meaning.
+
+(The former question 7, slashing-protection cadence, was removed when
+slashing became a non-goal — step 6.)

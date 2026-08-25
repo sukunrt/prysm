@@ -34,29 +34,37 @@ AttestationData) is implemented here.
 
 ## The change, concretely
 
-1. **Target.** The FFG vote cast in round R targets the block at slot
-   `RoundStart(R) - 1` (the last block before the round), replacing today's
-   `StartSlot(E) - 1`. The round-0 underflow returns the anchor root, as
-   the epoch-0 arm does today. Open question 1 records the `-1` vs `0`
-   (round's own first slot) choice; `-1` is recommended and matches
-   `plan-final.md` item 1 ("the round starting at slot N targets the block
-   at slot N-1").
-2. **Checkpoints carry rounds.** `Checkpoint{epoch, root}` keeps its proto
-   shape; the `epoch` field is reinterpreted as the round index. No proto
-   or SSZ change. With `SlotsPerRound == SlotsPerEpoch` (shipped mainnet
-   and minimal configs) the round index equals the epoch index at every
-   slot, so the reinterpretation is numerically the identity — the whole
-   existing test suite and the spectest survey set stay put. Only the
-   e2e/devnet configs (SLOTS_PER_ROUND=8 against 32-slot epochs) exercise
-   real per-round finality. This is the plan-next "identity trick" applied
-   a third time.
-3. **Cadence.** Justification/finalization processing and the
-   participation-array rotation move from the epoch boundary to every round
-   boundary (a `ProcessRound` hook in `ProcessSlots`, running before epoch
-   processing when the boundaries coincide — which, under the identity
-   configs, they always do, preserving today's ordering exactly). Epoch
-   processing keeps everything else: registry, slashings, randao, sync
-   committees, effective balances.
+1. **Target.** The FFG vote cast in round R targets a block at the
+   round's start, with the exact slot CONFIGURABLE (user, 2026-08-21):
+   `FFG_TARGET_OFFSET_SLOTS`, default 1 → `RoundStart(R) - 1` (the last
+   block before the round, matching `plan-final.md` item 1), 0 → the
+   round's own first slot. Underflow returns the anchor root, as the
+   epoch-0 arm does today. Both offsets are exercised in the
+   verification runs.
+2. **Checkpoints carry rounds, as a distinct type.** `Checkpoint{epoch,
+   root}` keeps its wire/SSZ shape; the field's VALUE becomes the round
+   index and its Go type becomes `primitives.Round` via the proto
+   `cast_type` (user, 2026-08-21: retype so the compiler catches the
+   bugs). With `SlotsPerRound == SlotsPerEpoch` (shipped mainnet and
+   minimal configs) the round index equals the epoch index at every
+   slot, so the change is numerically the identity — the whole existing
+   test suite and the spectest survey set stay put. Only the e2e/devnet
+   configs (SLOTS_PER_ROUND=8 against 32-slot epochs) exercise real
+   per-round finality. This is the plan-next "identity trick" applied a
+   third time. (The simplex spec's own direction — slot-valued
+   checkpoints — was considered and deferred to the gadget era: the user
+   chose the smallest change, and slot values would break the identity
+   trick.)
+3. **Cadence: justification and finalization only** (user, 2026-08-21).
+   J&F moves from the epoch boundary to every round boundary (a
+   `ProcessRound` hook in `ProcessSlots`). Rewards, penalties, and
+   inactivity stay at epoch cadence; committee selection stays
+   epoch-based. The one dependency: the participation arrays J&F counts
+   must rotate per round (or round R would justify on round R-1's bits);
+   the detailed plan places the rotation so that epoch rewards still
+   read pre-rotation arrays and today's ordering is preserved exactly
+   under the identity configs. Epoch processing keeps everything else:
+   registry, slashings, randao, sync committees, effective balances.
 4. **Sources follow.** The attestation's source checkpoint is the state's
    justified checkpoint, which is now round-based; no separate work, but
    every site that converts `checkpoint.Epoch` to a slot must use
@@ -86,18 +94,20 @@ AttestationData) is implemented here.
   detect or miss is not measured.
 - Rewards/penalties fidelity is secondary (task charter: consensus values
   may be wrong; wire behavior must be real). No 1/rounds-per-epoch reward
-  rescaling. The one accounting item that MUST be fixed is the
-  finality-delay/inactivity-leak computation, which would otherwise
-  underflow or spuriously fire when round indices outrun epoch indices —
-  see detailed step 2.
+  rescaling. The inactivity leak stays epoch-based (user, 2026-08-21;
+  simplest change): one input conversion where the round-valued finalized
+  checkpoint meets the epoch-typed delay computation — detailed step 2.5.
 
 ## What the detailed plan covers
 
-1. The target shift, state side and forkchoice side together (the
-   plan-next 5.2 lesson: the two must move as one or
-   `VerifyLmdFfgConsistency` rejects every vote).
-2. The `ProcessRound` cadence hook and the split of Heze epoch processing;
-   the finality-delay conversion to rounds.
+0. The retype (step 0): `Checkpoint.epoch` → `primitives.Round` via the
+   proto `cast_type` (wire/SSZ unchanged); the compile-error sweep is the
+   mixed-units audit, with bare cross-unit casts forbidden.
+1. The target shift with its configurable offset, state side and
+   forkchoice side together (the plan-next 5.2 lesson: the two must move
+   as one or `VerifyLmdFfgConsistency` rejects every vote).
+2. The `ProcessRound` cadence hook and the split of Heze epoch
+   processing; the leak's single input conversion.
 3. Attestation plumbing: data construction, state/gossip/pool acceptance
    windows moving from {prev,current} epoch to {prev,current} round,
    domain-from-slot, committee resolution from slot.
@@ -115,11 +125,13 @@ AttestationData) is implemented here.
    caches/stategen surfaces are audited.
 6. Slashing: the zero-change path — explicitly out of scope.
 7. Measurement and verification: finality latency in slots as the
-   headline number against kurtosis run 02 and the Shadow baseline; the
-   e2e ladder with a rounds twin of the finalization evaluator; spectest
-   survey extension (the identity configs mean the expected-failure set
-   should not move; the survey pass proves it and records any delta — no
-   vector fixing).
+   headline number against kurtosis run 02 and the Shadow baseline;
+   justification/finalization PROGRESSION asserted at every tier (user
+   requirement) — unit, smoke chain-check, and two e2e evaluators
+   (`FinalizationOccursInRounds`, `JustificationAdvancesEveryRound`);
+   a smoke per target offset; spectest survey extension (the identity
+   configs mean the expected-failure set should not move; the survey
+   pass proves it and records any delta — no vector fixing).
 
 ## Rules (carried over, binding)
 
@@ -134,22 +146,22 @@ AttestationData) is implemented here.
 - Every `file:line` in the detailed file was verified on 2026-08-21 and is
   a pointer, not an address — grep for the symbol.
 
-## Open questions for the user
+## Open questions — all resolved, 2026-08-21
 
-Recorded with recommendations in `plan-finality-round-detailed.md`'s final
-section; summary: (1) target slot `RoundStart(R)-1` vs `RoundStart(R)` —
-recommend `-1` (matches plan-final.md item 1); (2) checkpoint unit typing
-— recommend pure reinterpretation of the existing `Epoch`-typed fields,
-no proto retype, with the mixed-units audit and 8/32 tests carrying the
-load; (3) which accounting moves to round cadence — recommend
-J&F + participation rotation + rewards + inactivity as one unit; (4) the
-inactivity leak — with delay measured in rounds it arms ~4x sooner in
-wall clock; recommend keeping the raw threshold, documented; (5) wire and
-pool retention — recommend leaving the slot-based gossip windows and
-epoch-based pool pruning as is while state acceptance narrows to the
-round pair; (6) metrics compatibility — recommend the `*_epoch` gauges
-emit the epoch of the round-start slot with new `*_round` gauges beside
-them.
+Full answers recorded in `plan-finality-round-detailed.md`'s final
+section. Summary: (1) target slot is CONFIGURABLE — offset 1 (slot −1,
+default) or 0 (round's first slot), both first-class; (2) checkpoints are
+RETYPED to `primitives.Round` so the compiler catches unit bugs
+(smallest-change variant; the spec's slot-valued checkpoint is deferred
+to the gadget era); (3) only justification/finalization moves to round
+cadence — committees, rewards, penalties, inactivity all stay
+epoch-based; (4) the inactivity leak stays epoch-based, simplest change;
+(5) wire/pool retention stays as is; (6) new round metrics are built
+(`finality_latency_slots`, round-advance counters, `beacon_*_round`
+gauges). Additional stated requirement: verifying that justification and
+finalization are PROGRESSING per round is asserted at every verification
+tier (unit, smoke chain-check, two e2e evaluators). Nothing blocks
+execution.
 
 ## Deliverable
 
