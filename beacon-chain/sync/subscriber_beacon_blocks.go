@@ -444,6 +444,11 @@ func (s *Service) broadcastAndReceiveUnseenDataColumnSidecars(
 		return nil, errors.Wrap(err, "receive data column sidecars")
 	}
 
+	now := time.Now()
+	for i := range unseenSidecars {
+		s.logDataColumn(unseenSidecars[i], "local", now)
+	}
+
 	return unseenIndices, nil
 }
 

@@ -44,7 +44,7 @@ func queueTestService(t *testing.T) *Service {
 	st, err := util.NewBeaconState()
 	require.NoError(t, err)
 	return &Service{
-		pendingPayloadAttestations: make(map[[32]byte][]*ethpb.PayloadAttestationMessage),
+		pendingPayloadAttestations: make(map[[32]byte][]pendingPayloadAttestation),
 		seenPendingBlocks:          make(map[[32]byte]bool),
 		cfg:                        &config{chain: &mock.ChainService{State: st, NotFinalized: true, FinalizedCheckPoint: &ethpb.Checkpoint{}}, p2p: p2ptest.NewTestP2P(t)},
 	}
@@ -122,7 +122,7 @@ func TestQueuePendingPayloadAttestation_IgnoresNonCommittee(t *testing.T) {
 
 func TestQueuePendingPayloadAttestation_DropsWhenNoState(t *testing.T) {
 	s := &Service{
-		pendingPayloadAttestations: make(map[[32]byte][]*ethpb.PayloadAttestationMessage),
+		pendingPayloadAttestations: make(map[[32]byte][]pendingPayloadAttestation),
 		seenPendingBlocks:          make(map[[32]byte]bool),
 		cfg:                        &config{chain: &mock.ChainService{HeadStateErr: errors.New("no state")}},
 	}
@@ -143,7 +143,7 @@ func TestQueuePendingPayloadAttestation_DrainsWhenBlockInForkchoice(t *testing.T
 	pool := payloadattestation.NewPool()
 	s := &Service{
 		payloadAttestationCache:    &cache.PayloadAttestationCache{},
-		pendingPayloadAttestations: make(map[[32]byte][]*ethpb.PayloadAttestationMessage),
+		pendingPayloadAttestations: make(map[[32]byte][]pendingPayloadAttestation),
 		seenPendingBlocks:          make(map[[32]byte]bool),
 		cfg: &config{
 			chain:                  &mock.ChainService{State: st}, // InForkchoice true: block already arrived.
@@ -167,18 +167,18 @@ func TestQueuePendingPayloadAttestation_DrainsWhenBlockInForkchoice(t *testing.T
 
 func TestPrunePendingPayloadAttestations(t *testing.T) {
 	s := &Service{
-		pendingPayloadAttestations: make(map[[32]byte][]*ethpb.PayloadAttestationMessage),
+		pendingPayloadAttestations: make(map[[32]byte][]pendingPayloadAttestation),
 		cfg:                        &config{clock: startup.NewClock(genesisForSlot(10), [32]byte{})},
 	}
 
 	currentSlot := s.cfg.clock.CurrentSlot()
 
 	staleAtt, stalePa := pendingPayloadAtt(t, []byte{'a'}, 1, currentSlot-2)
-	s.pendingPayloadAttestations[stalePa.BeaconBlockRoot()] = []*ethpb.PayloadAttestationMessage{staleAtt}
+	s.pendingPayloadAttestations[stalePa.BeaconBlockRoot()] = []pendingPayloadAttestation{{msg: staleAtt}}
 	prevAtt, prevPa := pendingPayloadAtt(t, []byte{'b'}, 1, currentSlot-1)
-	s.pendingPayloadAttestations[prevPa.BeaconBlockRoot()] = []*ethpb.PayloadAttestationMessage{prevAtt}
+	s.pendingPayloadAttestations[prevPa.BeaconBlockRoot()] = []pendingPayloadAttestation{{msg: prevAtt}}
 	freshAtt, freshPa := pendingPayloadAtt(t, []byte{'c'}, 1, currentSlot)
-	s.pendingPayloadAttestations[freshPa.BeaconBlockRoot()] = []*ethpb.PayloadAttestationMessage{freshAtt}
+	s.pendingPayloadAttestations[freshPa.BeaconBlockRoot()] = []pendingPayloadAttestation{{msg: freshAtt}}
 
 	s.prunePendingPayloadAttestations()
 
@@ -199,7 +199,7 @@ func TestProcessPendingPayloadAttestation_DrainsAndProcesses(t *testing.T) {
 	pool := payloadattestation.NewPool()
 	s := &Service{
 		payloadAttestationCache:    &cache.PayloadAttestationCache{},
-		pendingPayloadAttestations: make(map[[32]byte][]*ethpb.PayloadAttestationMessage),
+		pendingPayloadAttestations: make(map[[32]byte][]pendingPayloadAttestation),
 		cfg: &config{
 			chain:                  &mock.ChainService{State: st, Genesis: genesisForSlot(0)},
 			p2p:                    p2ptest.NewTestP2P(t),
@@ -211,7 +211,7 @@ func TestProcessPendingPayloadAttestation_DrainsAndProcesses(t *testing.T) {
 
 	root := []byte{'a'}
 	att, pa := pendingPayloadAtt(t, root, ptc[0], 0)
-	s.pendingPayloadAttestations[pa.BeaconBlockRoot()] = []*ethpb.PayloadAttestationMessage{att}
+	s.pendingPayloadAttestations[pa.BeaconBlockRoot()] = []pendingPayloadAttestation{{msg: att}}
 
 	s.processPendingPayloadAttestation(t.Context(), pa.BeaconBlockRoot())
 

@@ -2,16 +2,26 @@ package sync
 
 import (
 	"context"
+	"time"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/verification"
 	payloadattestation "github.com/OffchainLabs/prysm/v7/consensus-types/payload-attestation"
 	"github.com/OffchainLabs/prysm/v7/crypto/rand"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	eth "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	prysmTime "github.com/OffchainLabs/prysm/v7/time"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 )
 
 const maxPendingPayloadAttestationRoots = 2
+
+// pendingPayloadAttestation is a payload attestation parked until its block
+// arrives. arrived is when it came off gossip, so a replayed vote still reports
+// its true arrival to the ledger.
+type pendingPayloadAttestation struct {
+	msg     *eth.PayloadAttestationMessage
+	arrived time.Time
+}
 
 func (s *Service) queuePendingPayloadAttestation(ctx context.Context, v verification.PayloadAttestationMsgVerifier, att *eth.PayloadAttestationMessage) (pubsub.ValidationResult, error) {
 	root := bytesutil.ToBytes32(att.Data.BeaconBlockRoot)
@@ -30,7 +40,7 @@ func (s *Service) queuePendingPayloadAttestation(ctx context.Context, v verifica
 		return pubsub.ValidationIgnore, nil
 	}
 	for _, existing := range inner {
-		if existing.ValidatorIndex == validatorIndex {
+		if existing.msg.ValidatorIndex == validatorIndex {
 			s.pendingPayloadAttestationLock.Unlock()
 			return pubsub.ValidationIgnore, nil
 		}
@@ -44,7 +54,8 @@ func (s *Service) queuePendingPayloadAttestation(ctx context.Context, v verifica
 		// The attested block is unknown, so the head state used here may be on a different branch, do not penalize the peer.
 		return pubsub.ValidationIgnore, err
 	}
-	s.pendingPayloadAttestations[root] = append(inner, att)
+	s.pendingPayloadAttestations[root] = append(
+		inner, pendingPayloadAttestation{msg: att, arrived: prysmTime.Now()})
 	s.pendingPayloadAttestationLock.Unlock()
 
 	if s.cfg.chain.InForkchoice(root) {
@@ -85,7 +96,8 @@ func (s *Service) processPendingPayloadAttestation(ctx context.Context, root [32
 		return
 	}
 
-	for _, att := range atts {
+	for _, pending := range atts {
+		att := pending.msg
 		pa, err := payloadattestation.NewReadOnly(att)
 		if err != nil {
 			log.WithError(err).Debug("Could not create read only pending payload attestation")
@@ -101,6 +113,7 @@ func (s *Service) processPendingPayloadAttestation(ctx context.Context, root [32
 			log.WithError(err).Debug("Could not process pending payload attestation")
 			continue
 		}
+		s.logPTCVote(pa, "gossip", pending.arrived)
 		if err := s.cfg.p2p.Broadcast(ctx, att); err != nil {
 			log.WithError(err).Warn("Could not broadcast pending payload attestation")
 		}
@@ -115,7 +128,7 @@ func (s *Service) prunePendingPayloadAttestations() {
 	}
 	currentSlot := s.cfg.clock.CurrentSlot()
 	for root, atts := range s.pendingPayloadAttestations {
-		if len(atts) == 0 || atts[0].Data == nil || atts[0].Data.Slot+1 < currentSlot {
+		if len(atts) == 0 || atts[0].msg.Data == nil || atts[0].msg.Data.Slot+1 < currentSlot {
 			delete(s.pendingPayloadAttestations, root)
 		}
 	}

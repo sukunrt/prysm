@@ -212,7 +212,7 @@ type Service struct {
 	pendingEnvelopeLock                  sync.RWMutex
 	selfBuildSigFailures                 int
 	selfBuildSigFailSlot                 primitives.Slot
-	pendingPayloadAttestations           map[[32]byte][]*ethpb.PayloadAttestationMessage
+	pendingPayloadAttestations           map[[32]byte][]pendingPayloadAttestation
 	pendingPayloadAttestationLock        sync.RWMutex
 }
 
@@ -233,7 +233,7 @@ func NewService(ctx context.Context, opts ...Option) *Service {
 		payloadAttestationCache:    &cache.PayloadAttestationCache{},
 		proposerPreferencesCache:   cache.NewProposerPreferencesCache(),
 		pendingPayloadEnvelopes:    make(map[[32]byte]map[uint64]*ethpb.SignedExecutionPayloadEnvelope),
-		pendingPayloadAttestations: make(map[[32]byte][]*ethpb.PayloadAttestationMessage),
+		pendingPayloadAttestations: make(map[[32]byte][]pendingPayloadAttestation),
 	}
 
 	for _, opt := range opts {

@@ -3,11 +3,13 @@ package validator
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed"
 	opfeed "github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/operation"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/gloas"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/core"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
@@ -93,7 +95,29 @@ func (vs *Server) SubmitPayloadAttestation(
 		"blockRoot":      fmt.Sprintf("%#x", msg.Data.BeaconBlockRoot),
 		"validatorIndex": msg.ValidatorIndex,
 	}).Debug("Submitted payload attestation message")
+
+	vs.logLocalPTCVote(msg)
 	return &emptypb.Empty{}, nil
+}
+
+// logLocalPTCVote records this node's own payload attestation in the vote
+// ledger. The gossip validator never sees the messages this node publishes, so
+// this is the only place they can enter the run's ledger. Same line shape as the
+// sync side, with outcome "local".
+func (vs *Server) logLocalPTCVote(msg *ethpb.PayloadAttestationMessage) {
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
+	start := slots.UnsafeStartTime(vs.TimeFetcher.GenesisTime(), msg.Data.Slot)
+	log.WithFields(logrus.Fields{
+		"outcome":           "local",
+		"slot":              msg.Data.Slot,
+		"blockRoot":         fmt.Sprintf("%#x", bytesutil.ToBytes32(msg.Data.BeaconBlockRoot)),
+		"validatorIndex":    msg.ValidatorIndex,
+		"payloadPresent":    msg.Data.PayloadPresent,
+		"blobDataAvailable": msg.Data.BlobDataAvailable,
+		"arrivedMs":         time.Since(start).Milliseconds(),
+	}).Info("PTC vote")
 }
 
 func (vs *Server) payloadAttestationCommitteeIndices(ctx context.Context, msg *ethpb.PayloadAttestationMessage) ([]uint64, error) {

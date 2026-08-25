@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed"
 	statefeed "github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/state"
@@ -18,6 +19,7 @@ import (
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/runtime/logging"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
+	prysmTime "github.com/OffchainLabs/prysm/v7/time"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -31,6 +33,7 @@ const maxPendingGloasRoots = 8
 type pendingColumnEntry struct {
 	sidecar *ethpb.DataColumnSidecarGloas
 	peer    peer.ID
+	arrived time.Time
 }
 
 type pendingGloasEntry struct {
@@ -184,7 +187,7 @@ func (s *Service) queuePendingGloasColumn(roCol blocks.RODataColumn, pid peer.ID
 	if entry.columns[idx] != nil {
 		return nil
 	}
-	entry.columns[idx] = &pendingColumnEntry{sidecar: dc, peer: pid}
+	entry.columns[idx] = &pendingColumnEntry{sidecar: dc, peer: pid, arrived: prysmTime.Now()}
 	return nil
 }
 
@@ -276,6 +279,7 @@ func (s *Service) processPendingGloasColumns(ctx context.Context, root [fieldpar
 		v.SetBidCommitments(commitments)
 
 		s.setSeenDataColumnRootIndex(root, v.Index(), v.Slot())
+		s.logDataColumn(v, "gossip", pe.arrived)
 		verified = append(verified, v)
 	}
 

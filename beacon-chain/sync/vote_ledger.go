@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/OffchainLabs/prysm/v7/config/features"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
+	payloadattestation "github.com/OffchainLabs/prysm/v7/consensus-types/payload-attestation"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
@@ -132,6 +134,61 @@ func (s *Service) logFFGAggregate(
 		"dataRoot":        decoupled.VoteLedgerDataRoot(att),
 		"validators":      decoupled.VoteLedgerValidators(indices),
 	}).Info("FFG aggregate")
+}
+
+// logDataColumn writes one line per data column sidecar the node takes in.
+// outcome says how it arrived: "gossip" for one accepted off a column subnet,
+// "local" for one the node built itself by reconstruction or from the execution
+// client and never saw on gossip. arrived is milliseconds into the column's own
+// slot, the same clock basis as the vote ledger's lines, so a run can ask how
+// the 128 columns of a slot filled in relative to the votes cast on it.
+//
+// kzgCommitmentCount comes from the cell count: a column holds one cell per
+// blob, and verification refuses a sidecar whose cells and commitments disagree,
+// so this counts the blobs whether or not the Gloas bid commitments are attached.
+//
+// Off unless --goldfish-vote-ledger is set.
+func (s *Service) logDataColumn(
+	column blocks.VerifiedRODataColumn, outcome string, arrived time.Time,
+) {
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
+	start := slots.UnsafeStartTime(s.cfg.clock.GenesisTime(), column.Slot())
+	log.WithFields(logrus.Fields{
+		"outcome":            outcome,
+		"slot":               column.Slot(),
+		"blockRoot":          fmt.Sprintf("%#x", column.BlockRoot()),
+		"columnIndex":        column.Index(),
+		"kzgCommitmentCount": len(column.Column()),
+		"arrivedMs":          arrived.Sub(start).Milliseconds(),
+	}).Info("Data column")
+}
+
+// logPTCVote writes one line per payload attestation the node takes in.
+// outcome says how it arrived: "gossip" for one accepted off the PTC topic,
+// including one replayed once its block landed, "local" for one this node's own
+// PTC member published, which never traverses gossip. arrived is milliseconds
+// into the vote's own slot, the same clock basis as the other ledger lines, so a
+// run can line the PTC's verdict up against the payload it is voting on.
+//
+// Off unless --goldfish-vote-ledger is set.
+func (s *Service) logPTCVote(
+	pa payloadattestation.ROMessage, outcome string, arrived time.Time,
+) {
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
+	start := slots.UnsafeStartTime(s.cfg.clock.GenesisTime(), pa.Slot())
+	log.WithFields(logrus.Fields{
+		"outcome":           outcome,
+		"slot":              pa.Slot(),
+		"blockRoot":         fmt.Sprintf("%#x", pa.BeaconBlockRoot()),
+		"validatorIndex":    pa.ValidatorIndex(),
+		"payloadPresent":    pa.PayloadPresent(),
+		"blobDataAvailable": pa.BlobDataAvailable(),
+		"arrivedMs":         arrived.Sub(start).Milliseconds(),
+	}).Info("PTC vote")
 }
 
 // dropVote counts and records a head vote the node is discarding. Every path

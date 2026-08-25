@@ -71,6 +71,7 @@ func (s *Service) validatePayloadAttestation(ctx context.Context, pid peer.ID, m
 	}
 
 	msg.ValidatorData = att
+	s.logPTCVote(pa, "gossip", receivedTime)
 	startTime, err := slots.StartTime(s.cfg.clock.GenesisTime(), pa.Slot())
 	if err == nil {
 		syncPayloadAttestationArrivalDelaySeconds.Observe(receivedTime.Sub(startTime).Seconds())

@@ -114,6 +114,7 @@ func (s *Service) validateDataColumn(ctx context.Context, pid peer.ID, msg *pubs
 	validationTime := s.cfg.clock.Now().Sub(receivedTime)
 	dataColumnSidecarArrivalGossipSummary.Observe(float64(sinceSlotStartTime.Milliseconds()))
 	dataColumnSidecarVerificationGossipHistogram.Observe(float64(validationTime.Milliseconds()))
+	s.logDataColumn(verifiedRODataColumn, "gossip", receivedTime)
 
 	select {
 	case s.dataColumnLogCh <- dataColumnLogEntry{

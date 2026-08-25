@@ -1,13 +1,17 @@
 package sync
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/startup"
 	"github.com/OffchainLabs/prysm/v7/config/features"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
+	payloadattestation "github.com/OffchainLabs/prysm/v7/consensus-types/payload-attestation"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	dto "github.com/prometheus/client_model/go"
@@ -117,6 +121,68 @@ func TestLogFFGAggregate_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	require.Equal(t, primitives.ValidatorIndex(5), entry.Data["aggregatorIndex"])
 	require.Equal(t, uint64(2), entry.Data["seats"])
 	require.Equal(t, "5,9", entry.Data["validators"])
+}
+
+func TestLogDataColumn_QuietUnlessTheLedgerIsOn(t *testing.T) {
+	hook := logTest.NewGlobal()
+	s := ledgerService(t)
+	root := bytesutil.PadTo([]byte{0xab}, 32)
+	ro, err := blocks.NewRODataColumnGloas(&ethpb.DataColumnSidecarGloas{
+		Slot:            9,
+		Index:           5,
+		BeaconBlockRoot: root,
+		Column:          [][]byte{{0x01}, {0x02}, {0x03}},
+	})
+	require.NoError(t, err)
+	column := blocks.NewVerifiedRODataColumn(ro)
+
+	s.logDataColumn(column, "gossip", time.Now())
+	require.Equal(t, 0, len(hook.AllEntries()))
+
+	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
+	defer reset()
+	s.logDataColumn(column, "gossip", time.Now())
+	require.Equal(t, 1, len(hook.AllEntries()))
+	entry := hook.LastEntry()
+	require.Equal(t, "Data column", entry.Message)
+	require.Equal(t, "gossip", entry.Data["outcome"])
+	require.Equal(t, primitives.Slot(9), entry.Data["slot"])
+	require.Equal(t, uint64(5), entry.Data["columnIndex"])
+	require.Equal(t, 3, entry.Data["kzgCommitmentCount"])
+	require.Equal(t, fmt.Sprintf("%#x", bytesutil.ToBytes32(root)), entry.Data["blockRoot"])
+}
+
+func TestLogPTCVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
+	hook := logTest.NewGlobal()
+	s := ledgerService(t)
+	root := bytesutil.PadTo([]byte{0xcd}, 32)
+	pa, err := payloadattestation.NewReadOnly(&ethpb.PayloadAttestationMessage{
+		ValidatorIndex: 11,
+		Data: &ethpb.PayloadAttestationData{
+			Slot:              4,
+			BeaconBlockRoot:   root,
+			PayloadPresent:    true,
+			BlobDataAvailable: true,
+		},
+		Signature: make([]byte, 96),
+	})
+	require.NoError(t, err)
+
+	s.logPTCVote(pa, "gossip", time.Now())
+	require.Equal(t, 0, len(hook.AllEntries()))
+
+	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
+	defer reset()
+	s.logPTCVote(pa, "gossip", time.Now())
+	require.Equal(t, 1, len(hook.AllEntries()))
+	entry := hook.LastEntry()
+	require.Equal(t, "PTC vote", entry.Message)
+	require.Equal(t, "gossip", entry.Data["outcome"])
+	require.Equal(t, primitives.Slot(4), entry.Data["slot"])
+	require.Equal(t, primitives.ValidatorIndex(11), entry.Data["validatorIndex"])
+	require.Equal(t, true, entry.Data["payloadPresent"])
+	require.Equal(t, true, entry.Data["blobDataAvailable"])
+	require.Equal(t, fmt.Sprintf("%#x", bytesutil.ToBytes32(root)), entry.Data["blockRoot"])
 }
 
 // Every discard has to move the counter, whether or not the ledger is on:
