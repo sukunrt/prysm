@@ -271,7 +271,9 @@ was canonical. Pinned by
 `TestGoldfish_RoundStartProposalIsOrphaned`. If this cost is not acceptable
 before the gadget lands, the smallest spec-shaped stub is to treat the unique
 round-start block descending from the stable root as the distinguished
-proposal.
+proposal. **That stub was built in step 5's wave (user decision 2026-08-20);
+see 5.7. The pinning test is now
+`TestGoldfish_RoundStartProposalAdmitted` and its three siblings.**
 
 ### The e2e cannot judge this step in this checkout
 
@@ -397,6 +399,119 @@ plan-next.md step 5).
 - [ ] Full e2e with flag on: still finalizes (the 87.5%→96.9% weight
       argument in decision 12 says it must; the run proves it).
 - [ ] `go build ./...`, `go vet`, `bazelisk build //...`.
+
+## 5.7 Executed 2026-08-20 <added by executor>
+
+Three jj changes on top of `yssuxmnt`, oldest first:
+
+| change | what |
+|---|---|
+| `kztuytom` | the FFG target shift, state side and forkchoice side |
+| `pmpxlyos` | the flagged e2e variant with participation relaxed there only |
+| `vlzvtvzq` | the round-start proposal stub in the walk |
+
+### Helper versus callers (5.2)
+
+The helper, renamed. `helpers.BlockRoot` had exactly five callers, all of them
+computing the FFG target: the four in the plan plus `testing/util/attestation.go`,
+which builds the attestations the tests feed back into the same matching code.
+It had no other use and no test of its own. Changing its body and keeping the
+name would have left a function documented as the spec's `get_block_root`
+returning something else, so it is now `helpers.FFGTargetRoot`, with the five
+call sites renamed and the deviation written where the implementation is.
+
+### Test expectations edited
+
+Every one, and why:
+
+- `TestStore_TargetRootForEpoch` (forkchoice): six values. The slot-32 and
+  slot-33 blocks now target the genesis block rather than the slot-32 block;
+  after finalizing the slot-33 block the pruned tree root is its own target and
+  the dependent root falls back to `finalizedDependentRoot`; the slot-96 and
+  slot-97 blocks target the slot-33 block rather than the slot-96 one; the
+  dependent root for epoch 1 from the slot-129 block is the slot-32 block
+  rather than zero.
+- `TestProcessJustificationAndFinalizationPreCompute_*` (precompute): three
+  tests, justified root `byte(64)` becomes `byte(63)`.
+- `TestAttestedCurrentEpoch` (precompute): the marked block root moves from
+  index `SlotsPerEpoch` to `SlotsPerEpoch-1`.
+- `TestStore_OnBlockBatch` (blockchain): the justified root is `blks[62]`, the
+  block at slot 63, not `blks[63]`.
+- `TestGoldfishWalk_NoPassthroughAtRoundStart` (forkchoice): unchanged
+  expectation, but the round-start block now has to arrive in the previous
+  round to stay outside the proposal mechanism, so the test isolates
+  `is_available_attestation_viable` as it did before.
+- `TestGoldfish_RoundStartProposalIsOrphaned` (forkchoice): replaced by
+  `TestGoldfish_RoundStartProposalAdmitted`, since the orphaning it pinned is
+  the thing the stub removes.
+
+`core/altair` needed none: its attestation tests build their attestations
+through `testing/util`, which shifted with the helper.
+
+### What the plan did not say
+
+1. **Pruning had to move with the target.** `prune` treats a child of the
+   finalized node at or before `EpochStart(finalizedEpoch)` as incompatible
+   with the checkpoint. That was right while the checkpoint block sat *at* the
+   epoch's first slot; with the shift the checkpoint block sits one slot
+   earlier and its child at the first slot is the finalized chain itself. Left
+   alone, finalization deleted the canonical chain and `postBlockProcess` then
+   failed with "no node found for root". The bound is now strict and the early
+   return moved with it. `TestStore_PruneKeepsTheEpochStartChild` pins it.
+2. **The pruned tree root is its own target**, rather than `nil`. A nil target
+   makes `targetRootForEpoch` answer the zero root for the anchor and for every
+   later block of its epoch, and the epoch-0 arm already says the answer for an
+   unreachable target is the anchor.
+3. **`IsViableForCheckpoint` moved with the same boundary**: a child at exactly
+   the epoch's first slot now makes its parent a viable checkpoint, because
+   that child's target for the epoch is the parent.
+
+### The round-start proposal stub (task 2)
+
+`on_block` records the round-start blocks that arrive during their own round,
+as `update_round_proposals` does, and `get_head` phase 2 starts the walk at the
+round's single such block when it descends from the stable root (stubbed as the
+justified root) and is viable for the head. The disambiguation rule is the
+spec's: two distinct round-start blocks in a round distinguish neither, and the
+round-start slot is orphaned as it was before the stub.
+
+Two spec checks cannot be made here and are deliberately absent: the freeze at
+the round's available-vote action, and the "descends from the live
+available-confirmed head" test, both of which need the finality gadget. Without
+the freeze the decision is re-evaluated on every walk, so a second proposal
+arriving later in the slot withdraws the first one's distinction instead of
+being ignored. That is the conservative direction.
+
+### The smoke
+
+Same shape as step 4's `step4-fin.sh` (256 validators, one node, geth 1.17.6,
+`SLOTS_PER_ROUND = 8`, Heze genesis, 12-second slots), rerun as
+`w2a-smoke.sh`; ~4.8 epochs.
+
+- **No orphans at all.** Slots 1-153 each produced a block and every block's
+  parent is the previous slot's block, the nineteen round starts (8, 16, ...,
+  152) included. Step 4's equivalent run orphaned every one of them.
+- `goldfish_gate_stop_total` 0, against 77 in the step-4 run: those stops were
+  the walk refusing the round-start proposals.
+- `goldfish_round_proposal_total` 38 (the walk runs more than once per slot),
+  `goldfish_round_proposal_conflict_total` 0, `goldfish_gate_retreat` 0,
+  `beacon_reorgs_total` 0, `goldfish_seat_fraction` 1.
+- **It still finalizes with the shifted target**: `beacon_finalized_epoch` 2 and
+  `beacon_current_justified_epoch` 3 at the end of the run. Justification is
+  the end-to-end proof that the two sides of the shift agree - a state-side
+  target that disagreed with forkchoice would have had
+  `VerifyLmdFfgConsistency` reject every attestation.
+
+Logs: `w2a-smoke-bn.log`, `w2a-smoke-vc.log`, `w2a-smoke-metrics.txt`,
+`w2a-chain-check.py` in the session scratchpad.
+
+### Not verified here
+
+The e2e still cannot run in this checkout (the vendored geth payload JSON,
+4.9). `TestEndToEnd_HezeGenesisSlotStartFFG` is therefore written but unrun,
+and the flagged participation floor is untested at runtime. The rpc packages
+`rpc/eth/beacon` and `rpc/prysm/v1alpha1/beacon` have 32 failures that this
+work did not cause: the same 32 fail on `yssuxmnt`.
 
 ---
 
