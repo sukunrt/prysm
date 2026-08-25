@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	coreblocks "github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/gloas"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/transition"
@@ -198,4 +199,32 @@ func TestPremineGenesis_HezeSlot1(t *testing.T) {
 	bid, err := st.LatestExecutionPayloadBid()
 	require.NoError(t, err)
 	require.Equal(t, primitives.Slot(1), bid.Slot())
+}
+
+// TestPremineGenesis_HezeGenesisBlockRoot pins the genesis block root: the block a node
+// reconstructs from the state must be the one the state's latest_block_header commits to, or the
+// first proposer's parent root does not match and no block is ever built.
+func TestPremineGenesis_HezeGenesisBlockRoot(t *testing.T) {
+	one := uint64(1)
+	gb := types.NewBlockWithHeader(&types.Header{
+		Time:          uint64(time.Now().Unix()),
+		Extra:         make([]byte, 32),
+		BaseFee:       big.NewInt(1),
+		ExcessBlobGas: &one,
+		BlobGasUsed:   &one,
+		GasLimit:      30000000,
+	})
+	st, err := NewPreminedGenesis(t.Context(), time.Unix(int64(gb.Time()), 0), 256, 0, version.Heze, gb)
+	require.NoError(t, err)
+
+	genesisBlk, err := coreblocks.NewGenesisBlockForState(t.Context(), st)
+	require.NoError(t, err)
+	want, err := genesisBlk.Block().HashTreeRoot()
+	require.NoError(t, err)
+
+	st, err = transition.ProcessSlots(t.Context(), st, 1)
+	require.NoError(t, err)
+	got, err := helpers.BlockRootAtSlot(st, 0)
+	require.NoError(t, err)
+	require.DeepEqual(t, want[:], got)
 }

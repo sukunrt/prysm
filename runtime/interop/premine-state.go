@@ -678,7 +678,7 @@ func (s *PremineGenesisConfig) setLatestBlockHeader(g state.BeaconState) error {
 			},
 			BlsToExecutionChanges: make([]*ethpb.SignedBLSToExecutionChange, 0),
 			SignedExecutionPayloadBid: &ethpb.SignedExecutionPayloadBid{
-				Message:   emptyExecutionPayloadBid(),
+				Message:   s.genesisExecutionPayloadBid(),
 				Signature: make([]byte, fieldparams.BLSSignatureLength),
 			},
 			PayloadAttestations: make([]*ethpb.PayloadAttestation, 0),
@@ -719,13 +719,7 @@ func (s *PremineGenesisConfig) setExecutionPayload(g state.BeaconState) error {
 	// parent_block_hash at it and its empty parent_execution_requests hash to the
 	// bid's execution_requests_root.
 	if s.Version >= version.Gloas {
-		bid := emptyExecutionPayloadBid()
-		bid.ParentBlockHash = gb.ParentHash().Bytes()
-		bid.BlockHash = gb.Hash().Bytes()
-		bid.FeeRecipient = gb.Coinbase().Bytes()
-		bid.GasLimit = gb.GasLimit()
-
-		robid, err := blocks.WrappedROExecutionPayloadBid(bid)
+		robid, err := blocks.WrappedROExecutionPayloadBid(s.genesisExecutionPayloadBid())
 		if err != nil {
 			return err
 		}
@@ -851,6 +845,19 @@ func (s *PremineGenesisConfig) setExecutionPayload(g state.BeaconState) error {
 	}
 
 	return errUnsupportedVersion
+}
+
+// genesisExecutionPayloadBid describes the execution genesis block. The genesis header commits
+// to it as well: eth-beacon-genesis and the other clients set
+// body.signed_execution_payload_bid.message == state.latest_execution_payload_bid, and
+// blocks.NewGenesisBlockForState reconstructs the genesis block that way.
+func (s *PremineGenesisConfig) genesisExecutionPayloadBid() *ethpb.ExecutionPayloadBid {
+	bid := emptyExecutionPayloadBid()
+	bid.ParentBlockHash = s.GB.ParentHash().Bytes()
+	bid.BlockHash = s.GB.Hash().Bytes()
+	bid.FeeRecipient = s.GB.Coinbase().Bytes()
+	bid.GasLimit = s.GB.GasLimit()
+	return bid
 }
 
 // emptyExecutionPayloadBid returns a zero-valued bid with every fixed-size field
