@@ -217,35 +217,11 @@ func (s *Service) ForkchoiceUpdated(
 	if attrs == nil {
 		return nil, nil, errors.New("nil payload attributer")
 	}
-	switch attrs.Version() {
-	case version.Bellatrix:
-		a, err := attrs.PbV1()
-		if err != nil {
-			return nil, nil, err
-		}
-		err = s.rpcClient.CallContext(ctx, result, ForkchoiceUpdatedMethod, state, a)
-		if err != nil {
-			return nil, nil, handleRPCError(err)
-		}
-	case version.Capella:
-		a, err := attrs.PbV2()
-		if err != nil {
-			return nil, nil, err
-		}
-		err = s.rpcClient.CallContext(ctx, result, ForkchoiceUpdatedMethodV2, state, a)
-		if err != nil {
-			return nil, nil, handleRPCError(err)
-		}
-	case version.Deneb, version.Electra, version.Fulu:
-		a, err := attrs.PbV3()
-		if err != nil {
-			return nil, nil, err
-		}
-		err = s.rpcClient.CallContext(ctx, result, ForkchoiceUpdatedMethodV3, state, a)
-		if err != nil {
-			return nil, nil, handleRPCError(err)
-		}
-	case version.Gloas:
+	// Matched by range rather than by exact version: an empty attributer carries
+	// the state's version, and a consensus-only fork above Gloas (Heze) leaves
+	// the execution client speaking the Gloas methods.
+	switch v := attrs.Version(); {
+	case v >= version.Gloas:
 		a, err := attrs.PbV4()
 		if err != nil {
 			return nil, nil, err
@@ -254,8 +230,35 @@ func (s *Service) ForkchoiceUpdated(
 		if err != nil {
 			return nil, nil, handleRPCError(err)
 		}
+	case v >= version.Deneb:
+		a, err := attrs.PbV3()
+		if err != nil {
+			return nil, nil, err
+		}
+		err = s.rpcClient.CallContext(ctx, result, ForkchoiceUpdatedMethodV3, state, a)
+		if err != nil {
+			return nil, nil, handleRPCError(err)
+		}
+	case v >= version.Capella:
+		a, err := attrs.PbV2()
+		if err != nil {
+			return nil, nil, err
+		}
+		err = s.rpcClient.CallContext(ctx, result, ForkchoiceUpdatedMethodV2, state, a)
+		if err != nil {
+			return nil, nil, handleRPCError(err)
+		}
+	case v >= version.Bellatrix:
+		a, err := attrs.PbV1()
+		if err != nil {
+			return nil, nil, err
+		}
+		err = s.rpcClient.CallContext(ctx, result, ForkchoiceUpdatedMethod, state, a)
+		if err != nil {
+			return nil, nil, handleRPCError(err)
+		}
 	default:
-		return nil, nil, fmt.Errorf("unknown payload attribute version: %v", attrs.Version())
+		return nil, nil, fmt.Errorf("unknown payload attribute version: %v", v)
 	}
 
 	if result.Status == nil {

@@ -3026,3 +3026,53 @@ func TestExecutionBlock_MarshalUnmarshalJSON_BlockAccessList(t *testing.T) {
 	require.NoError(t, decoded.UnmarshalJSON(enc))
 	require.DeepEqual(t, []byte(bal), []byte(decoded.BlockAccessList))
 }
+
+// methodRecordingRPCClient records the last engine method it was asked to call
+// and answers with a VALID forkchoice response.
+type methodRecordingRPCClient struct {
+	method string
+}
+
+func (*methodRecordingRPCClient) Close() {}
+
+func (*methodRecordingRPCClient) BatchCall([]rpc.BatchElem) error { return nil }
+
+func (c *methodRecordingRPCClient) CallContext(_ context.Context, result any, method string, _ ...any) error {
+	c.method = method
+	resp, ok := result.(*ForkchoiceUpdatedResponse)
+	if !ok {
+		return errors.New("unexpected result type")
+	}
+	resp.Status = &pb.PayloadStatus{Status: pb.PayloadStatus_VALID}
+	return nil
+}
+
+// TestForkchoiceUpdated_AttributeVersionRange pins the engine method chosen for
+// each payload attribute version. Heze must reach V4: it is a consensus-only
+// fork, so the execution client still speaks the Gloas (Amsterdam) methods, and
+// an empty attributer carries the beacon state's version.
+func TestForkchoiceUpdated_AttributeVersionRange(t *testing.T) {
+	tests := []struct {
+		name    string
+		version int
+		method  string
+	}{
+		{name: "bellatrix", version: version.Bellatrix, method: ForkchoiceUpdatedMethod},
+		{name: "capella", version: version.Capella, method: ForkchoiceUpdatedMethodV2},
+		{name: "deneb", version: version.Deneb, method: ForkchoiceUpdatedMethodV3},
+		{name: "fulu", version: version.Fulu, method: ForkchoiceUpdatedMethodV3},
+		{name: "gloas", version: version.Gloas, method: ForkchoiceUpdatedMethodV4},
+		{name: "heze", version: version.Heze, method: ForkchoiceUpdatedMethodV4},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &methodRecordingRPCClient{}
+			srv := &Service{}
+			srv.rpcClient = client
+			attrs := payloadattribute.EmptyWithVersion(tt.version)
+			_, _, err := srv.ForkchoiceUpdated(t.Context(), &pb.ForkchoiceState{}, attrs)
+			require.NoError(t, err)
+			require.Equal(t, tt.method, client.method)
+		})
+	}
+}
