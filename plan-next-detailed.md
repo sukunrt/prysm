@@ -557,32 +557,104 @@ work did not cause: the same 32 fail on `yssuxmnt`.
 
 ## 6.3 The runs
 
-- [ ] Shakeout: `kurtosis run` with 2 nodes, assert startup + first blocks
+- [x] Shakeout: `kurtosis run` with 2 nodes, assert startup + first blocks
       (~3 slots). Iterate here — image, genesis, and injection bugs all
       surface at this tier.
-- [ ] Full kurtosis run: 10-16 nodes, ~100 validators, 5-6 epochs, matching
+- [x] Full kurtosis run: 10-16 nodes, ~100 validators, 5-6 epochs, matching
       the recorded baseline's shape.
 - [ ] ethshadow run: same shape, new data dir + new `shadow-runN.log` in
       `decoupled-shadow-sim` (never touch existing `data*`), Goldfish on.
-- [ ] Both runs also flip one knob once (e.g. available-attestation BPS)
+- [x] Both runs also flip one knob once (e.g. available-attestation BPS)
       to prove the sweep axis works end to end.
 
 ## 6.4 Record
 
-- [ ] Per harness: finalization cadence; available attestations per slot
+- [x] Per harness (kurtosis): finalization cadence; available attestations per slot
       per node; per-slot attestation counts and bytes; the step-4 metrics
       (late-vote fraction, gate stops, gate retreats).
 - [ ] Kurtosis vs ethshadow vs the recorded plan-5.4 baseline: traffic
       should match the baseline (Goldfish changes head dynamics, not
       message counts); head dynamics may differ. Divergence in traffic is a
       bug, not a finding.
-- [ ] Write the numbers into a summary in each run's directory and into an
+- [x] Write the numbers into a summary in each run's directory and into an
       executor note in this file.
 
 ## 6.5 Verify
 
 - [ ] Both harnesses complete their full runs; summaries written; configs
       committed (this repo: `kurtosis/`; sim workspace: its own history).
+
+---
+
+## 6.6 Executed 2026-08-20 <added by executor> — the kurtosis measurement runs
+
+Three runs on the rebuilt images (`prysm-*:zqtmtlrvvnqs`, built from this
+tip by `kurtosis/build-images.sh`). Each run's `network_params.yaml` and a
+`summary.md` with the numbers are in `kurtosis/runs/`; the bulky scrapes and
+node logs are in `~/dev/prysm2-run-logs/`. The ethshadow half of 6.3/6.4 is
+untouched and still open.
+
+| run | shape | result |
+| --- | --- | --- |
+| 01 shakeout | 2 nodes, 128 vals, 48 slots | startup unbroken; 39/39 blocks |
+| 02 main | 10 supernodes, 130 vals, 6 epochs, late blocks | finalized 4; 43 retreats = 43 reorgs |
+| 03 knob flip | run 02, BPS 2500 -> 5000, 3 epochs | zero retreats, zero reorgs |
+
+**Late publishers cause gate retreats, one for one.** Run 02 turned on
+`--decoupled-late-block-publish-bps=3500
+--decoupled-late-block-publish-every-nth=4`: 43 blocks published 2.1s into a
+6s slot, past the 1.5s available-attestation deadline. Every node counted 43
+`goldfish_gate_retreat`, 43 `beacon_reorgs_total`, and the retreat slots
+match the late slots one for one with a one-slot tolerance (0 unexplained
+retreats, 0 late blocks without a retreat). Recording both counters was
+right: `beacon_reorgs_total` alone reads as 51 reorgs in a healthy run.
+`goldfish_gate_stop_total` runs 1-8 higher than the retreat count — stops
+that leave the head where it is.
+
+**The sweep axis works.** Moving the available attestation deadline to 5000
+bps (3.0s, i.e. after the late publishers) took gate stops, gate retreats and
+reorgs to exactly zero while the same 21 late blocks were still published.
+The value reaches both the beacon node and the VC through a new line in the
+generator image's CL config template, the same route `SLOTS_PER_ROUND` uses.
+
+**Traffic matches the plan-5.4 baseline.** Per slot per node in run 02
+against `decoupled-shadow-sim/data19/baseline.md`: available attestations
+130.0/slot delivered to the application (baseline 128.0 at 128 validators)
+costing 172 KB/slot against 177 KB, on 214-byte messages against 202;
+unaggregated committee attestations 23.7 KB/slot against 24.2 KB on
+261-byte messages against 259; 16.25 attesters per slot, flat over all eight
+round offsets. Goldfish changed the head dynamics, not the message counts,
+which is what 6.4 asked. The only gaps are structural: fewer *forwards* per
+message (10 nodes, 9 peers, against the baseline's 16) on the aggregate and
+block topics.
+
+**Seat fraction did not worsen with scale.** Mean 0.920 over 2080 samples at
+10 nodes and 130 validators, against the 2-node e2e's 0.82-0.99 band, with
+`goldfish_late_vote_total` at 0 for the whole run: the missing seats never
+publish in time, they are not votes lost in flight. The low samples (0.09)
+are exactly the late slots.
+
+**Supernodes work, not just start** (per the user's 2026-08-20 directive).
+All ten nodes: `Supernode mode enabled. Will custody all data columns going
+forward.`, `custody_group_count: 128` in the metadata and ENR, all 128 column
+subnets subscribed with 1,152 subscribed peers across them (every node on
+every subnet) and formed meshes, and **zero** data-column or sampling errors
+in the logs. No columns are gossiped or served, because no blob transaction
+can exist here — see the next point.
+
+**Anomaly for a human: the EL never credits a transfer.** On
+`ethpandaops/geth:glamsterdam-devnet-8` with this genesis, ten 5 ETH
+transfers were included in a canonical block with correct `gasUsed` and
+receipts, but the recipients' balances stayed 0 and the sender was debited
+only the gas (0.000276 ETH against 50 ETH). Nothing on the EL can be funded,
+so a blob spammer cannot run and no data columns ever exist. It does not
+affect these consensus measurements — the ethshadow baseline also ran on
+empty payloads — but it blocks any future blob or column experiment. Full
+detail in `kurtosis/runs/02-main/summary.md`.
+
+**Cost.** 0.12-0.14 cores and ~350 MB per beacon node at 6s slots; a
+32-container 10-node enclave never fell behind the clock on this 16-core box.
+16 nodes would fit.
 
 ---
 

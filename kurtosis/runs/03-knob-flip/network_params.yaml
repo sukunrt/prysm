@@ -1,0 +1,106 @@
+# ethpandaops/ethereum-package args for the decoupled fork.
+#
+#   kurtosis run --enclave decoupled ~/dev/ethereum-package \
+#       --args-file kurtosis/network_params.yaml
+#
+# Run 03: run 02 with one value moved, to prove the sweep axis works end
+# to end. AVAILABLE_ATTESTATION_DUE_BPS_HEZE goes 2500 -> 5000, which
+# puts the available attestation deadline (3.0s) *after* the late
+# publishers' 3500 bps (2.1s): the same late blocks should now be voted
+# for instead of gated away. Three epochs is enough to show it.
+#
+# Only defaults that matter are spelled out; everything else comes from the
+# package's own network_params.yaml.
+
+participants:
+  - el_type: geth
+    # Pinned, not :latest. This is commit 366048ea (2026-08-10), byte for
+    # byte the geth the ethshadow baseline ran, which is the point of having
+    # two harnesses. It also has to be pinned: geth master from 2026-08-19
+    # rejects every forkchoiceUpdatedV4 with "failed to process builder
+    # deposit queue: empty system contract: no code at
+    # 0x0000bFF46984e3725691FA540a8C7589300D8282" -- newer geth wants the
+    # ePBS builder-deposit system contract in the EL genesis, and
+    # ethereum-genesis-generator 6.0.2 does not deploy it (it knows only
+    # 4788, 2935, 7002, 7251 and the deposit contract). Moving to a newer
+    # geth means teaching the generator that contract first.
+    el_image: ethpandaops/geth:glamsterdam-devnet-8
+    cl_type: prysm
+    # Built by kurtosis/build-images.sh from this tree. Also tagged with the
+    # jj change id; :local is what a run uses so the file does not churn.
+    cl_image: prysm-beacon-chain:local
+    vc_type: prysm
+    vc_image: prysm-validator:local
+    # The Prysm VC must talk gRPC: its REST client has no Gloas/Heze SSZ
+    # block codec. The package passes --beacon-rest-api-provider
+    # unconditionally and Prysm enables the REST client on the flag's mere
+    # presence, which no vc_extra_params value can undo -- the image's
+    # entrypoint shim drops the flag instead. See validator-entrypoint.sh.
+    vc_extra_params:
+      # The late publishers. 3500 bps of a 6s slot is 2.1s, which is past
+      # both the available attestation deadline (2500 bps = 1.5s) and the
+      # FFG one (3333 bps = 2.0s), so the attesters of a late slot have no
+      # choice but to vote for the parent and the block cannot clear the
+      # majority gate. every-nth=4 picks every fourth validator index, so
+      # about a quarter of the slots are late.
+      - --decoupled-late-block-publish-bps=3500
+      - --decoupled-late-block-publish-every-nth=4
+    use_separate_vc: true
+    # Fulu is at epoch 0, and the package refuses to start a PeerDAS network
+    # unless a node is a supernode, a node holds 128+ validators, or
+    # perfect_peerdas_enabled is on with 16 participants
+    # (src/package_io/input_parser.star:474). Full custody on every node is
+    # the honest choice here: these runs measure attestation traffic, and
+    # sampling-driven column fetches would only add noise.
+    supernode: true
+    count: 10
+
+network_params:
+  network: kurtosis
+  network_id: "3151908"
+  preset: mainnet
+  seconds_per_slot: 6
+  slot_duration_ms: 6000
+  # 10 x 13 = 130 validators. The ethshadow baseline ran 128; the floor
+  # is what matters, since prysmctl's genesis builder never returns when
+  # there are too few validators to fill the PTC window (kurtosis/README).
+  # 130 / SLOTS_PER_ROUND = 16.25 attesters per slot, the baseline's 16.
+  num_validator_keys_per_node: 13
+  # Enough for ten nodes' images, keys and genesis before slot 0.
+  genesis_delay: 180
+
+  # Genesis is Heze. Nothing upgrades into Heze at runtime -- prysmctl builds
+  # the Heze state directly (see Dockerfile.genesis-gen) -- so every fork is
+  # at epoch 0. Gloas must be 0 too: prysm gates on GloasForkEpoch in ~86
+  # non-test sites, and Gloas at 0 is what puts amsterdamTime on the EL
+  # genesis, which forkchoiceUpdatedV4 requires.
+  deneb_fork_epoch: 0
+  electra_fork_epoch: 0
+  fulu_fork_epoch: 0
+  gloas_fork_epoch: 0
+  heze_fork_epoch: 0
+
+  # An explicit single-entry BLOB_SCHEDULE. The generator builds the CL
+  # BLOB_SCHEDULE out of the BPO_* vars, so exactly one non-default BPO gives
+  # exactly one entry; bpo_2..5 stay at FAR_FUTURE.
+  bpo_1_epoch: 0
+  bpo_1_max_blobs: 6
+  bpo_1_target_blobs: 3
+  bpo_2_epoch: 18446744073709551615
+
+ethereum_genesis_generator_params:
+  # Patched generator: Heze stripped from the CL->EL fork mapping (Heze is
+  # CL-only), SLOTS_PER_ROUND added to the CL config template, and the CL
+  # genesis state built by prysmctl instead of eth-genesis-state-generator.
+  image: prysm-genesis-gen:local
+  extra_env:
+    # Four rounds to the 32-slot epoch: the attestation-traffic multiplier
+    # the measurements are about.
+    SLOTS_PER_ROUND: 8
+    # The head-timing sweep axis, spelled out even at its default so every
+    # run's file records the value it ran.
+    AVAILABLE_ATTESTATION_DUE_BPS_HEZE: 5000
+
+additional_services: []
+wait_for_finalization: false
+global_log_level: info
