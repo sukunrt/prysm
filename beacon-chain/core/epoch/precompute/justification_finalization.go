@@ -5,7 +5,6 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/time"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
-	"github.com/OffchainLabs/prysm/v7/config/params"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
@@ -21,7 +20,10 @@ func UnrealizedCheckpoints(st state.BeaconState) (*ethpb.Checkpoint, *ethpb.Chec
 		return nil, nil, errNilState
 	}
 
-	if slots.ToEpoch(st.Slot()) <= params.BeaconConfig().GenesisEpoch+1 {
+	// FFG runs on the ROUND clock, so the genesis stub guard counts rounds too:
+	// skip while the state is still in round 0 or 1. SlotsPerRound equals
+	// SlotsPerEpoch on every shipped config, so this is the old epoch guard there.
+	if slots.RoundAt(st.Slot()) <= 1 {
 		jc := st.CurrentJustifiedCheckpoint()
 		fc := st.FinalizedCheckpoint()
 		return jc, fc, nil
@@ -55,7 +57,11 @@ func UnrealizedCheckpoints(st state.BeaconState) (*ethpb.Checkpoint, *ethpb.Chec
 //	  current_target_balance = get_attesting_balance(state, current_attestations)
 //	  weigh_justification_and_finalization(state, total_active_balance, previous_target_balance, current_target_balance)
 func ProcessJustificationAndFinalizationPreCompute(state state.BeaconState, pBal *Balance) (state.BeaconState, error) {
-	canProcessSlot, err := slots.EpochStart(2 /*epoch*/)
+	// The round twin of the spec's GENESIS_EPOCH+1 stub guard: rounds 0 and 1 are
+	// skipped, so the first round this can justify is round 2, whose processing
+	// runs at the last slot of round 2. Identical to the epoch guard wherever
+	// SlotsPerRound equals SlotsPerEpoch, which is every shipped config.
+	canProcessSlot, err := slots.RoundStart(2 /*round*/)
 	if err != nil {
 		return nil, err
 	}

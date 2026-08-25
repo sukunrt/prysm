@@ -24,8 +24,10 @@ import (
 // FinalizationOccursInRounds is the rounds twin of FinalizationOccurs: with FFG
 // keyed to rounds, steady state is the finalized checkpoint two rounds behind
 // the head's round and the justified checkpoint one round behind, whatever the
-// epoch length is. Run it only after the epoch-2 genesis guard has cleared, so
-// that every round in the window is one the gadget was allowed to justify.
+// epoch length is. Run it only after the round-2 genesis guard has cleared, so
+// that every round in the window is one the gadget was allowed to justify. The
+// guard ends at round 2, so at 8/32 any epoch from 1 on qualifies; the call
+// sites stay at a later epoch because the other evaluators need the room.
 var FinalizationOccursInRounds = func(epoch primitives.Epoch) types.Evaluator {
 	return types.Evaluator{
 		Name:       "finalizes_in_rounds_at_epoch_%d",

@@ -315,18 +315,20 @@ func TestProcessJustificationAndFinalization_RoundProgressionAt8Over32(t *testin
 		CurrentEpochTargetAttested: total,
 	}
 
-	// The genesis guard stays epoch-based, so the first boundary that justifies at all
-	// is the first round ending past slot EpochStart(2) == 64, which is round 8.
+	// The genesis stub guard counts ROUNDS: rounds 0 and 1 are skipped, so the first
+	// round that can justify is round 2, ending past slot RoundStart(2) == 16. Round 2
+	// is therefore justified at the 2->3 boundary (slot 24) and finalized at the 3->4
+	// boundary (slot 32) -- a two-round warmup instead of the two-epoch one.
 	for _, tc := range []struct {
 		round     primitives.Round
 		justified primitives.Round
 		finalized primitives.Round
 	}{
-		{round: 7, justified: 0, finalized: 0}, // still inside the genesis guard
-		{round: 8, justified: 8, finalized: 0},
-		{round: 9, justified: 9, finalized: 8},
-		{round: 10, justified: 10, finalized: 9},
-		{round: 11, justified: 11, finalized: 10},
+		{round: 1, justified: 0, finalized: 0}, // still inside the genesis guard
+		{round: 2, justified: 2, finalized: 0},
+		{round: 3, justified: 3, finalized: 2},
+		{round: 4, justified: 4, finalized: 3},
+		{round: 5, justified: 5, finalized: 4},
 	} {
 		end, err := slots.RoundEnd(tc.round)
 		require.NoError(t, err)
@@ -339,27 +341,28 @@ func TestProcessJustificationAndFinalization_RoundProgressionAt8Over32(t *testin
 			"finalized round after the round %d boundary", tc.round)
 	}
 
-	// Rounds 8-11 all live inside epoch 2, so the whole progression above happened
-	// without a single epoch boundary: this cadence is invisible to epoch processing.
-	firstEpoch, err := helpers.CheckpointEpoch(8)
+	// Rounds 2 and 3 both live inside epoch 0, so a full justify-and-finalize cycle
+	// completes without a single epoch boundary: this cadence is invisible to epoch
+	// processing.
+	firstEpoch, err := helpers.CheckpointEpoch(2)
 	require.NoError(t, err)
-	lastEpoch, err := helpers.CheckpointEpoch(11)
+	lastEpoch, err := helpers.CheckpointEpoch(3)
 	require.NoError(t, err)
-	assert.Equal(t, primitives.Epoch(2), firstEpoch)
-	assert.Equal(t, primitives.Epoch(2), lastEpoch)
+	assert.Equal(t, primitives.Epoch(0), firstEpoch)
+	assert.Equal(t, primitives.Epoch(0), lastEpoch)
 
-	// The finalized checkpoint names round 10's FFG target block, the last block
-	// before the round started: RoundStart(10) - 1 == slot 79.
-	targetSlot, err := slots.FFGTargetSlot(10)
+	// The finalized checkpoint names round 4's FFG target block, the last block
+	// before the round started: RoundStart(4) - 1 == slot 31.
+	targetSlot, err := slots.FFGTargetSlot(4)
 	require.NoError(t, err)
-	assert.Equal(t, primitives.Slot(79), targetSlot)
+	assert.Equal(t, primitives.Slot(31), targetSlot)
 	want := bytesutil.ToBytes32(blockRoots[targetSlot])
 	assert.DeepEqual(t, want[:], st.FinalizedCheckpoint().Root)
 
-	// Two rounds of latency: round 10's target block sits at slot 79 and the state
-	// learns it is final while still in round 11, at slot 95.
-	assert.Equal(t, primitives.Round(11), time.CurrentRound(st))
-	assert.Equal(t, primitives.Slot(95), st.Slot())
+	// Two rounds of latency: round 4's target block sits at slot 31 and the state
+	// learns it is final while still in round 5, at slot 47.
+	assert.Equal(t, primitives.Round(5), time.CurrentRound(st))
+	assert.Equal(t, primitives.Slot(47), st.Slot())
 	assert.Equal(t, primitives.Slot(16), st.Slot()-targetSlot)
 	assert.Equal(t, primitives.Slot(16), 2*params.BeaconConfig().SlotsPerRound)
 }
