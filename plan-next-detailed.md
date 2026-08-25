@@ -99,9 +99,14 @@ In `beacon-chain/forkchoice/doubly-linked-tree/`, beside `store.head`
       of score, **except at a round-start slot**
       (`slots.IsRoundStart`, `time/slots/slottime.go:175`). Spec:
       `is_available_attestation_viable`.
-- [ ] Payload-status tiebreaker, stubbed per decision 13: PENDING for a
-      same-slot vote, EMPTY otherwise. Leave a `TODO(gadget)` naming the
-      spec rule.
+- [ ] Payload-status derivation — **no stub (user decision 2026-08-20,
+      overriding decision 13)**: implement the spec's
+      `get_available_vote_payload_status` — same-slot vote → PENDING;
+      older block → FULL/EMPTY by the vote's `payload_present` bit. It is
+      byte-for-byte the Gloas mainnet `get_supported_node` rule. The vote
+      store already carries the bit (4.1) and `NodeV2.PayloadStatus`
+      exists; the derivation is a few lines in the walk. Unit test both
+      arms plus the same-slot case.
 - [ ] Stable root: use the justified root. No TSQ, no height filter.
 - [ ] The walk assigns `s.headNode` exactly where `store.go:61` does today,
       so `FullHead` and `CachedHeadRoot` keep working.
@@ -159,11 +164,12 @@ In `beacon-chain/forkchoice/doubly-linked-tree/`, beside `store.head`
       before the next slot start.
 - [ ] Counter: walk stopped at the gate.
 - [ ] Counter: late votes (for slot N-1, arriving after the t=0 drain).
-- [ ] Counter: gate-caused head retreats — incremented by the walk when the
-      new head is an ancestor of the previous head. `saveHead`'s
-      `reorgCount` (`blockchain/head.go:151`) is left untouched (open
-      question 1; get the user's answer before the first sim run, the
-      default is: leave it, document it).
+- [ ] Counter: gate-caused head retreats (`goldfish_gate_retreat`) —
+      incremented by the walk when the new head is an ancestor of the
+      previous head. `saveHead`'s `reorgCount` (`blockchain/head.go:151`)
+      is left untouched. **Decided by user 2026-08-20: keep both. The sims
+      must include late publishers so this counter carries signal — see the
+      late-publisher knob in plan-next.md step 6.**
 
 ## 4.6 Tests that will wake up (lesson 4)
 
@@ -358,12 +364,14 @@ plan-next.md step 5).
 
 ---
 
-# Open questions for the user
+# Open questions — all resolved, 2026-08-20
 
-Mirrored from `plan-next.md` with recommendations: (1) gate-retreat metric
-— add a separate counter, leave `reorgCount`; (2) knob assignment — FFG
-gets slot-start flag + names-which-block knob, available attestation's BPS
-is the head-timing sweep axis; (3) payload-status tiebreaker stays stubbed
-until the gadget; (4) kurtosis images via plain Dockerfile + patched
-genesis-generator, not bazel push tooling. Answer before the step-6 runs;
-steps 4-5 can start on the recommendations.
+Full answers recorded in `plan-next.md`'s open-questions section. Summary:
+(1) keep both — add `goldfish_gate_retreat`, leave `reorgCount`; sims must
+include late publishers (knob spec'd in plan-next.md step 6).
+(2) as recommended — FFG gets the slot-start flag; the available
+attestation's BPS config is the head-timing sweep axis; its naming knob is
+deferred. (3) NO stub — implement the spec's payload-status derivation
+(identical to Gloas mainnet `get_supported_node`); see 4.2. (4) kurtosis
+images: whatever is easiest; the Dockerfile route is the starting point and
+the executor may switch without asking. Nothing blocks execution.
