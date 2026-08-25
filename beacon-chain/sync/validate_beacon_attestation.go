@@ -524,11 +524,10 @@ func (s *Service) validateAvailableAttestation(
 	pid peer.ID,
 	msg *pubsub.Message,
 ) (pubsub.ValidationResult, error) {
-	// start := time.Now()
-	defer func() {
-		// TODO(sukunrt): fix this with correct metrics
-		//		attestationVerificationGossipSummary.Observe(float64(time.Since(start).Milliseconds()))
-	}()
+	// When the vote entered validation. The ledger carries it alongside the
+	// decision time so a run can tell a vote refused for being late from one
+	// that was never delivered.
+	arrived := time.Now()
 
 	if pid == s.cfg.p2p.PeerID() {
 		// Our own votes never reach the subscriber - the subscription loop
@@ -567,13 +566,13 @@ func (s *Service) validateAvailableAttestation(
 	data := att.GetData()
 	// Do not process slot 0 attestations.
 	if data.Slot == 0 {
-		availableAttDropCount.WithLabelValues("slot_zero").Inc()
+		s.dropVote(att, "slot_zero", arrived)
 		return pubsub.ValidationIgnore, nil
 	}
 
 	// only care about current slot
 	if err := helpers.ValidateAvailableAttestationTime(data.Slot, s.cfg.clock.GenesisTime(), earlyAttestationProcessingTolerance); err != nil {
-		availableAttDropCount.WithLabelValues("not_current_slot").Inc()
+		s.dropVote(att, "not_current_slot", arrived)
 		tracing.AnnotateError(span, err)
 		return pubsub.ValidationIgnore, err
 	}
@@ -594,6 +593,7 @@ func (s *Service) validateAvailableAttestation(
 		// block is imported, and ignore it for now so gossip does not penalize the
 		// peer that forwarded a vote we simply cannot check yet.
 		s.savePendingAvailableAtt(att)
+		s.logVote(att, voteQueued, "", arrived)
 		// The block can be imported, and its queue drained, between the check
 		// above and the insert. Nothing would wake the vote after that, so take a
 		// second look: whichever of the two sees the block last drains the queue.
@@ -603,15 +603,16 @@ func (s *Service) validateAvailableAttestation(
 		return pubsub.ValidationIgnore, nil
 	}
 
-	validationRes, err := s.validateAvailableAttWithBlock(ctx, att, blockRoot)
+	validationRes, err := s.validateAvailableAttWithBlock(ctx, att, blockRoot, arrived)
 	if validationRes != pubsub.ValidationAccept {
 		if validationRes == pubsub.ValidationReject {
-			availableAttDropCount.WithLabelValues("signature").Inc()
+			s.dropVote(att, "signature", arrived)
 		}
 		return validationRes, err
 	}
 
 	msg.ValidatorData = att
+	s.logVote(att, voteAccepted, "", arrived)
 
 	// TODO(sukunrt): mark the attestation as seen
 	return pubsub.ValidationAccept, nil
@@ -625,12 +626,13 @@ func (s *Service) validateAvailableAttWithBlock(
 	ctx context.Context,
 	att *eth.AvailableAttestation,
 	blockRoot [32]byte,
+	arrived time.Time,
 ) (pubsub.ValidationResult, error) {
 	round := slots.RoundAt(att.Data.Slot)
 	targetRoot, err := s.cfg.chain.TargetRootForRound(blockRoot, round)
 	if err != nil {
 		// We can reject this, it's an invalid attestation but there might be some reason the peer forwarded this.
-		availableAttDropCount.WithLabelValues("target_root").Inc()
+		s.dropVote(att, "target_root", arrived)
 		return pubsub.ValidationIgnore, errors.Wrap(err, "target root for round")
 	}
 	state, err := s.cfg.chain.AttestationTargetState(ctx, &ethpb.Checkpoint{
@@ -638,7 +640,7 @@ func (s *Service) validateAvailableAttWithBlock(
 		Root:  targetRoot[:],
 	})
 	if err != nil {
-		availableAttDropCount.WithLabelValues("target_state").Inc()
+		s.dropVote(att, "target_state", arrived)
 		return pubsub.ValidationIgnore, errors.Wrap(err, "attestation target state")
 	}
 

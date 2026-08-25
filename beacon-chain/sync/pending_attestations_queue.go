@@ -460,18 +460,23 @@ func pendingAvailableAttsAreEqual(a, b *ethpb.AvailableAttestation) bool {
 // peers that also lacked the block get another chance to count it. Forkchoice
 // counts a replay whose slot has already passed as a late vote.
 func (s *Service) processAvailableAttestation(ctx context.Context, att *ethpb.AvailableAttestation) {
+	arrived := time.Now()
 	blockRoot := bytesutil.ToBytes32(att.GetData().BeaconBlockRoot)
-	res, err := s.validateAvailableAttWithBlock(ctx, att, blockRoot)
+	res, err := s.validateAvailableAttWithBlock(ctx, att, blockRoot, arrived)
 	if res != pubsub.ValidationAccept {
-		// validateAvailableAttWithBlock already named the reason it refused.
+		if res == pubsub.ValidationReject {
+			s.dropVote(att, "signature", arrived)
+		}
+		// Otherwise validateAvailableAttWithBlock already named the reason.
 		log.WithError(err).Debug("Pending available attestation was not accepted")
 		return
 	}
 	if err := s.cfg.chain.ReceiveAvailableAttestation(ctx, att); err != nil {
-		availableAttDropCount.WithLabelValues("forkchoice").Inc()
+		s.dropVote(att, "forkchoice", arrived)
 		log.WithError(err).Debug("Could not record pending available attestation")
 		return
 	}
+	s.logVote(att, voteReplayed, "", arrived)
 	if err := s.cfg.p2p.Broadcast(ctx, att); err != nil {
 		log.WithError(err).Debug("Could not broadcast pending available attestation")
 	}

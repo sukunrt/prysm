@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/cache"
 	"github.com/OffchainLabs/prysm/v7/config/features"
@@ -71,7 +72,7 @@ func (s *Service) availableAttestationSubscriber(ctx context.Context, msg proto.
 	// The available attestation is the Goldfish head vote: it is not aggregated
 	// and it is not included in blocks, so forkchoice is its only consumer.
 	if err := s.cfg.chain.ReceiveAvailableAttestation(ctx, att); err != nil {
-		availableAttDropCount.WithLabelValues("forkchoice").Inc()
+		s.dropVote(att, "forkchoice", time.Now())
 		return err
 	}
 	return nil

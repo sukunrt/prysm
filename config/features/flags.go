@@ -232,6 +232,14 @@ var (
 		Name:  "disable-track-equivocations",
 		Usage: "Disables recording proposer equivocations observed on gossip into forkchoice.",
 	}
+	// GoldfishVoteLedger writes one line per Goldfish head vote per node, which
+	// is what lets a run reconcile every seat of every slot against the
+	// committee instead of trusting an aggregate counter. It is off by default:
+	// the topic carries one message per seat holder per slot.
+	GoldfishVoteLedger = &cli.BoolFlag{
+		Name:  "goldfish-vote-ledger",
+		Usage: "Logs every available attestation head vote and every drop, one line each, for per-slot seat reconciliation.",
+	}
 
 	// DecoupledFFGVoteAtSlotStart moves the FFG (committee) attestation from the
 	// attestation due time to the start of the slot, plus a bounded random jitter.
@@ -330,6 +338,7 @@ var BeaconChainFlags = combinedFlags([]cli.Flag{
 	enableStartupOptimistic,
 	ignoreUnviableAttestations,
 	disableTrackEquivocations,
+	GoldfishVoteLedger,
 	enableFullSSZDataLogging,
 	disableVerboseSigVerification,
 	enableProposerPreprocessing,

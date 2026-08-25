@@ -73,6 +73,7 @@ type Flags struct {
 	DisableStakinContractCheck bool // Disables check for deposit contract when proposing blocks
 	IgnoreUnviableAttestations bool // Ignore attestations whose target state is not viable (avoids lagging-node DoS).
 	TrackEquivocations         bool // Record proposer equivocations seen on gossip into forkchoice.
+	GoldfishVoteLedger         bool // Log one line per available attestation head vote, for per-slot seat reconciliation.
 
 	EnableHashtree               bool // Enables usage of the hashtree library for hashing
 	EnableVerboseSigVerification bool // EnableVerboseSigVerification specifies whether to verify individual signature if batch verification fails
@@ -320,6 +321,10 @@ func ConfigureBeaconChain(ctx *cli.Context) error {
 	if ctx.IsSet(disableTrackEquivocations.Name) && ctx.Bool(disableTrackEquivocations.Name) {
 		logDisabled(disableTrackEquivocations)
 		cfg.TrackEquivocations = false
+	}
+	if ctx.IsSet(GoldfishVoteLedger.Name) && ctx.Bool(GoldfishVoteLedger.Name) {
+		logEnabled(GoldfishVoteLedger)
+		cfg.GoldfishVoteLedger = true
 	}
 	if ctx.IsSet(EnableStateDiff.Name) {
 		logEnabled(EnableStateDiff)

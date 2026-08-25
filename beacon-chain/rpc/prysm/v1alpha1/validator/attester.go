@@ -3,6 +3,7 @@ package validator
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/operation"
@@ -12,11 +13,13 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -360,6 +363,26 @@ func (vs *Server) proposeAvailableAtt(
 	if vs.AvailableAttestationReceiver != nil {
 		if err := vs.AvailableAttestationReceiver.ReceiveAvailableAttestation(ctx, att); err != nil {
 			log.WithError(err).Error("Could not record local available attestation")
+		} else if features.Get().GoldfishVoteLedger {
+			// The node's own votes never reach the gossip subscriber, so this is
+			// the only place they can enter the run's vote ledger. Same line
+			// shape as the sync side, with outcome "local".
+			start := slots.UnsafeStartTime(vs.TimeFetcher.GenesisTime(), data.Slot)
+			since := time.Since(start).Milliseconds()
+			fields := logrus.Fields{
+				"outcome":   "local",
+				"voteSlot":  data.Slot,
+				"seats":     att.AggregationBits.Count(),
+				"blockRoot": fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
+				"arrivedMs": since,
+				"decidedMs": since,
+			}
+			indices := decoupled.AvailableAttestationSeatsToValidatorIndices(
+				data.Slot, att.AggregationBits.BitIndices(), decoupled.CommitteeValidatorCount())
+			if len(indices) == 1 {
+				fields["validator"] = indices[0]
+			}
+			log.WithFields(fields).Info("Goldfish vote")
 		}
 	}
 
