@@ -1195,6 +1195,201 @@ each new run gets a fresh data dir.
       round, so 4 times per epoch. That is the intended result, not a
       regression.
 
+## 5.3a Executed 2026-08-19: the Shadow run <added by executor>
+
+**Config chosen.** 16 beacon nodes (geth + prysm + prysm VC), one lighthouse CL
+bootnode, one prometheus host, **128 validators, 8 per node**, 12-second slots,
+`SLOTS_PER_EPOCH: 32`, `SLOTS_PER_ROUND: 8`, `GLOAS_FORK_EPOCH: 0`,
+`HEZE_FORK_EPOCH: 0`, run for **55 minutes of simulated time** = genesis at
+05:00 plus 250 slots, which is 7 full epochs and three finalization events.
+
+Why 128 and not 96 or 256: `initialize_ptc_window` needs at least one validator
+per slot of the epoch, so 32 is the floor; 128 is four times that and divides
+`SLOTS_PER_ROUND` exactly, so every slot has the same committee size (16) and
+the per-slot numbers are not an artefact of an uneven split. It is also the
+largest count that keeps 16 nodes at a round 8 keys each. Wall clock was about
+55 minutes for the 55-minute run.
+
+Files in `/home/sukun/dev/decoupled-shadow-sim` (not a git or jj repo; nothing
+to commit there):
+
+- `sim.yaml` — 128 validators, `gloas_epoch: 0`, `extra_env` carries
+  `HEZE_FORK_EPOCH`, `HEZE_FORK_VERSION`, `GENESIS_TIMESTAMP` and
+  `GENESIS_DELAY`. The old `SLOTS_PER_EPOCH: "8"` override is gone: there is no
+  devnet preset any more (5.1), so the generator's mainnet default is right.
+  `sim-shakeout.yaml` is the same file with a 7-minute `stop_time`.
+- `cl-config-template.yaml` — `SLOTS_PER_EPOCH: 32` (was 8), new
+  `SLOTS_PER_ROUND: 8`, and the keys this prysm build has no field for are
+  removed (`HEGOTA_*`, `EIP7928_*`, `VIEW_FREEZE_CUTOFF_BPS`,
+  `INCLUSION_LIST_*`, `PROPOSER_INCLUSION_LIST_CUTOFF_BPS`,
+  `MAX_REQUEST_INCLUSION_LIST`, `MAX_BYTES_PER_INCLUSION_LIST`,
+  `CONFIRMATION_BYZANTINE_THRESHOLD`). `BLOB_SCHEDULE: []` is kept: the
+  explicit single entry `fulu-devnet.yaml` needs exists because prysmctl
+  derives the EL genesis from mainnet's absolute BPO epochs, and here the EL
+  genesis comes from the generator, which schedules no BPO at all.
+- `make-heze-genesis.sh`, `analyze-run.py`, `slot-attesters.py`,
+  `write-baseline.sh` — new.
+- `bin/prysm-beacon`, `bin/prysm-validator` — rebuilt from this tip; the
+  previous pair is kept as `*.bak-aug16`.
+
+`Dockerfile.genesis-gen` did **not** change. Its heze-is-CL-only patch still
+matters, and its `SLOTS_PER_EPOCH` patch is now a no-op that costs nothing.
+
+### The genesis generator cannot build this genesis
+
+ethshadow builds the CL genesis with ethpandaops'
+`eth-genesis-state-generator`. That tool knows the name "heze", but at
+`HEZE_FORK_EPOCH: 0` it emits a **Gloas**-versioned state, and prysm cannot
+read even that: `failed to unmarshal state, detected fork=gloas: invalid ssz
+encoding. first variable element offset indexes into fixed value data`. Genesis
+is Heze here and nothing upgrades into Heze — `UpgradeToHeze` is deleted (step
+4) — so the state has to come from `prysmctl testnet generate-genesis
+--fork heze`.
+
+`make-heze-genesis.sh` runs between `ethshadow --gen-only` and Shadow. Two
+things it has to get right:
+
+1. **The validator set must be the mnemonic's, not prysmctl's interop keys.**
+   ethshadow makes the keystores with `eth2-val-tools keystores` over the
+   mnemonic, so the genesis registry must hold those pubkeys in that order. The
+   script generates `deposit_data.json` with `eth2-val-tools deposit-data` for
+   the same mnemonic and index range and passes it to `--deposit-json-file`.
+   One field has to be renamed: eth2-val-tools calls the deposit amount
+   `value`, prysmctl wants `amount`. The fork version must be
+   `GENESIS_FORK_VERSION`, or `ProcessPreGenesisDeposits` silently drops every
+   validator with a bad deposit signature.
+2. **The EL genesis must not be rewritten.** ethshadow runs `geth init` for
+   every node during `--gen-only`, so by the time the script runs, geth has
+   already stored its genesis block. `prysmctl --geth-genesis-json-out` sets
+   `gen.Timestamp` to the CL genesis time, which changes the block hash, and
+   the CL genesis then names a block geth never made. That is run 17: every
+   node logged `Unable to retrieve proof-of-stake genesis block data
+   error=HeaderByHash, hash=0x17bc...: not found` and no block was ever
+   produced. The fix is in `sim.yaml`: move the whole genesis delay into the
+   timestamp (`GENESIS_TIMESTAMP: "946685100"`, `GENESIS_DELAY: "0"`), so the
+   EL genesis already carries the timestamp prysmctl would set and nothing has
+   to be rewritten. Genesis still lands at simulated 00:05:00, exactly where a
+   300-second delay put it. The script now asserts the CL state's
+   `latest_block_hash` equals the hash `geth init` prints, and refuses to write
+   otherwise.
+
+`baseFeePerGas` is the one field the script does add to `genesis.json`: the
+generator leaves it unset and geth's `ToBlock` falls back to
+`params.InitialBaseFee`, but prysmctl refuses to guess for a post-merge chain.
+Writing that same value (`0x3b9aca00`) in leaves the header unchanged.
+
+Also confirmed while doing this: geth 1.17.6 and the go-ethereum 1.17.4 library
+prysmctl links agree on the genesis block hash, and prysm accepts the resulting
+state with no config-parse errors and subscribes to
+`/eth2/5529c2ec/available_attestation/ssz_snappy` at slot 0.
+
+### The run ladder
+
+Four data dirs, none of them deleted:
+
+- `data16` / `shadow-run16.log` — **hung**. The new `sim.yaml` dropped
+  `general.model_unblocked_syscall_latency: true`, which the old one had.
+  Without it a busy-polling client freezes Shadow's virtual clock: the run sat
+  at simulated `00:00:06` through two minutes of wall clock with 0% progress.
+  Restored.
+- `data17` / `shadow-run17.log` — **no blocks**, the EL genesis hash mismatch
+  above.
+- `data18` / `shadow-run18.log` — **shakeout, clean**. 7 minutes of sim, which
+  is genesis plus 10 slots. A block in every slot, all 16 nodes peered,
+  available attestations at ~128 per slot per node from the first slot.
+- `data19` / `shadow-run19.log` — **the measurement run**. 55 minutes of sim,
+  `** Shadow completed successfully`, `processes failed: 0`.
+
+The two-step shakeout is worth keeping: both failures above show up inside the
+first two minutes of a run, and each cost about five minutes to find instead of
+an hour.
+
+Exact commands for `data19`:
+
+```
+cd /home/sukun/dev/decoupled-shadow-sim
+/home/sukun/dev/ethshadow/target/release/ethshadow --gen-only -d data19 sim.yaml \
+    > shadow-run19-gen.log 2>&1
+./make-heze-genesis.sh data19 128 > shadow-run19-genesis.log 2>&1
+shadow -d data19/shadow data19/shadow.yaml > shadow-run19.log 2>&1
+./write-baseline.sh data19 32 224
+```
+
+## 5.4 Executed 2026-08-19: the baseline <added by executor>
+
+Full tables in `data19/baseline.md`. Window: slot 32 to slot 224, that is
+epochs 1 to 6 inclusive — epoch 0 is dropped because the gossip meshes are
+still forming. All numbers are per node and per slot, averaged over 192 slots.
+
+**All 16 nodes finalize at cadence, in lockstep.** Finalized epoch at each
+epoch boundary, identical on every node:
+
+| epoch | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| finalized | 0 | 0 | 0 | 2 | 3 | 4 | 5 |
+
+Onset at epoch 4 is the spec's floor, the same as the e2e in 5.2a: justification
+is skipped while the current epoch is at most `GENESIS_EPOCH + 1`. After onset
+it is one finalized epoch per epoch, with no node lagging. Head slots at the end
+of the window differ by at most one slot across nodes.
+
+**Available attestations reach every node: 128.0 per slot per node**, on every
+one of the 16 nodes, against 128 validators — exactly one message per
+seat-holder per slot, with no loss. (5.4's "64 per slot per node" was written
+for a 64-validator run.) The message is 202 bytes on the wire.
+
+**Per-slot attester count: exactly 16.00, on every slot of the window and flat
+across all eight round offsets** (192 slots, min 16, max 16). That is
+128/`SLOTS_PER_ROUND`. A mainnet-shaped run at the same validator count would
+put 128/32 = 4 attesters in a slot, so this is the intended **4x**, and it comes
+from the round, not from a short epoch.
+
+Per-slot traffic, mean over the 16 nodes. "in" is messages that reached prysm's
+validator, "dup" is what gossipsub discarded as already seen, and "out" is what
+this node published or forwarded. Received bytes are derived — prysm records
+per-topic byte counts on the send side only, because an incoming RPC can claim
+any size (`p2p/pubsub_tracer.go:193`) — as (in + dup) x the topic's mean sent
+size.
+
+| topic | msg size | in | dup | recv B/slot | out | sent B/slot |
+|---|---|---|---|---|---|---|
+| `available_attestation` | 202 B | 128.0 | 749.1 | 177,353 | 869.0 | 175,734 |
+| `beacon_attestation_*` | 259 B | 11.2 | 82.2 | 24,225 | 92.8 | 24,066 |
+| `beacon_aggregate_and_proof` | 485 B | 10.7 | 69.5 | 38,886 | 79.6 | 38,564 |
+| `beacon_block` | 2172 B | 1.0 | 4.9 | 12,789 | 5.8 | 12,653 |
+
+Reading it:
+
+- The available-attestation stream costs about **176 KB/s per node in each
+  direction** (per 12-second slot: 177 KB in, 176 KB out), against about 63 KB
+  for both attestation topics together. The mock is roughly **2.8x the entire
+  FFG attestation load** at this size. That is the number this project exists
+  to measure, and it is dominated by duplicates: 128 useful messages carry 749
+  duplicates, an amplification of 6.9x, because the topic is global and every
+  one of the 16 nodes meshes with most of the others.
+- `beacon_attestation_*` shows 11.2 of the 16 attesters per slot, not 16:
+  `SlotCommitteeCount` is 1 here, so a slot's attestations all land on one
+  subnet, and a node only holds that subnet when its 2 persistent subnets or a
+  duty put it there. The aggregate topic is global and carries 10.7 per slot,
+  which is the aggregator count the validator logs also report (mean 10.71).
+- `beacon_block` is 1.0 in per slot on every node: no missed slots and no forks
+  in the window.
+
+### Deviations and what is left
+
+- The plan's 5.4 line "64 per slot per node" assumed 64 validators; at 128 the
+  answer is 128.
+- Prometheus scrapes every 15 seconds while a slot is 12 seconds, so a single
+  slot cannot be resolved; every per-slot figure here is a mean over 192 slots.
+  The attester count is not affected — it is read from the validator clients'
+  own logs, slot by slot.
+- Received bytes are derived, not measured. Prysm has no per-topic received-byte
+  counter, by design.
+- The validator clients log `Skipping payload attestation: data unavailable
+  reason=no canonical shuffling block for slot N` every slot. PTC duties never
+  run, so this run measures nothing about the payload-attestation stream. Not a
+  regression from this step, and out of scope for 5.4.
+
 ## 5.4 Record
 
 - [ ] All nodes finalize at cadence.

@@ -539,8 +539,22 @@ Two pieces of step 5 are done ahead of the e2e work; full notes in
   chosen by exact attribute version so every `forkchoiceUpdated` on a Heze
   state failed. Full notes in `plan-detailed.md` 5.2a.
 
-Still open in step 5: the Shadow run (5.3) and the baseline recording (5.4),
-both of which live in the ethshadow repo and need more than one node.
+- 5.3/5.4: the Shadow run and the baseline. 16 nodes, 128 validators, 55
+  minutes of simulated time, 7 epochs. All 16 nodes finalize in lockstep from
+  epoch 4 onward, one epoch per epoch. Available attestations reach every node
+  at **128.0 per slot per node** - one message per seat-holder, no loss - and
+  cost about 176 KB per slot per node in each direction, against 63 KB for both
+  FFG attestation topics together. The per-slot attester count is exactly 16 on
+  every slot and flat across all eight round offsets, which is the intended 4x
+  and comes from the round, not from a short epoch. Two things had to be built:
+  the sim's genesis generator cannot produce a Heze state (it emits a Gloas one
+  prysm cannot even unmarshal), so `make-heze-genesis.sh` builds it with
+  prysmctl over the mnemonic's deposit data; and the EL genesis must already
+  carry its final timestamp when ethshadow runs `geth init`, or the CL genesis
+  names a block geth never made. Full notes in `plan-detailed.md` 5.3a and 5.4,
+  numbers in `decoupled-shadow-sim/data19/baseline.md`.
+
+Step 5 is complete.
 
 ## Open questions for the user
 
