@@ -183,6 +183,7 @@ type BeaconChainConfig struct {
 	BeaconStateElectraFieldCount   int             // BeaconStateElectraFieldCount defines how many fields are in beacon state post upgrade to Electra.
 	BeaconStateFuluFieldCount      int             // BeaconStateFuluFieldCount defines how many fields are in beacon state post upgrade to Fulu.
 	BeaconStateGloasFieldCount     int             // BeaconStateGloasFieldCount defines how many fields are in beacon state post upgrade to Gloas.
+	BeaconStateHezeFieldCount      int             // BeaconStateHezeFieldCount defines how many fields are in beacon state post upgrade to Heze.
 
 	// Slasher constants.
 	WeakSubjectivityPeriod    primitives.Epoch // WeakSubjectivityPeriod defines the time period expressed in number of epochs were proof of stake network should validate block headers and attestations for slashable events.

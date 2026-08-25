@@ -46,6 +46,8 @@ func ComputeFieldRootsWithHasher(ctx context.Context, state *BeaconState) ([][]b
 		fieldRoots = make([][]byte, params.BeaconConfig().BeaconStateFuluFieldCount)
 	case version.Gloas:
 		fieldRoots = make([][]byte, params.BeaconConfig().BeaconStateGloasFieldCount)
+	case version.Heze:
+		fieldRoots = make([][]byte, params.BeaconConfig().BeaconStateHezeFieldCount)
 	default:
 		return nil, fmt.Errorf("unknown state version %s", version.String(state.version))
 	}

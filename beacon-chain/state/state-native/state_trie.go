@@ -141,6 +141,10 @@ var (
 		[]types.FieldIndex{types.ProposerLookahead},
 		gloasAdditionalFields,
 	)
+
+	// Heze owns its own state container. It has not diverged from Gloas yet,
+	// so the field list is a copy rather than a shared variable.
+	hezeFields = slices.Clone(gloasFields)
 )
 
 // promotionThresholdByField defines absolute overlay promotion thresholds
@@ -162,6 +166,7 @@ const (
 	electraSharedFieldRefCount   = 10
 	fuluSharedFieldRefCount      = 11
 	gloasSharedFieldRefCount     = 14 // Adds Builders + BuilderPendingWithdrawals + PTCWindow to the shared-ref set and LatestExecutionPayloadHeader is removed
+	hezeSharedFieldRefCount      = gloasSharedFieldRefCount
 )
 
 // InitializeFromProtoPhase0 the beacon state from a protobuf representation.
@@ -202,6 +207,11 @@ func InitializeFromProtoFulu(st *ethpb.BeaconStateFulu) (state.BeaconState, erro
 // InitializeFromProtoGloas the beacon state from a protobuf representation.
 func InitializeFromProtoGloas(st *ethpb.BeaconStateGloas) (state.BeaconState, error) {
 	return InitializeFromProtoUnsafeGloas(proto.Clone(st).(*ethpb.BeaconStateGloas))
+}
+
+// InitializeFromProtoHeze the beacon state from a protobuf representation.
+func InitializeFromProtoHeze(st *ethpb.BeaconStateHeze) (state.BeaconState, error) {
+	return InitializeFromProtoUnsafeHeze(proto.Clone(st).(*ethpb.BeaconStateHeze))
 }
 
 // InitializeFromProtoUnsafePhase0 directly uses the beacon state protobuf fields
@@ -922,6 +932,119 @@ func InitializeFromProtoUnsafeGloas(st *ethpb.BeaconStateGloas) (state.BeaconSta
 	return b, nil
 }
 
+// InitializeFromProtoUnsafeHeze directly uses the beacon state protobuf fields
+// and sets them as fields of the BeaconState type.
+func InitializeFromProtoUnsafeHeze(st *ethpb.BeaconStateHeze) (state.BeaconState, error) {
+	if st == nil {
+		return nil, errors.New("received nil state")
+	}
+
+	hRoots := customtypes.HistoricalRoots(make([][32]byte, len(st.HistoricalRoots)))
+	for i, r := range st.HistoricalRoots {
+		hRoots[i] = bytesutil.ToBytes32(r)
+	}
+
+	proposerLookahead := make([]primitives.ValidatorIndex, len(st.ProposerLookahead))
+	for i, v := range st.ProposerLookahead {
+		proposerLookahead[i] = primitives.ValidatorIndex(v)
+	}
+
+	fieldCount := params.BeaconConfig().BeaconStateHezeFieldCount
+	b := &BeaconState{
+		version:                       version.Heze,
+		genesisTime:                   st.GenesisTime,
+		genesisValidatorsRoot:         bytesutil.ToBytes32(st.GenesisValidatorsRoot),
+		slot:                          st.Slot,
+		fork:                          st.Fork,
+		latestBlockHeader:             st.LatestBlockHeader,
+		historicalRoots:               hRoots,
+		eth1Data:                      st.Eth1Data,
+		eth1DataVotes:                 st.Eth1DataVotes,
+		eth1DepositIndex:              st.Eth1DepositIndex,
+		slashings:                     st.Slashings,
+		previousEpochParticipation:    st.PreviousEpochParticipation,
+		currentEpochParticipation:     st.CurrentEpochParticipation,
+		justificationBits:             st.JustificationBits,
+		previousJustifiedCheckpoint:   st.PreviousJustifiedCheckpoint,
+		currentJustifiedCheckpoint:    st.CurrentJustifiedCheckpoint,
+		finalizedCheckpoint:           st.FinalizedCheckpoint,
+		currentSyncCommittee:          st.CurrentSyncCommittee,
+		nextSyncCommittee:             st.NextSyncCommittee,
+		nextWithdrawalIndex:           st.NextWithdrawalIndex,
+		nextWithdrawalValidatorIndex:  st.NextWithdrawalValidatorIndex,
+		historicalSummaries:           st.HistoricalSummaries,
+		depositRequestsStartIndex:     st.DepositRequestsStartIndex,
+		depositBalanceToConsume:       st.DepositBalanceToConsume,
+		exitBalanceToConsume:          st.ExitBalanceToConsume,
+		earliestExitEpoch:             st.EarliestExitEpoch,
+		consolidationBalanceToConsume: st.ConsolidationBalanceToConsume,
+		earliestConsolidationEpoch:    st.EarliestConsolidationEpoch,
+		pendingDeposits:               st.PendingDeposits,
+		pendingPartialWithdrawals:     st.PendingPartialWithdrawals,
+		pendingConsolidations:         st.PendingConsolidations,
+		proposerLookahead:             proposerLookahead,
+		latestExecutionPayloadBid:     st.LatestExecutionPayloadBid,
+		builders:                      st.Builders,
+		nextWithdrawalBuilderIndex:    st.NextWithdrawalBuilderIndex,
+		executionPayloadAvailability:  st.ExecutionPayloadAvailability,
+		builderPendingPayments:        st.BuilderPendingPayments,
+		builderPendingWithdrawals:     st.BuilderPendingWithdrawals,
+		latestBlockHash:               st.LatestBlockHash,
+		payloadExpectedWithdrawals:    st.PayloadExpectedWithdrawals,
+		ptcWindow:                     st.PtcWindow,
+		dirtyFields:                   make(map[types.FieldIndex]bool, fieldCount),
+		dirtyIndices:                  make(map[types.FieldIndex][]uint64, fieldCount),
+		stateFieldLeaves:              make(map[types.FieldIndex]*fieldtrie.FieldTrie, len(fieldMap)),
+		rebuildTrie:                   make(map[types.FieldIndex]bool, fieldCount),
+		valMapHandler:                 stateutil.NewValMapHandler(st.Validators),
+		builderIdxMap:                 newBuilderIdxMap(st.Builders),
+	}
+
+	b.blockRootsMultiValue = NewMultiValueBlockRoots(st.BlockRoots)
+	b.stateRootsMultiValue = NewMultiValueStateRoots(st.StateRoots)
+	b.randaoMixesMultiValue = NewMultiValueRandaoMixes(st.RandaoMixes)
+	b.balancesMultiValue = NewMultiValueBalances(st.Balances)
+	b.validatorsMultiValue = NewMultiValueValidators(st.Validators)
+	b.inactivityScoresMultiValue = NewMultiValueInactivityScores(st.InactivityScores)
+	b.sharedFieldReferences = make(map[types.FieldIndex]*stateutil.Reference, hezeSharedFieldRefCount)
+
+	for _, f := range hezeFields {
+		b.dirtyFields[f] = true
+		b.rebuildTrie[f] = true
+		b.dirtyIndices[f] = []uint64{}
+		dt, ok := fieldMap[f]
+		if !ok {
+			continue
+		}
+		trie, err := fieldtrie.NewFieldTrie(f, dt, nil, 0, promotionThresholdByField[f])
+		if err != nil {
+			return nil, err
+		}
+		b.stateFieldLeaves[f] = trie
+	}
+
+	// Initialize field reference tracking for shared data.
+	b.sharedFieldReferences[types.HistoricalRoots] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.Eth1DataVotes] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.Slashings] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.PreviousEpochParticipationBits] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.CurrentEpochParticipationBits] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.HistoricalSummaries] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.PendingDeposits] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.PendingPartialWithdrawals] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.PendingConsolidations] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.ProposerLookahead] = stateutil.NewRef(1)
+	b.sharedFieldReferences[types.Builders] = stateutil.NewRef(1)                  // New in Gloas.
+	b.sharedFieldReferences[types.BuilderPendingWithdrawals] = stateutil.NewRef(1) // New in Gloas.
+	b.sharedFieldReferences[types.PTCWindow] = stateutil.NewRef(1)                 // New in Gloas.
+
+	state.Count.Inc()
+	// Finalizer runs when dst is being destroyed in garbage collection.
+	runtime.SetFinalizer(b, finalizerCleanup)
+
+	return b, nil
+}
+
 // Copy returns a deep copy of the beacon state.
 func (b *BeaconState) Copy() state.BeaconState {
 	b.lock.RLock()
@@ -945,6 +1068,8 @@ func (b *BeaconState) Copy() state.BeaconState {
 		fieldCount = params.BeaconConfig().BeaconStateFuluFieldCount
 	case version.Gloas:
 		fieldCount = params.BeaconConfig().BeaconStateGloasFieldCount
+	case version.Heze:
+		fieldCount = params.BeaconConfig().BeaconStateHezeFieldCount
 	}
 
 	dst := &BeaconState{
@@ -1048,6 +1173,8 @@ func (b *BeaconState) Copy() state.BeaconState {
 		dst.sharedFieldReferences = make(map[types.FieldIndex]*stateutil.Reference, fuluSharedFieldRefCount)
 	case version.Gloas:
 		dst.sharedFieldReferences = make(map[types.FieldIndex]*stateutil.Reference, gloasSharedFieldRefCount)
+	case version.Heze:
+		dst.sharedFieldReferences = make(map[types.FieldIndex]*stateutil.Reference, hezeSharedFieldRefCount)
 	}
 
 	for field, ref := range b.sharedFieldReferences {
@@ -1114,6 +1241,16 @@ func (b *BeaconState) HashTreeRoot(ctx context.Context) ([32]byte, error) {
 	return bytesutil.ToBytes32(b.merkleLayers[len(b.merkleLayers)-1][0]), nil
 }
 
+// progressiveFields returns the field list and field count used by progressive
+// merkleization. Only the Gloas-shaped versions merkleize progressively; see
+// features.ProgressiveSSZEnabled.
+func (b *BeaconState) progressiveFields() ([]types.FieldIndex, int) {
+	if b.version >= version.Heze {
+		return hezeFields, params.BeaconConfig().BeaconStateHezeFieldCount
+	}
+	return gloasFields, params.BeaconConfig().BeaconStateGloasFieldCount
+}
+
 func (b *BeaconState) progressiveHashTreeRoot(ctx context.Context) ([32]byte, error) {
 	if err := b.initializeProgressiveMerkleTree(ctx); err != nil {
 		return [32]byte{}, err
@@ -1122,7 +1259,8 @@ func (b *BeaconState) progressiveHashTreeRoot(ctx context.Context) ([32]byte, er
 		return [32]byte{}, err
 	}
 
-	activeFields := make([]bool, params.BeaconConfig().BeaconStateGloasFieldCount)
+	_, fieldCount := b.progressiveFields()
+	activeFields := make([]bool, fieldCount)
 	for i := range activeFields {
 		activeFields[i] = true
 	}
@@ -1144,8 +1282,9 @@ func (b *BeaconState) initializeProgressiveMerkleTree(ctx context.Context) error
 		return nil
 	}
 
-	fieldRoots := make([][]byte, params.BeaconConfig().BeaconStateGloasFieldCount)
-	for _, field := range gloasFields {
+	fields, fieldCount := b.progressiveFields()
+	fieldRoots := make([][]byte, fieldCount)
+	for _, field := range fields {
 		root, err := b.rootSelector(ctx, field)
 		if err != nil {
 			return fmt.Errorf("could not compute progressive field %s: %w", field.String(), err)
@@ -1205,6 +1344,8 @@ func (b *BeaconState) initializeMerkleLayers(ctx context.Context) error {
 		b.dirtyFields = make(map[types.FieldIndex]bool, params.BeaconConfig().BeaconStateFuluFieldCount)
 	case version.Gloas:
 		b.dirtyFields = make(map[types.FieldIndex]bool, params.BeaconConfig().BeaconStateGloasFieldCount)
+	case version.Heze:
+		b.dirtyFields = make(map[types.FieldIndex]bool, params.BeaconConfig().BeaconStateHezeFieldCount)
 	default:
 		return fmt.Errorf("unknown state version (%s) when computing dirty fields in merklization", version.String(b.version))
 	}

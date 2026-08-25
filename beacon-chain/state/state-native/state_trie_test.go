@@ -9,6 +9,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
@@ -861,4 +862,43 @@ func TestBeaconChainCopy_Electra(t *testing.T) {
 		t.Log(cmp.Diff(st.ToProto(), st2.ToProto(), protocmp.Transform()))
 		t.Fatal("Copied state does not match original state")
 	}
+}
+
+// TestInitializeFromProtoHeze_MatchesGloas checks that a Heze state built from
+// the Gloas state's fields reports the Heze version, round-trips back to a
+// BeaconStateHeze, and hashes to the same root as the Gloas state. Heze owns
+// the container but has not diverged from Gloas yet.
+func TestInitializeFromProtoHeze_MatchesGloas(t *testing.T) {
+	ctx := t.Context()
+
+	gloasState, err := util.NewBeaconStateGloas()
+	require.NoError(t, err)
+	gs, ok := gloasState.ToProtoUnsafe().(*ethpb.BeaconStateGloas)
+	require.Equal(t, true, ok)
+
+	enc, err := gs.MarshalSSZ()
+	require.NoError(t, err)
+	hs := &ethpb.BeaconStateHeze{}
+	require.NoError(t, hs.UnmarshalSSZ(enc))
+
+	hezeState, err := statenative.InitializeFromProtoHeze(hs)
+	require.NoError(t, err)
+	require.Equal(t, version.Heze, hezeState.Version())
+
+	gloasRoot, err := gloasState.HashTreeRoot(ctx)
+	require.NoError(t, err)
+	hezeRoot, err := hezeState.HashTreeRoot(ctx)
+	require.NoError(t, err)
+	require.Equal(t, gloasRoot, hezeRoot)
+
+	copied := hezeState.Copy()
+	copiedRoot, err := copied.HashTreeRoot(ctx)
+	require.NoError(t, err)
+	require.Equal(t, gloasRoot, copiedRoot)
+
+	pb, err := statenative.ProtobufBeaconStateHeze(hezeState.ToProto())
+	require.NoError(t, err)
+	reEnc, err := pb.MarshalSSZ()
+	require.NoError(t, err)
+	require.DeepEqual(t, enc, reEnc)
 }
