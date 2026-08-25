@@ -778,6 +778,18 @@ balances, so the mismatch is real, not cosmetic. The divisor should follow
 
 # Step 5 — verify
 
+## 5.0 Design clarification from the user (2026-08-19) <added by executor>
+
+Committee membership at a given sub-round slot offset is **fixed across the
+rounds of an epoch**: with 4 rounds per epoch, slot-offset k of every round
+has the same voters. The shuffle is per-epoch, keyed by slot-within-round —
+exactly what step 2 implemented and its partition tests pin. Consequence for
+the duty under-reporting problem (2.8): the duties API does not need
+per-round reshaping. A validator's committee, index and position are
+constant within the epoch; only its attesting slots multiply to
+`slot + k*SlotsPerRound`, k = 0..rounds-1. The fix is to fan a duty out to
+its repeat slots, not to recompute assignments per round.
+
 ## 5.1 There is no devnet preset
 
 A preset is compile-time and fixes SSZ array sizes. `SLOTS_PER_ROUND` sizes
