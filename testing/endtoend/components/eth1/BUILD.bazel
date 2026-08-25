@@ -35,6 +35,7 @@ go_library(
         "@com_github_ethereum_go_ethereum//accounts/keystore:go_default_library",
         "@com_github_ethereum_go_ethereum//common:go_default_library",
         "@com_github_ethereum_go_ethereum//core/types:go_default_library",
+        "@com_github_ethereum_go_ethereum//crypto:go_default_library",
         "@com_github_ethereum_go_ethereum//crypto/kzg4844:go_default_library",
         "@com_github_ethereum_go_ethereum//ethclient:go_default_library",
         "@com_github_ethereum_go_ethereum//ethclient/gethclient:go_default_library",

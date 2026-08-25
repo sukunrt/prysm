@@ -17,6 +17,20 @@ import (
 // defaultMinerAddress is used to send deposits and test transactions in the e2e test.
 // This account is given a large initial balance in the genesis block in test setups.
 const defaultMinerAddress = "0x878705ba3f8bc32fcf7f4caa1a35e72af65cf766"
+
+// E2EBlobSenderKey and E2EBlobV0SenderKey are the hex private keys of two
+// further genesis-funded accounts (the well-known dev keys #0 and #1). Geth
+// reserves each sender address to a single txpool subpool, so an account with
+// a pending plain transaction cannot also submit a blob transaction: e2e runs
+// send plain traffic from the miner account and blob traffic from these. The
+// V0 account exists because pre-Fulu V0 sidecars left in the pool at the
+// Osaka boundary become invalid, so they must not share an account with
+// post-Fulu V1 cell-proof transactions.
+const E2EBlobSenderKey = "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+const E2EBlobV0SenderKey = "59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d"
+
+const e2eBlobSenderAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+const e2eBlobV0SenderAddress = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
 const defaultTestChainId int64 = 1337
 const defaultCoinbase = "0x0000000000000000000000000000000000000000"
 const defaultDifficulty = "1"
@@ -259,6 +273,8 @@ func GethTestnetGenesis(genesis time.Time, cfg *clparams.BeaconChainConfig) *cor
 		Alloc: types.GenesisAlloc{
 			da.Address: da.Account,
 			ma.Address: ma.Account,
+			common.HexToAddress(e2eBlobSenderAddress):   {Balance: minerBalance},
+			common.HexToAddress(e2eBlobV0SenderAddress): {Balance: minerBalance},
 		},
 		ParentHash: common.HexToHash(defaultParenthash),
 	}

@@ -16,11 +16,13 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/rand"
+	"github.com/OffchainLabs/prysm/v7/runtime/interop"
 	e2e "github.com/OffchainLabs/prysm/v7/testing/endtoend/params"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	ethcrypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/kzg4844"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/gethclient"
@@ -34,6 +36,27 @@ import (
 const txCount = 20
 
 var fundedAccount *keystore.Key
+
+// keyFromHex builds an in-memory keystore key from a hex private key.
+func keyFromHex(hexKey string) *keystore.Key {
+	priv, err := ethcrypto.HexToECDSA(hexKey)
+	if err != nil {
+		panic(err) // lint:nopanic -- Compile-time constant test keys.
+	}
+	return &keystore.Key{
+		Address:    ethcrypto.PubkeyToAddress(priv.PublicKey),
+		PrivateKey: priv,
+	}
+}
+
+// BlobSenderKey is the genesis-funded account dedicated to blob transactions.
+// Geth reserves each sender address to a single txpool subpool, so blob
+// transactions cannot come from an account that also carries plain traffic.
+func BlobSenderKey() *keystore.Key { return keyFromHex(interop.E2EBlobSenderKey) }
+
+// BlobV0SenderKey is the genesis-funded account for pre-Fulu V0 sidecar blob
+// transactions; see the note on blobV0Account.
+func BlobV0SenderKey() *keystore.Key { return keyFromHex(interop.E2EBlobV0SenderKey) }
 
 // blobV0Account sends pre-Fulu V0 sidecar blob transactions when Fulu is
 // scheduled. V0 sidecars left in the pool at the Osaka boundary become invalid
@@ -117,19 +140,40 @@ func (t *TransactionGenerator) Start(ctx context.Context) error {
 	backend := ethclient.NewClient(client)
 	defer backend.Close()
 
-	logrus.Info("Transaction generator waiting for the funding transfer to mine")
-	if err := WaitForBlocks(ctx, backend, mineKey, 1); err != nil {
-		return errors.Wrap(err, "failed to mine block for funding tx")
-	}
-
-	// Ensure the funded account has a comfortable minimum balance for blob and fuzzed txs.
+	// Wait for the funding to credit by polling the balances themselves: a
+	// block count says nothing about whether the transfers were included, and
+	// WaitForBlocks pads the chain with spam transactions from the miner,
+	// which race the funding nonces. If a transfer goes missing from the pool
+	// entirely, send another after a few slots rather than waiting forever.
 	minWei := new(big.Int).Mul(big.NewInt(1000), big.NewInt(0).SetUint64(cfg.GweiPerEth))
 	minWei.Mul(minWei, big.NewInt(1e9)) // 1000 ETH in wei
-	if err := ensureMinBalance(ctx, client, backend, mineKey, fundedAccount, minWei); err != nil {
+	logrus.Info("Transaction generator waiting for the funding to credit")
+	refundAfter := 4 * time.Duration(cfg.SecondsPerSlot) * time.Second
+	waitFunded := func(key *keystore.Key) error {
+		deadline := time.Now().Add(refundAfter)
+		for {
+			bal, err := backend.BalanceAt(ctx, key.Address, nil)
+			if err == nil && bal.Cmp(minWei) >= 0 {
+				return nil
+			}
+			if time.Now().After(deadline) {
+				if err := fundAccount(client, mineKey, key); err != nil {
+					return errors.Wrap(err, "refund of an uncredited account")
+				}
+				deadline = time.Now().Add(refundAfter)
+			}
+			select {
+			case <-ctx.Done():
+				return errors.Wrap(ctx.Err(), "funding never credited")
+			case <-time.After(500 * time.Millisecond):
+			}
+		}
+	}
+	if err := waitFunded(fundedAccount); err != nil {
 		return err
 	}
 	if needsBlobV0Account {
-		if err := ensureMinBalance(ctx, client, backend, mineKey, blobV0Account, minWei); err != nil {
+		if err := waitFunded(blobV0Account); err != nil {
 			return err
 		}
 	}
@@ -644,28 +688,6 @@ func clampTxGas(tx *types.Transaction, gasCap uint64) *types.Transaction {
 	}
 }
 
-// ensureMinBalance tops up dest account from miner if its balance is below minWei.
-func ensureMinBalance(ctx context.Context, rpcCli *rpc.Client, backend *ethclient.Client, minerKey, destKey *keystore.Key, minWei *big.Int) error {
-	bal, err := backend.BalanceAt(ctx, destKey.Address, nil)
-	if err != nil {
-		return err
-	}
-
-	if bal.Cmp(minWei) >= 0 {
-		return nil
-	}
-
-	if err := fundAccount(rpcCli, minerKey, destKey); err != nil {
-		return err
-	}
-
-	if err := WaitForBlocks(ctx, backend, minerKey, 1); err != nil {
-		return errors.Wrap(err, "failed to mine block for top-up tx")
-	}
-
-	return nil
-}
-
 func encodeBlobs(data []byte) []kzg4844.Blob {
 	blobs := []kzg4844.Blob{{}}
 	blobIndex := 0
@@ -823,20 +845,17 @@ func fundAccount(client *rpc.Client, sourceKey, destKey *keystore.Key) error {
 	if !ok {
 		return errors.New("could not set big int for value")
 	}
-	// The gas limit is estimated rather than fixed: paying into an account that
-	// does not exist yet costs far more than a plain transfer once Amsterdam is
-	// active (roughly 207k against 21k), and a fixed 100k limit runs the funding
-	// transfer out of gas there. A silently unfunded account only shows up later
-	// as "insufficient funds" from whatever it was meant to pay for.
-	gasLimit, err := backend.EstimateGas(context.Background(), ethereum.CallMsg{
-		From:  sourceKey.Address,
-		To:    &destKey.Address,
-		Value: val,
-	})
-	if err != nil {
-		return errors.Wrap(err, "could not estimate the gas of the funding transfer")
-	}
-	tx := types.NewTransaction(nonce, destKey.Address, val, gasLimit, expectedPrice, nil)
+	// The gas limit is deliberately not estimated: funding is sent before the
+	// first engine-built block exists, and an estimate there runs in a
+	// pre-merge context (the genesis header has no prevRandao, and geth gates
+	// every time-scheduled fork on isMerge), pricing the transfer at 21000
+	// where the post-Amsterdam blocks that execute it charge ~207k - the
+	// transfer dies out-of-gas and costs slots of re-funding. A generous
+	// fixed limit is headroom, not a cost assumption: unused gas is refunded,
+	// and the transfer rides in the first block instead of waiting out an
+	// estimate that only becomes trustworthy one block later.
+	const fundingGasLimit = 1_000_000
+	tx := types.NewTransaction(nonce, destKey.Address, val, fundingGasLimit, expectedPrice, nil)
 	signedTx, err := types.SignTx(tx, types.NewLondonSigner(chainid), sourceKey.PrivateKey)
 	if err != nil {
 		return err
@@ -845,7 +864,7 @@ func fundAccount(client *rpc.Client, sourceKey, destKey *keystore.Key) error {
 		return err
 	}
 	logrus.WithField("to", destKey.Address.Hex()).WithField("hash", signedTx.Hash().Hex()).
-		WithField("gas", gasLimit).Info("Sent funding transfer")
+		WithField("gas", fundingGasLimit).Info("Sent funding transfer")
 	return nil
 }
 
