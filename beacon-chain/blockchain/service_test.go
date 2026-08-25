@@ -547,3 +547,37 @@ func TestNotifyIndex(t *testing.T) {
 		t.Errorf("Notifier channel did not receive the index")
 	}
 }
+
+// A Gloas-or-later genesis block is full: it commits to the execution genesis block. Both the
+// fresh bootstrap and the restart path must say so, otherwise the first proposer builds on the
+// genesis bid's parent block hash, which is the zero hash.
+func TestGloasGenesisIsFull(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig()
+	cfg.GloasForkEpoch = 0
+	params.OverrideBeaconConfig(cfg)
+
+	genesisState, _ := util.DeterministicGenesisStateGloas(t, 64)
+	service, tr := minimalTestService(t, WithFinalizedStateAtStartUp(genesisState))
+	ctx, beaconDB, fcs := tr.ctx, tr.db, tr.fcs
+
+	require.NoError(t, service.saveGenesisData(ctx, genesisState))
+	genesisRoot := service.originBlockRoot
+	require.Equal(t, true, fcs.HasFullNode(genesisRoot))
+	headRoot, full := service.HeadRootAndFull()
+	require.Equal(t, genesisRoot, headRoot)
+	require.Equal(t, true, full)
+
+	// Restart: forkchoice is rebuilt from the saved finalized block alone.
+	require.NoError(t, beaconDB.SaveJustifiedCheckpoint(ctx, &ethpb.Checkpoint{Root: genesisRoot[:]}))
+	require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Root: genesisRoot[:]}))
+	fcs2 := doublylinkedtree.New()
+	fcs2.SetGenesisTime(service.genesisTime)
+	fcs2.SetBalancesByRooter(tr.sg.ActiveNonSlashedBalancesByRoot)
+	service.cfg.ForkChoiceStore = fcs2
+	require.NoError(t, service.setupForkchoice(genesisState))
+	require.Equal(t, true, fcs2.HasFullNode(genesisRoot))
+	headRoot, full = service.HeadRootAndFull()
+	require.Equal(t, genesisRoot, headRoot)
+	require.Equal(t, true, full)
+}

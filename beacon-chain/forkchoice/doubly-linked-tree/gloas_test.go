@@ -2261,3 +2261,58 @@ func BenchmarkConsensusChildrenLen(b *testing.B) {
 		}
 	})
 }
+
+// withBidGasLimit rebuilds the block with the given gas limit in its execution payload bid.
+func withBidGasLimit(t *testing.T, rob blocks.ROBlock, root [32]byte, gasLimit uint64) blocks.ROBlock {
+	t.Helper()
+	pb, err := rob.Proto()
+	require.NoError(t, err)
+	blk, ok := pb.(*ethpb.SignedBeaconBlockGloas)
+	require.Equal(t, true, ok)
+	blk.Block.Body.SignedExecutionPayloadBid.Message.GasLimit = gasLimit
+	signed, err := blocks.NewSignedBeaconBlock(blk)
+	require.NoError(t, err)
+	out, err := blocks.NewROBlockWithRoot(signed, root)
+	require.NoError(t, err)
+	return out
+}
+
+// A Gloas genesis block is full: it commits to the execution genesis block, which exists by
+// definition, and no payload envelope is ever imported for it. Without its full node the first
+// proposer builds on the genesis bid's parent block hash, which is the zero hash.
+func TestInsertGloasGenesis_CreatesFullNode(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig()
+	cfg.GloasForkEpoch = 0
+	params.OverrideBeaconConfig(cfg)
+
+	ctx := t.Context()
+	f := New()
+	f.store.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Root: params.BeaconConfig().ZeroHash}
+	f.store.finalizedCheckpoint = &forkchoicetypes.Checkpoint{Root: params.BeaconConfig().ZeroHash}
+	f.SetBalancesByRooter(func(_ context.Context, _ [32]byte) ([]uint64, error) {
+		return f.justifiedBalances, nil
+	})
+
+	genesisRoot := indexToHash(1)
+	genesisHash := indexToHash(100)
+	zero := params.BeaconConfig().ZeroHash
+	st, rob, err := prepareGloasForkchoiceState(ctx, 0, genesisRoot, zero, genesisHash, zero, 0, 0)
+	require.NoError(t, err)
+	rob = withBidGasLimit(t, rob, genesisRoot, 30000000)
+	require.NoError(t, f.InsertNode(ctx, st, rob))
+
+	require.Equal(t, true, f.HasFullNode(genesisRoot))
+	gasLimit, err := f.GasLimit(genesisRoot)
+	require.NoError(t, err)
+	require.Equal(t, uint64(30000000), gasLimit)
+	// Forkchoice must prefer the full genesis, so the first proposer sees a full parent.
+	require.Equal(t, true, f.FullBeatsEmpty(genesisRoot))
+
+	// A block at slot 1 that builds on the genesis payload hangs off the full genesis node.
+	childRoot := indexToHash(2)
+	st, child, err := prepareGloasForkchoiceState(ctx, 1, childRoot, genesisRoot, indexToHash(101), genesisHash, 0, 0)
+	require.NoError(t, err)
+	require.NoError(t, f.InsertNode(ctx, st, child))
+	require.Equal(t, genesisHash, f.ParentHash(childRoot))
+}

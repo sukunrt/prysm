@@ -88,7 +88,7 @@ func (s *Store) insert(ctx context.Context,
 	blockHash := &[32]byte{}
 	var gasLimit uint64
 	if block.Version() >= version.Gloas {
-		if err := s.resolveParentPayloadStatus(block, &parent, blockHash); err != nil {
+		if err := s.resolveParentPayloadStatus(block, &parent, blockHash, &gasLimit); err != nil {
 			return nil, err
 		}
 	} else {
@@ -158,6 +158,18 @@ func (s *Store) insert(ctx context.Context,
 		}
 		ret = fn
 		s.fullNodeByRoot[root] = fn
+	} else if parent == nil && slot == 0 {
+		// A Gloas genesis block commits to the execution genesis block, which is present by
+		// definition, so genesis is full. No payload envelope is ever imported for it, and
+		// nothing else creates its full node, so make it here.
+		s.fullNodeByRoot[root] = &PayloadNode{
+			node:       n,
+			optimistic: true,
+			timestamp:  time.Now(),
+			full:       true,
+			gasLimit:   gasLimit,
+			children:   make([]*Node, 0),
+		}
 	}
 
 	if parent == nil {

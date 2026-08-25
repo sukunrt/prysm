@@ -41,7 +41,8 @@ func (f *ForkChoice) CanonicalNodeAtSlot(slot primitives.Slot) ([32]byte, bool) 
 	return pn.node.root, pn.full
 }
 
-func (s *Store) resolveParentPayloadStatus(block interfaces.ReadOnlyBeaconBlock, parent **PayloadNode, blockHash *[32]byte) error {
+func (s *Store) resolveParentPayloadStatus(block interfaces.ReadOnlyBeaconBlock, parent **PayloadNode,
+	blockHash *[32]byte, gasLimit *uint64) error {
 	sb, err := block.Body().SignedExecutionPayloadBid()
 	if err != nil {
 		return err
@@ -55,6 +56,7 @@ func (s *Store) resolveParentPayloadStatus(block interfaces.ReadOnlyBeaconBlock,
 		return errors.Wrap(err, "failed to get bid from wrapped bid")
 	}
 	*blockHash = bid.BlockHash()
+	*gasLimit = bid.GasLimit()
 	parentRoot := block.ParentRoot()
 	*parent = s.emptyNodeByRoot[parentRoot]
 	if *parent == nil {

@@ -338,6 +338,7 @@ func (s *Service) initializeHead(ctx context.Context, st state.BeaconState) erro
 
 	s.cfg.ForkChoiceStore.RLock()
 	root := s.cfg.ForkChoiceStore.HighestReceivedBlockRoot()
+	full := s.cfg.ForkChoiceStore.FullBeatsEmpty(root)
 	s.cfg.ForkChoiceStore.RUnlock()
 	blk, err := s.cfg.BeaconDB.Block(ctx, root)
 	if err != nil {
@@ -349,7 +350,8 @@ func (s *Service) initializeHead(ctx context.Context, st state.BeaconState) erro
 			return errors.Wrap(err, "could not get head state")
 		}
 	}
-	if err := s.setHead(&head{root: root, block: blk, state: st, slot: blk.Block().Slot(), optimistic: false}); err != nil {
+	if err := s.setHead(&head{root: root, block: blk, state: st, slot: blk.Block().Slot(),
+		full: full, optimistic: false}); err != nil {
 		return errors.Wrap(err, "could not set head")
 	}
 	log.WithFields(logrus.Fields{
@@ -397,6 +399,7 @@ func (s *Service) saveGenesisData(ctx context.Context, genesisState state.Beacon
 		block:      genesisBlk,
 		state:      genesisState,
 		slot:       genesisBlk.Block().Slot(),
+		full:       s.cfg.ForkChoiceStore.FullBeatsEmpty(genesisBlkRoot),
 		optimistic: false,
 	}); err != nil {
 		log.WithError(err).Fatal("Could not set head")
