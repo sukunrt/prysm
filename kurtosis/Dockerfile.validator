@@ -1,0 +1,18 @@
+# Prysm validator client for kurtosis. See Dockerfile.beacon-chain.
+#
+# ethereum-package's prysm VC launcher (src/vc/prysm.star) does not override
+# the entrypoint, so the binary has to be the image ENTRYPOINT, and it lives
+# at /validator to match the upstream offchainlabs image.
+FROM debian:bookworm-slim
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY validator /validator
+# ... behind a shim that drops --beacon-rest-api-provider, which the package
+# passes unconditionally and which switches Prysm onto a REST client that has
+# no Gloas/Heze SSZ block codec. See validator-entrypoint.sh.
+COPY validator-entrypoint.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

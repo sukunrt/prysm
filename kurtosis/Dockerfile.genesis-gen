@@ -1,0 +1,20 @@
+# Patched ethpandaops/ethereum-genesis-generator for the decoupled fork.
+#
+# Mirrors decoupled-shadow-sim/Dockerfile.genesis-gen, plus the CL genesis
+# state itself (kurtosis has no equivalent of that repo's post-hoc
+# make-heze-genesis.sh, so the swap happens inside the image).
+#
+# Everything else the fork needs is already reachable from
+# network_params.yaml: gloas_fork_epoch / heze_fork_epoch = 0, a single-entry
+# BLOB_SCHEDULE from bpo_1_*, and Amsterdam at the EL genesis time as a
+# consequence of gloas_fork_epoch 0.
+#
+# The patches live in patch-generator.sh; read that first.
+FROM ethpandaops/ethereum-genesis-generator:6.0.2
+
+ENV SLOTS_PER_ROUND=8
+
+COPY prysmctl /usr/local/bin/prysmctl
+COPY prysm-genesis-state.sh /usr/local/bin/prysm-genesis-state.sh
+COPY patch-generator.sh /tmp/patch-generator.sh
+RUN /tmp/patch-generator.sh

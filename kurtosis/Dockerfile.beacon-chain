@@ -1,0 +1,21 @@
+# Prysm beacon-chain for kurtosis, over a statically linked `go build` binary.
+#
+# The build context is produced by build-images.sh; it holds nothing but the
+# binaries. The binary path must be /beacon-chain: ethereum-package's prysm
+# launcher hardcodes it (src/cl/prysm/prysm_launcher.star,
+# PRYSM_ENTRYPOINT_COMMAND) and runs it through `sh -c`, so the image also
+# needs a shell.
+FROM debian:bookworm-slim
+
+# curl and socat are for the readiness gate in beacon-entrypoint.sh.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl socat \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY beacon-chain /beacon-chain-bin
+# /beacon-chain is a gate that keeps the HTTP port closed until the node can
+# answer /eth/v1/node/identity, because the package reads the ENR from there
+# the moment the port opens and does not retry. See beacon-entrypoint.sh.
+COPY beacon-entrypoint.sh /beacon-chain
+
+ENTRYPOINT ["/beacon-chain"]
