@@ -287,6 +287,19 @@ route. The validator must run gRPC (the REST client has no Gloas/Heze SSZ
 block codec); verify what the package passes and override with
 `vc_extra_params` if needed.
 
+### Late publishers <added by executor, user decision 2026-08-20>
+
+The measurement runs must include **late block publishers**: some fraction
+of proposers publishing after the 25%-of-slot vote deadline, so
+gate-caused head retreats actually happen and `goldfish_gate_retreat`
+carries signal (a run where every block is timely never exercises the gate).
+This is the first of decision 14's adversarial knobs to land: a
+validator-client knob (flag or per-validator config) that delays block
+publication by a configurable fraction of the slot for a configurable
+subset of proposers. Record in the run outputs: which slots were published
+late, the resulting `goldfish_gate_retreat` count, and `reorgCount`
+alongside it — the pair is the observable the user asked for.
+
 ### Scale and measurements
 
 Same shape as the recorded baseline: 10-16 nodes, ~100 validators, 5-6
@@ -316,6 +329,10 @@ dynamics, not different traffic.
    `goldfish_gate_retreat` counter, leave `reorgCount` untouched but
    documented in the run notes. Deciding to *split* saveHead's accounting
    instead means touching a hot path for a cosmetic gain — not recommended.
+   **ANSWERED by user 2026-08-20: keep both — add `goldfish_gate_retreat`,
+   leave `reorgCount` as is. Additional requirement: the sims must include
+   late publishers, so gate retreats actually occur and both counters are
+   exercised — see the late-publisher note in step 6.**
 2. **Which stream gets which knob.** Recommendation as in step 5: FFG vote
    gets the slot-start flag and the names-which-block knob; the available
    attestation's existing BPS config is the sweep axis for head timing.
