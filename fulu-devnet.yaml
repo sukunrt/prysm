@@ -30,6 +30,15 @@ GLOAS_FORK_EPOCH: 0
 HEZE_FORK_VERSION: 0x18000000
 HEZE_FORK_EPOCH: 0
 
+# Rounds
+# ---------------------------------------------------------------
+# Four rounds to the 32-slot epoch. The committee shuffle repeats every round,
+# so each validator attests four times per epoch and per-slot attestation
+# traffic is four times a mainnet-shaped run. That is the measurement.
+# SLOTS_PER_EPOCH stays at the mainnet preset's 32, so no SSZ size changes and
+# one mainnet-preset binary runs this config.
+SLOTS_PER_ROUND: 8
+
 # Blob schedule
 # ---------------------------------------------------------------
 # A single genesis entry. Without it the config inherits mainnet's absolute
