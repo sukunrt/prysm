@@ -347,6 +347,7 @@ func (s *Service) Start() {
 
 	go s.prunePendingGloasColumns()
 	go s.processPendingGloasColumnsRoutine()
+	go s.drainPendingAttsRoutine()
 
 	if !params.FuluEnabled() {
 		return

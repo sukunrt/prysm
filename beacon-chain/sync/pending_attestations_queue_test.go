@@ -14,6 +14,7 @@ import (
 	mock "github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain/testing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/operation"
+	statefeed "github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/state"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/signing"
 	dbtest "github.com/OffchainLabs/prysm/v7/beacon-chain/db/testing"
@@ -1208,6 +1209,77 @@ func TestProcessPendingAtts_AvailableAttestationQueuedDuringDrain(t *testing.T) 
 
 	require.Equal(t, batch+1, len(chain.AvailableAttestations))
 	require.Equal(t, 0, len(r.blkRootToPendingAtts[root]))
+}
+
+// A block the node proposes itself is imported through the RPC and never
+// reaches the gossip block subscriber, so nothing there drains the votes peers
+// already sent for it. The drain has to hang off block processing instead.
+func TestDrainPendingAttsRoutine_DrainsOnBlockProcessed(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.MinGenesisActiveValidatorCount = 64
+	params.OverrideBeaconConfig(cfg)
+
+	db := dbtest.SetupDB(t)
+	p1 := p2ptest.NewTestP2P(t)
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	slot := primitives.Slot(2)
+	blk := util.NewBeaconBlock()
+	blk.Block.Slot = slot
+	util.SaveBlock(t, ctx, db, blk)
+	root, err := blk.Block.HashTreeRoot()
+	require.NoError(t, err)
+
+	st, keys := util.DeterministicGenesisState(t, decoupled.CommitteeValidatorCount())
+	require.NoError(t, st.SetSlot(slot))
+	require.NoError(t, db.SaveState(ctx, st, root))
+
+	genesisOffset := time.Duration(uint64(slot)*params.BeaconConfig().SecondsPerSlot) * time.Second
+	notifier := &mock.MockStateNotifier{}
+	chain := &mock.ChainService{
+		Genesis:         time.Now().Add(-genesisOffset),
+		State:           st,
+		TargetRoot:      root,
+		ForkchoiceRoots: map[[32]byte]bool{root: true},
+		DB:              db,
+	}
+	r := &Service{
+		ctx: ctx,
+		cfg: &config{
+			p2p:           p1,
+			beaconDB:      db,
+			chain:         chain,
+			clock:         startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
+			stateNotifier: notifier,
+			initialSync:   &mockSync.Sync{IsSyncing: false},
+		},
+		blkRootToPendingAtts: make(map[[32]byte][]any),
+		signatureChan:        make(chan *signatureVerifier, verifierLimit),
+	}
+	go r.verifierRoutine()
+	go r.drainPendingAttsRoutine()
+
+	r.savePendingAvailableAtt(availableVote(t, slot, 5, keys[5], root[:]))
+	require.Equal(t, 1, len(r.blkRootToPendingAtts[root]))
+
+	// The node finished importing the block: nothing else will wake this queue.
+	// Resend until the routine is subscribed, then wait for the replay.
+	drained := false
+	for i := 0; i < 200 && !drained; i++ {
+		notifier.StateFeed().Send(&feed.Event{
+			Type: statefeed.BlockProcessed,
+			Data: &statefeed.BlockProcessedData{Slot: slot, BlockRoot: root},
+		})
+		time.Sleep(20 * time.Millisecond)
+		r.pendingAttsLock.RLock()
+		drained = len(r.blkRootToPendingAtts[root]) == 0
+		r.pendingAttsLock.RUnlock()
+	}
+	// The queue emptying is the wiring under test; that a drained vote reaches
+	// forkchoice is TestProcessPendingAtts_AvailableAttestationReplayed.
+	require.Equal(t, true, drained, "block processing did not drain the vote queue")
 }
 
 func TestValidatePendingAtts_ExpiresAvailableAtts(t *testing.T) {

@@ -11,6 +11,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/operation"
+	statefeed "github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/state"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	"github.com/OffchainLabs/prysm/v7/config/features"
@@ -76,6 +77,50 @@ func (s *Service) processPendingAttsForBlock(ctx context.Context, bRoot [32]byte
 
 	//  Request the blocks for the pending attestations that could not be processed.
 	return s.sendBatchRootRequest(ctx, pendingRoots, randGen)
+}
+
+// drainPendingAttsRoutine drains the pending attestation queue for every block
+// the node imports, whichever path imported it.
+//
+// The gossip subscriber drains the queue for blocks it receives, but a block the
+// node proposes itself is imported through the RPC and never reaches that
+// subscriber, so nothing drained its queue. That is not a corner case: peers
+// vote for a proposal as soon as it reaches them, which is before the proposer
+// has finished importing its own block, so every one of those votes was queued
+// and then forgotten. On a six node devnet it cost the proposer the whole
+// committee, one slot in six.
+//
+// A head vote is gossiped once, during its own slot, so the drain has to happen
+// while the slot is still running - which it does, this event fires as soon as
+// the block is processed. Draining twice is harmless: the queue is taken and
+// emptied under one lock.
+func (s *Service) drainPendingAttsRoutine() {
+	ch := make(chan *feed.Event, 1)
+	sub := s.cfg.stateNotifier.StateFeed().Subscribe(ch)
+	defer sub.Unsubscribe()
+
+	for {
+		select {
+		case ev := <-ch:
+			if ev.Type != statefeed.BlockProcessed {
+				continue
+			}
+			data, ok := ev.Data.(*statefeed.BlockProcessedData)
+			if !ok || data == nil {
+				continue
+			}
+			// Initial sync imports through the batch path, which emits this event
+			// too and has no gossip-queued votes to replay.
+			if s.cfg.initialSync != nil && s.cfg.initialSync.Syncing() {
+				continue
+			}
+			go s.drainPendingAttsForBlock(s.ctx, data.BlockRoot)
+		case <-sub.Err():
+			return
+		case <-s.ctx.Done():
+			return
+		}
+	}
 }
 
 // drainPendingAttsForBlock processes every attestation queued against the block
