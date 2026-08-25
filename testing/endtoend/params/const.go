@@ -11,6 +11,9 @@ const (
 	// since these are the only transactions in the e2e run.
 	DepositGasLimit = 4000000
 	// SpamTxGasLimit is used for the spam transactions (to/from miner address)
-	// which WaitForBlocks generates in order to advance the EL chain.
-	SpamTxGasLimit = 21000
+	// which WaitForBlocks generates in order to advance the EL chain. It is a
+	// limit with headroom, not a cost: Amsterdam repriced a plain transfer to
+	// ~207k gas, and the old 21000 made every spam transaction fail with
+	// status 0 while still being included - invisible until a receipt scan.
+	SpamTxGasLimit = 1_000_000
 )
