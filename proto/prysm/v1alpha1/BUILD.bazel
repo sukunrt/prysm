@@ -110,6 +110,14 @@ ssz_methodical(
 )
 
 ssz_methodical(
+    name = "methodical_heze",
+    deps = [":go_proto"],
+    config_file = "heze.yaml",
+    override_package_name = "eth",
+    out = "heze.ssz.go",
+)
+
+ssz_methodical(
     name = "methodical_non_core",
     deps = [":go_proto"],
     config_file = "non-core.yaml",

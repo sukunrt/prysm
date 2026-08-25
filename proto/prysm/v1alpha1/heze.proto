@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package ethereum.eth.v1alpha1;
+
+import "proto/eth/ext/options.proto";
+
+option go_package = "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1;eth";
+
+// Spec:
+//
+//	class AvailableAttestationData(Container):
+//	    slot: Slot
+//	    payload_present: boolean  # Payload availability signal
+//	    beacon_block_root: Root   # Goldfish attestation for fork choice
+message AvailableAttestationData {
+  // goldfish votes
+  uint64 slot = 1 [(ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"];
+
+  bool payload_present = 2;
+
+  bytes beacon_block_root = 3 [(ethereum.eth.ext.ssz_size) = "32"];
+}
+
+message AvailableAttestation {
+  // aggregation bits for the ptc members. we can send the id itself, but this is faithful to the spec.
+  bytes aggregation_bits = 1 [
+    (ethereum.eth.ext.ssz_size) = "64", // 512 bits
+    (ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/go-bitfield.Bitvector512"
+  ];
+
+  AvailableAttestationData data = 2;
+
+  bytes signature = 3 [(ethereum.eth.ext.ssz_size) = "96"];
+}

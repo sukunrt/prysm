@@ -32,6 +32,8 @@ const (
 	RoleSyncCommitteeAggregator
 	// RolePTCMember means the validator should submit a payload attestation.
 	RolePTCMember
+	// RoleAvailableAttester means the validator should submit a goldfish attestation.
+	RoleAvailableAttester
 )
 
 // Validator interface defines the primary methods of a validator client.
