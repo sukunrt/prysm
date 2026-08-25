@@ -8,12 +8,16 @@ import (
 	coreblocks "github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/gloas"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/signing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/transition"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/crypto/bls"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls/common"
+	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/encoding/ssz/detect"
 	enginev1 "github.com/OffchainLabs/prysm/v7/proto/engine/v1"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
@@ -227,4 +231,139 @@ func TestPremineGenesis_HezeGenesisBlockRoot(t *testing.T) {
 	got, err := helpers.BlockRootAtSlot(st, 0)
 	require.NoError(t, err)
 	require.DeepEqual(t, want[:], got)
+}
+
+// TestPremineGenesis_HezeBuilderSeeding covers the genesis builder registry: deposit entries
+// carrying 0xB0 withdrawal credentials must be onboarded as builders rather than validators, so
+// an external builder can bid on a chain whose EL has no builder deposit contract.
+func TestPremineGenesis_HezeBuilderSeeding(t *testing.T) {
+	const nvals = 256
+	amount := params.BeaconConfig().MinDepositAmount * 10
+	execAddr := bytesutil.ToBytes20([]byte("buildoor-exec-addr"))
+
+	privs, pubs, err := DeterministicallyGenerateKeys(0, nvals)
+	require.NoError(t, err)
+	dds, roots, err := DepositDataFromKeysWithExecCreds(privs, pubs, 0)
+	require.NoError(t, err)
+
+	builderKey, err := bls.RandKey()
+	require.NoError(t, err)
+
+	t.Run("valid builder deposit is onboarded", func(t *testing.T) {
+		dd, root := builderDepositData(t, builderKey, execAddr, amount, true)
+		st, err := preminedHezeGenesis(t, append(dds, dd), append(roots, root))
+		require.NoError(t, err)
+
+		require.Equal(t, nvals, st.NumValidators())
+		builders, err := st.Builders()
+		require.NoError(t, err)
+		require.Equal(t, 1, len(builders))
+		require.DeepEqual(t, builderKey.PublicKey().Marshal(), builders[0].Pubkey)
+		require.DeepEqual(t, execAddr[:], builders[0].ExecutionAddress)
+		require.Equal(t, primitives.Gwei(amount), builders[0].Balance)
+		require.Equal(t, primitives.Epoch(0), builders[0].DepositEpoch)
+		require.Equal(t, params.BeaconConfig().FarFutureEpoch, builders[0].WithdrawableEpoch)
+		require.DeepEqual(t, []byte{params.BeaconConfig().PayloadBuilderVersion}, builders[0].Version)
+
+		// The deposit must not linger in the queue, and it must not have funded a validator.
+		pending, err := st.PendingDeposits()
+		require.NoError(t, err)
+		require.Equal(t, 0, len(pending))
+		_, ok := st.ValidatorIndexByPubkey(bytesutil.ToBytes48(builderKey.PublicKey().Marshal()))
+		require.Equal(t, false, ok)
+
+		// Bid-eligible at slot 0. VerifyBuilderActive is a thin wrapper over IsActiveBuilder,
+		// so this is the check RequireBidBuilderActive applies on both the gossip and the
+		// builder-API path, and nothing has finalized yet.
+		active, err := st.IsActiveBuilder(0)
+		require.NoError(t, err)
+		require.Equal(t, true, active)
+		require.Equal(t, primitives.Round(0), st.FinalizedCheckpoint().Epoch)
+
+		bid := primitives.Gwei(amount - params.BeaconConfig().MinDepositAmount)
+		canCover, err := st.CanBuilderCoverBid(0, bid)
+		require.NoError(t, err)
+		require.Equal(t, true, canCover)
+	})
+
+	t.Run("builder deposit with a bad signature is dropped", func(t *testing.T) {
+		dd, root := builderDepositData(t, builderKey, execAddr, amount, false)
+		st, err := preminedHezeGenesis(t, append(dds, dd), append(roots, root))
+		require.NoError(t, err)
+
+		require.Equal(t, nvals, st.NumValidators())
+		builders, err := st.Builders()
+		require.NoError(t, err)
+		require.Equal(t, 0, len(builders))
+	})
+
+	t.Run("no builder entries leaves the registry empty", func(t *testing.T) {
+		st, err := preminedHezeGenesis(t, dds, roots)
+		require.NoError(t, err)
+
+		require.Equal(t, nvals, st.NumValidators())
+		builders, err := st.Builders()
+		require.NoError(t, err)
+		require.Equal(t, 0, len(builders))
+	})
+}
+
+func preminedHezeGenesis(
+	t *testing.T,
+	dds []*ethpb.Deposit_Data,
+	roots [][]byte,
+) (state.BeaconState, error) {
+	t.Helper()
+	one := uint64(1)
+	gb := types.NewBlockWithHeader(&types.Header{
+		Time:          uint64(time.Now().Unix()),
+		Extra:         make([]byte, 32),
+		BaseFee:       big.NewInt(1),
+		ExcessBlobGas: &one,
+		BlobGasUsed:   &one,
+		GasLimit:      30000000,
+	})
+	return NewPreminedGenesis(t.Context(), time.Unix(int64(gb.Time()), 0), uint64(len(dds)), 0,
+		version.Heze, gb, WithDepositData(dds, roots))
+}
+
+// builderDepositData mints the deposit_data.json entry a builder is seeded with: 0xB0 prefix,
+// eleven zero bytes, then the twenty-byte execution address.
+func builderDepositData(
+	t *testing.T,
+	key common.SecretKey,
+	execAddr [20]byte,
+	amount uint64,
+	validSig bool,
+) (*ethpb.Deposit_Data, []byte) {
+	t.Helper()
+	creds := make([]byte, 12)
+	creds[0] = params.BeaconConfig().BuilderWithdrawalPrefixByte
+	creds = append(creds, execAddr[:]...)
+
+	msg := &ethpb.DepositMessage{
+		PublicKey:             key.PublicKey().Marshal(),
+		WithdrawalCredentials: creds,
+		Amount:                amount,
+	}
+	mr, err := msg.HashTreeRoot()
+	require.NoError(t, err)
+	domain, err := signing.ComputeDomain(params.BeaconConfig().DomainDeposit, nil, nil)
+	require.NoError(t, err)
+	sr, err := (&ethpb.SigningData{ObjectRoot: mr[:], Domain: domain}).HashTreeRoot()
+	require.NoError(t, err)
+
+	sig := make([]byte, fieldparams.BLSSignatureLength)
+	if validSig {
+		sig = key.Sign(sr[:]).Marshal()
+	}
+	dd := &ethpb.Deposit_Data{
+		PublicKey:             msg.PublicKey,
+		WithdrawalCredentials: creds,
+		Amount:                amount,
+		Signature:             sig,
+	}
+	root, err := dd.HashTreeRoot()
+	require.NoError(t, err)
+	return dd, root[:]
 }

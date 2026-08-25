@@ -32,6 +32,7 @@ type PremineGenesisConfig struct {
 	Version         int          // as in "github.com/OffchainLabs/prysm/v7/runtime/version"
 	GB              *types.Block // geth genesis block
 	depositEntries  *depositEntries
+	builderDeposits []*ethpb.PendingDeposit
 }
 
 type depositEntries struct {
@@ -77,6 +78,7 @@ func (s *PremineGenesisConfig) prepare(ctx context.Context) (state.BeaconState, 
 	if err != nil {
 		return nil, err
 	}
+	s.splitBuilderDeposits()
 	if err = s.processDeposits(ctx, st); err != nil {
 		return nil, err
 	}
@@ -242,6 +244,33 @@ func (s *PremineGenesisConfig) processDeposits(ctx context.Context, g state.Beac
 	return nil
 }
 
+// splitBuilderDeposits pulls the 0xB0-credential entries out of the supplied deposit data and
+// keeps them as pending deposits. ProcessPreGenesisDeposits would otherwise turn each of them
+// into an active validator; as pending deposits they are instead onboarded as builders by
+// OnboardBuildersFromPendingDeposits in setPTCWindowAndBuilders.
+func (s *PremineGenesisConfig) splitBuilderDeposits() {
+	if s.depositEntries == nil || s.Version < version.Gloas {
+		return
+	}
+	dds := make([]*ethpb.Deposit_Data, 0, len(s.depositEntries.dds))
+	roots := make([][]byte, 0, len(s.depositEntries.roots))
+	for i, dd := range s.depositEntries.dds {
+		if !helpers.IsBuilderWithdrawalCredential(dd.WithdrawalCredentials) {
+			dds = append(dds, dd)
+			roots = append(roots, s.depositEntries.roots[i])
+			continue
+		}
+		s.builderDeposits = append(s.builderDeposits, &ethpb.PendingDeposit{
+			PublicKey:             dd.PublicKey,
+			WithdrawalCredentials: dd.WithdrawalCredentials,
+			Amount:                dd.Amount,
+			Signature:             dd.Signature,
+		})
+	}
+	s.depositEntries.dds = dds
+	s.depositEntries.roots = roots
+}
+
 func (s *PremineGenesisConfig) deposits() ([]*ethpb.Deposit, error) {
 	if s.depositEntries == nil {
 		prv, pub, err := s.keys()
@@ -374,6 +403,9 @@ func (s *PremineGenesisConfig) setPTCWindowAndBuilders(g state.BeaconState) erro
 		return errors.Wrap(err, "could not initialize the ptc window")
 	}
 	if err := g.SetPTCWindow(window); err != nil {
+		return err
+	}
+	if err := g.SetPendingDeposits(s.builderDeposits); err != nil {
 		return err
 	}
 	return g.OnboardBuildersFromPendingDeposits()

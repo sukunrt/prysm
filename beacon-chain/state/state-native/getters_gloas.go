@@ -119,6 +119,17 @@ func (b *BeaconState) BuilderPubkey(builderIndex primitives.BuilderIndex) ([fiel
 //	        and builder.withdrawable_epoch == FAR_FUTURE_EPOCH
 //	    )
 //	</spec>
+//
+// Deviation from the pseudocode above: a builder whose deposit epoch is the genesis epoch is
+// treated as finalized. Genesis is Heze here, so a builder seeded into the genesis state gets
+// deposit epoch 0 and can never satisfy the strict inequality, because the genesis finalized
+// checkpoint is 0 too; it would stay unusable until the first round starting in epoch 1
+// finalized. The genesis state is the chain's anchor and is final by construction, so the gate
+// has nothing to protect there.
+//
+// This selects exactly the genesis-seeded builders: the only other writer of the registry is
+// processBuilderDepositRequest, and it needs the EIP-8282 predeploys, which our geth genesis does
+// not contain. Every builder deposited at epoch 1 or later still waits for finalization.
 func (b *BeaconState) IsActiveBuilder(builderIndex primitives.BuilderIndex) (bool, error) {
 	if b.version < version.Gloas {
 		return false, errNotSupported("IsActiveBuilder", b.version)
@@ -131,12 +142,18 @@ func (b *BeaconState) IsActiveBuilder(builderIndex primitives.BuilderIndex) (boo
 	if err != nil {
 		return false, err
 	}
+	if builder.WithdrawableEpoch != params.BeaconConfig().FarFutureEpoch {
+		return false, nil
+	}
+	if builder.DepositEpoch == params.BeaconConfig().GenesisEpoch {
+		return true, nil
+	}
 
 	finalizedEpoch, err := checkpointEpoch(b.finalizedCheckpoint)
 	if err != nil {
 		return false, err
 	}
-	return builder.DepositEpoch < finalizedEpoch && builder.WithdrawableEpoch == params.BeaconConfig().FarFutureEpoch, nil
+	return builder.DepositEpoch < finalizedEpoch, nil
 }
 
 // CanBuilderCoverBid returns true if the builder has enough balance to cover the given bid amount.

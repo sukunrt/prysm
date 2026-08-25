@@ -222,6 +222,41 @@ func TestBuilderHelpers(t *testing.T) {
 		require.Equal(t, false, active)
 	})
 
+	// A builder seeded into the genesis state has deposit epoch 0 and so does the genesis
+	// finalized checkpoint, so the strict inequality can never hold for it.
+	t.Run("genesis builder is active before anything finalizes", func(t *testing.T) {
+		genesisBuilder := func(depositEpoch, withdrawable primitives.Epoch) *BeaconState {
+			stIface, err := InitializeFromProtoGloas(&ethpb.BeaconStateGloas{
+				Builders: []*ethpb.Builder{
+					{
+						Balance:           10,
+						DepositEpoch:      depositEpoch,
+						WithdrawableEpoch: withdrawable,
+					},
+				},
+				FinalizedCheckpoint: &ethpb.Checkpoint{Epoch: 0},
+			})
+			require.NoError(t, err)
+			st, ok := stIface.(*BeaconState)
+			require.Equal(t, true, ok)
+			return st
+		}
+
+		active, err := genesisBuilder(0, params.BeaconConfig().FarFutureEpoch).IsActiveBuilder(0)
+		require.NoError(t, err)
+		require.Equal(t, true, active)
+
+		// The exemption is genesis only: a later deposit still waits for finalization.
+		active, err = genesisBuilder(1, params.BeaconConfig().FarFutureEpoch).IsActiveBuilder(0)
+		require.NoError(t, err)
+		require.Equal(t, false, active)
+
+		// And it never overrides the exit gate.
+		active, err = genesisBuilder(0, 3).IsActiveBuilder(0)
+		require.NoError(t, err)
+		require.Equal(t, false, active)
+	})
+
 	t.Run("can builder cover bid", func(t *testing.T) {
 		stIface, err := InitializeFromProtoGloas(&ethpb.BeaconStateGloas{
 			Builders: []*ethpb.Builder{
