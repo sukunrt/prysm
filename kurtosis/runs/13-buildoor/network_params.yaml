@@ -1,0 +1,117 @@
+# ethpandaops/ethereum-package args for the decoupled fork, plus a real ePBS
+# builder.
+#
+#   kurtosis run --enclave rounds-13-buildoor ~/dev/ethereum-package \
+#       --args-file kurtosis/runs/13-buildoor/network_params.yaml
+#
+# Run 13: exploratory. Every previous run built its payloads locally, so the
+# builder half of ePBS -- bids on gossip, the PTC voting on a payload, the
+# envelope revealed after the block -- has never been exercised against
+# anything but Prysm's own local-EL path. This run attaches ethpandaops'
+# buildoor, the builder the Glamsterdam devnets run, and asks two questions:
+# does it onboard and bid at all, and does per-round finality still land at a
+# seat fraction of 1.00 while it does.
+#
+# The topology is run 12's, unchanged, so the finality numbers are comparable
+# line for line: 6 beacon nodes x 22 keys = 132 validators, 6s slots,
+# SLOTS_PER_ROUND 8, the same pinned EL.
+#
+# buildoor is attached as per-participant builder instances -- the newer
+# ethereum-package schema (`additional_services: [buildoor]` plus
+# `buildoor_params.instances`), not the deprecated network-wide
+# `mev_type: buildoor`, which also drags an inert mev-boost sidecar onto every
+# node. A builder is independent of the participant it is wired to: it reads
+# that CL's payload_attributes stream, builds against that EL, and then
+# gossips to the whole network through the beacon API
+# (POST /eth/v1/beacon/execution_payload_bids and
+# POST /eth/v1/beacon/execution_payload_envelopes).
+#
+# This requires ethereum-package newer than the checkout run 12 used; see
+# summary.md, finding 1.
+
+participants:
+  - el_type: geth
+    # Pinned, not :latest -- geth master rejects every forkchoiceUpdatedV4
+    # without the ePBS builder-deposit system contract, which
+    # ethereum-genesis-generator 6.0.2 does not deploy.
+    el_image: ethpandaops/geth:glamsterdam-devnet-8
+    cl_type: prysm
+    cl_image: prysm-beacon-chain:local
+    vc_type: prysm
+    vc_image: prysm-validator:local
+    use_separate_vc: true
+    supernode: true
+    count: 6
+    cl_extra_params:
+      - --goldfish-vote-ledger
+
+network_params:
+  network: kurtosis
+  network_id: "3151908"
+  preset: mainnet
+  seconds_per_slot: 6
+  slot_duration_ms: 6000
+  num_validator_keys_per_node: 22
+  genesis_delay: 180
+
+  deneb_fork_epoch: 0
+  electra_fork_epoch: 0
+  fulu_fork_epoch: 0
+  gloas_fork_epoch: 0
+  heze_fork_epoch: 0
+
+  bpo_1_epoch: 0
+  bpo_1_max_blobs: 6
+  bpo_1_target_blobs: 3
+  bpo_2_epoch: 18446744073709551615
+
+  # EIP-8282 builder execution requests: the deposit contract (request
+  # type 0x03) and the exit contract (0x04). buildoor's lifecycle deposits
+  # its builder key through the first one, and without it every deposit is
+  # deferred with "builder system contract not deployed".
+  # ethereum-genesis-generator 6.0.2 -- the base of prysm-genesis-gen --
+  # does not deploy them; 6.2.0's /apps/el-gen/system-contracts.yaml does,
+  # and this is that file's two entries verbatim, injected into the alloc
+  # so the pinned geth (which already carries ProcessBuilderDepositQueue
+  # and knows both addresses) has something to call.
+  additional_preloaded_contracts: '{"0x0000bff46984e3725691fa540a8c7589300d8282":{"balance":"0","nonce":"1","code":"0x3373fffffffffffffffffffffffffffffffffffffffe1461011c575f54807fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff146102705760015460088111605257506058565b60089003015b601190600182026001905f5b5f821115607f57810190830284830290049160010191906064565b90939004925050503660b814609f57366102705734610270575f5260205ff35b8034106102705760383567ffffffffffffffff1680633b9aca001161027057633b9aca00029034031061027057600154600101600155600354806006026004015f358155600101602035815560010160403581556001016060358155600101608035815560010160a035905560b85f5f3760b85fa0600101600355005b60035460025480820380604011610131575060405b5f5b8181146101d7578281016006026004018160b8028154815260200181600101548152602001816002015480825260401c67ffffffffffffffff16816010018160381c81600701538160301c81600601538160281c81600501538160201c81600401538160181c81600301538160101c81600201538160081c816001015353602001816003015481526020018160040154815260200190600501549052600101610133565b91018092146101e957906002556101f4565b90505f6002555f6003555b36610242575f54600154817fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff1461023057600882820111610238575b50505f610264565b0160089003610264565b7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5b5f555f60015560b8025ff35b5f5ffd"},"0x000064d678505ad48f8ccb093bc65613800e8282":{"balance":"0","nonce":"1","code":"0x3373fffffffffffffffffffffffffffffffffffffffe1460e1575f54807fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff146101c65760015460028111605157506057565b60029003015b601190600182026001905f5b5f821115607e57810190830284830290049160010191906063565b909390049250505036603014609e57366101c657346101c6575f5260205ff35b34106101c657600154600101600155600354806003026004013381556001015f35815560010160203590553360601b5f5260305f60143760445fa0600101600355005b6003546002548082038060101160f5575060105b5f5b81811461012d5782810160030260040181604402815460601b8152601401816001015481526020019060020154905260010160f7565b910180921461013f579060025561014a565b90505f6002555f6003555b36610198575f54600154817fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff146101865760028282011161018e575b50505f6101ba565b01600290036101ba565b7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff5b5f555f6001556044025ff35b5f5ffd","storage":{"0x0000000000000000000000000000000000000000000000000000000000000000":"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}}}'
+
+ethereum_genesis_generator_params:
+  image: prysm-genesis-gen:local
+  extra_env:
+    SLOTS_PER_ROUND: 8
+    AVAILABLE_ATTESTATION_DUE_BPS_HEZE: 2500
+    # The generator's CL template reads SECONDS_PER_SLOT from
+    # $SLOT_DURATION_IN_SECONDS. The package used to export it next to
+    # SLOT_DURATION_MS and no longer does -- generators from 6.1 on derive the
+    # one from the other, 6.0.2 does not -- so without this line the config
+    # ships SLOT_DURATION_MS 6000 alongside the template default
+    # SECONDS_PER_SLOT 12, and the chain runs its duties on a 12s cadence
+    # against a 6s clock: one block every other slot, head falling a slot
+    # behind the clock every slot. See summary.md, finding 3.
+    SLOT_DURATION_IN_SECONDS: 6
+
+buildoor_params:
+  image: ethpandaops/buildoor:main
+  # The legacy (Fulu getHeader) builder API is off: no Prysm node here is
+  # pointed at a mev-boost, so it would serve nobody. The ePBS path -- bids on
+  # gossip, PTC vote, envelope revealed after the block -- is the one under
+  # test.
+  builder_api: false
+  epbs_builder: true
+  # Onboard without hand-built genesis registration: derive a builder key,
+  # deposit to the builder-deposit contract from the prefunded wallet, wait for
+  # activation, keep the balance topped up.
+  lifecycle: true
+  # Two builders, on two different nodes, so a bid has to travel over gossip to
+  # reach four of the six proposers rather than only ever meeting a local one.
+  instances:
+    - participant: 1
+    - participant: 2
+  extra_args:
+    - --log-level=debug
+
+additional_services:
+  - buildoor
+wait_for_finalization: false
+global_log_level: info
