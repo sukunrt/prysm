@@ -236,17 +236,14 @@ func GethTestnetGenesis(genesis time.Time, cfg *clparams.BeaconChainConfig) *cor
 		BPO1Time:                bpo1Time,
 		BPO2Time:                bpo2Time,
 		DepositContractAddress:  common.HexToAddress(cfg.DepositContractAddress),
+		// Since geth 1.17.5 only Cancun, Prague and the BPO forks carry blob
+		// schedule entries; Osaka and Amsterdam inherit the last one set.
 		BlobScheduleConfig: &params.BlobScheduleConfig{
 			Cancun: params.DefaultCancunBlobConfig,
 			Prague: params.DefaultPragueBlobConfig,
-			Osaka:  params.DefaultOsakaBlobConfig,
 			BPO1:   params.DefaultBPO1BlobConfig,
 			BPO2:   params.DefaultBPO2BlobConfig,
 			BPO3:   params.DefaultBPO3BlobConfig,
-			// geth refuses a genesis that schedules a fork with blobs but
-			// gives it no blob schedule entry, and Amsterdam is at genesis
-			// whenever Gloas is. It keeps Osaka's blob parameters.
-			Amsterdam: params.DefaultOsakaBlobConfig,
 		},
 	}
 	da := defaultDepositContractAllocation(cfg.DepositContractAddress)

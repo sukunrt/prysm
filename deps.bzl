@@ -53,6 +53,12 @@ def prysm_deps():
         version = "v0.0.0-20210112150236-f10218a38794",
     )
     go_repository(
+        name = "com_github_aclements_go_perfevent",
+        importpath = "github.com/aclements/go-perfevent",
+        sum = "h1:JjxwchlOepwsUWcQwD2mLUAGE9aCp0/ehy6yCHFBOvo=",
+        version = "v0.0.0-20240301234650-f7843625020f",
+    )
+    go_repository(
         name = "com_github_adrg_xdg",
         importpath = "github.com/adrg/xdg",
         sum = "h1:xRnxJXne7+oWDatRhR1JLnvuccuIeCoBu2rtuLqQB78=",
@@ -480,10 +486,16 @@ def prysm_deps():
         version = "v0.0.0-20260202195803-dba9d589def2",
     )
     go_repository(
+        name = "com_github_cockroachdb_crlib",
+        importpath = "github.com/cockroachdb/crlib",
+        sum = "h1:SHlYZ/bMx7frnmeqCu+xm0TCxXLzX3jQIVuFbnFGtFU=",
+        version = "v0.0.0-20241112164430-1264a2edc35b",
+    )
+    go_repository(
         name = "com_github_cockroachdb_datadriven",
         importpath = "github.com/cockroachdb/datadriven",
-        sum = "h1:otljaYPt5hWxV3MUfO5dFPFiOXg9CyG5/kCfayTqsJ4=",
-        version = "v1.0.3-0.20230413201302-be42291fc80f",
+        sum = "h1:UycK/E0TkisVrQbSoxvU827FwgBBcZ95nRRmpj/12QI=",
+        version = "v1.0.3-0.20250407164829-2945557346d5",
     )
     go_repository(
         name = "com_github_cockroachdb_errors",
@@ -505,16 +517,34 @@ def prysm_deps():
         version = "v0.0.0-20230118201751-21c54148d20b",
     )
     go_repository(
+        name = "com_github_cockroachdb_metamorphic",
+        importpath = "github.com/cockroachdb/metamorphic",
+        sum = "h1:XANOgPYtvELQ/h4IrmPAohXqe2pWA8Bwhejr3VQoZsA=",
+        version = "v0.0.0-20231108215700-4ba948b56895",
+    )
+    go_repository(
         name = "com_github_cockroachdb_pebble",
         importpath = "github.com/cockroachdb/pebble",
         sum = "h1:5AAWCBWbat0uE0blr8qzufZP5tBjkRyy/jWe1QWLnvw=",
         version = "v1.1.5",
     )
     go_repository(
+        name = "com_github_cockroachdb_pebble_v2",
+        importpath = "github.com/cockroachdb/pebble/v2",
+        sum = "h1:j9wPgMDbkErFdAKYFGhsoCcvzcjR+6zrJ4jhKtJ6bOk=",
+        version = "v2.1.4",
+    )
+    go_repository(
         name = "com_github_cockroachdb_redact",
         importpath = "github.com/cockroachdb/redact",
         sum = "h1:u1PMllDkdFfPWaNGMyLD1+so+aq3uUItthCFqzwPJ30=",
         version = "v1.1.5",
+    )
+    go_repository(
+        name = "com_github_cockroachdb_swiss",
+        importpath = "github.com/cockroachdb/swiss",
+        sum = "h1:VXvSNzmr8hMj8XTuY0PT9Ane9qZGul/p67vGYwl9BFI=",
+        version = "v0.0.0-20251224182025-b0f6560f979b",
     )
     go_repository(
         name = "com_github_cockroachdb_tokenbucket",
@@ -821,8 +851,8 @@ def prysm_deps():
         patches = [
             "//third_party:com_github_ethereum_go_ethereum_secp256k1.patch",
         ],
-        sum = "h1:uA4q+qiLp7QImBsjdRbINu8iX6OEVmj4DPc5/E5Fsxc=",
-        version = "v1.17.4",
+        sum = "h1:o9BIXs2Q/3cPHVxw49n+Zjn2i6rB9TOXatev46duOC4=",
+        version = "v1.17.5",
     )
     go_repository(
         name = "com_github_ethereum_hid",
@@ -2508,8 +2538,8 @@ def prysm_deps():
     go_repository(
         name = "com_github_olekukonko_tablewriter",
         importpath = "github.com/olekukonko/tablewriter",
-        sum = "h1:58+kh9C6jJVXYjt8IE48G2eWl6BjwU5Gj0gqY84fy78=",
-        version = "v0.0.0-20170122224234-a0225b3f23b5",
+        sum = "h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N7AbDhec=",
+        version = "v0.0.5",
     )
     go_repository(
         name = "com_github_onsi_ginkgo",
@@ -2955,6 +2985,18 @@ def prysm_deps():
         importpath = "github.com/r3labs/sse/v2",
         sum = "h1:hFEkLLFY4LDifoHdiCN/LlGBAdVJYsANaLqNYa1l/v0=",
         version = "v2.10.0",
+    )
+    go_repository(
+        name = "com_github_raduberinde_axisds",
+        importpath = "github.com/RaduBerinde/axisds",
+        sum = "h1:YItk/RmU5nvlsv/awo2Fjx97Mfpt4JfgtEVAGPrLdz8=",
+        version = "v0.1.0",
+    )
+    go_repository(
+        name = "com_github_raduberinde_btreemap",
+        importpath = "github.com/RaduBerinde/btreemap",
+        sum = "h1:bsU8Tzxr/PNz75ayvCnxKZWEYdLMPDkUgticP4a4Bvk=",
+        version = "v0.0.0-20250419174037-3d62b7205d54",
     )
     go_repository(
         name = "com_github_rcrowley_go_metrics",
