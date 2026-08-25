@@ -192,9 +192,9 @@ func TestServer_GetChainHead(t *testing.T) {
 
 	head, err := bs.GetChainHead(t.Context(), nil)
 	require.NoError(t, err)
-	assert.Equal(t, primitives.Epoch(3), head.PreviousJustifiedEpoch, "Unexpected PreviousJustifiedEpoch")
-	assert.Equal(t, primitives.Epoch(2), head.JustifiedEpoch, "Unexpected JustifiedEpoch")
-	assert.Equal(t, primitives.Epoch(1), head.FinalizedEpoch, "Unexpected FinalizedEpoch")
+	assert.Equal(t, primitives.Round(3), head.PreviousJustifiedEpoch, "Unexpected PreviousJustifiedEpoch")
+	assert.Equal(t, primitives.Round(2), head.JustifiedEpoch, "Unexpected JustifiedEpoch")
+	assert.Equal(t, primitives.Round(1), head.FinalizedEpoch, "Unexpected FinalizedEpoch")
 	assert.Equal(t, primitives.Slot(24), head.PreviousJustifiedSlot, "Unexpected PreviousJustifiedSlot")
 	assert.Equal(t, primitives.Slot(16), head.JustifiedSlot, "Unexpected JustifiedSlot")
 	assert.Equal(t, primitives.Slot(8), head.FinalizedSlot, "Unexpected FinalizedSlot")
