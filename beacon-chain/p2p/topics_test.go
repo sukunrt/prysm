@@ -73,3 +73,26 @@ func TestAllTopics(t *testing.T) {
 		require.Equal(t, false, ok)
 	}
 }
+
+// TestAllTopics_AvailableAttestationAtHeze pins the available_attestation
+// topic into the pubsub allowlist: a topic missing from allTopics cannot be
+// joined at all, so publishes and subscribes fail once Heze activates.
+func TestAllTopics_AvailableAttestationAtHeze(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.MainnetConfig().Copy()
+	cfg.GloasForkEpoch = 2
+	cfg.HezeForkEpoch = 4
+	params.OverrideBeaconConfig(cfg)
+	s := &Service{}
+	all := s.allTopicStrings()
+	hezeDigest := params.ForkDigest(cfg.HezeForkEpoch)
+	want := "/eth2/" + hex.EncodeToString(hezeDigest[:]) + "/available_attestation/ssz_snappy"
+	found := false
+	for _, top := range all {
+		if top == want {
+			found = true
+			break
+		}
+	}
+	require.Equal(t, true, found, "missing "+want)
+}
