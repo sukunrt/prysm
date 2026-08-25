@@ -160,9 +160,11 @@ func (s *Service) processPendingBlocks(ctx context.Context) error {
 			}
 			cancelFunction()
 
+			// Save the columns gossiped before the block arrived first: the envelope's data
+			// availability check reads them from storage, and this call is synchronous.
+			s.processPendingGloasColumns(s.ctx, blkRoot, b)
 			// Process synchronously because it's likely that the next pending block depends on it.
 			s.processPendingPayloadEnvelope(ctx, blkRoot)
-			s.processPendingGloasColumns(s.ctx, blkRoot, b)
 			s.processPendingPayloadAttestation(ctx, blkRoot)
 			blkRoots = append(blkRoots, blkRoot)
 
