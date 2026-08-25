@@ -57,6 +57,39 @@ func (s *Service) logVote(
 	log.WithFields(fields).Info("Goldfish vote")
 }
 
+// logFFGVote writes one line for one FFG attestation that passed gossip
+// validation. arrived is when the attestation entered validation, carried as
+// milliseconds into the attestation's own slot: the same clock basis as the
+// head-vote lines above, so both parse the same way.
+//
+// Off unless --goldfish-vote-ledger is set.
+func (s *Service) logFFGVote(att ethpb.Att, arrived time.Time) {
+	if !features.Get().GoldfishVoteLedger || att == nil {
+		return
+	}
+	data := att.GetData()
+	if data == nil || data.Target == nil {
+		return
+	}
+	seats := uint64(1)
+	if bits := att.GetAggregationBits(); bits != nil {
+		seats = bits.Count()
+	}
+	start := slots.UnsafeStartTime(s.cfg.clock.GenesisTime(), data.Slot)
+	fields := logrus.Fields{
+		"outcome":        "gossip",
+		"attSlot":        data.Slot,
+		"targetRound":    data.Target.Epoch,
+		"committeeIndex": att.GetCommitteeIndex(),
+		"seats":          seats,
+		"arrivedMs":      arrived.Sub(start).Milliseconds(),
+	}
+	if att.IsSingle() {
+		fields["validator"] = att.GetAttestingIndex()
+	}
+	log.WithFields(fields).Info("FFG vote")
+}
+
 // dropVote counts and records a head vote the node is discarding. Every path
 // that throws a vote away goes through here, so goldfish_vote_drop_total and
 // the ledger can never disagree.

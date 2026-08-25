@@ -581,6 +581,7 @@ func (s *Service) handleEpochBoundary(ctx context.Context, slot primitives.Slot,
 func (s *Service) handleBlockAttestations(ctx context.Context, blk interfaces.ReadOnlyBeaconBlock, st state.BeaconState) error {
 	// Feed in block's attestations to fork choice store.
 	for _, a := range blk.Body().Attestations() {
+		logFFGInclusion(blk.Slot(), a)
 		committees, err := helpers.AttestationCommitteesFromState(ctx, st, a)
 		if err != nil {
 			return err
@@ -607,6 +608,28 @@ func (s *Service) handleBlockAttestations(ctx context.Context, blk interfaces.Re
 		}
 	}
 	return nil
+}
+
+// logFFGInclusion writes one line per attestation carried by an imported block:
+// which slot's FFG votes landed in which block, and how many slots late.
+//
+// Off unless --goldfish-vote-ledger is set.
+func logFFGInclusion(blockSlot primitives.Slot, att ethpb.Att) {
+	if !features.Get().GoldfishVoteLedger || att == nil || att.GetData() == nil {
+		return
+	}
+	attSlot := att.GetData().Slot
+	inclusionSlots, err := blockSlot.SafeSubSlot(attSlot)
+	if err != nil {
+		return
+	}
+	log.WithFields(logrus.Fields{
+		"attSlot":        attSlot,
+		"blockSlot":      blockSlot,
+		"inclusionSlots": inclusionSlots,
+		"committeeIndex": att.GetCommitteeIndex(),
+		"seats":          att.GetAggregationBits().Count(),
+	}).Info("FFG vote included")
 }
 
 // handleBlockPayloadAttestations feeds payload attestations included in a Gloas block into forkchoice.

@@ -7,6 +7,7 @@ import (
 	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/startup"
 	"github.com/OffchainLabs/prysm/v7/config/features"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	dto "github.com/prometheus/client_model/go"
@@ -49,6 +50,34 @@ func TestLogVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	s.logVote(ledgerVote(), voteAccepted, "", time.Now())
 	require.Equal(t, 1, len(hook.AllEntries()))
 	require.Equal(t, voteAccepted, hook.LastEntry().Data["outcome"])
+}
+
+func TestLogFFGVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
+	hook := logTest.NewGlobal()
+	s := ledgerService(t)
+	att := &ethpb.SingleAttestation{
+		CommitteeId:   2,
+		AttesterIndex: 7,
+		Data: &ethpb.AttestationData{
+			Slot:   9,
+			Target: &ethpb.Checkpoint{Epoch: 1},
+		},
+	}
+
+	s.logFFGVote(att, time.Now())
+	require.Equal(t, 0, len(hook.AllEntries()))
+
+	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
+	defer reset()
+	s.logFFGVote(att, time.Now())
+	require.Equal(t, 1, len(hook.AllEntries()))
+	entry := hook.LastEntry()
+	require.Equal(t, "FFG vote", entry.Message)
+	require.Equal(t, primitives.Slot(9), entry.Data["attSlot"])
+	require.Equal(t, primitives.Round(1), entry.Data["targetRound"])
+	require.Equal(t, primitives.CommitteeIndex(2), entry.Data["committeeIndex"])
+	require.Equal(t, uint64(1), entry.Data["seats"])
+	require.Equal(t, primitives.ValidatorIndex(7), entry.Data["validator"])
 }
 
 // Every discard has to move the counter, whether or not the ledger is on:

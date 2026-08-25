@@ -3868,3 +3868,27 @@ func TestRefreshCaches_CachedStateMatchesHeadRoot(t *testing.T) {
 	require.NotNil(t, cached)
 	require.Equal(t, primitives.Slot(1), cached.Slot())
 }
+
+func TestLogFFGInclusion_QuietUnlessTheLedgerIsOn(t *testing.T) {
+	hook := logTest.NewGlobal()
+	bits := bitfield.NewBitlist(8)
+	bits.SetBitAt(1, true)
+	att := &ethpb.AttestationElectra{
+		AggregationBits: bits,
+		Data:            &ethpb.AttestationData{Slot: 4, CommitteeIndex: 1},
+	}
+
+	logFFGInclusion(7, att)
+	require.Equal(t, 0, len(hook.AllEntries()))
+
+	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
+	defer reset()
+	logFFGInclusion(7, att)
+	require.Equal(t, 1, len(hook.AllEntries()))
+	entry := hook.LastEntry()
+	require.Equal(t, "FFG vote included", entry.Message)
+	require.Equal(t, primitives.Slot(4), entry.Data["attSlot"])
+	require.Equal(t, primitives.Slot(7), entry.Data["blockSlot"])
+	require.Equal(t, primitives.Slot(3), entry.Data["inclusionSlots"])
+	require.Equal(t, uint64(1), entry.Data["seats"])
+}
