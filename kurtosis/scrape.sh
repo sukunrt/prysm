@@ -14,7 +14,11 @@ enclave=$1
 outdir=$2
 interval=${3:-6}
 
-keep='^(p2p_pubsub_deliver_total|p2p_pubsub_duplicate_total'
+# p2p_pubsub_undeliverable_total is the only trace of a message gossipsub
+# dropped because the subscriber's buffer was full: it never reaches validation
+# and never reaches the app, so no other counter moves. It is what a missing
+# Goldfish head vote looks like from outside.
+keep='^(p2p_pubsub_deliver_total|p2p_pubsub_duplicate_total|p2p_pubsub_undeliverable_total'
 keep+='|p2p_pubsub_rpc_recv_pub_total|p2p_pubsub_rpc_recv_pub_bytes_total'
 keep+='|p2p_pubsub_rpc_sent_pub_total|gossipsub_topic_msg_sent_bytes'
 keep+='|p2p_pubsub_topic_active|p2p_peer_count|p2p_message_received_total'

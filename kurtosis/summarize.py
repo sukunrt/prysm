@@ -44,6 +44,9 @@ COUNTERS = {
     # node" the plan checks, where deliver counts only what came off the wire.
     "p2p_message_received_total": "app",
     "p2p_pubsub_duplicate_total": "dup",
+    # Messages gossipsub could not hand to the subscriber because its buffer was
+    # full. They never reach validation, so nothing else counts them.
+    "p2p_pubsub_undeliverable_total": "undeliverable",
     "p2p_pubsub_rpc_sent_pub_total": "sent_msgs",
     "gossipsub_topic_msg_sent_bytes": "sent_bytes",
 }
@@ -243,14 +246,14 @@ def main():
         print(f"\n### {family}\n")
         print("| node | msgs/slot in | dup msgs/slot |"
               " recv bytes/slot (derived) | msgs/slot out | sent bytes/slot |"
-              " app msgs/slot |")
-        print("|---|---|---|---|---|---|---|")
+              " app msgs/slot | undeliverable |")
+        print("|---|---|---|---|---|---|---|---|")
         agg = defaultdict(list)
         sizes = []
         for name, ((_, _, fa0), (_, _, fa1)) in windows.items():
             row = {}
             for key in ("deliver", "dup", "sent_msgs", "sent_bytes",
-                        "app"):
+                        "app", "undeliverable"):
                 row[key] = (fa1[(family, key)] - fa0[(family, key)]) / span
             size = row["sent_bytes"] / row["sent_msgs"] if row["sent_msgs"] \
                 else 0.0
@@ -260,14 +263,16 @@ def main():
                 agg[key].append(val)
             print(f"| {name} | {fmt(row['deliver'])} | {fmt(row['dup'])} | "
                   f"{fmt(row['recv_bytes'], 0)} | {fmt(row['sent_msgs'])} | "
-                  f"{fmt(row['sent_bytes'], 0)} | {fmt(row['app'])} |")
+                  f"{fmt(row['sent_bytes'], 0)} | {fmt(row['app'])} | "
+                  f"{row['undeliverable'] * span:,.0f} |")
         n = max(1, len(windows))
         print(f"| **mean** | **{fmt(sum(agg['deliver']) / n)}** | "
               f"**{fmt(sum(agg['dup']) / n)}** | "
               f"**{fmt(sum(agg['recv_bytes']) / n, 0)}** | "
               f"**{fmt(sum(agg['sent_msgs']) / n)}** | "
               f"**{fmt(sum(agg['sent_bytes']) / n, 0)}** | "
-              f"**{fmt(sum(agg['app']) / n)}** |")
+              f"**{fmt(sum(agg['app']) / n)}** | "
+              f"**{sum(agg['undeliverable']) * span / n:,.0f}** |")
         live = [x for x in sizes if x]
         if live:
             print(f"\nMean gossip message size on this topic family: "
