@@ -672,3 +672,110 @@ func TestLogFFGAggregateGroups_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	require.Equal(t, chosen, entry.Data["chosenData"])
 	require.Equal(t, uint64(2), entry.Data["chosenSeats"])
 }
+
+// dutyPoolAtt builds a pool candidate for the duty-time aggregation tests. The
+// signature only has to decode as a BLS point: nothing on the duty path checks
+// it, but the aggregation algorithm decompresses every signature it folds.
+func dutyPoolAtt(bits bitfield.Bitlist, sig []byte) *ethpb.AttestationElectra {
+	cb := primitives.NewAttestationCommitteeBits()
+	cb.SetBitAt(0, true)
+	return &ethpb.AttestationElectra{
+		AggregationBits: bits,
+		CommitteeBits:   cb,
+		Data: &ethpb.AttestationData{
+			BeaconBlockRoot: make([]byte, fieldparams.RootLength),
+			Source:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+			Target:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+		},
+		Signature: sig,
+	}
+}
+
+// aggregatorSlotSig returns a slot signature that makes a committee of the given
+// size select its holder as an aggregator. The duty path only runs the modulo
+// check on these bytes, so any BLS signature that lands on it will do.
+func aggregatorSlotSig(t *testing.T, committeeLen uint64) []byte {
+	for range 1000 {
+		priv, err := bls.RandKey()
+		require.NoError(t, err)
+		sig := priv.Sign([]byte("selection")).Marshal()
+		is, err := helpers.IsAggregator(committeeLen, sig)
+		require.NoError(t, err)
+		if is {
+			return sig
+		}
+	}
+	t.Fatal("Could not find a selection proof that is an aggregator")
+	return nil
+}
+
+// TestSubmitAggregateSelectionProofElectra_AggregatesAtDutyTime pins the duty to
+// the seats the pool actually holds. The pool's background aggregation tick runs
+// at a fixed offset into the slot, later than the aggregate is due, so the duty
+// only ever sees loose one-seat votes and must fold them itself.
+func TestSubmitAggregateSelectionProofElectra_AggregatesAtDutyTime(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	c := params.MinimalSpecConfig().Copy()
+	c.MaxCommitteesPerSlot = 1
+	c.TargetCommitteeSize = 250
+	params.OverrideBeaconConfig(c)
+
+	const committeeLen = 250
+	ctx := t.Context()
+	beaconState, _ := util.DeterministicGenesisStateElectra(
+		t, committeeLen*uint64(params.BeaconConfig().SlotsPerEpoch))
+	committee, err := helpers.BeaconCommitteeFromState(ctx, beaconState, 0, 0)
+	require.NoError(t, err)
+	require.Equal(t, committeeLen, len(committee))
+	v, err := beaconState.ValidatorAtIndex(committee[0])
+	require.NoError(t, err)
+
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	attSig := priv.Sign([]byte("attestation")).Marshal()
+
+	for _, tt := range []struct {
+		name  string
+		stale bitfield.Bitlist
+	}{
+		{name: "only singles"},
+		{name: "singles and a stale partial aggregate", stale: func() bitfield.Bitlist {
+			bits := bitfield.NewBitlist(committeeLen)
+			for i := range uint64(100) {
+				bits.SetBitAt(i, true)
+			}
+			return bits
+		}()},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			pool := attestations.NewPool()
+			if tt.stale != nil {
+				require.NoError(t, pool.SaveAggregatedAttestation(dutyPoolAtt(tt.stale, attSig)))
+			}
+			for i := range uint64(committeeLen) {
+				bits := bitfield.NewBitlist(committeeLen)
+				bits.SetBitAt(i, true)
+				require.NoError(t, pool.SaveUnaggregatedAttestation(dutyPoolAtt(bits, attSig)))
+			}
+
+			server := &Server{
+				HeadFetcher:           &mock.ChainService{State: beaconState},
+				SyncChecker:           &mockSync.Sync{IsSyncing: false},
+				OptimisticModeFetcher: &mock.ChainService{},
+				AttPool:               pool,
+				P2P:                   &mockp2p.MockBroadcaster{},
+				TimeFetcher:           &mock.ChainService{Genesis: time.Now()},
+			}
+			res, err := server.SubmitAggregateSelectionProofElectra(ctx, &ethpb.AggregateSelectionRequest{
+				Slot:           0,
+				CommitteeIndex: 0,
+				PublicKey:      v.PublicKey,
+				SlotSignature:  aggregatorSlotSig(t, committeeLen),
+			})
+			require.NoError(t, err)
+			agg := res.AggregateAndProof.Aggregate
+			require.Equal(t, uint64(committeeLen), agg.GetAggregationBits().Count())
+			require.Equal(t, true, agg.CommitteeBits.BitAt(0))
+		})
+	}
+}

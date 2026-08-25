@@ -17,7 +17,10 @@ import (
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
+	attaggregation "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation/attestations"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -90,16 +93,19 @@ func (vs *Server) SubmitAggregateSelectionProofElectra(
 			}
 		}
 	} else {
-		atts = vs.AttPool.AggregatedAttestationsBySlotIndexElectra(ctx, req.Slot, req.CommitteeIndex)
-		if len(atts) == 0 {
-			atts = vs.AttPool.UnaggregatedAttestationsBySlotIndexElectra(ctx, req.Slot, req.CommitteeIndex)
-		}
+		atts = append(
+			vs.AttPool.AggregatedAttestationsBySlotIndexElectra(ctx, req.Slot, req.CommitteeIndex),
+			vs.AttPool.UnaggregatedAttestationsBySlotIndexElectra(ctx, req.Slot, req.CommitteeIndex)...)
 	}
 	if len(atts) == 0 {
 		return nil, status.Errorf(codes.NotFound, "Could not find attestation for slot and committee in pool")
 	}
+	merged, err := mergeByData(atts)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Could not aggregate attestations: %v", err)
+	}
 
-	best := bestAggregate(atts, req.CommitteeIndex, indexInCommittee)
+	best := bestAggregate(merged, req.CommitteeIndex, indexInCommittee)
 	logFFGAggregateGroups(atts, best, req.Slot, req.CommitteeIndex, validatorIndex)
 	attAndProof := &ethpb.AggregateAttestationAndProofElectra{
 		Aggregate:       best,
@@ -107,6 +113,42 @@ func (vs *Server) SubmitAggregateSelectionProofElectra(
 		AggregatorIndex: validatorIndex,
 	}
 	return &ethpb.AggregateSelectionElectraResponse{AggregateAndProof: attAndProof}, nil
+}
+
+// mergeByData folds an aggregation duty's candidates into as few attestations
+// per attestation data as the aggregation algorithm can reach. The duty cannot
+// rely on the pool's background aggregation tick having run: that tick fires at
+// a fixed offset into the slot (7s by default) while the aggregate is due at a
+// fraction of it, half the slot from Gloas on, so on a 12s slot the duty always
+// runs first and would otherwise pick a one-seat vote out of a full committee.
+func mergeByData[T ethpb.Att](atts []T) ([]T, error) {
+	byData := make(map[attestation.Id][]ethpb.Att, len(atts))
+	order := make([]attestation.Id, 0, len(atts))
+	for _, att := range atts {
+		id, err := attestation.NewId(att, attestation.Data)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not create attestation ID")
+		}
+		if _, ok := byData[id]; !ok {
+			order = append(order, id)
+		}
+		byData[id] = append(byData[id], att.Clone())
+	}
+	merged := make([]T, 0, len(order))
+	for _, id := range order {
+		aggregated, err := attaggregation.Aggregate(byData[id])
+		if err != nil {
+			return nil, errors.Wrap(err, "could not aggregate attestations")
+		}
+		for _, a := range aggregated {
+			att, ok := a.(T)
+			if !ok {
+				return nil, errors.Errorf("aggregation returned a %T", a)
+			}
+			merged = append(merged, att)
+		}
+	}
+	return merged, nil
 }
 
 // ffgVoteGroup holds the seats one attestation data drew among an aggregation
