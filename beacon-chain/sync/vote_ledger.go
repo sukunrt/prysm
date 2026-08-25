@@ -85,6 +85,8 @@ func (s *Service) logFFGVote(att ethpb.Att, arrived time.Time) {
 		"committeeIndex": att.GetCommitteeIndex(),
 		"seats":          seats,
 		"arrivedMs":      arrived.Sub(start).Milliseconds(),
+		"blockRoot":      fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
+		"dataRoot":       decoupled.VoteLedgerDataRoot(att),
 	}
 	if att.IsSingle() {
 		fields["validator"] = att.GetAttestingIndex()
@@ -126,6 +128,8 @@ func (s *Service) logFFGAggregate(
 		"aggregatorIndex": aggregateAndProof.GetAggregatorIndex(),
 		"seats":           att.GetAggregationBits().Count(),
 		"arrivedMs":       arrived.Sub(start).Milliseconds(),
+		"blockRoot":       fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
+		"dataRoot":        decoupled.VoteLedgerDataRoot(att),
 		"validators":      decoupled.VoteLedgerValidators(indices),
 	}).Info("FFG aggregate")
 }

@@ -343,6 +343,8 @@ func (vs *Server) logLocalFFGVote(att ethpb.Att) {
 		"committeeIndex": att.GetCommitteeIndex(),
 		"seats":          seats,
 		"arrivedMs":      time.Since(start).Milliseconds(),
+		"blockRoot":      fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
+		"dataRoot":       decoupled.VoteLedgerDataRoot(att),
 	}
 	if att.IsSingle() {
 		fields["validator"] = att.GetAttestingIndex()

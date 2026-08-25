@@ -1,8 +1,12 @@
 package decoupled
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
+
+	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
 )
 
 // VoteLedgerValidators renders validator indices as the goldfish vote ledger's
@@ -14,4 +18,19 @@ func VoteLedgerValidators(indices []uint64) string {
 		parts[i] = strconv.FormatUint(v, 10)
 	}
 	return strings.Join(parts, ",")
+}
+
+// VoteLedgerDataRoot renders the attestation pool's grouping key for att: two
+// FFG votes can be aggregated together exactly when this value matches. Without
+// it a run cannot tell a committee that agreed on one vote from a committee that
+// split across several, because both look like the same count of arrivals.
+//
+// Returns the empty string when the key cannot be built, which keeps the ledger
+// line rather than dropping it.
+func VoteLedgerDataRoot(att ethpb.Att) string {
+	id, err := attestation.NewId(att, attestation.Data)
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%#x", id)
 }

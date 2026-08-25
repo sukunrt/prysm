@@ -630,6 +630,8 @@ func logFFGInclusion(blockSlot primitives.Slot, att ethpb.Att, indices []uint64)
 		"inclusionSlots": inclusionSlots,
 		"committeeIndex": att.GetCommitteeIndex(),
 		"seats":          att.GetAggregationBits().Count(),
+		"blockRoot":      fmt.Sprintf("%#x", bytesutil.ToBytes32(att.GetData().BeaconBlockRoot)),
+		"dataRoot":       decoupled.VoteLedgerDataRoot(att),
 		"validators":     decoupled.VoteLedgerValidators(indices),
 	}).Info("FFG vote included")
 }

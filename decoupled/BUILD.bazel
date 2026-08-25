@@ -11,15 +11,22 @@ go_library(
     deps = [
         "//config/params:go_default_library",
         "//consensus-types/primitives:go_default_library",
+        "//proto/prysm/v1alpha1:go_default_library",
+        "//proto/prysm/v1alpha1/attestation:go_default_library",
     ],
 )
 
 go_test(
     name = "go_default_test",
-    srcs = ["available_attestation_committee_test.go"],
+    srcs = [
+        "available_attestation_committee_test.go",
+        "vote_ledger_test.go",
+    ],
     embed = [":go_default_library"],
     deps = [
         "//consensus-types/primitives:go_default_library",
+        "//proto/prysm/v1alpha1:go_default_library",
         "//testing/require:go_default_library",
+        "@com_github_prysmaticlabs_go_bitfield//:go_default_library",
     ],
 )

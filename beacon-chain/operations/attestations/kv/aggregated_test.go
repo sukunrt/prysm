@@ -1,7 +1,9 @@
 package kv
 
 import (
+	"math/rand"
 	"sort"
+	"strconv"
 	"testing"
 
 	"github.com/OffchainLabs/go-bitfield"
@@ -36,6 +38,126 @@ func TestKV_Aggregated_AggregateUnaggregatedAttestations(t *testing.T) {
 
 	require.Equal(t, 1, len(cache.AggregatedAttestationsBySlotIndex(t.Context(), 1, 0)), "Did not aggregate correctly")
 	require.Equal(t, 1, len(cache.AggregatedAttestationsBySlotIndex(t.Context(), 2, 0)), "Did not aggregate correctly")
+}
+
+// electraSingles builds one-bit Electra attestations, one per seat, all naming
+// the same head block root. Signatures differ per seat so the attestations get
+// distinct full IDs, the way gossip singles from distinct validators do.
+func electraSingles(
+	t *testing.T, priv bls.SecretKey, committeeSize uint64, seats []uint64, headRoot byte,
+) []ethpb.Att {
+	t.Helper()
+
+	atts := make([]ethpb.Att, 0, len(seats))
+	for _, seat := range seats {
+		bits := bitfield.NewBitlist(committeeSize)
+		bits.SetBitAt(seat, true)
+		committeeBits := primitives.NewAttestationCommitteeBits()
+		committeeBits.SetBitAt(0, true)
+		blockRoot := make([]byte, 32)
+		blockRoot[0] = headRoot
+		atts = append(atts, util.HydrateAttestationElectra(&ethpb.AttestationElectra{
+			Data:            &ethpb.AttestationData{Slot: 1, BeaconBlockRoot: blockRoot},
+			AggregationBits: bits,
+			CommitteeBits:   committeeBits,
+			Signature:       priv.Sign([]byte{byte(seat), byte(seat >> 8), headRoot}).Marshal(),
+		}))
+	}
+	return atts
+}
+
+// aggregatedSeats reports the seats the pool can still account for: the union
+// over every aggregated bucket plus whatever is still unaggregated, and the bit
+// count of the single largest aggregate, which is what an aggregator publishes.
+func aggregatedSeats(c *AttCaches) (union, largest, ids int) {
+	seats := map[int]bool{}
+
+	c.aggregatedAttLock.RLock()
+	for _, as := range c.aggregatedAtt {
+		ids++
+		for _, a := range as {
+			if n := int(a.GetAggregationBits().Count()); n > largest {
+				largest = n
+			}
+			for _, i := range a.GetAggregationBits().BitIndices() {
+				seats[i] = true
+			}
+		}
+	}
+	c.aggregatedAttLock.RUnlock()
+
+	for _, a := range c.UnaggregatedAttestations() {
+		for _, i := range a.GetAggregationBits().BitIndices() {
+			seats[i] = true
+		}
+	}
+	return len(seats), largest, ids
+}
+
+// A whole committee arriving as singles must end up as one full-width aggregate,
+// whether it arrives in one burst or in batches with an aggregation tick between
+// them. This pins down that the pool itself never drops a seat between the
+// unaggregated map and the aggregated bucket.
+func TestKV_Aggregated_WholeCommitteeOfSinglesLosesNoSeat(t *testing.T) {
+	const committeeSize = 250
+
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	seats := make([]uint64, committeeSize)
+	for i := range seats {
+		seats[i] = uint64(i)
+	}
+
+	for _, batch := range []int{committeeSize, 37, 1} {
+		t.Run("batch"+strconv.Itoa(batch), func(t *testing.T) {
+			cache := NewAttCaches()
+			atts := electraSingles(t, priv, committeeSize, seats, 0xaa)
+			for i := 0; i < len(atts); i += batch {
+				require.NoError(t, cache.SaveUnaggregatedAttestations(atts[i:min(i+batch, len(atts))]))
+				require.NoError(t, cache.AggregateUnaggregatedAttestations(t.Context()))
+			}
+			union, largest, ids := aggregatedSeats(cache)
+			assert.Equal(t, committeeSize, union, "seats went missing")
+			assert.Equal(t, committeeSize, largest, "committee did not aggregate into one attestation")
+			assert.Equal(t, 1, ids, "committee did not land under one ID")
+		})
+	}
+}
+
+// Singles that disagree on the head they name carry different attestation data,
+// so they aggregate under different IDs. No seat is lost, but no aggregate can
+// grow past its own group, which caps what an aggregator is able to publish.
+func TestKV_Aggregated_SinglesSplitByDataAggregatePerID(t *testing.T) {
+	const committeeSize = 250
+	groups := []struct {
+		size     int
+		headRoot byte
+	}{{172, 0xa1}, {67, 0xb2}, {11, 0xc3}}
+
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+
+	atts := make([]ethpb.Att, 0, committeeSize)
+	next := uint64(0)
+	for _, g := range groups {
+		seats := make([]uint64, g.size)
+		for i := range seats {
+			seats[i] = next
+			next++
+		}
+		atts = append(atts, electraSingles(t, priv, committeeSize, seats, g.headRoot)...)
+	}
+	rnd := rand.New(rand.NewSource(1))
+	rnd.Shuffle(len(atts), func(i, j int) { atts[i], atts[j] = atts[j], atts[i] })
+
+	cache := NewAttCaches()
+	require.NoError(t, cache.SaveUnaggregatedAttestations(atts))
+	require.NoError(t, cache.AggregateUnaggregatedAttestations(t.Context()))
+
+	union, largest, ids := aggregatedSeats(cache)
+	assert.Equal(t, committeeSize, union, "seats went missing")
+	assert.Equal(t, groups[0].size, largest, "largest aggregate is not the largest group")
+	assert.Equal(t, len(groups), ids, "one ID per attestation data")
 }
 
 func TestKV_Aggregated_SaveAggregatedAttestation(t *testing.T) {
