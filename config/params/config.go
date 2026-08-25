@@ -205,8 +205,8 @@ type BeaconChainConfig struct {
 	FuluForkEpoch        primitives.Epoch `yaml:"FULU_FORK_EPOCH" spec:"true"`        // FuluForkEpoch is used to represent the assigned fork epoch for fulu.
 	GloasForkVersion     []byte           `yaml:"GLOAS_FORK_VERSION" spec:"true"`     // GloasForkVersion is used to represent the fork version for gloas.
 	GloasForkEpoch       primitives.Epoch `yaml:"GLOAS_FORK_EPOCH" spec:"true"`       // GloasForkEpoch is used to represent the assigned fork epoch for gloas.
-	HegotaForkVersion    []byte           `yaml:"HEGOTA_FORK_VERSION" spec:"true"`    // HegotaForkVersion is used to represent the fork version for hegota.
-	HegotaForkEpoch      primitives.Epoch `yaml:"HEGOTA_FORK_EPOCH" spec:"true"`      // HegotaForkEpoch is used to represent the assigned fork epoch for hegota.
+	HezeForkVersion    []byte           `yaml:"HEZE_FORK_VERSION" spec:"true"`    // HezeForkVersion is used to represent the fork version for heze.
+	HezeForkEpoch      primitives.Epoch `yaml:"HEZE_FORK_EPOCH" spec:"true"`      // HezeForkEpoch is used to represent the assigned fork epoch for heze.
 
 	ForkVersionSchedule map[[fieldparams.VersionLength]byte]primitives.Epoch // Schedule of fork epochs by version.
 	ForkVersionNames    map[[fieldparams.VersionLength]byte]string           // Human-readable names of fork versions.
@@ -369,7 +369,7 @@ func (b *BeaconChainConfig) VersionToForkEpochMap() map[int]primitives.Epoch {
 		version.Electra:   b.ElectraForkEpoch,
 		version.Fulu:      b.FuluForkEpoch,
 		version.Gloas:     b.GloasForkEpoch,
-		version.Hegota:    b.HegotaForkEpoch,
+		version.Heze:    b.HezeForkEpoch,
 	}
 }
 
@@ -636,7 +636,7 @@ func initForkSchedule(b *BeaconChainConfig) *NetworkSchedule {
 		{Epoch: b.ElectraForkEpoch, isFork: true, ForkVersion: to4(b.ElectraForkVersion), MaxBlobsPerBlock: uint64(b.DeprecatedMaxBlobsPerBlockElectra), VersionEnum: version.Electra},
 		{Epoch: b.FuluForkEpoch, isFork: true, ForkVersion: to4(b.FuluForkVersion), VersionEnum: version.Fulu},
 		{Epoch: b.GloasForkEpoch, isFork: true, ForkVersion: to4(b.GloasForkVersion), VersionEnum: version.Gloas},
-		{Epoch: b.HegotaForkEpoch, isFork: true, ForkVersion: to4(b.HegotaForkVersion), VersionEnum: version.Hegota},
+		{Epoch: b.HezeForkEpoch, isFork: true, ForkVersion: to4(b.HezeForkVersion), VersionEnum: version.Heze},
 	})
 }
 
@@ -662,7 +662,7 @@ func configForkSchedule(b *BeaconChainConfig) map[[fieldparams.VersionLength]byt
 	fvs[bytesutil.ToBytes4(b.ElectraForkVersion)] = b.ElectraForkEpoch
 	fvs[bytesutil.ToBytes4(b.FuluForkVersion)] = b.FuluForkEpoch
 	fvs[bytesutil.ToBytes4(b.GloasForkVersion)] = b.GloasForkEpoch
-	fvs[bytesutil.ToBytes4(b.HegotaForkVersion)] = b.HegotaForkEpoch
+	fvs[bytesutil.ToBytes4(b.HezeForkVersion)] = b.HezeForkEpoch
 	return fvs
 }
 
@@ -687,7 +687,7 @@ func ConfigForkVersions(b *BeaconChainConfig) map[[fieldparams.VersionLength]byt
 		bytesutil.ToBytes4(b.ElectraForkVersion):   version.Electra,
 		bytesutil.ToBytes4(b.FuluForkVersion):      version.Fulu,
 		bytesutil.ToBytes4(b.GloasForkVersion):     version.Gloas,
-		bytesutil.ToBytes4(b.HegotaForkVersion):    version.Hegota,
+		bytesutil.ToBytes4(b.HezeForkVersion):    version.Heze,
 	}
 }
 

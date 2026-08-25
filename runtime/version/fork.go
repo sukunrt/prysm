@@ -15,7 +15,7 @@ const (
 	Electra
 	Fulu
 	Gloas
-	Hegota
+	Heze
 )
 
 var versionToString = map[int]string{
@@ -27,7 +27,7 @@ var versionToString = map[int]string{
 	Electra:   "electra",
 	Fulu:      "fulu",
 	Gloas:     "gloas",
-	Hegota:    "hegota",
+	Heze:    "heze",
 }
 
 // stringToVersion and allVersions are populated in init()
@@ -39,7 +39,7 @@ var supportedVersions []int
 // enabled on any supported network. These versions are removed from All().
 var unsupportedVersions = map[int]struct{}{
 	Gloas:  {},
-	Hegota: {},
+	Heze: {},
 }
 
 // ErrUnrecognizedVersionName means a string does not match the list of canonical version names.
