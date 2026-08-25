@@ -257,3 +257,59 @@ func insertChain(t *testing.T, ctx context.Context, f *ForkChoice, blocks []chai
 		require.NoError(t, f.InsertNode(ctx, st, blk))
 	}
 }
+
+// TestPrune_LeavesTheEpochDependentRootReachable is the e2e killer, pinned as a
+// unit test. Per-round finality prunes at every round start and finality lands two
+// rounds behind head, so cutting the tree at the finalized round would put the
+// tree root only a few slots below head. The proposer-boost check inside
+// Store.insert asks dependentRootForEpoch for the boundary of currentEpoch-1,
+// which at 8 slots per round inside a 32-slot epoch is four to seven rounds back
+// -- always below such a cut. The walk then runs off the tree root's nil parent
+// and returns ErrNilNode, so every block insert fails and the chain stops.
+//
+// The horizon therefore trails the finalized round by two epochs.
+func TestPrune_LeavesTheEpochDependentRootReachable(t *testing.T) {
+	setupRoundsConfig(t, 1)
+	ctx := t.Context()
+	f := setup(0, 0)
+
+	// A dense chain through slot 100: epoch 3, round 12.
+	var blocks []chainBlock
+	parent := params.BeaconConfig().ZeroHash
+	for slot := primitives.Slot(1); slot <= 100; slot++ {
+		root := [32]byte{byte(slot)}
+		blocks = append(blocks, chainBlock{slot, root, parent})
+		parent = root
+	}
+	insertChain(t, ctx, f, blocks)
+	head := parent
+
+	// Finalize round 10 -- two rounds behind the head's round 12, the design's
+	// steady state. Round 10's FFG target at offset 1 is the block at slot 79.
+	s := f.store
+	finalized := [32]byte{79}
+	s.finalizedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 10, Root: finalized}
+	s.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 10, Root: finalized}
+	require.NoError(t, s.prune(ctx))
+
+	// The horizon is two epochs before the epoch holding RoundStart(10)=slot 80,
+	// i.e. EpochStart(2)-64 = slot 0. Nothing is cut this early, but the
+	// invariant under test is reachability, so assert that directly: the
+	// proposer-boost lookup for the previous epoch must still resolve.
+	currentEpoch := slots.ToEpoch(100)
+	_, err := s.dependentRootForEpoch(head, currentEpoch-1)
+	require.NoError(t, err)
+
+	// Now push finality far enough that the horizon actually moves, and check the
+	// same lookup still resolves against a genuinely cut tree.
+	s.finalizedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 12, Root: [32]byte{95}}
+	s.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 12, Root: [32]byte{95}}
+	require.NoError(t, s.prune(ctx))
+	require.Equal(t, primitives.Slot(32), s.treeRootNode.slot,
+		"the horizon should have cut the tree back to EpochStart(3)-2*SlotsPerEpoch")
+
+	got, err := s.dependentRootForEpoch(head, currentEpoch-1)
+	require.NoError(t, err)
+	// Epoch 2 starts at slot 64, so the dependent root is the block at slot 63.
+	require.Equal(t, [32]byte{63}, got)
+}

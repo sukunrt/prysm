@@ -153,10 +153,15 @@ func TestStore_Prune_MoreThanThreshold(t *testing.T) {
 
 	s := f.store
 
-	// Finalized root is at index 99 so everything before 99 should be pruned.
+	// Finalized round 3 puts the pruning horizon at slot 32 -- two epochs before
+	// the epoch holding round 3's first slot -- so slots 0-31 go and 32-99 stay.
+	// The horizon trails the finalized node on purpose: epoch-keyed lookups such
+	// as dependentRootForEpoch still have to reach the previous epoch boundary.
 	s.finalizedCheckpoint.Root = indexToHash(99)
+	s.finalizedCheckpoint.Epoch = 3
 	require.NoError(t, s.prune(t.Context()))
-	assert.Equal(t, 1, len(s.emptyNodeByRoot), "Incorrect nodes count")
+	assert.Equal(t, 68, len(s.emptyNodeByRoot), "Incorrect nodes count")
+	assert.Equal(t, primitives.Slot(32), s.treeRootNode.slot, "Incorrect tree root")
 }
 
 func TestStore_Prune_MoreThanOnce(t *testing.T) {
@@ -175,15 +180,15 @@ func TestStore_Prune_MoreThanOnce(t *testing.T) {
 
 	s := f.store
 
-	// Finalized root is at index 11 so everything before 11 should be pruned.
-	s.finalizedCheckpoint.Root = indexToHash(10)
+	// Finalized round 3 puts the horizon at slot 32, so slots 32-99 survive.
+	s.finalizedCheckpoint.Root = indexToHash(99)
+	s.finalizedCheckpoint.Epoch = 3
 	require.NoError(t, s.prune(t.Context()))
-	assert.Equal(t, 90, len(s.emptyNodeByRoot), "Incorrect nodes count")
+	assert.Equal(t, 68, len(s.emptyNodeByRoot), "Incorrect nodes count")
 
-	// One more time.
-	s.finalizedCheckpoint.Root = indexToHash(10)
+	// One more time: the horizon has not moved, so neither has the tree.
 	require.NoError(t, s.prune(t.Context()))
-	assert.Equal(t, 90, len(s.emptyNodeByRoot), "Incorrect nodes count")
+	assert.Equal(t, 68, len(s.emptyNodeByRoot), "Incorrect nodes count")
 }
 
 func TestStore_Prune_ReturnEarly(t *testing.T) {
@@ -205,28 +210,50 @@ func TestStore_Prune_ReturnEarly(t *testing.T) {
 	require.Equal(t, nodeCount, f.NodeCount())
 }
 
+// forkAtGenesisThenChain builds two children of the genesis node -- a dead branch
+// at slot 2 and a chain at slots 1,3,4,...,last -- and returns the fork choice.
+// The chain is long enough that a finalized round can put the pruning horizon
+// above the dead branch, which is where pruning becomes observable now that the
+// horizon trails the finalized round by two epochs.
+func forkAtGenesisThenChain(t *testing.T, last uint64) *ForkChoice {
+	t.Helper()
+	f := setup(0, 0)
+	ctx := t.Context()
+	zero := params.BeaconConfig().ZeroHash
+	insert := func(slot primitives.Slot, root, parent [32]byte) {
+		state, blkRoot, err := prepareForkchoiceState(ctx, slot, root, parent, zero, 0, 0)
+		require.NoError(t, err)
+		require.NoError(t, f.InsertNode(ctx, state, blkRoot))
+	}
+	insert(1, indexToHash(1), zero)
+	// The dead branch: a second child of genesis, on no one's finalized chain.
+	insert(2, indexToHash(2), zero)
+	for i := uint64(3); i <= last; i++ {
+		insert(primitives.Slot(i), indexToHash(i), indexToHash(i-1))
+	}
+	return f
+}
+
 // This unit test starts with a simple branch like this
 //
-//   - 1
+//   - 1 -- 3 -- 4 -- ... -- 99
 //     /
 //
 // -- 0 -- 2
 //
-// And we finalize 1. As a result only 1 should survive
+// and finalizes 99 at round 3, which puts the horizon at slot 32. Everything
+// below the horizon -- genesis and the dangling branch at slot 2 -- goes.
 func TestStore_Prune_NoDanglingBranch(t *testing.T) {
-	f := setup(0, 0)
-	ctx := t.Context()
-	state, blkRoot, err := prepareForkchoiceState(ctx, 1, indexToHash(1), params.BeaconConfig().ZeroHash, [32]byte{'1'}, 0, 0)
-	require.NoError(t, err)
-	require.NoError(t, f.InsertNode(ctx, state, blkRoot))
-	state, blkRoot, err = prepareForkchoiceState(ctx, 2, indexToHash(2), params.BeaconConfig().ZeroHash, [32]byte{'2'}, 0, 0)
-	require.NoError(t, err)
-	require.NoError(t, f.InsertNode(ctx, state, blkRoot))
+	f := forkAtGenesisThenChain(t, 99)
 
 	s := f.store
-	s.finalizedCheckpoint.Root = indexToHash(1)
+	s.finalizedCheckpoint.Root = indexToHash(99)
+	s.finalizedCheckpoint.Epoch = 3
 	require.NoError(t, s.prune(t.Context()))
-	require.Equal(t, len(s.emptyNodeByRoot), 1)
+
+	require.Equal(t, false, f.HasNode(indexToHash(2)))
+	require.Equal(t, false, f.HasNode(params.BeaconConfig().ZeroHash))
+	require.Equal(t, primitives.Slot(32), s.treeRootNode.slot)
 }
 
 // This test starts with the following branching diagram
@@ -294,19 +321,15 @@ func TestStore_tips(t *testing.T) {
 }
 
 func TestStore_PruneMapsNodes(t *testing.T) {
-	f := setup(0, 0)
-	ctx := t.Context()
-	state, blkRoot, err := prepareForkchoiceState(ctx, 1, indexToHash(1), params.BeaconConfig().ZeroHash, [32]byte{'1'}, 0, 0)
-	require.NoError(t, err)
-	require.NoError(t, f.InsertNode(ctx, state, blkRoot))
-	state, blkRoot, err = prepareForkchoiceState(ctx, 2, indexToHash(2), params.BeaconConfig().ZeroHash, [32]byte{'2'}, 0, 0)
-	require.NoError(t, err)
-	require.NoError(t, f.InsertNode(ctx, state, blkRoot))
+	f := forkAtGenesisThenChain(t, 99)
 
 	s := f.store
-	s.finalizedCheckpoint.Root = indexToHash(1)
+	s.finalizedCheckpoint.Root = indexToHash(99)
+	s.finalizedCheckpoint.Epoch = 3
 	require.NoError(t, s.prune(t.Context()))
-	require.Equal(t, len(s.emptyNodeByRoot), 1)
+	// Slots 32-99 remain; genesis, slot 1, the dead branch at slot 2 and slots
+	// 3-31 are all below the horizon.
+	require.Equal(t, 68, len(s.emptyNodeByRoot))
 }
 
 func TestForkChoice_ReceivedBlocksLastEpoch(t *testing.T) {
@@ -515,14 +538,17 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	s.finalizedCheckpoint.Root = blk1.Root()
 	s.justifiedCheckpoint.Root = blk1.Root()
 	require.NoError(t, s.prune(ctx))
-	// The block at slot 31 is pruned away, so the new tree root is its own
-	// target and the dependent root falls back to the saved one.
+	// The pruning horizon trails the finalized round by two epochs, and the
+	// finalized round here is 1, so the horizon is still at genesis and nothing
+	// is cut: epoch 1's target and dependent root are unchanged. This is the
+	// point of the trailing horizon -- an epoch-keyed lookup for the previous
+	// epoch must keep resolving right after a prune.
 	target, err = f.TargetRootForRound(blk1.Root(), 1)
 	require.NoError(t, err)
-	require.Equal(t, blk1.Root(), target)
+	require.Equal(t, params.BeaconConfig().ZeroHash, target)
 	dependent, err = f.DependentRoot(1)
 	require.NoError(t, err)
-	require.Equal(t, blk.Root(), dependent)
+	require.Equal(t, [32]byte{}, dependent)
 	dependent, err = f.DependentRoot(2)
 	require.NoError(t, err)
 	require.Equal(t, blk1.Root(), dependent)
@@ -590,18 +616,24 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	require.Equal(t, dependent, blk1.Root())
 	dependent, err = f.DependentRoot(1)
 	require.NoError(t, err)
-	require.Equal(t, blk.Root(), dependent)
+	require.Equal(t, [32]byte{}, dependent)
 	target, err = f.TargetRootForRound(blk6.Root(), 2)
 	require.NoError(t, err)
 	require.Equal(t, target, blk1.Root())
 
-	// Prune finalization, finalize the block at slot 96
+	// Prune finalization, finalize the block at slot 96 in round 3. The horizon
+	// sits two epochs before round 3's epoch, i.e. slot 32, so the tree is cut at
+	// the block at slot 32 and only genesis goes. Everything the epoch-keyed
+	// lookups need for epoch 3 is still reachable.
 	s.finalizedCheckpoint.Root = blk4.Root()
+	s.finalizedCheckpoint.Epoch = 3
 	require.NoError(t, s.prune(ctx))
+	require.Equal(t, blk.Root(), s.treeRootNode.root)
+	require.Equal(t, false, f.HasNode(params.BeaconConfig().ZeroHash))
+	// Slot 95 was missed, so epoch 3's target is still the block at slot 33.
 	target, err = f.TargetRootForRound(blk4.Root(), 3)
 	require.NoError(t, err)
-	require.Equal(t, blk4.Root(), target)
-	// Dependent root for the finalized block should be the root of the pruned block at slot 33
+	require.Equal(t, blk1.Root(), target)
 	dependent, err = f.DependentRootForEpoch(blk4.Root(), 3)
 	require.NoError(t, err)
 	require.Equal(t, blk1.Root(), dependent)

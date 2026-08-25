@@ -269,7 +269,12 @@ func TestVotes_CanFindHead(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, indexToHash(10), r, "Incorrect head for with justified epoch at 3")
 
-	// Verify pruning above the prune threshold does prune:
+	// Finalize block 5, which sits at slot 2*SlotsPerEpoch, i.e. round 2. The
+	// pruning horizon trails the finalized round by two epochs, so for round 2 it
+	// is still genesis and nothing is cut yet -- pruning is a memory optimization
+	// and lags finality on purpose so epoch-keyed lookups stay reachable. Head
+	// selection is gated by the checkpoints, not by whether a node was pruned, so
+	// the head assertions below hold either way:
 	//          0
 	//         / \
 	//        2   1
@@ -277,7 +282,7 @@ func TestVotes_CanFindHead(t *testing.T) {
 	//            3
 	//            |
 	//            4
-	// -------pruned here ------
+	//          /   \
 	//          5   6
 	//          |
 	//          7
@@ -286,9 +291,9 @@ func TestVotes_CanFindHead(t *testing.T) {
 	//         / \
 	//        9  10
 	f.store.finalizedCheckpoint.Root = indexToHash(5)
+	f.store.finalizedCheckpoint.Epoch = 2
 	require.NoError(t, f.store.prune(t.Context()))
-	assert.Equal(t, 5, len(f.store.emptyNodeByRoot), "Incorrect nodes length after prune")
-	// we pruned artificially the justified root.
+	assert.Equal(t, 7, len(f.store.emptyNodeByRoot), "Incorrect nodes length after prune")
 	f.store.justifiedCheckpoint.Root = indexToHash(5)
 
 	r, err = f.Head(t.Context())

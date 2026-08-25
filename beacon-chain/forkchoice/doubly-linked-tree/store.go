@@ -305,12 +305,54 @@ func (s *Store) pruneFinalizedNodeByRootMap(ctx context.Context, node, finalized
 	return nil
 }
 
+// pruneHorizonSlot returns the slot below which fork choice stops keeping nodes.
+//
+// Pruning is a memory optimization, not a correctness mechanism: head selection is
+// gated by the justified and finalized checkpoints, so nothing below finality can
+// win whether or not its node is still in the tree. What pruning must not do is
+// delete nodes that live lookups still reach.
+//
+// dependentRootForEpoch is epoch-keyed -- shuffling is an epoch concept -- and its
+// callers ask for the boundary of currentEpoch-1, so the tree has to reach that far
+// back. Per-round finality lands two rounds behind head, which at 8 slots per round
+// inside a 32-slot epoch is well within a single epoch; cutting at the finalized
+// round would put that epoch boundary below the tree root on every prune and every
+// insert would fail. So keep the cut on the epoch rhythm and trail it by two
+// epochs from the epoch holding the finalized round's first slot -- the distance
+// the epoch-keyed world got for free when finality itself lagged two epochs.
+//
+// This is how FAR BACK the horizon sits. Where the cut lands relative to a round's
+// FFG target -- the offset-dependent geometry -- is a separate question, handled by
+// the incompatible-children pass in prune.
+func pruneHorizonSlot(finalizedRound primitives.Round) (primitives.Slot, error) {
+	roundStart, err := slots.RoundStart(finalizedRound)
+	if err != nil {
+		return 0, err
+	}
+	epochStart, err := slots.EpochStart(slots.ToEpoch(roundStart))
+	if err != nil {
+		return 0, err
+	}
+	trail := params.BeaconConfig().SlotsPerEpoch.Mul(2)
+	if epochStart < trail {
+		return 0, nil
+	}
+	return epochStart - trail, nil
+}
+
 // prune prunes the fork choice store. It removes all nodes that compete with the finalized root.
 // This function does not prune for invalid optimistically synced nodes, it deals only with pruning upon finalization
 // TODO: Gloas, to ensure that chains up to a full node are found, we may want to consider pruning only up to the latest full block that was finalized
 func (s *Store) prune(ctx context.Context) error {
 	ctx, span := trace.StartSpan(ctx, "doublyLinkedForkchoice.Prune")
 	defer span.End()
+
+	// The tree walk below used to be the only thing that noticed a cancelled
+	// context, which made the check depend on whether there was anything to cut.
+	// Now that the horizon can leave the tree untouched, check up front.
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 
 	finalizedRoot := s.finalizedCheckpoint.Root
 	finalizedRound := s.finalizedCheckpoint.Epoch
@@ -325,18 +367,32 @@ func (s *Store) prune(ctx context.Context) error {
 	}
 	s.finalizedPayloadBlockHash = s.checkpointPayloadHashForRoot(finalizedRoot)
 
-	// Save the new finalized dependent root because it will be pruned
-	s.finalizedDependentRoot = fn.parent.node.root
+	// Cut the tree back to the pruning horizon. The new tree root is the deepest
+	// ancestor of the finalized node at or below the horizon, so the horizon only
+	// ever moves along the finalized chain.
+	boundSlot, err := pruneHorizonSlot(finalizedRound)
+	if err != nil {
+		return errors.Wrap(err, "could not compute prune horizon")
+	}
+	newRoot := fn
+	for newRoot.slot > boundSlot && newRoot.parent != nil {
+		newRoot = newRoot.parent.node
+	}
+	if newRoot.parent != nil {
+		// Save the dependent root below the new tree root, since it is about to go.
+		s.finalizedDependentRoot = newRoot.parent.node.root
 
-	// Prune nodeByRoot starting from root
-	if err := s.pruneFinalizedNodeByRootMap(ctx, s.treeRootNode, fn); err != nil {
-		return err
+		// Prune nodeByRoot starting from root
+		if err := s.pruneFinalizedNodeByRootMap(ctx, s.treeRootNode, newRoot); err != nil {
+			return err
+		}
+
+		newRoot.parent = nil
+		s.treeRootNode = newRoot
+
+		prunedCount.Inc()
 	}
 
-	fn.parent = nil
-	s.treeRootNode = fn
-
-	prunedCount.Inc()
 	// Prune all children of the finalized checkpoint block that are incompatible
 	// with it. A chain's FFG target for the finalized round is its deepest block at
 	// or before slots.FFGTargetSlot(round), so a child of the finalized node is
