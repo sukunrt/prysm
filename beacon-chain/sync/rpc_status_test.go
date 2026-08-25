@@ -1179,3 +1179,96 @@ func makeBlocks(t *testing.T, i, n uint64, previousRoot [32]byte) []interfaces.R
 	}
 	return ifaceBlocks
 }
+
+// TestValidateStatusMessage_ShiftedFinalizedCheckpoint pins the FFG target
+// shift in the status handshake. The checkpoint block for epoch E sits at
+// StartSlot(E)-1, so its finalized child sits exactly on the epoch's first
+// slot; the peer whose status says so is describing the ordinary case and must
+// not be rejected. Rejecting it cost the e2e its whole peer set: both peers
+// failed re-validation with "invalid epoch", the joining node dropped them and
+// stopped syncing.
+func TestValidateStatusMessage_ShiftedFinalizedCheckpoint(t *testing.T) {
+	ctx := t.Context()
+	db := dbTest.SetupDB(t)
+
+	genesis := util.NewBeaconBlock()
+	genRoot, err := genesis.Block.HashTreeRoot()
+	require.NoError(t, err)
+	wsb, err := consensusblocks.NewSignedBeaconBlock(genesis)
+	require.NoError(t, err)
+	require.NoError(t, db.SaveBlock(ctx, wsb))
+	require.NoError(t, db.SaveGenesisBlockRoot(ctx, genRoot))
+
+	blocks := makeBlocks(t, 0, 200, genRoot)
+	require.NoError(t, db.SaveBlocks(ctx, blocks))
+	summaries := make([]*ethpb.StateSummary, len(blocks))
+	for i, b := range blocks {
+		r, err := b.Block().HashTreeRoot()
+		require.NoError(t, err)
+		summaries[i] = &ethpb.StateSummary{Slot: b.Block().Slot(), Root: r[:]}
+	}
+	require.NoError(t, db.SaveStateSummaries(ctx, summaries))
+
+	rootAt := func(slot primitives.Slot) [32]byte {
+		r, err := blocks[slot-1].Block().HashTreeRoot()
+		require.NoError(t, err)
+		return r
+	}
+
+	perEpoch := params.BeaconConfig().SlotsPerEpoch
+	// The local node is finalized far enough ahead that the block on epoch 3's
+	// first slot is itself finalized, which is what makes FinalizedChildBlock
+	// answer at all. Without that the branch exits early and proves nothing.
+	localRoot := rootAt(6*perEpoch - 1)
+	require.NoError(t, db.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{
+		Epoch: 6, Root: localRoot[:],
+	}))
+
+	shifted := rootAt(3*perEpoch - 1) // the epoch 3 checkpoint under the shift
+	tooOld := rootAt(2*perEpoch - 1)  // the epoch 2 checkpoint, claimed as 3
+
+	state, err := transition.GenesisBeaconState(ctx, nil, 0, &ethpb.Eth1Data{
+		DepositRoot: make([]byte, 32), BlockHash: make([]byte, 32),
+	})
+	require.NoError(t, err)
+	require.NoError(t, state.SetSlot(6*perEpoch))
+	elapsed := uint64(8*perEpoch) * params.BeaconConfig().SecondsPerSlot
+	chain := &mock.ChainService{
+		State:               state,
+		FinalizedCheckPoint: &ethpb.Checkpoint{Epoch: 6, Root: localRoot[:]},
+		Fork: &ethpb.Fork{
+			PreviousVersion: params.BeaconConfig().GenesisForkVersion,
+			CurrentVersion:  params.BeaconConfig().GenesisForkVersion,
+		},
+		Genesis:        time.Unix(time.Now().Unix()-int64(elapsed), 0),
+		ValidatorsRoot: [32]byte{'A'},
+		FinalizedRoots: map[[32]byte]bool{
+			localRoot: true, shifted: true, tooOld: true,
+		},
+	}
+	r := &Service{
+		cfg: &config{
+			chain:         chain,
+			clock:         startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
+			beaconDB:      db,
+			stateNotifier: chain.StateNotifier(),
+		},
+		ctx: ctx,
+	}
+	digest := r.currentForkDigest()
+	status := func(root [32]byte) *ethpb.Status {
+		return &ethpb.Status{
+			ForkDigest:     digest[:],
+			FinalizedRoot:  root[:],
+			FinalizedEpoch: 3,
+			HeadRoot:       localRoot[:],
+			HeadSlot:       6 * perEpoch,
+		}
+	}
+
+	require.NoError(t, r.validateStatusMessage(ctx, status(shifted)))
+	// A checkpoint a whole epoch too early is still a contradiction: its child
+	// is well before epoch 3's first slot, so that child would be the
+	// checkpoint instead.
+	require.ErrorIs(t, r.validateStatusMessage(ctx, status(tooOld)), p2ptypes.ErrInvalidEpoch)
+}

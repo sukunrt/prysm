@@ -485,9 +485,15 @@ func (s *Service) validateStatusMessage(ctx context.Context, genericMsg any) err
 		if childBlock == nil || childBlock.IsNil() {
 			return nil
 		}
-		// If child finalized block also has a smaller or
-		// equal slot number we return an error.
-		if startSlot >= childBlock.Block().Slot() {
+		// If the child finalized block has a smaller slot number we return an
+		// error: that child, not this block, would be the epoch's checkpoint.
+		//
+		// The bound is strict because the FFG target is the block at
+		// StartSlot(E)-1, so the checkpoint block's child sitting exactly on
+		// the epoch's first slot is the ordinary case, not a contradiction.
+		// This is the same boundary move that prune and IsViableForCheckpoint
+		// took with the target shift.
+		if startSlot > childBlock.Block().Slot() {
 			return p2ptypes.ErrInvalidEpoch
 		}
 		return nil
