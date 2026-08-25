@@ -150,3 +150,11 @@ Decisions:
    and memory grows; keep runs short. If the gadget stalls, pruning stops;
    watch for it.
 8. The Goldfish gate must be live at the fork, or all head weights are zero.
+9. Decided 2026-08-15: duty assignment moves to the beacon node. Extend
+   `ValidatorDuty` like `ptc_slots`: the node computes available-attester
+   and finality-vote assignments in `duties_v2.go`; `RolesAt` only reads
+   the snapshot. The client-side Heze check and seat computation in
+   `RolesAt` go away, the `decoupled` package stays node-only, and the
+   node stops setting `AttesterSlot` after Heze (kills the TODO(goldfish)
+   wipe). Data RPCs return the unsigned vote with seat bits set, so the
+   client only signs.
