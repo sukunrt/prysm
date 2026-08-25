@@ -313,3 +313,39 @@ func TestPrune_LeavesTheEpochDependentRootReachable(t *testing.T) {
 	// Epoch 2 starts at slot 64, so the dependent root is the block at slot 63.
 	require.Equal(t, [32]byte{63}, got)
 }
+
+// TestInsert_UnwindsTheNodeOnError pins that a failed insert leaves the store
+// exactly as it found it. The caller rolls the block back out of the database
+// when InsertNode fails, so a node left behind in emptyNodeByRoot names a block
+// that no longer exists; head selection then keeps landing on that root and
+// failing with "block does not exist" for the rest of the process's life. That
+// is what turned the e2e's first insert failure into a permanent wedge.
+func TestInsert_UnwindsTheNodeOnError(t *testing.T) {
+	setupRoundsConfig(t, 1)
+	ctx := t.Context()
+	f := setup(0, 0)
+	s := f.store
+	zero := params.BeaconConfig().ZeroHash
+
+	parentRoot := [32]byte{1}
+	insertChain(t, ctx, f, []chainBlock{{1, parentRoot, zero}})
+
+	before := len(s.emptyNodeByRoot)
+	parentChildren := len(s.emptyNodeByRoot[parentRoot].children)
+
+	// Point the head at a node that is not in the tree, so the head half of the
+	// proposer-boost dependent-root comparison fails after the new node has
+	// already been registered.
+	s.headNode = &Node{root: [32]byte{'x'}, slot: 1}
+
+	// Drift genesis so the block below is timely for the current slot, which is
+	// what takes insert down the proposer-boost path.
+	driftGenesisTime(f, 2, 0)
+	st, blk, err := prepareForkchoiceState(ctx, 2, [32]byte{2}, parentRoot, zero, 0, 0)
+	require.NoError(t, err)
+	require.ErrorContains(t, "could not get head dependent root", f.InsertNode(ctx, st, blk))
+
+	require.Equal(t, false, f.HasNode([32]byte{2}))
+	require.Equal(t, before, len(s.emptyNodeByRoot))
+	require.Equal(t, parentChildren, len(s.emptyNodeByRoot[parentRoot].children))
+}

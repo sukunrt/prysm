@@ -3,6 +3,7 @@ package doublylinkedtree
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/OffchainLabs/go-bitfield"
@@ -171,6 +172,19 @@ func (s *Store) insert(ctx context.Context,
 	}
 	s.emptyNodeByRoot[root] = pn
 	ret = pn
+	// unwindInsert undoes the bookkeeping done from here on. Every error return
+	// below has to call it: the caller rolls the block back out of the database
+	// when insert fails, so a node left behind names a block that no longer
+	// exists, and head selection keeps landing on it and failing with "block does
+	// not exist" for the rest of the process's life.
+	unwindInsert := func() {
+		delete(s.emptyNodeByRoot, root)
+		delete(s.fullNodeByRoot, root)
+		if parent != nil {
+			parent.children = slices.DeleteFunc(parent.children, func(c *Node) bool { return c == n })
+		}
+		updatePayloadNodeMetrics(s)
+	}
 	if block.Version() < version.Gloas {
 		// Make also the full node, this is optimistic until the engine returns the execution payload validation.
 		fn := &PayloadNode{
@@ -202,9 +216,7 @@ func (s *Store) insert(ctx context.Context,
 			s.headNode = n
 			s.highestReceivedNode = n
 		} else {
-			delete(s.emptyNodeByRoot, root)
-			delete(s.fullNodeByRoot, root)
-			updatePayloadNodeMetrics(s)
+			unwindInsert()
 			return nil, errInvalidParentRoot
 		}
 	} else {
@@ -217,6 +229,7 @@ func (s *Store) insert(ctx context.Context,
 		currentSlot := slots.CurrentSlot(s.genesisTime)
 		sss, err := slots.SinceSlotStart(currentSlot, s.genesisTime, now)
 		if err != nil {
+			unwindInsert()
 			return nil, fmt.Errorf("could not determine time since current slot started: %w", err)
 		}
 		bps := params.BeaconConfig().AttestationDueBPS
@@ -232,10 +245,12 @@ func (s *Store) insert(ctx context.Context,
 			}
 			depRoot, err := s.dependentRootForEpoch(root, depEpoch)
 			if err != nil {
+				unwindInsert()
 				return nil, errors.Wrap(err, "could not get block dependent root.")
 			}
 			headDepRoot, err := s.dependentRoot(depEpoch)
 			if err != nil {
+				unwindInsert()
 				return nil, errors.Wrap(err, "could not get head dependent root.")
 			}
 			if depRoot == headDepRoot {
