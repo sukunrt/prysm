@@ -31,6 +31,12 @@ import (
 
 var processPendingBlocksPeriod = slots.DivideSlotBy(3 /* times per slot */)
 
+// threeSlotDuration bounds the work the pending queue does synchronously, so that one
+// entry waiting on data that never arrives cannot hold up the whole queue.
+func threeSlotDuration() time.Duration {
+	return 3 * time.Duration(params.BeaconConfig().SecondsPerSlot) * time.Second
+}
+
 const maxPeerRequest = 50
 const numOfTries = 5
 const maxBlocksPerSlot = 3
@@ -148,10 +154,7 @@ func (s *Service) processPendingBlocks(ctx context.Context) error {
 				continue
 			}
 
-			// Calculate the deadline time by adding three slots duration to the current time
-			secondsPerSlot := params.BeaconConfig().SecondsPerSlot
-			threeSlotDuration := 3 * time.Duration(secondsPerSlot) * time.Second
-			ctxWithTimeout, cancelFunction := context.WithTimeout(ctx, threeSlotDuration)
+			ctxWithTimeout, cancelFunction := context.WithTimeout(ctx, threeSlotDuration())
 			// Process and broadcast the block.
 			if err := s.processAndBroadcastBlock(ctxWithTimeout, b, blkRoot); err != nil {
 				s.handleBlockProcessingError(ctxWithTimeout, err, b, blkRoot)
@@ -516,12 +519,15 @@ func (s *Service) fetchAndQueuePayloadEnvelopesForRoots(
 		if env == nil || env.Message == nil {
 			continue
 		}
-		s.queuePendingPayloadEnvelopeFromRootRequest(env)
+		s.queueUnverifiedPayloadEnvelope(env)
 	}
 }
 
-// Signature is not verified here, processing revalidates fully and the slot bound plus caps bound memory.
-func (s *Service) queuePendingPayloadEnvelopeFromRootRequest(signedEnvelope *ethpb.SignedExecutionPayloadEnvelope) {
+// queueUnverifiedPayloadEnvelope queues an envelope that has not been through gossip
+// validation: one fetched by root, or one put back after its import timed out. The
+// signature is not verified here, processing revalidates fully, and the slot bound plus
+// the caps bound memory.
+func (s *Service) queueUnverifiedPayloadEnvelope(signedEnvelope *ethpb.SignedExecutionPayloadEnvelope) {
 	if signedEnvelope == nil || signedEnvelope.Message == nil || signedEnvelope.Message.Payload == nil {
 		return
 	}

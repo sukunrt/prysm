@@ -3,6 +3,7 @@ package sync
 import (
 	"bytes"
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	lruwrpr "github.com/OffchainLabs/prysm/v7/cache/lru"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	enginev1 "github.com/OffchainLabs/prysm/v7/proto/engine/v1"
@@ -712,4 +714,79 @@ func TestProcessPendingPayloadEnvelope_PastSlotFetchesDataColumns(t *testing.T) 
 		s.processPendingPayloadEnvelope(s.ctx, root)
 		require.Equal(t, true, s.hasPendingGloasColumns(root))
 	})
+}
+
+// An envelope whose import runs past the deadline must not hold the caller for longer
+// than that, and must go back on the queue so the mid-slot sweep retries it.
+func TestProcessPendingPayloadEnvelope_DeadlineRequeuesForRetry(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SecondsPerSlot = 1
+	params.OverrideBeaconConfig(cfg)
+
+	ctx := context.Background()
+	db := dbtest.SetupDB(t)
+	genesis := time.Now()
+	var calls atomic.Int32
+	chainService := &mock.ChainService{
+		Genesis:             genesis,
+		FinalizedCheckPoint: &ethpb.Checkpoint{},
+		DB:                  db,
+		ReceivePayloadEnvelopeFn: func(ctx context.Context, _ interfaces.ROSignedExecutionPayloadEnvelope) error {
+			// The first import wedges the way a data availability check does when the
+			// columns for its slot will never arrive; the retry finds them.
+			if calls.Add(1) == 1 {
+				<-ctx.Done()
+				return errors.Wrap(ctx.Err(), "data availability check failed for payload envelope")
+			}
+			return nil
+		},
+	}
+	broadcaster := p2ptesting.NewTestP2P(t)
+	s := &Service{
+		ctx:                      ctx,
+		pendingPayloadEnvelopes:  make(map[[32]byte]map[uint64]*ethpb.SignedExecutionPayloadEnvelope),
+		pendingGloasColumns:      make(map[[32]byte]*pendingGloasEntry),
+		seenPayloadEnvelopeCache: lruwrpr.New(10),
+		badBlockCache:            lruwrpr.New(10),
+		cfg: &config{
+			chain:    chainService,
+			beaconDB: db,
+			stateGen: stategen.New(db, doublylinkedtree.New()),
+			clock:    startup.NewClock(genesis, chainService.ValidatorsRoot),
+			p2p:      broadcaster,
+		},
+	}
+
+	bid := util.GenerateTestSignedExecutionPayloadBid(0)
+	sb := util.NewBeaconBlockGloas()
+	signedBlock, err := blocks.NewSignedBeaconBlock(sb)
+	require.NoError(t, err)
+	root, err := signedBlock.Block().HashTreeRoot()
+	require.NoError(t, err)
+	chainService.ForkchoiceRoots = map[[32]byte]bool{root: true}
+
+	builderIdx := primitives.BuilderIndex(bid.Message.BuilderIndex)
+	blockHash := bytesutil.ToBytes32(bid.Message.BlockHash)
+	env := testSignedExecutionPayloadEnvelope(t, 0, builderIdx, root, blockHash)
+	s.pendingPayloadEnvelopes[root] = map[uint64]*ethpb.SignedExecutionPayloadEnvelope{uint64(builderIdx): env}
+
+	start := time.Now()
+	s.processPendingPayloadEnvelope(ctx, root)
+	elapsed := time.Since(start)
+
+	require.Equal(t, int32(1), calls.Load())
+	require.Equal(t, true, elapsed < 2*threeSlotDuration(), "import was not bounded by the deadline")
+	require.Equal(t, false, s.hasSeenPayloadEnvelope(root, builderIdx))
+	require.Equal(t, false, broadcaster.BroadcastCalled.Load())
+
+	// The entry is back on the queue, so the mid-slot sweep picks it up again.
+	s.pendingEnvelopeLock.RLock()
+	require.Equal(t, 1, len(s.pendingPayloadEnvelopes[root]))
+	s.pendingEnvelopeLock.RUnlock()
+
+	s.processPendingPayloadEnvelopes(ctx)
+	require.Equal(t, int32(2), calls.Load())
+	require.Equal(t, true, s.hasSeenPayloadEnvelope(root, builderIdx))
+	require.Equal(t, 0, len(s.pendingPayloadEnvelopes))
 }

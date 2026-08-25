@@ -70,12 +70,15 @@ type ChainService struct {
 	CanonicalRoots              map[[32]byte]bool
 	// Ancestors lets a test stub the result of Ancestor(root, slot) without
 	// wiring a full forkchoice store. Keyed by the input root.
-	Ancestors                      map[[32]byte][32]byte
-	Fork                           *ethpb.Fork
-	RecordedEquivocations          map[EquivocationKey][][32]byte
-	MockCanonicalFull              map[primitives.Slot]bool
-	ETH1Data                       *ethpb.Eth1Data
-	ReceivePayloadEnvelopeErr      error
+	Ancestors                 map[[32]byte][32]byte
+	Fork                      *ethpb.Fork
+	RecordedEquivocations     map[EquivocationKey][][32]byte
+	MockCanonicalFull         map[primitives.Slot]bool
+	ETH1Data                  *ethpb.Eth1Data
+	ReceivePayloadEnvelopeErr error
+	// ReceivePayloadEnvelopeFn, when set, replaces ReceiveExecutionPayloadEnvelope so a
+	// test can observe the context the caller passed in.
+	ReceivePayloadEnvelopeFn       func(context.Context, interfaces.ROSignedExecutionPayloadEnvelope) error
 	stateNotifier                  statefeed.Notifier
 	VerifyBlkDescendantErr         error
 	Block                          interfaces.ReadOnlySignedBeaconBlock
@@ -976,7 +979,10 @@ func (c *ChainService) PtcLookupState(_ context.Context, _ [32]byte, _ primitive
 }
 
 // ReceiveExecutionPayloadEnvelope implements the same method in the chain service.
-func (c *ChainService) ReceiveExecutionPayloadEnvelope(_ context.Context, _ interfaces.ROSignedExecutionPayloadEnvelope) error {
+func (c *ChainService) ReceiveExecutionPayloadEnvelope(ctx context.Context, e interfaces.ROSignedExecutionPayloadEnvelope) error {
+	if c.ReceivePayloadEnvelopeFn != nil {
+		return c.ReceivePayloadEnvelopeFn(ctx, e)
+	}
 	return c.ReceivePayloadEnvelopeErr
 }
 

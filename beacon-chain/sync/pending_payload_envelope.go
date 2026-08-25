@@ -7,6 +7,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -64,7 +65,17 @@ func (s *Service) processPendingPayloadEnvelope(ctx context.Context, root [32]by
 			s.requestDataColumnsForEnvelope(root)
 		}
 
-		if err := s.cfg.chain.ReceiveExecutionPayloadEnvelope(ctx, e); err != nil {
+		// Bound the import the way the pending block queue bounds block import: its data
+		// availability check waits on column storage, and callers run it synchronously.
+		envCtx, cancel := context.WithTimeout(ctx, threeSlotDuration())
+		err = s.cfg.chain.ReceiveExecutionPayloadEnvelope(envCtx, e)
+		cancel()
+		if err != nil {
+			// The data may still show up, so put the envelope back for the mid-slot sweep
+			// to retry rather than dropping it on a deadline we imposed ourselves.
+			if errors.Is(err, context.DeadlineExceeded) {
+				s.queueUnverifiedPayloadEnvelope(signedEnvelope)
+			}
 			log.WithError(err).Debug("Could not process pending payload envelope")
 			continue
 		}
