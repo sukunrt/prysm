@@ -43,6 +43,15 @@ func (c beaconApiChainClient) headBlockHeaders(ctx context.Context) (*structs.Ge
 	return &blockHeader, nil
 }
 
+// parseRound reads a checkpoint's `epoch` JSON field, which carries a ROUND.
+func parseRound(value, name string) (primitives.Round, error) {
+	round, err := strconv.ParseUint(value, 10, 64)
+	if err != nil {
+		return 0, errors.Wrapf(err, "failed to parse %s round `%s`", name, value)
+	}
+	return primitives.Round(round), nil
+}
+
 func (c beaconApiChainClient) ChainHead(ctx context.Context, _ *empty.Empty) (*ethpb.ChainHead, error) {
 	const endpoint = "/eth/v1/beacon/states/head/finality_checkpoints"
 
@@ -59,14 +68,16 @@ func (c beaconApiChainClient) ChainHead(ctx context.Context, _ *empty.Empty) (*e
 		return nil, errors.New("finalized checkpoint is nil")
 	}
 
-	finalizedEpoch, err := strconv.ParseUint(finalityCheckpoints.Data.Finalized.Epoch, 10, 64)
+	// The checkpoints' `epoch` field carries a ROUND, so its slot is the round's
+	// first slot. This is the symmetric twin of the beacon node's own ChainHead.
+	finalizedRound, err := parseRound(finalityCheckpoints.Data.Finalized.Epoch, "finalized")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse finalized epoch `%s`", finalityCheckpoints.Data.Finalized.Epoch)
+		return nil, err
 	}
 
-	finalizedSlot, err := slots.EpochStart(primitives.Epoch(finalizedEpoch))
+	finalizedSlot, err := slots.RoundStart(finalizedRound)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get first slot for epoch `%d`", finalizedEpoch)
+		return nil, errors.Wrapf(err, "failed to get first slot for round `%d`", finalizedRound)
 	}
 
 	finalizedRoot, err := hexutil.Decode(finalityCheckpoints.Data.Finalized.Root)
@@ -78,14 +89,14 @@ func (c beaconApiChainClient) ChainHead(ctx context.Context, _ *empty.Empty) (*e
 		return nil, errors.New("current justified checkpoint is nil")
 	}
 
-	justifiedEpoch, err := strconv.ParseUint(finalityCheckpoints.Data.CurrentJustified.Epoch, 10, 64)
+	justifiedRound, err := parseRound(finalityCheckpoints.Data.CurrentJustified.Epoch, "current justified checkpoint")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse current justified checkpoint epoch `%s`", finalityCheckpoints.Data.CurrentJustified.Epoch)
+		return nil, err
 	}
 
-	justifiedSlot, err := slots.EpochStart(primitives.Epoch(justifiedEpoch))
+	justifiedSlot, err := slots.RoundStart(justifiedRound)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get first slot for epoch `%d`", justifiedEpoch)
+		return nil, errors.Wrapf(err, "failed to get first slot for round `%d`", justifiedRound)
 	}
 
 	justifiedRoot, err := hexutil.Decode(finalityCheckpoints.Data.CurrentJustified.Root)
@@ -97,14 +108,14 @@ func (c beaconApiChainClient) ChainHead(ctx context.Context, _ *empty.Empty) (*e
 		return nil, errors.New("previous justified checkpoint is nil")
 	}
 
-	previousJustifiedEpoch, err := strconv.ParseUint(finalityCheckpoints.Data.PreviousJustified.Epoch, 10, 64)
+	previousJustifiedRound, err := parseRound(finalityCheckpoints.Data.PreviousJustified.Epoch, "previous justified checkpoint")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse previous justified checkpoint epoch `%s`", finalityCheckpoints.Data.PreviousJustified.Epoch)
+		return nil, err
 	}
 
-	previousJustifiedSlot, err := slots.EpochStart(primitives.Epoch(previousJustifiedEpoch))
+	previousJustifiedSlot, err := slots.RoundStart(previousJustifiedRound)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get first slot for epoch `%d`", previousJustifiedEpoch)
+		return nil, errors.Wrapf(err, "failed to get first slot for round `%d`", previousJustifiedRound)
 	}
 
 	previousJustifiedRoot, err := hexutil.Decode(finalityCheckpoints.Data.PreviousJustified.Root)
@@ -134,13 +145,13 @@ func (c beaconApiChainClient) ChainHead(ctx context.Context, _ *empty.Empty) (*e
 		HeadEpoch:                  headEpoch,
 		HeadBlockRoot:              headBlockRoot,
 		FinalizedSlot:              finalizedSlot,
-		FinalizedEpoch:             primitives.Round(finalizedEpoch),
+		FinalizedEpoch:             finalizedRound,
 		FinalizedBlockRoot:         finalizedRoot,
 		JustifiedSlot:              justifiedSlot,
-		JustifiedEpoch:             primitives.Round(justifiedEpoch),
+		JustifiedEpoch:             justifiedRound,
 		JustifiedBlockRoot:         justifiedRoot,
 		PreviousJustifiedSlot:      previousJustifiedSlot,
-		PreviousJustifiedEpoch:     primitives.Round(previousJustifiedEpoch),
+		PreviousJustifiedEpoch:     previousJustifiedRound,
 		PreviousJustifiedBlockRoot: previousJustifiedRoot,
 		OptimisticStatus:           blockHeader.ExecutionOptimistic,
 	}, nil

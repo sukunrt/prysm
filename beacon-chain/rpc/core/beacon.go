@@ -112,6 +112,10 @@ func (s *Service) ChainHead(ctx context.Context) (*ethpb.ChainHead, *RpcError) {
 			Reason: Internal,
 		}
 	}
+	// Unit note for readers of this response: HeadEpoch is an EPOCH, while
+	// FinalizedEpoch, JustifiedEpoch and PreviousJustifiedEpoch are ROUNDS. The
+	// proto field names are kept for wire compatibility; the *Slot fields beside
+	// them are the round-start slots computed above.
 	return &ethpb.ChainHead{
 		HeadSlot:                   headBlock.Block().Slot(),
 		HeadEpoch:                  slots.ToEpoch(headBlock.Block().Slot()),

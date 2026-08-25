@@ -637,7 +637,7 @@ func TestGetChainHead(t *testing.T) {
 			},
 			{
 				name:          "invalid finalized epoch",
-				expectedError: "failed to parse finalized epoch `foo`",
+				expectedError: "failed to parse finalized round `foo`",
 				generateFinalityCheckpointsResponse: func() structs.GetFinalityCheckpointsResponse {
 					validResponse := generateValidFinalityCheckpointsResponse()
 					validResponse.Data.Finalized.Epoch = "foo"
@@ -646,7 +646,7 @@ func TestGetChainHead(t *testing.T) {
 			},
 			{
 				name:          "failed to get first slot of finalized epoch",
-				expectedError: fmt.Sprintf("failed to get first slot for epoch `%d`", uint64(math.MaxUint64)),
+				expectedError: fmt.Sprintf("failed to get first slot for round `%d`", uint64(math.MaxUint64)),
 				generateFinalityCheckpointsResponse: func() structs.GetFinalityCheckpointsResponse {
 					validResponse := generateValidFinalityCheckpointsResponse()
 					validResponse.Data.Finalized.Epoch = strconv.FormatUint(uint64(math.MaxUint64), 10)
@@ -673,7 +673,7 @@ func TestGetChainHead(t *testing.T) {
 			},
 			{
 				name:          "nil current justified epoch",
-				expectedError: "failed to parse current justified checkpoint epoch `foo`",
+				expectedError: "failed to parse current justified checkpoint round `foo`",
 				generateFinalityCheckpointsResponse: func() structs.GetFinalityCheckpointsResponse {
 					validResponse := generateValidFinalityCheckpointsResponse()
 					validResponse.Data.CurrentJustified.Epoch = "foo"
@@ -682,7 +682,7 @@ func TestGetChainHead(t *testing.T) {
 			},
 			{
 				name:          "failed to get first slot of current justified epoch",
-				expectedError: fmt.Sprintf("failed to get first slot for epoch `%d`", uint64(math.MaxUint64)),
+				expectedError: fmt.Sprintf("failed to get first slot for round `%d`", uint64(math.MaxUint64)),
 				generateFinalityCheckpointsResponse: func() structs.GetFinalityCheckpointsResponse {
 					validResponse := generateValidFinalityCheckpointsResponse()
 					validResponse.Data.CurrentJustified.Epoch = strconv.FormatUint(uint64(math.MaxUint64), 10)
@@ -709,7 +709,7 @@ func TestGetChainHead(t *testing.T) {
 			},
 			{
 				name:          "nil previous justified epoch",
-				expectedError: "failed to parse previous justified checkpoint epoch `foo`",
+				expectedError: "failed to parse previous justified checkpoint round `foo`",
 				generateFinalityCheckpointsResponse: func() structs.GetFinalityCheckpointsResponse {
 					validResponse := generateValidFinalityCheckpointsResponse()
 					validResponse.Data.PreviousJustified.Epoch = "foo"
@@ -718,7 +718,7 @@ func TestGetChainHead(t *testing.T) {
 			},
 			{
 				name:          "failed to get first slot of previous justified epoch",
-				expectedError: fmt.Sprintf("failed to get first slot for epoch `%d`", uint64(math.MaxUint64)),
+				expectedError: fmt.Sprintf("failed to get first slot for round `%d`", uint64(math.MaxUint64)),
 				generateFinalityCheckpointsResponse: func() structs.GetFinalityCheckpointsResponse {
 					validResponse := generateValidFinalityCheckpointsResponse()
 					validResponse.Data.PreviousJustified.Epoch = strconv.FormatUint(uint64(math.MaxUint64), 10)
