@@ -92,7 +92,19 @@ handled (detailed 1.3, 1.3a, the lifetime-audit rule's main referent);
 Networking research does not care who proposes — block timing and size are
 what the wire sees, and those stay real.
 
-## S3 — RECOMMEND: seat-counted quorums, seat-bitfield participation
+## S3 — RECOMMEND (as corrected by the user, 2026-08-22): vote-counted
+## quorums over the FULL validator set
+
+**Correction (user):** the original draft framed the quorum over the
+512-seat availability structure (342/512). That was wrong twice over.
+Justification's electorate is ALL validators — 2/3 of the set, not of a
+seat table — and, decisively: **every validator voting once per round IS
+the network load under test**. The whole simulation exists to test whether
+that networking makes sense; sampling the FFG electorate to any fixed seat
+count would shrink the measured wire traffic (at 10k validators, 512
+votes/round instead of 10k) and falsify the experiment — the same reason
+the merged-streams idea is rejected outright. The 512-seat structure
+belongs to the availability stream alone.
 
 **Replaces:** balance-weighted J&F (full-registry precompute scans per
 round boundary, effective-balance sums, 2/3 of active gwei) and the
@@ -101,11 +113,14 @@ the trickiest part of the cadence split (the boundary-kind dance in 2.2,
 the doubled precompute at epoch boundaries, the prev-round-uses-epoch-
 active-set quirk).
 
-**With:** J&F counts seats — quorum = ≥⌈2/3·512⌉ = 342 seats — over two
-512-bit round bitfields (current/previous round) owned by the J&F code
-alone. On the equal-stake devnet, seat count ≡ balance weight numerically,
-so nothing measured changes. Justification bits and the k-finality rules
-are untouched (they consume booleans).
+**With:** J&F counts votes — quorum = ≥⌈2/3·N⌉ over the genesis validator
+set N — over two N-bit round bitfields (current/previous round, one bit
+per validator) owned by the J&F code alone. Every validator still votes
+once per round and every vote still crosses the wire; only the COUNTING
+changes (popcount over bits instead of effective-balance sums). On the
+equal-stake devnet, vote count ≡ balance weight numerically, so nothing
+measured changes. Justification bits and the k-finality rules are
+untouched (they consume booleans).
 
 **Consequence for the cadence:** `processRoundHeze` collapses to "count
 seats, run J&F, rotate two bitfields"; the epoch boundary calls stock
