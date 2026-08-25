@@ -588,12 +588,33 @@ func (s *Service) validateAvailableAttestation(
 	// Verify the block being voted and the processed state is in beaconDB and the block has passed validation if it's in the beaconDB.
 	blockRoot := bytesutil.ToBytes32(data.BeaconBlockRoot)
 	if !s.hasBlockAndState(ctx, blockRoot) {
-		// Block not yet available - save attestation to pending queue for later processing
-		// when the block arrives. Return ValidationIgnore so gossip doesn't potentially penalize the peer.
-		//
-		// TODO(sukunrt): save the attestation here
+		// The block has not arrived yet. Queue the vote so it is replayed once the
+		// block is imported, and ignore it for now so gossip does not penalize the
+		// peer that forwarded a vote we simply cannot check yet.
+		s.savePendingAvailableAtt(att)
 		return pubsub.ValidationIgnore, nil
 	}
+
+	validationRes, err := s.validateAvailableAttWithBlock(ctx, att, blockRoot)
+	if validationRes != pubsub.ValidationAccept {
+		return validationRes, err
+	}
+
+	msg.ValidatorData = att
+
+	// TODO(sukunrt): mark the attestation as seen
+	return pubsub.ValidationAccept, nil
+}
+
+// validateAvailableAttWithBlock validates a vote whose block is already known:
+// it resolves the target state the vote's signer is drawn from and verifies the
+// signature. It is shared by the gossip validator and by the pending queue that
+// replays votes which arrived before their block.
+func (s *Service) validateAvailableAttWithBlock(
+	ctx context.Context,
+	att *eth.AvailableAttestation,
+	blockRoot [32]byte,
+) (pubsub.ValidationResult, error) {
 	epoch := slots.ToEpoch(att.Data.Slot)
 	targetRoot, err := s.cfg.chain.TargetRootForEpoch(blockRoot, epoch)
 	if err != nil {
@@ -611,21 +632,6 @@ func (s *Service) validateAvailableAttestation(
 	// This is a goldfish attestation.
 	// The peer can vote for anything that's descended from finality.
 	// TODO(sukunrt): add validation for finality descendent block.
-	//
-	// Block exists - verify it's in forkchoice (i.e., it's a descendant of the finalized checkpoint)
-	//
-	// if !s.cfg.chain.InForkchoice(blockRoot) {
-	// 	tracing.AnnotateError(span, blockchain.ErrNotDescendantOfFinalized)
-	// 	return pubsub.ValidationIgnore, blockchain.ErrNotDescendantOfFinalized
-	// }
 
-	validationRes, err := s.validateUnaggregatedAvailableAttWithState(ctx, att, state)
-	if validationRes != pubsub.ValidationAccept {
-		return validationRes, err
-	}
-
-	msg.ValidatorData = att
-
-	// TODO(sukunrt): mark the attestation as seen
-	return pubsub.ValidationAccept, nil
+	return s.validateUnaggregatedAvailableAttWithState(ctx, att, state)
 }

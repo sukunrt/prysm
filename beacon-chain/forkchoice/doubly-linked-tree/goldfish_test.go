@@ -101,6 +101,22 @@ func TestInsertAvailableAttestation_ZeroSeatsIgnored(t *testing.T) {
 	require.Equal(t, uint64(2), f.store.goldfishVotes.seats(1))
 }
 
+// A vote replayed from the sync pending queue after its own slot ended must
+// show up in the late vote accounting rather than vanishing.
+func TestInsertAvailableAttestation_CountsLateVote(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	f := setup(0, 0)
+	driftGenesisTime(f, 4, 0)
+
+	before := counterValue(t, goldfishLateVoteCount)
+	f.InsertAvailableAttestation(3, 1, 1, [32]byte{'a'}, false)
+	require.Equal(t, before+1, counterValue(t, goldfishLateVoteCount))
+
+	// A vote naming the current slot is on time and must not be counted.
+	f.InsertAvailableAttestation(4, 2, 1, [32]byte{'a'}, false)
+	require.Equal(t, before+1, counterValue(t, goldfishLateVoteCount))
+}
+
 func TestGoldfishActive_GatedOnHeze(t *testing.T) {
 	params.SetupTestConfigCleanup(t)
 	f := setup(0, 0)

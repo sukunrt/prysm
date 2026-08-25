@@ -94,6 +94,8 @@ func (s *Service) processAttestations(ctx context.Context, attestations []any) {
 		blockRoot = v.GetData().BeaconBlockRoot
 	case ethpb.SignedAggregateAttAndProof:
 		blockRoot = v.AggregateAttestationAndProof().AggregateVal().GetData().BeaconBlockRoot
+	case *ethpb.AvailableAttestation:
+		blockRoot = v.GetData().BeaconBlockRoot
 	default:
 		log.Warnf("Unexpected attestation type %T, skipping processing", v)
 		return
@@ -102,11 +104,14 @@ func (s *Service) processAttestations(ctx context.Context, attestations []any) {
 	validAggregates := make([]ethpb.SignedAggregateAttAndProof, 0, len(attestations))
 	startAggregate := time.Now()
 	atts := make([]ethpb.Att, 0, len(attestations))
+	availableAtts := make([]*ethpb.AvailableAttestation, 0, len(attestations))
 	aggregateAttAndProofCount := 0
 	for _, att := range attestations {
 		switch v := att.(type) {
 		case ethpb.Att:
 			atts = append(atts, v)
+		case *ethpb.AvailableAttestation:
+			availableAtts = append(availableAtts, v)
 		case ethpb.SignedAggregateAttAndProof:
 			aggregateAttAndProofCount++
 			// Avoid processing multiple aggregates only differing by aggregator index.
@@ -135,12 +140,17 @@ func (s *Service) processAttestations(ctx context.Context, attestations []any) {
 
 	durationAtts := time.Since(startAtts)
 
+	for _, att := range availableAtts {
+		s.processAvailableAttestation(ctx, att)
+	}
+
 	log.WithFields(logrus.Fields{
 		"blockRoot":                       fmt.Sprintf("%#x", blockRoot),
 		"totalCount":                      len(attestations),
 		"aggregateAttAndProofCount":       aggregateAttAndProofCount,
 		"uniqueAggregateAttAndProofCount": len(validAggregates),
 		"attCount":                        len(atts),
+		"availableAttCount":               len(availableAtts),
 		"durationTotal":                   durationAggregateAttAndProof + durationAtts,
 		"durationAggregateAttAndProof":    durationAggregateAttAndProof,
 		"durationAtts":                    durationAtts,
@@ -406,6 +416,52 @@ func (s *Service) savePendingAtt(att ethpb.Att) {
 	})
 }
 
+// savePendingAvailableAtt queues a Goldfish head vote whose block we have not
+// seen yet, keyed by the missing block root. Without this the vote is lost for
+// good: it is only ever gossiped once, during its own slot.
+func (s *Service) savePendingAvailableAtt(att *ethpb.AvailableAttestation) {
+	root := bytesutil.ToBytes32(att.GetData().BeaconBlockRoot)
+
+	s.savePending(root, att, func(other any) bool {
+		a, ok := other.(*ethpb.AvailableAttestation)
+		return ok && pendingAvailableAttsAreEqual(att, a)
+	})
+}
+
+// pendingAvailableAttsAreEqual reports whether two queued votes are the same
+// vote. The seat bits name the signer, so a slot and bits match is the same
+// validator voting for the same block root twice.
+func pendingAvailableAttsAreEqual(a, b *ethpb.AvailableAttestation) bool {
+	return a.GetData().Slot == b.GetData().Slot &&
+		a.GetData().PayloadPresent == b.GetData().PayloadPresent &&
+		bytes.Equal(a.GetAggregationBits(), b.GetAggregationBits())
+}
+
+// processAvailableAttestation replays a queued Goldfish head vote now that its
+// block is known. The vote is verified exactly as the gossip validator would
+// have verified it on arrival, then handed to forkchoice and re-broadcast so
+// peers that also lacked the block get another chance to count it. Forkchoice
+// counts a replay whose slot has already passed as a late vote.
+func (s *Service) processAvailableAttestation(ctx context.Context, att *ethpb.AvailableAttestation) {
+	blockRoot := bytesutil.ToBytes32(att.GetData().BeaconBlockRoot)
+	res, err := s.validateAvailableAttWithBlock(ctx, att, blockRoot)
+	if err != nil {
+		log.WithError(err).Debug("Pending available attestation failed validation")
+		return
+	}
+	if res != pubsub.ValidationAccept {
+		log.Debug("Pending available attestation was not accepted")
+		return
+	}
+	if err := s.cfg.chain.ReceiveAvailableAttestation(ctx, att); err != nil {
+		log.WithError(err).Debug("Could not record pending available attestation")
+		return
+	}
+	if err := s.cfg.p2p.Broadcast(ctx, att); err != nil {
+		log.WithError(err).Debug("Could not broadcast pending available attestation")
+	}
+}
+
 // We want to avoid saving duplicate items, which is the purpose of the passed-in closure.
 // It is the responsibility of the caller to provide a function that correctly determines quality
 // in the context of the pending queue.
@@ -498,6 +554,8 @@ func (s *Service) validatePendingAtts(ctx context.Context, slot primitives.Slot)
 				attSlot = t.GetData().Slot
 			case ethpb.SignedAggregateAttAndProof:
 				attSlot = t.AggregateAttestationAndProof().AggregateVal().GetData().Slot
+			case *ethpb.AvailableAttestation:
+				attSlot = t.GetData().Slot
 			default:
 				log.Debugf("Unexpected item of type %T in pending attestation queue. Item will be removed", t)
 				// Remove the pending attestation from the map in place.

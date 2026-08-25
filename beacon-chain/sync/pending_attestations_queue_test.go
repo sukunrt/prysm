@@ -26,6 +26,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
@@ -1046,4 +1047,102 @@ func Test_pendingAttsAreEqual(t *testing.T) {
 		b := &ethpb.SingleAttestation{Data: &ethpb.AttestationData{Slot: 1}, AttesterIndex: 2}
 		assert.Equal(t, false, pendingAttsAreEqual(a, b))
 	})
+}
+
+// availableVote builds a signed Goldfish head vote carrying the seats validator
+// idx holds in the slot.
+func availableVote(
+	t *testing.T,
+	slot primitives.Slot,
+	idx primitives.ValidatorIndex,
+	signer bls.SecretKey,
+	blockRoot []byte,
+) *ethpb.AvailableAttestation {
+	t.Helper()
+	bits := bitfield.NewBitvector512()
+	seats := decoupled.AvailableAttestationSeats(slot, idx, decoupled.CommitteeValidatorCount())
+	for _, seat := range seats {
+		bits.SetBitAt(seat, true)
+	}
+	att := &ethpb.AvailableAttestation{
+		AggregationBits: bits,
+		Data: &ethpb.AvailableAttestationData{
+			Slot:            slot,
+			BeaconBlockRoot: blockRoot,
+		},
+	}
+	root, err := signing.ComputeSigningRoot(att.Data, decoupled.AvailableAttDomain)
+	require.NoError(t, err)
+	att.Signature = signer.Sign(root[:]).Marshal()
+	return att
+}
+
+func TestProcessPendingAtts_AvailableAttestationReplayed(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	// The mock available committee is drawn from the genesis validator set, so
+	// the config has to name the same count the test state has.
+	cfg.MinGenesisActiveValidatorCount = 64
+	params.OverrideBeaconConfig(cfg)
+
+	db := dbtest.SetupDB(t)
+	p1 := p2ptest.NewTestP2P(t)
+	ctx := t.Context()
+
+	slot := primitives.Slot(2)
+	blk := util.NewBeaconBlock()
+	blk.Block.Slot = slot
+	util.SaveBlock(t, ctx, db, blk)
+	root, err := blk.Block.HashTreeRoot()
+	require.NoError(t, err)
+
+	st, keys := util.DeterministicGenesisState(t, decoupled.CommitteeValidatorCount())
+	require.NoError(t, st.SetSlot(slot))
+	require.NoError(t, db.SaveState(ctx, st, root))
+
+	genesisOffset := time.Duration(uint64(slot)*params.BeaconConfig().SecondsPerSlot) * time.Second
+	chain := &mock.ChainService{
+		Genesis:         time.Now().Add(-genesisOffset),
+		State:           st,
+		TargetRoot:      root,
+		ForkchoiceRoots: map[[32]byte]bool{root: true},
+		DB:              db,
+	}
+	r := &Service{
+		ctx: ctx,
+		cfg: &config{
+			p2p:      p1,
+			beaconDB: db,
+			chain:    chain,
+			clock:    startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
+		},
+		blkRootToPendingAtts: make(map[[32]byte][]any),
+		signatureChan:        make(chan *signatureVerifier, verifierLimit),
+	}
+	go r.verifierRoutine()
+
+	// The same vote queued twice takes a single slot; a second signer adds one.
+	r.savePendingAvailableAtt(availableVote(t, slot, 5, keys[5], root[:]))
+	r.savePendingAvailableAtt(availableVote(t, slot, 5, keys[5], root[:]))
+	require.Equal(t, 1, len(r.blkRootToPendingAtts[root]))
+	r.savePendingAvailableAtt(availableVote(t, slot, 6, keys[6], root[:]))
+	require.Equal(t, 2, len(r.blkRootToPendingAtts[root]))
+
+	// The block arrived: every queued vote reaches forkchoice and the key is gone.
+	require.NoError(t, r.processPendingAttsForBlock(ctx, root))
+	require.Equal(t, 2, len(chain.AvailableAttestations))
+	require.Equal(t, 0, len(r.blkRootToPendingAtts[root]))
+}
+
+func TestValidatePendingAtts_ExpiresAvailableAtts(t *testing.T) {
+	s := &Service{blkRootToPendingAtts: make(map[[32]byte][]any)}
+	root := [32]byte{'A'}
+	s.savePendingAvailableAtt(&ethpb.AvailableAttestation{
+		AggregationBits: bitfield.NewBitvector512(),
+		Data:            &ethpb.AvailableAttestationData{Slot: 1, BeaconBlockRoot: root[:]},
+	})
+	require.Equal(t, 1, len(s.blkRootToPendingAtts[root]))
+
+	s.validatePendingAtts(t.Context(), 1+params.BeaconConfig().SlotsPerEpoch)
+	require.Equal(t, 0, len(s.blkRootToPendingAtts), "Stale available attestation was not expired")
 }

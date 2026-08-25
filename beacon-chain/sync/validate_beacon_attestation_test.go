@@ -991,7 +991,8 @@ func TestService_validateAvailableAttestation(t *testing.T) {
 			chain:       chain,
 			clock:       startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
 		},
-		signatureChan: make(chan *signatureVerifier, verifierLimit),
+		blkRootToPendingAtts: make(map[[32]byte][]any),
+		signatureChan:        make(chan *signatureVerifier, verifierLimit),
 	}
 	s.initCaches()
 	go s.verifierRoutine()
@@ -1128,4 +1129,10 @@ func TestService_validateAvailableAttestation(t *testing.T) {
 			}
 		})
 	}
+
+	// The unknown block root case is ignored on the wire but must not be lost:
+	// it belongs in the pending queue, waiting for its block to arrive.
+	t.Run("unknown block root is queued", func(t *testing.T) {
+		require.Equal(t, 1, len(s.blkRootToPendingAtts[unknownRoot]))
+	})
 }
