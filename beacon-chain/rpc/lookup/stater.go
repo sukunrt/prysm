@@ -140,28 +140,31 @@ func (p *BeaconDbStater) State(ctx context.Context, stateId []byte) (state.Beaco
 		}
 	case "finalized":
 		checkpoint := p.ChainInfoFetcher.FinalizedCheckpt()
-		targetSlot, err := slots.RoundStart(checkpoint.Epoch)
+		targetSlot, err := slots.FFGTargetSlot(checkpoint.Epoch)
 		if err != nil {
-			return nil, errors.Wrap(err, "could not get start slot")
+			return nil, errors.Wrap(err, "could not get FFG target slot")
 		}
 		// We use the stategen replayer to fetch the finalized state and then
-		// replay it to the start slot of our checkpoint's round. The replayer
-		// only ever accesses our canonical history, so the state retrieved will
-		// always be the finalized state at that round.
+		// replay it to the slot of the checkpoint's FFG TARGET block, which is
+		// what checkpoint.Root names -- not the round's first slot, which is a
+		// slot later at the default offset. The replayer only ever accesses our
+		// canonical history, so the state retrieved is the finalized state whose
+		// latest block header is the checkpoint block itself.
 		s, err = p.ReplayerBuilder.ReplayerForSlot(targetSlot).ReplayToSlot(ctx, targetSlot)
 		if err != nil {
 			return nil, errors.Wrap(err, "could not get finalized state")
 		}
 	case "justified":
 		checkpoint := p.ChainInfoFetcher.CurrentJustifiedCheckpt()
-		targetSlot, err := slots.RoundStart(checkpoint.Epoch)
+		targetSlot, err := slots.FFGTargetSlot(checkpoint.Epoch)
 		if err != nil {
-			return nil, errors.Wrap(err, "could not get start slot")
+			return nil, errors.Wrap(err, "could not get FFG target slot")
 		}
-		// We use the stategen replayer to fetch the justified state and then
-		// replay it to the start slot of our checkpoint's round. The replayer
-		// only ever accesses our canonical history, so the state retrieved will
-		// always be the justified state at that round.
+		// Same as the finalized case: checkpoint.Root names the round's FFG
+		// target block, so the state has to be replayed to that block's slot.
+		// The replayer only ever accesses our canonical history, so the state
+		// retrieved is the justified state whose latest block header is the
+		// checkpoint block itself.
 		s, err = p.ReplayerBuilder.ReplayerForSlot(targetSlot).ReplayToSlot(ctx, targetSlot)
 		if err != nil {
 			return nil, errors.Wrap(err, "could not get justified state")

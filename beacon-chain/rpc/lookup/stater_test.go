@@ -21,6 +21,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 )
@@ -96,7 +97,15 @@ func TestGetState(t *testing.T) {
 	t.Run("finalized", func(t *testing.T) {
 		stateGen := mockstategen.NewService()
 		replayer := mockstategen.NewReplayerBuilder()
-		replayer.SetMockStateForSlot(newBeaconState, params.BeaconConfig().SlotsPerEpoch*10)
+		// The checkpoint's root names its round's FFG TARGET block, one slot
+		// before the round starts at the default offset, so that is the only
+		// slot the stater may replay to. Mocking just that slot means the test
+		// fails if the stater reaches for the round's first slot instead: a
+		// checkpoint-synced node that took the wrong state would save an origin
+		// its peers' finalized root does not match, and would never sync.
+		target, err := slots.FFGTargetSlot(10)
+		require.NoError(t, err)
+		replayer.SetMockStateForSlot(newBeaconState, target)
 		stateGen.StatesByRoot[stateRoot] = newBeaconState
 
 		p := BeaconDbStater{
@@ -120,7 +129,10 @@ func TestGetState(t *testing.T) {
 	t.Run("justified", func(t *testing.T) {
 		stateGen := mockstategen.NewService()
 		replayer := mockstategen.NewReplayerBuilder()
-		replayer.SetMockStateForSlot(newBeaconState, params.BeaconConfig().SlotsPerEpoch*10)
+		// Same as the finalized case: only the FFG target slot is mocked.
+		target, err := slots.FFGTargetSlot(10)
+		require.NoError(t, err)
+		replayer.SetMockStateForSlot(newBeaconState, target)
 		stateGen.StatesByRoot[stateRoot] = newBeaconState
 
 		p := BeaconDbStater{
