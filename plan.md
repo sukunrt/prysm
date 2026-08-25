@@ -124,7 +124,38 @@ Grep for remaining hits in the preset sense (`grep -rn decoupled` minus the
 - `bazelisk build //...` succeeds.
 - No `.decoupled.*` files remain.
 - `go build -tags=decoupled ./...` no longer resolves, and nothing references
-  the tag.
+  the tag. <added by executor agent> The first half is not testable: Go
+  accepts any unknown tag, and `mainnet.go` is now plain `!minimal`, so the
+  build succeeds and selects mainnet. Only the second half is a real check.
+
+### Executed 2026-08-19 <added by executor agent>
+
+Done, in two jj changes rather than one per subsection: `Revert the decoupled
+SSZ preset` (every hand-written edit plus the 16 twins) and `gen: collapse the
+generated build constraint to !minimal` (a pure regeneration diff). One change
+per subsection would have left non-compiling intermediates, because the file
+deletions and the config/Bazel edits depend on each other.
+
+Four sites this section's Edit table did not name, all required:
+
+| file | what |
+|---|---|
+| `tools/go/def.bzl:12-14,47` | the `eth_network == "decoupled"` transition arm and the `attr.string(values=...)` list |
+| `tools/methodical.bzl:63` | `go_build_constraint = "!minimal && !decoupled"`, hardcoded — the Bazel twin of what `build/gen` writes, and it does **not** read the preset list, so it never collapses on its own |
+| `proto/ssz_proto_library.bzl:177` | a third site: the `elif config.lower() == "decoupled"` arm of `_ssz_proto_files_impl` |
+| `cmd/config.go` | the `errors` import goes unused once the case arm is deleted |
+
+Two notes for later steps:
+
+- **`withoutEvaluators` died with `decoupled_e2e_test.go`.** It is the helper
+  that drops named evaluators from a run, and step 5's replacement e2e test
+  needs it back. Recover it from that change's diff.
+- **There were no yaml files to update.** Decision 10 says "update the e2e and
+  sim yaml files"; no yaml in this repo set `SLOTS_PER_EPOCH: 8`. The 8-slot
+  epoch lived only in `DecoupledConfig()`. The sim yaml is in the ethshadow
+  repo and is step 5.3's problem.
+
+`E2EDecoupledTestConfig` also runs to EOF (91-155), not 91-131.
 
 ---
 

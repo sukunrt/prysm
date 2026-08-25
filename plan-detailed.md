@@ -133,6 +133,85 @@ here: `TestLoadConfigFile` (HEZE placeholder fields and upstream
 `PAYLOAD_DUE_BPS` drift), and `go build -tags=minimal` in
 `proto/prysm/v1alpha1/attestation/aggregation/testing`.
 
+## 1.9 Sites the plan missed <added by executor agent>
+
+Found while executing step 1 on 2026-08-19. All are done; this is the
+reconciliation list.
+
+### Three more Bazel/Starlark sites
+
+The plan's 1.6 list did not name these, and the tree does not build without
+them.
+
+- [x] `tools/go/def.bzl:12-14` — the `elif attr.eth_network == "decoupled"`
+      arm of `_go_test_transition_impl`. Deleted.
+- [x] `tools/go/def.bzl:47` — `"eth_network": attr.string(values = [...])`
+      still listed `"decoupled"`. Dropped.
+- [x] `tools/methodical.bzl:63` — `go_build_constraint = "!minimal &&
+      !decoupled"`, hardcoded. Now `"!minimal"`. **This is the Bazel twin of
+      the constraint `build/gen` writes**, and unlike `build/gen` it does not
+      read the preset list from the `.bzl`, so it does not collapse by
+      itself. Adding a preset later means editing this string too.
+- [x] `proto/ssz_proto_library.bzl:177-178` — the plan named lines 13 and 117
+      only. `_ssz_proto_files_impl` has a third site: the
+      `elif (ctx.attr.config.lower() == "decoupled"): subs = decoupled` arm.
+
+### Go fallout the plan did not predict
+
+- [x] `cmd/config.go` — deleting the `case "decoupled"` arm leaves the
+      `errors` import unused. Dropped it.
+- [x] `config/params/values.go` — removing `DecoupledName` and
+      `EndToEndDecoupledName` (the two longest names) makes gofmt re-align
+      the whole const block. The diff is bigger than two lines.
+- [x] `config/params/testnet_e2e_config.go` — `E2EDecoupledTestConfig` runs
+      to **EOF (91-155)**, not 91-131. The plan's range would have left the
+      function body behind.
+- [x] `build/gen/proto_test.go` — besides the fixture there are two more
+      references: the `applyGenModes(dir, []string{"minimal", "decoupled"})`
+      call and the `mode(decoupled)` assertion.
+
+### `withoutEvaluators` dies with the e2e file
+
+`testing/endtoend/decoupled_e2e_test.go` also held `withoutEvaluators`, the
+helper that drops named evaluators from a run. Nothing else uses it, so it
+went with the file — but **step 5.2's replacement e2e test needs it back**.
+It is 12 lines; copy it from this change's diff rather than rewriting it.
+
+### There were no yaml files to update
+
+`plan.md` decision 10 says "Update the e2e and sim yaml files". No yaml in
+this repo carried `SLOTS_PER_EPOCH: 8` — `fulu-devnet.yaml` and
+`fulu-devnet-4.yaml` do not set it at all. The 8-slot epoch lived only in
+`DecoupledConfig()`. The sim yaml lives in the ethshadow repo, not here, and
+is step 5.3's problem.
+
+### A third `TestLoadConfigFile` drift
+
+The known-breakage note lists the HEZE placeholder fields and
+`PAYLOAD_DUE_BPS`. There is a third: `MIN_BUILDER_WITHDRAWABILITY_DELAY`,
+want 64, got 8192. Same cause (upstream config drift), also pre-existing.
+
+### The `-tags=decoupled` accept criterion is not testable
+
+`plan.md` asks that `go build -tags=decoupled ./...` "no longer resolve". It
+still succeeds, and always will: Go accepts any unknown build tag, and
+`mainnet.go` is now plain `!minimal`, so an arbitrary tag just selects
+mainnet. The real criterion is the one 1.8 already states — nothing in the
+tree references the tag. Verified by grep.
+
+### Commit shape
+
+The plan asks for one jj change per numbered group. That would leave several
+non-compiling intermediates, because the deletions in 1.1 and the edits in
+1.4-1.6 are mutually dependent. Landed as **two** changes instead:
+
+1. `Revert the decoupled SSZ preset` — every hand-written edit plus all 16
+   generated twins. Tree builds and tests at this point; only the stale
+   `!minimal && !decoupled` constraint strings remain, and they are inert
+   once nothing sets the tag.
+2. `gen: collapse the generated build constraint to !minimal` — a pure
+   `make gen proto ssz mode=force` diff, exactly 16 one-line changes.
+
 ---
 
 # Step 2 — `primitives.Round` and `SlotsPerRound`
