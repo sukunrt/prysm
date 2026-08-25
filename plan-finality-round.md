@@ -163,7 +163,23 @@ finalization are PROGRESSING per round is asserted at every verification
 tier (unit, smoke chain-check, two e2e evaluators). Nothing blocks
 execution.
 
+## Review
+
+Adversarially reviewed 2026-08-21 by an independent agent (35+ pointers
+re-verified, cadence split traced at 8/32). Findings folded into the
+detailed file: Round's SSZ method set before regeneration, the epoch
+part's precompute re-run, a Heze-only epoch-processing pair (never touch
+`processEpochGloas` — it is live in spectests), the corrected offset-0
+forkchoice rule for empty round-start slots, a one-line dependent-root
+reimplementation, ~25 additional audit sites (checkpoint-sync origin
+computation, initial-sync slot math, doppelganger, cache eviction,
+builder gating, WS computation), and a commit restructure into four
+stacks around the compiler sweep. The retype was re-confirmed as the
+right typing choice: the review's independent audit found ~25 live
+mixed-unit sites the hand enumeration missed — empirical proof that the
+compiler, not a grep, has to be the auditor.
+
 ## Deliverable
 
-This charter plus `plan-finality-round-detailed.md`, one jj change.
-Nothing else modified.
+This charter plus `plan-finality-round-detailed.md`, one jj change per
+revision. Nothing else modified.
