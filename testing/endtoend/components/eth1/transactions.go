@@ -815,7 +815,20 @@ func fundAccount(client *rpc.Client, sourceKey, destKey *keystore.Key) error {
 	if !ok {
 		return errors.New("could not set big int for value")
 	}
-	tx := types.NewTransaction(nonce, destKey.Address, val, 100000, expectedPrice, nil)
+	// The gas limit is estimated rather than fixed: paying into an account that
+	// does not exist yet costs far more than a plain transfer once Amsterdam is
+	// active (roughly 207k against 21k), and a fixed 100k limit runs the funding
+	// transfer out of gas there. A silently unfunded account only shows up later
+	// as "insufficient funds" from whatever it was meant to pay for.
+	gasLimit, err := backend.EstimateGas(context.Background(), ethereum.CallMsg{
+		From:  sourceKey.Address,
+		To:    &destKey.Address,
+		Value: val,
+	})
+	if err != nil {
+		return errors.Wrap(err, "could not estimate the gas of the funding transfer")
+	}
+	tx := types.NewTransaction(nonce, destKey.Address, val, gasLimit, expectedPrice, nil)
 	signedTx, err := types.SignTx(tx, types.NewLondonSigner(chainid), sourceKey.PrivateKey)
 	if err != nil {
 		return err
