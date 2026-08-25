@@ -527,7 +527,20 @@ Two pieces of step 5 are done ahead of the e2e work; full notes in
   `attesterCount=1024` for 256 keys, and the same 32 pubkeys attest at slot k,
   k+8 and k+16, with aggregates at each.
 
-Still open in step 5: the e2e replacement test and the Shadow run.
+- 5.2: the replacement e2e. `TestEndToEnd_HezeGenesis` runs the suite on a
+  Heze genesis at `SLOTS_PER_ROUND = 8` and passes: finalization at epoch 4,
+  available attestations on every node, and committee attestations in all four
+  rounds of an epoch. **Five epochs, not four** - the spec skips justification
+  while the current epoch is at most `GENESIS_EPOCH + 1`, so no finalized
+  checkpoint exists before epoch 4. `SECONDS_PER_SLOT` stays at 6. The run
+  found three real bugs: the e2e funder's fixed gas limit is too small at
+  Amsterdam, `onBlockBatch` asked a Heze state for an execution payload header
+  it does not have (initial sync could never work), and the engine method was
+  chosen by exact attribute version so every `forkchoiceUpdated` on a Heze
+  state failed. Full notes in `plan-detailed.md` 5.2a.
+
+Still open in step 5: the Shadow run (5.3) and the baseline recording (5.4),
+both of which live in the ethshadow repo and need more than one node.
 
 ## Open questions for the user
 

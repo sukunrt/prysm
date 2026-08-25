@@ -1017,6 +1017,152 @@ One round is 8 slots, so the committee partition and "a Heze genesis produces
 and processes blocks" are both provable inside the first round. Only
 finalization needs the epochs.
 
+## 5.2a Executed 2026-08-19: the replacement e2e <added by executor>
+
+Three jj changes carry the fixes the run needed (`unqzztmy`, `vroulvvz`,
+`lumktpyp`) and one carries the test itself (`lpkuqvuq`).
+`testing/endtoend/heze_e2e_test.go` holds `TestEndToEnd_HezeGenesis`,
+`withoutEvaluators` recovered from the deleted file, and a `withEvaluators`
+twin beside it. `testing/endtoend/evaluators/rounds.go` holds the two new
+evaluators. Bazel target `//testing/endtoend:go_heze_test`,
+`eth_network = "mainnet"`.
+
+### Five epochs, not four
+
+The step asks for four. Finalization cannot be asserted in four: the spec's
+`process_justification_and_finalization` returns early while the current epoch
+is at most `GENESIS_EPOCH + 1`, so epoch 1 is never justified at its own
+boundary, and the first finalized checkpoint only appears during epoch 4. The
+evaluator loop also stops at `EpochsToRun-1`. So four epochs runs the stock
+`FinalizationOccurs(3)` never, and a `FinalizationOccurs(2)` swapped in for it
+fails at epoch 3 with "expected finalized epoch to be 1, received: 0" (run 3).
+Five epochs lets the stock evaluator fire at epoch 4 with finalized = 2. The
+run is about 19 minutes wall clock including the sync phase.
+
+`SECONDS_PER_SLOT` stays at 6, as the step demands. `SLOTS_PER_ROUND = 8` is
+set on the test's own copy of `E2EMainnetTestConfig`, not in
+`config/params`, so the other mainnet e2e tests keep the identity config.
+
+### The iteration ladder actually used
+
+1. A throwaway `TestEndToEnd_HezeGenesisShort` in `testing/endtoend`: one
+   epoch, no checkpoint-sync phase, only the evaluators that fire at epoch 0.
+   Three minutes instead of nineteen. It caught the harness problems.
+   Deleted once the full test was green; it is four lines of config over
+   `e2eMinimal`, so recreate rather than keep.
+2. A throwaway `TestEndToEnd_AttribFuluGenesis`: the same framework, config
+   and geth with `InitForkCfg(Fulu, Fulu)`. That is the attribution tool -
+   it passed in 12.5 minutes while the Heze run failed, which placed the
+   first failure at Amsterdam rather than in the framework.
+3. Unit tests for the two consensus-side bugs, so neither needed a second
+   e2e run to confirm.
+4. One full mainnet-preset run as the official result.
+
+No minimal-preset variant was built: the two epoch-scale failures were both
+diagnosed from one run's logs and fixed with unit tests, so there was nothing
+left to iterate.
+
+### Three bugs the run found
+
+1. **`fundAccount` runs out of gas at Amsterdam** (`unqzztmy`, e2e code).
+   Paying into an account that does not exist yet costs about 207k gas under
+   Amsterdam against 21k for a plain transfer, and the transaction generator
+   funds its blob sender with a fixed 100k limit. The funding transfer is
+   included but reverts out of gas, `ensureMinBalance` tops up and does not
+   re-check, and the first blob transaction dies with "insufficient funds for
+   gas * price + value ... have 0". The gas limit is estimated now. This is
+   the first e2e to activate Amsterdam at genesis, which is why it only
+   surfaced here.
+2. **A Heze state has no execution payload header** (`vroulvvz`,
+   `beacon-chain/blockchain/process_block.go`). `onBlockBatch` reads the
+   pre-state's latest execution payload header for every block of a batch and
+   the skip list stopped at Gloas, so a Heze pre-state wrapped a nil object
+   and *every* initial-sync batch failed with "could not process block in
+   batch: attempted to wrap nil object". A node joining a Heze chain could
+   never sync. The single-block path never hit this because Gloas+ blocks
+   return before the call.
+3. **The engine method was picked by exact version** (`lumktpyp`,
+   `beacon-chain/execution/engine_jsonrpc.go`). An empty payload attributer
+   carries the beacon *state's* version, so on a Heze state every
+   `forkchoiceUpdated` without attributes failed with "unknown payload
+   attribute version: 8". The execution client then reported "Beacon client
+   online, but no consensus updates received in a while" and its chain never
+   advanced. All three nodes logged it; only the syncing node was killed by
+   it, because the other two reach the engine through the Gloas proposal path
+   as well.
+
+Both consensus fixes match by version range rather than by a list of
+versions, so a later consensus-only fork above Gloas does not have to be
+added to them. Each has a unit test that fails without its fix.
+
+### Evaluators dropped, and why
+
+- `VerifyBlockGraffiti`, `FeeRecipientIsPresent`, `ValidatorsVoteWithTheMajority`,
+  `ProcessesDepositsInBlocks`, `ValidatorSyncParticipation` all read blocks
+  over `ListBeaconBlocks`, and `BeaconBlockContainer` has no arm for a
+  Gloas-shaped block: `convertToBlockContainer` returns "block type is not
+  recognized". Same family as the 34 known `rpc/prysm/v1alpha1/beacon`
+  failures. `ValidatorSyncParticipation` would fail anyway, because the
+  mainnet `SyncCommitteeSize` of 512 exceeds the 256 genesis validators.
+- `ActivatesDepositedValidators`: mainnet `EpochsPerEth1VotingPeriod` is 64.
+  It self-skips above an Electra genesis, and is dropped for clarity.
+- The exit and withdrawal evaluators are appended after the options run, so
+  `withoutEvaluators` cannot reach them. They are policy-gated on epoch 7 and
+  simply never fire in a five-epoch run.
+
+Nothing shared was weakened.
+
+### Two evaluators added
+
+`testing/endtoend/evaluators/rounds.go`:
+
+- `AvailableAttestationsFlow` reads
+  `p2p_message_received_total{topic="/eth2/<digest>/available_attestation/ssz_snappy"}`
+  off every beacon node's metrics page and requires it above zero. It cannot
+  use `valueOfTopic`: that helper depends on the metric name repeating in the
+  HELP and TYPE comments, and those carry no labels, so a labelled sample
+  reads as zero. A small line scanner reads the sample instead.
+- `AttestationsInEveryRound` fetches the previous epoch's block attestations
+  over `GET /eth/v2/beacon/blocks/{slot}/attestations` - the one block-reading
+  API that does have a Gloas arm - and requires every round offset of an epoch
+  to appear among the attested slots. If only the epoch's first round attested,
+  every attested slot would land in round 0 and the check would fail.
+
+### The run
+
+`step5c-e2e-run6.log`, `ok ... 1138.812s`, 42 sub-tests, no failures. Node
+data and component logs under `/var/tmp/claude-prysm2-e2e/logs-run6`.
+
+- Finalization: `finalizes_at_epoch_4` passed, which asserts finalized ==
+  head - 2 with no gap between the previous justified, current justified and
+  current epochs. Beacon node 0 reports `just=2 fin=0` through epoch 3,
+  `just=3 fin=2` at epoch 4 and `just=4 fin=3` at epoch 5.
+- Available attestations: `available_attestations_flow` passed at epochs 1
+  to 4 on both nodes. A live read during an earlier run showed
+  `p2p_message_received_total{...available_attestation...} 512` after four
+  slots.
+- Every round: `attestations_in_every_round` passed at epochs 2, 3 and 4. The
+  validator client's own log is the second witness - `attesterCount=512` for
+  128 keys, and the same 16 pubkeys attesting at slots 33, 41, 49 and 57, the
+  four round offsets of epoch 1.
+- The sync phase passed too: a third beacon node joined at epoch 4, matched
+  head, and the doppelganger check fired.
+
+### Harness notes
+
+The e2e runs as a plain `go test`, no Bazel:
+
+```
+RUNFILES_DIR=<dir> TEST_WORKSPACE=prysm TEST_TMPDIR=... E2E_LOG_PATH=...   go test ./testing/endtoend/ -run '^TestEndToEnd_HezeGenesis$' -v -count=1 -timeout 90m
+```
+
+`testing/endtoend` reaches for binaries through rules_go's `bazel.FindBinary`,
+which needs a runfiles tree: `<RUNFILES_DIR>/prysm/` with `cmd/beacon-chain`,
+`cmd/validator`, `cmd/geth`, `tools/bootnode` and a `testing/endtoend/static-files`
+symlink. `TEST_TMPDIR` and `E2E_LOG_PATH` must be on real disk: `/tmp` is a
+31G tmpfs here and one run writes a 1.6GB tracing file plus three geth data
+dirs, which killed run 4 mid-flight.
+
 ## 5.3 Shadow
 
 - [ ] Flip the sim config to `SLOTS_PER_ROUND = 8` here, not earlier.
