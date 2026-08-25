@@ -133,6 +133,21 @@ func (mr *MockBeaconNodeValidatorServerMockRecorder) GetAttesterDuties(arg0, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAttesterDuties", reflect.TypeOf((*MockBeaconNodeValidatorServer)(nil).GetAttesterDuties), arg0, arg1)
 }
 
+// GetAvailableAttestationData mocks base method.
+func (m *MockBeaconNodeValidatorServer) GetAvailableAttestationData(arg0 context.Context, arg1 *eth.AvailableAttestationDataRequest) (*eth.AvailableAttestationData, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAvailableAttestationData", arg0, arg1)
+	ret0, _ := ret[0].(*eth.AvailableAttestationData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAvailableAttestationData indicates an expected call of GetAvailableAttestationData.
+func (mr *MockBeaconNodeValidatorServerMockRecorder) GetAvailableAttestationData(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvailableAttestationData", reflect.TypeOf((*MockBeaconNodeValidatorServer)(nil).GetAvailableAttestationData), arg0, arg1)
+}
+
 // GetBeaconBlock mocks base method.
 func (m *MockBeaconNodeValidatorServer) GetBeaconBlock(arg0 context.Context, arg1 *eth.BlockRequest) (*eth.GenericBeaconBlock, error) {
 	m.ctrl.T.Helper()
@@ -371,6 +386,21 @@ func (m *MockBeaconNodeValidatorServer) ProposeAttestationElectra(arg0 context.C
 func (mr *MockBeaconNodeValidatorServerMockRecorder) ProposeAttestationElectra(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProposeAttestationElectra", reflect.TypeOf((*MockBeaconNodeValidatorServer)(nil).ProposeAttestationElectra), arg0, arg1)
+}
+
+// ProposeAvailableAttestation mocks base method.
+func (m *MockBeaconNodeValidatorServer) ProposeAvailableAttestation(arg0 context.Context, arg1 *eth.AvailableAttestation) (*eth.AttestResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProposeAvailableAttestation", arg0, arg1)
+	ret0, _ := ret[0].(*eth.AttestResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProposeAvailableAttestation indicates an expected call of ProposeAvailableAttestation.
+func (mr *MockBeaconNodeValidatorServerMockRecorder) ProposeAvailableAttestation(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProposeAvailableAttestation", reflect.TypeOf((*MockBeaconNodeValidatorServer)(nil).ProposeAvailableAttestation), arg0, arg1)
 }
 
 // ProposeBeaconBlock mocks base method.

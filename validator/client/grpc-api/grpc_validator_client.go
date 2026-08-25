@@ -207,6 +207,10 @@ func (c *grpcValidatorClient) AttestationData(ctx context.Context, in *ethpb.Att
 	return c.getClient().GetAttestationData(ctx, in)
 }
 
+func (c *grpcValidatorClient) AvailableAttestationData(ctx context.Context, in *ethpb.AvailableAttestationDataRequest) (*ethpb.AvailableAttestationData, error) {
+	return c.getClient().GetAvailableAttestationData(ctx, in)
+}
+
 func (c *grpcValidatorClient) BeaconBlock(ctx context.Context, in *ethpb.BlockRequest) (*ethpb.GenericBeaconBlock, error) {
 	if c.stateless {
 		in.EagerPayloadStateRoot = true
@@ -250,6 +254,10 @@ func (c *grpcValidatorClient) PrepareBeaconProposer(ctx context.Context, in *eth
 
 func (c *grpcValidatorClient) ProposeAttestation(ctx context.Context, in *ethpb.Attestation) (*ethpb.AttestResponse, error) {
 	return c.getClient().ProposeAttestation(ctx, in)
+}
+
+func (c *grpcValidatorClient) ProposeAvailableAttestation(ctx context.Context, in *ethpb.AvailableAttestation) (*ethpb.AttestResponse, error) {
+	return c.getClient().ProposeAvailableAttestation(ctx, in)
 }
 
 func (c *grpcValidatorClient) ProposeAttestationElectra(ctx context.Context, in *ethpb.SingleAttestation) (*ethpb.AttestResponse, error) {

@@ -124,6 +124,10 @@ func (c *beaconApiValidatorClient) AttestationData(ctx context.Context, in *ethp
 	})
 }
 
+func (c *beaconApiValidatorClient) AvailableAttestationData(ctx context.Context, in *ethpb.AvailableAttestationDataRequest) (*ethpb.AvailableAttestationData, error) {
+	panic("unimplemented: use grpc")
+}
+
 func (c *beaconApiValidatorClient) BeaconBlock(ctx context.Context, in *ethpb.BlockRequest) (*ethpb.GenericBeaconBlock, error) {
 	ctx, span := trace.StartSpan(ctx, "beacon-api.BeaconBlock")
 	defer span.End()
@@ -185,6 +189,10 @@ func (c *beaconApiValidatorClient) ProposeAttestation(ctx context.Context, in *e
 	return wrapInMetrics[*ethpb.AttestResponse]("ProposeAttestation", func() (*ethpb.AttestResponse, error) {
 		return c.proposeAttestation(ctx, in)
 	})
+}
+
+func (c *beaconApiValidatorClient) ProposeAvailableAttestation(ctx context.Context, in *ethpb.AvailableAttestation) (*ethpb.AttestResponse, error) {
+	panic("unimplemented: use the grpc path")
 }
 
 func (c *beaconApiValidatorClient) ProposeAttestationElectra(ctx context.Context, in *ethpb.SingleAttestation) (*ethpb.AttestResponse, error) {

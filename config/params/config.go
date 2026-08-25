@@ -99,6 +99,7 @@ type BeaconChainConfig struct {
 	ContributionDueBPSGloas         primitives.BP    `yaml:"CONTRIBUTION_DUE_BPS_GLOAS" spec:"true"`          // ContributionDueBPSGloas defines the contribution due time in basis points of the slot (Gloas).
 	PayloadAttestationDueBPS        primitives.BP    `yaml:"PAYLOAD_ATTESTATION_DUE_BPS" spec:"true"`         // PayloadAttestationDueBPS defines the payload attestation due time in basis points of the slot.
 	PayloadDueBPS                   primitives.BP    `yaml:"PAYLOAD_DUE_BPS" spec:"true"`                     // PayloadDueBPS defines the cutoff for an execution payload to be considered timely, in basis points of the slot.
+	AvailableAttestationDueBPSHeze  primitives.BP    `yaml:"AVAILABLE_ATTESTATION_DUE_BPS_HEZE" spec:"true"`  // AttestationDueBPSGloas defines the attestation due time in basis points of the slot (Gloas).
 
 	// Prysm-internal (non-spec) parameters.
 	EquivocationEarlyDueBPS primitives.BP `yaml:"-"` // Cutoff for an "early" proposer equivocation, in basis points of the slot.
@@ -205,8 +206,8 @@ type BeaconChainConfig struct {
 	FuluForkEpoch        primitives.Epoch `yaml:"FULU_FORK_EPOCH" spec:"true"`        // FuluForkEpoch is used to represent the assigned fork epoch for fulu.
 	GloasForkVersion     []byte           `yaml:"GLOAS_FORK_VERSION" spec:"true"`     // GloasForkVersion is used to represent the fork version for gloas.
 	GloasForkEpoch       primitives.Epoch `yaml:"GLOAS_FORK_EPOCH" spec:"true"`       // GloasForkEpoch is used to represent the assigned fork epoch for gloas.
-	HezeForkVersion    []byte           `yaml:"HEZE_FORK_VERSION" spec:"true"`    // HezeForkVersion is used to represent the fork version for heze.
-	HezeForkEpoch      primitives.Epoch `yaml:"HEZE_FORK_EPOCH" spec:"true"`      // HezeForkEpoch is used to represent the assigned fork epoch for heze.
+	HezeForkVersion      []byte           `yaml:"HEZE_FORK_VERSION" spec:"true"`      // HezeForkVersion is used to represent the fork version for heze.
+	HezeForkEpoch        primitives.Epoch `yaml:"HEZE_FORK_EPOCH" spec:"true"`        // HezeForkEpoch is used to represent the assigned fork epoch for heze.
 
 	ForkVersionSchedule map[[fieldparams.VersionLength]byte]primitives.Epoch // Schedule of fork epochs by version.
 	ForkVersionNames    map[[fieldparams.VersionLength]byte]string           // Human-readable names of fork versions.
@@ -369,7 +370,7 @@ func (b *BeaconChainConfig) VersionToForkEpochMap() map[int]primitives.Epoch {
 		version.Electra:   b.ElectraForkEpoch,
 		version.Fulu:      b.FuluForkEpoch,
 		version.Gloas:     b.GloasForkEpoch,
-		version.Heze:    b.HezeForkEpoch,
+		version.Heze:      b.HezeForkEpoch,
 	}
 }
 
@@ -687,7 +688,7 @@ func ConfigForkVersions(b *BeaconChainConfig) map[[fieldparams.VersionLength]byt
 		bytesutil.ToBytes4(b.ElectraForkVersion):   version.Electra,
 		bytesutil.ToBytes4(b.FuluForkVersion):      version.Fulu,
 		bytesutil.ToBytes4(b.GloasForkVersion):     version.Gloas,
-		bytesutil.ToBytes4(b.HezeForkVersion):    version.Heze,
+		bytesutil.ToBytes4(b.HezeForkVersion):      version.Heze,
 	}
 }
 

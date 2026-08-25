@@ -30,6 +30,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/proposer"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/hash"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
@@ -77,10 +78,10 @@ type validator struct {
 	prevEpochBalancesLock        sync.RWMutex
 	attestedSlotsLock            sync.RWMutex
 	cachedAttestationDataLock    sync.RWMutex
+	cachedAttestationData        *ethpb.AttestationData
 	submittedPrefSlotsLock       sync.RWMutex
 	signedRequestAuthsLock       sync.Mutex
 	domainDataLock               sync.RWMutex
-	cachedAttestationData        *ethpb.AttestationData
 	graffitiOrderedIndex         uint64
 	walletInitializedFeed        *event.Feed
 	walletInitializedChan        chan *wallet.Wallet
@@ -124,6 +125,9 @@ type validator struct {
 	graffiti                     []byte
 	genesisTime                  time.Time
 	voteStats                    voteStats
+
+	cachedAvailableAttestationDataLock sync.RWMutex
+	cachedAvailableAttestationData     *ethpb.AvailableAttestationData
 }
 
 type validatorStatus struct {
@@ -576,6 +580,7 @@ func (v *validator) RolesAt(ctx context.Context, slot primitives.Slot) (map[[fie
 			}
 		}
 
+		// TODO(goldfish): wipe these when fork is Heze
 		if duty.AttesterSlot == slot {
 			roles = append(roles, iface.RoleAttester)
 
@@ -611,6 +616,15 @@ func (v *validator) RolesAt(ctx context.Context, slot primitives.Slot) (map[[fie
 
 		if slices.Contains(snap.ptcSlots(duty.ValidatorIndex), slot) {
 			roles = append(roles, iface.RolePTCMember)
+		}
+
+		if duty.Status == ethpb.ValidatorStatus_ACTIVE &&
+			slots.ToEpoch(slot) >= params.BeaconConfig().HezeForkEpoch {
+			n := params.BeaconConfig().MinGenesisActiveValidatorCount
+			seats := decoupled.AvailableAttestationSeats(slot, duty.ValidatorIndex, n)
+			if len(seats) > 0 {
+				roles = append(roles, iface.RoleAvailableAttester)
+			}
 		}
 
 		if len(roles) == 0 {
@@ -786,6 +800,46 @@ func (v *validator) getAttestationData(ctx context.Context, slot primitives.Slot
 
 	v.cachedAttestationData = data
 
+	return data, nil
+}
+
+// getAvailableAttestationData fetches available attestation data from the beacon node
+// with caching. The data is identical for all validators in the same slot, so we cache
+// it to avoid redundant beacon node requests.
+func (v *validator) getAvailableAttestationData(ctx context.Context, slot primitives.Slot) (*ethpb.AvailableAttestationData, error) {
+	ctx, span := trace.StartSpan(ctx, "validator.getAvailableAttestationData")
+	defer span.End()
+
+	ctx, err := v.withHeadHint(ctx, slot, attestationDueComponent(slot))
+	if err != nil {
+		return nil, fmt.Errorf("attach freshness hint: %w", err)
+	}
+
+	v.cachedAvailableAttestationDataLock.RLock()
+	if v.cachedAvailableAttestationData != nil && v.cachedAvailableAttestationData.Slot == slot {
+		data := v.cachedAvailableAttestationData
+		v.cachedAvailableAttestationDataLock.RUnlock()
+		return data, nil
+	}
+	v.cachedAvailableAttestationDataLock.RUnlock()
+
+	// Cache miss - acquire write lock and fetch
+	v.cachedAvailableAttestationDataLock.Lock()
+	defer v.cachedAvailableAttestationDataLock.Unlock()
+
+	// Double-check after acquiring write lock (another goroutine may have filled the cache)
+	if v.cachedAvailableAttestationData != nil && v.cachedAvailableAttestationData.Slot == slot {
+		return v.cachedAvailableAttestationData, nil
+	}
+
+	data, err := v.validatorClient.AvailableAttestationData(ctx, &ethpb.AvailableAttestationDataRequest{
+		Slot: slot,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	v.cachedAvailableAttestationData = data
 	return data, nil
 }
 

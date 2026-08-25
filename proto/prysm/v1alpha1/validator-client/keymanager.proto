@@ -8,6 +8,7 @@ import "proto/prysm/v1alpha1/beacon_core_types.proto";
 import "proto/prysm/v1alpha1/beacon_state.proto";
 import "proto/prysm/v1alpha1/gloas.proto";
 import "proto/prysm/v1alpha1/gloas_builder_api.proto";
+import "proto/prysm/v1alpha1/heze.proto";
 import "proto/prysm/v1alpha1/sync_committee.proto";
 
 option csharp_namespace = "Ethereum.Validator.Accounts.V2";
@@ -38,29 +39,20 @@ message SignRequest {
     // Phase0 objects.
     ethereum.eth.v1alpha1.BeaconBlock block = 101;
     ethereum.eth.v1alpha1.AttestationData attestation_data = 102;
-    ethereum.eth.v1alpha1.AggregateAttestationAndProof
-        aggregate_attestation_and_proof = 103;
+    ethereum.eth.v1alpha1.AggregateAttestationAndProof aggregate_attestation_and_proof = 103;
     ethereum.eth.v1alpha1.VoluntaryExit exit = 104;
-    uint64 slot = 105 [
-      (ethereum.eth.ext.cast_type) =
-          "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"
-    ];
-    uint64 epoch = 106 [
-      (ethereum.eth.ext.cast_type) =
-          "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"
-    ];
+    uint64 slot = 105 [(ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"];
+    uint64 epoch = 106 [(ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"];
 
     // Altair objects.
     ethereum.eth.v1alpha1.BeaconBlockAltair block_altair = 107;
-    ethereum.eth.v1alpha1.SyncAggregatorSelectionData
-        sync_aggregator_selection_data = 108;
+    ethereum.eth.v1alpha1.SyncAggregatorSelectionData sync_aggregator_selection_data = 108;
     ethereum.eth.v1alpha1.ContributionAndProof contribution_and_proof = 109;
     bytes sync_message_block_root = 110;
 
     // Bellatrix objects.
     ethereum.eth.v1alpha1.BeaconBlockBellatrix block_bellatrix = 111;
-    ethereum.eth.v1alpha1.BlindedBeaconBlockBellatrix blinded_block_bellatrix =
-        112;
+    ethereum.eth.v1alpha1.BlindedBeaconBlockBellatrix blinded_block_bellatrix = 112;
 
     // Builder objects.
     ethereum.eth.v1alpha1.ValidatorRegistrationV1 registration = 113;
@@ -76,8 +68,7 @@ message SignRequest {
     // Electra objects.
     ethereum.eth.v1alpha1.BeaconBlockElectra block_electra = 118;
     ethereum.eth.v1alpha1.BlindedBeaconBlockElectra blinded_block_electra = 119;
-    ethereum.eth.v1alpha1.AggregateAttestationAndProofElectra
-        aggregate_attestation_and_proof_electra = 120;
+    ethereum.eth.v1alpha1.AggregateAttestationAndProofElectra aggregate_attestation_and_proof_electra = 120;
 
     // Fulu objects.
     ethereum.eth.v1alpha1.BeaconBlockElectra block_fulu = 121;
@@ -89,13 +80,13 @@ message SignRequest {
     ethereum.eth.v1alpha1.PayloadAttestationData payload_attestation_data = 125;
     ethereum.eth.v1alpha1.ProposerPreferences proposer_preference = 126;
     ethereum.eth.v1alpha1.RequestAuthV1 request_auth = 127;
+
+    // Heze objects.
+    ethereum.eth.v1alpha1.AvailableAttestationData available_attestation_data = 128;
   }
 
   reserved 4, 5; // Reserving old, deleted fields.
-  uint64 signing_slot = 6 [
-    (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"
-  ];
+  uint64 signing_slot = 6 [(ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"];
 }
 
 // SignResponse returned by a RemoteSigner gRPC service.
@@ -121,27 +112,18 @@ message ProposerOptionPayload {
   string fee_recipient = 1;
   BuilderConfig builder = 2;
   optional string graffiti = 3;
-  uint64 gas_limit = 4 [
-    (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/validator.Uint64"
-  ];
+  uint64 gas_limit = 4 [(ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/prysm/v7/consensus-types/validator.Uint64"];
 }
 
 // BuilderConfig is a property of ProposerOptionPayload
 message BuilderConfig {
   bool enabled = 1;
-  uint64 gas_limit = 2 [
-    (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/validator.Uint64"
-  ];
+  uint64 gas_limit = 2 [(ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/prysm/v7/consensus-types/validator.Uint64"];
   repeated string relays = 3;
   // max_execution_payment is the maximum execution layer payment (in Gwei) the
   // proposer will accept from a builder for the Gloas builder API. 0 means
   // trustless-only; 2^64-1 means accept any amount.
-  uint64 max_execution_payment = 4 [
-    (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/validator.Uint64"
-  ];
+  uint64 max_execution_payment = 4 [(ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/prysm/v7/consensus-types/validator.Uint64"];
 }
 
 // ProposerSettingsPayload is used to unmarshal files sent from the validator

@@ -441,6 +441,18 @@ func (mr *MockValidatorMockRecorder) SubmitAttestation(ctx, slot, pubKey any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitAttestation", reflect.TypeOf((*MockValidator)(nil).SubmitAttestation), ctx, slot, pubKey)
 }
 
+// SubmitAvailableAttestation mocks base method.
+func (m *MockValidator) SubmitAvailableAttestation(ctx context.Context, slot primitives.Slot, pubKey [48]byte) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SubmitAvailableAttestation", ctx, slot, pubKey)
+}
+
+// SubmitAvailableAttestation indicates an expected call of SubmitAvailableAttestation.
+func (mr *MockValidatorMockRecorder) SubmitAvailableAttestation(ctx, slot, pubKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitAvailableAttestation", reflect.TypeOf((*MockValidator)(nil).SubmitAvailableAttestation), ctx, slot, pubKey)
+}
+
 // SubmitPayloadAttestation mocks base method.
 func (m *MockValidator) SubmitPayloadAttestation(ctx context.Context, slot primitives.Slot, pubKey [48]byte) {
 	m.ctrl.T.Helper()

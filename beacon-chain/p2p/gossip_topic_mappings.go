@@ -166,4 +166,7 @@ func init() {
 	GossipTypeMapping[reflect.TypeFor[*ethpb.PayloadAttestationMessage]()] = PayloadAttestationMessageTopicFormat
 	GossipTypeMapping[reflect.TypeFor[*ethpb.SignedExecutionPayloadBid]()] = ExecutionPayloadBidTopicFormat
 	GossipTypeMapping[reflect.TypeFor[*ethpb.SignedProposerPreferences]()] = SignedProposerPreferencesTopicFormat
+
+	// Specially handle Heze objects.
+	GossipTypeMapping[reflect.TypeFor[*ethpb.AvailableAttestation]()] = AvailableAttestationTopicFormat
 }

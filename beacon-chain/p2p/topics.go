@@ -55,6 +55,9 @@ const (
 	// GossipSignedProposerPreferencesMessage is the name for the proposer preferences message type.
 	GossipSignedProposerPreferencesMessage = "proposer_preferences"
 
+	// GossipAvailableAttestationMessage is the name for the available attestation type.
+	GossipAvailableAttestationMessage = "available_attestation"
+
 	// Topic Formats
 	//
 	// AttestationSubnetTopicFormat is the topic format for the attestation subnet.
@@ -91,6 +94,8 @@ const (
 	ExecutionPayloadBidTopicFormat = GossipProtocolAndDigest + GossipExecutionPayloadBidMessage
 	// SignedProposerPreferencesTopicFormat is the topic format for signed proposer preferences.
 	SignedProposerPreferencesTopicFormat = GossipProtocolAndDigest + GossipSignedProposerPreferencesMessage
+	// AvailableAttestationTopicFormat is the topic format for available attestation message.
+	AvailableAttestationTopicFormat = GossipProtocolAndDigest + GossipAvailableAttestationMessage
 )
 
 // topic is a struct representing a single gossipsub topic.

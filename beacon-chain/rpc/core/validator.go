@@ -1039,3 +1039,27 @@ func (s *Service) buildPayloadAttestationData(ctx context.Context, slot primitiv
 		BlobDataAvailable: available,
 	}, nil
 }
+
+// GetAvailableAttestationData requests that the beacon node produces available attestation data for
+// the current slot.
+func (s *Service) GetAvailableAttestationData(
+	ctx context.Context, req *ethpb.AvailableAttestationDataRequest,
+) (*ethpb.AvailableAttestationData, *RpcError) {
+	ctx, span := trace.StartSpan(ctx, "coreService.GetAvailableAttestationData")
+	defer span.End()
+	if slots.ToEpoch(req.Slot) < params.BeaconConfig().HezeForkEpoch {
+		return nil, &RpcError{
+			Reason: BadRequest,
+			Err:    errors.New("available attestation data is only available for heze fork")}
+	}
+
+	var isPayloadFull bool
+	fcRoot, full := s.ChainInfoFetcher.CanonicalNodeAtSlot(req.Slot)
+	isPayloadFull = full
+
+	return &ethpb.AvailableAttestationData{
+		Slot:            req.Slot,
+		PayloadPresent:  isPayloadFull,
+		BeaconBlockRoot: fcRoot[:],
+	}, nil
+}

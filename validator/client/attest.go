@@ -50,6 +50,7 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 		tracing.AnnotateError(span, err)
 		return
 	}
+
 	lock := async.NewMultilock(b.String())
 	lock.Lock()
 	defer lock.Unlock()

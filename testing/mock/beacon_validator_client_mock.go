@@ -164,6 +164,26 @@ func (mr *MockBeaconNodeValidatorClientMockRecorder) GetAttesterDuties(ctx, in a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAttesterDuties", reflect.TypeOf((*MockBeaconNodeValidatorClient)(nil).GetAttesterDuties), varargs...)
 }
 
+// GetAvailableAttestationData mocks base method.
+func (m *MockBeaconNodeValidatorClient) GetAvailableAttestationData(ctx context.Context, in *eth.AvailableAttestationDataRequest, opts ...grpc.CallOption) (*eth.AvailableAttestationData, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAvailableAttestationData", varargs...)
+	ret0, _ := ret[0].(*eth.AvailableAttestationData)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAvailableAttestationData indicates an expected call of GetAvailableAttestationData.
+func (mr *MockBeaconNodeValidatorClientMockRecorder) GetAvailableAttestationData(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAvailableAttestationData", reflect.TypeOf((*MockBeaconNodeValidatorClient)(nil).GetAvailableAttestationData), varargs...)
+}
+
 // GetBeaconBlock mocks base method.
 func (m *MockBeaconNodeValidatorClient) GetBeaconBlock(ctx context.Context, in *eth.BlockRequest, opts ...grpc.CallOption) (*eth.GenericBeaconBlock, error) {
 	m.ctrl.T.Helper()
@@ -482,6 +502,26 @@ func (mr *MockBeaconNodeValidatorClientMockRecorder) ProposeAttestationElectra(c
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProposeAttestationElectra", reflect.TypeOf((*MockBeaconNodeValidatorClient)(nil).ProposeAttestationElectra), varargs...)
+}
+
+// ProposeAvailableAttestation mocks base method.
+func (m *MockBeaconNodeValidatorClient) ProposeAvailableAttestation(ctx context.Context, in *eth.AvailableAttestation, opts ...grpc.CallOption) (*eth.AttestResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ProposeAvailableAttestation", varargs...)
+	ret0, _ := ret[0].(*eth.AttestResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProposeAvailableAttestation indicates an expected call of ProposeAvailableAttestation.
+func (mr *MockBeaconNodeValidatorClientMockRecorder) ProposeAvailableAttestation(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProposeAvailableAttestation", reflect.TypeOf((*MockBeaconNodeValidatorClient)(nil).ProposeAvailableAttestation), varargs...)
 }
 
 // ProposeBeaconBlock mocks base method.

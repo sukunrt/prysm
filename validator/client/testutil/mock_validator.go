@@ -343,3 +343,7 @@ func (fv *FakeValidator) SetTicker() {
 // SubmitPayloadAttestation for mocking.
 func (*FakeValidator) SubmitPayloadAttestation(_ context.Context, _ primitives.Slot, _ [fieldparams.BLSPubkeyLength]byte) {
 }
+
+// SubmitAvailableAttestation for mocking.
+func (*FakeValidator) SubmitAvailableAttestation(_ context.Context, _ primitives.Slot, _ [fieldparams.BLSPubkeyLength]byte) {
+}

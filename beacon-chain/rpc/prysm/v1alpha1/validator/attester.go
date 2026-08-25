@@ -46,6 +46,28 @@ func (vs *Server) GetAttestationData(ctx context.Context, req *ethpb.Attestation
 
 // Deprecated: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API.
 //
+// GetAvailableAttestationData requests that the beacon node produce an available
+// attestation data object, which the validator acting as an available attester
+// will then sign.
+func (vs *Server) GetAvailableAttestationData(ctx context.Context, req *ethpb.AvailableAttestationDataRequest) (*ethpb.AvailableAttestationData, error) {
+	ctx, span := trace.StartSpan(ctx, "AttesterServer.RequestAvailableAttestationData")
+	defer span.End()
+	span.SetAttributes(
+		trace.Int64Attribute("slot", int64(req.Slot)),
+	)
+
+	if vs.SyncChecker.Syncing() {
+		return nil, status.Errorf(codes.Unavailable, "Syncing to latest head, not ready to respond")
+	}
+	data, err := vs.CoreService.GetAvailableAttestationData(ctx, req)
+	if err != nil {
+		return nil, status.Errorf(core.ErrorReasonToGRPC(err.Reason), "Could not get attestation data: %v", err.Err)
+	}
+	return data, nil
+}
+
+// Deprecated: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API.
+//
 // ProposeAttestation is a function called by an attester to vote
 // on a block via an attestation object as defined in the Ethereum specification.
 func (vs *Server) ProposeAttestation(ctx context.Context, att *ethpb.Attestation) (*ethpb.AttestResponse, error) {
@@ -117,6 +139,41 @@ func (vs *Server) ProposeAttestationElectra(ctx context.Context, singleAtt *ethp
 			}
 		}
 	}()
+
+	return resp, nil
+}
+
+// Deprecated: The gRPC API will remain the default and fully supported through v8 (expected in 2026) but will be eventually removed in favor of REST API.
+//
+// ProposeAvailableAttestation is a function called by an attester to vote
+// on a block via an available attestation object.
+func (vs *Server) ProposeAvailableAttestation(ctx context.Context, att *ethpb.AvailableAttestation) (*ethpb.AttestResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "AttesterServer.ProposeAvailableAttestation")
+	defer span.End()
+
+	if vs.SyncChecker.Syncing() {
+		return nil, status.Errorf(codes.Unavailable, "Syncing to latest head, not ready to respond")
+	}
+
+	resp, err := vs.proposeAvailableAtt(ctx, att)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO(sukunrt): plug in this when writing the receive path for the attestations.
+	// singleAttCopy := singleAtt.Copy()
+	// att := singleAttCopy.ToAttestationElectra(committee)
+	// go func() {
+	// 	if features.Get().EnableExperimentalAttestationPool {
+	// 		if err := vs.AttestationCache.Add(att); err != nil {
+	// 			log.WithError(err).Error("Could not save attestation")
+	// 		}
+	// 	} else {
+	// 		if err := vs.AttPool.SaveUnaggregatedAttestation(att); err != nil {
+	// 			log.WithError(err).Error("Could not save unaggregated attestation")
+	// 		}
+	// 	}
+	// }()
 
 	return resp, nil
 }
@@ -250,6 +307,51 @@ func (vs *Server) proposeAtt(
 	// Broadcast the new attestation to the network.
 	if err := vs.P2P.BroadcastAttestation(ctx, subnet, att); err != nil {
 		return nil, status.Errorf(codes.Internal, "Could not broadcast attestation: %v", err)
+	}
+
+	return &ethpb.AttestResponse{
+		AttestationDataRoot: root[:],
+	}, nil
+}
+
+func (vs *Server) proposeAvailableAtt(
+	ctx context.Context,
+	att *ethpb.AvailableAttestation,
+) (*ethpb.AttestResponse, error) {
+	if _, err := bls.SignatureFromBytes(att.GetSignature()); err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Incorrect attestation signature")
+	}
+
+	root, err := att.GetData().HashTreeRoot()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Could not get attestation root: %v", err)
+	}
+
+	currentEpoch := slots.ToEpoch(vs.TimeFetcher.CurrentSlot())
+	if currentEpoch < params.BeaconConfig().HezeForkEpoch {
+		return nil, status.Error(codes.InvalidArgument, "available attestations only enabled post Heze")
+	}
+	data := att.GetData()
+	attEpoch := slots.ToEpoch(data.Slot)
+	if attEpoch < params.BeaconConfig().HezeForkEpoch {
+		return nil, status.Error(codes.InvalidArgument, "available attestations only enabled post Heze")
+	} else {
+		if data.PayloadPresent {
+			blockSlot, err := vs.ForkchoiceFetcher.RecentBlockSlot(bytesutil.ToBytes32(data.BeaconBlockRoot))
+			if err != nil {
+				return nil, status.Error(codes.Internal, "could not determine block slot")
+			}
+			if blockSlot == data.Slot {
+				return nil, status.Error(codes.InvalidArgument, "same slot attestations must not set payload_present")
+			}
+		}
+	}
+
+	// TODO(later): plug the monitoring path by sending the operation event like in availableAtt.
+
+	// Broadcast the available attestation to the network.
+	if err := vs.P2P.Broadcast(ctx, att); err != nil {
+		return nil, status.Errorf(codes.Internal, "Could not broadcast available attestation: %v", err)
 	}
 
 	return &ethpb.AttestResponse{
