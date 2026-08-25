@@ -947,6 +947,16 @@ divisor asked for four times as much.
 errors, and four `validator/client/runner.go` vet errors about discarded cancel
 functions. `runner.go` is byte-identical to its state at the step-5a head.
 
+Two more, neither on the step's known list, both confirmed by running them on
+the parent change:
+
+- `beacon-chain/rpc/eth/beacon` `TestSubmitAttestationsV2/post-electra` fails
+  the same way at the step-5a head: "no attesting indices found for committee
+  index 0". It is the same shape as the 34 known
+  `rpc/prysm/v1alpha1/beacon` failures, and it predates this step.
+- `config/params` needs `-tags develop`; without the tag the package aborts
+  with "Tests in this package require extra build tag". Green with it.
+
 ### Smoke: the fan-out is visible on a running node
 
 The step-5a setup rerun with `SLOTS_PER_ROUND: 8`
