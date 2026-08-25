@@ -73,6 +73,7 @@ func (t *TransactionGenerator) Start(ctx context.Context) error {
 	ctx, ccl := context.WithCancel(ctx)
 	t.cancel = ccl
 
+	logrus.Info("Transaction generator starting")
 	client, err := rpc.DialHTTP(fmt.Sprintf("http://127.0.0.1:%d", e2e.TestParams.Ports.Eth1RPCPort))
 	if err != nil {
 		return err
@@ -83,8 +84,8 @@ func (t *TransactionGenerator) Start(ctx context.Context) error {
 	newGen := rand.NewDeterministicGenerator()
 	if seed == 0 {
 		seed = newGen.Int63()
-		logrus.WithField("Seed", seed).Info("Transaction generator")
 	}
+	logrus.WithField("Seed", seed).Info("Transaction generator seeded")
 	// Set seed so that all transactions can be
 	// deterministically generated.
 	mathRand.Seed(seed)
@@ -97,6 +98,7 @@ func (t *TransactionGenerator) Start(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	logrus.Info("Transaction generator decrypted the miner key")
 	newKey := keystore.NewKeyForDirectICAP(newGen)
 	if err := fundAccount(client, mineKey, newKey); err != nil {
 		return err
@@ -115,6 +117,7 @@ func (t *TransactionGenerator) Start(ctx context.Context) error {
 	backend := ethclient.NewClient(client)
 	defer backend.Close()
 
+	logrus.Info("Transaction generator waiting for the funding transfer to mine")
 	if err := WaitForBlocks(ctx, backend, mineKey, 1); err != nil {
 		return errors.Wrap(err, "failed to mine block for funding tx")
 	}
@@ -130,6 +133,7 @@ func (t *TransactionGenerator) Start(ctx context.Context) error {
 			return err
 		}
 	}
+	logrus.Info("Transaction generator entering the send loop")
 	// Broadcast Transactions every slot
 	txPeriod := time.Duration(params.BeaconConfig().SecondsPerSlot) * time.Second
 	ticker := time.NewTicker(txPeriod)
@@ -837,7 +841,12 @@ func fundAccount(client *rpc.Client, sourceKey, destKey *keystore.Key) error {
 	if err != nil {
 		return err
 	}
-	return backend.SendTransaction(context.Background(), signedTx)
+	if err := backend.SendTransaction(context.Background(), signedTx); err != nil {
+		return err
+	}
+	logrus.WithField("to", destKey.Address.Hex()).WithField("hash", signedTx.Hash().Hex()).
+		WithField("gas", gasLimit).Info("Sent funding transfer")
+	return nil
 }
 
 // generateRandomEVMCode generates random but valid-looking EVM bytecode
