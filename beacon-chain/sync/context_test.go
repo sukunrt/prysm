@@ -128,34 +128,18 @@ func TestValidateVersion(t *testing.T) {
 	}
 }
 
-// TestContextByteVersions_HezeMapsToShape pins the consensus-only-fork rule:
-// the Heze digest decodes wire objects with the shape of the last fork
-// scheduled before it, never as version.Heze itself.
-func TestContextByteVersions_HezeMapsToShape(t *testing.T) {
-	t.Run("gloas scheduled", func(t *testing.T) {
-		params.SetupTestConfigCleanup(t)
-		cfg := params.MainnetConfig().Copy()
-		cfg.GloasForkEpoch = 2
-		cfg.HezeForkEpoch = 4
-		params.OverrideBeaconConfig(cfg)
+// TestContextByteVersions_HezeUsesGloas pins the wire-shape rule: Heze owns
+// its beacon state container but reuses the Gloas wire containers, so the Heze
+// digest decodes wire objects as version.Gloas, never as version.Heze.
+func TestContextByteVersions_HezeUsesGloas(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.MainnetConfig().Copy()
+	cfg.GloasForkEpoch = 2
+	cfg.HezeForkEpoch = 4
+	params.OverrideBeaconConfig(cfg)
 
-		m, err := ContextByteVersionsForValRoot([32]byte{})
-		require.NoError(t, err)
-		digest := params.ForkDigest(cfg.HezeForkEpoch)
-		require.Equal(t, version.Gloas, m[digest])
-	})
-
-	t.Run("gloas unscheduled falls back to fulu", func(t *testing.T) {
-		params.SetupTestConfigCleanup(t)
-		cfg := params.MainnetConfig().Copy()
-		cfg.FuluForkEpoch = 2
-		cfg.GloasForkEpoch = cfg.FarFutureEpoch
-		cfg.HezeForkEpoch = 6
-		params.OverrideBeaconConfig(cfg)
-
-		m, err := ContextByteVersionsForValRoot([32]byte{})
-		require.NoError(t, err)
-		digest := params.ForkDigest(cfg.HezeForkEpoch)
-		require.Equal(t, version.Fulu, m[digest])
-	})
+	m, err := ContextByteVersionsForValRoot([32]byte{})
+	require.NoError(t, err)
+	digest := params.ForkDigest(cfg.HezeForkEpoch)
+	require.Equal(t, version.Gloas, m[digest])
 }

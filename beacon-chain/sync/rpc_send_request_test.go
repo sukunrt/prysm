@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/OffchainLabs/methodical-ssz/ssz"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p"
 	p2ptest "github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/testing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/types"
@@ -1740,98 +1739,50 @@ func TestReadChunkedDataColumnSidecar(t *testing.T) {
 	})
 }
 
-// TestReadChunkedDataColumnSidecar_HezeShapes covers a node syncing across the
-// Heze fork: response chunks arrive with Heze context bytes but carry the
-// shape of the last fork scheduled before Heze (Heze is consensus-only). The
-// context map comes from the production ContextByteVersionsForValRoot, so the
-// shape rule itself is under test, in both schedule variants.
-func TestReadChunkedDataColumnSidecar_HezeShapes(t *testing.T) {
-	serveAndRead := func(t *testing.T, hezeDigest [4]byte, ctxMap ContextByteVersions, msg ssz.Marshaler,
-		read func(stream network.Stream, p p2p.P2P) error) {
-		p1, p2 := p2ptest.NewTestP2P(t), p2ptest.NewTestP2P(t)
+// TestReadChunkedDataColumnSidecar_HezeUsesGloasShape covers a node reading a
+// response chunk that arrives with Heze context bytes. Heze owns its beacon
+// state container but reuses the Gloas wire containers, so the chunk carries a
+// Gloas sidecar. The context map comes from the production
+// ContextByteVersionsForValRoot, so the mapping itself is under test.
+func TestReadChunkedDataColumnSidecar_HezeUsesGloasShape(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.MainnetConfig().Copy()
+	cfg.GloasForkEpoch = 2
+	cfg.HezeForkEpoch = 4
+	params.OverrideBeaconConfig(cfg)
 
-		var wg sync.WaitGroup
-		wg.Add(1)
-		p2.SetStreamHandler(p2p.RPCDataColumnSidecarsByRootTopicV1, func(stream network.Stream) {
-			defer wg.Done()
-			require.NoError(t, read(stream, p2))
-		})
+	ctxMap, err := ContextByteVersionsForValRoot(cfg.GenesisValidatorsRoot)
+	require.NoError(t, err)
+	hezeDigest := params.ForkDigest(cfg.HezeForkEpoch)
 
-		p1.Connect(p2)
-		stream, err := p1.BHost.NewStream(t.Context(), p2.PeerID(), p2p.RPCDataColumnSidecarsByRootTopicV1)
-		require.NoError(t, err)
-
-		_, err = stream.Write([]byte{responseCodeSuccess})
-		require.NoError(t, err)
-		require.NoError(t, writeContextToStream(hezeDigest[:], stream))
-		_, err = p1.Encoding().EncodeWithMaxLength(stream, msg)
-		require.NoError(t, err)
-
-		if util.WaitTimeout(&wg, time.Minute) {
-			t.Fatal("Did not receive stream within 1 minute")
-		}
+	expected := &ethpb.DataColumnSidecarGloas{
+		Index:           1,
+		Slot:            33,
+		BeaconBlockRoot: make([]byte, fieldparams.RootLength),
 	}
 
-	t.Run("gloas scheduled: heze context decodes a gloas sidecar", func(t *testing.T) {
-		params.SetupTestConfigCleanup(t)
-		cfg := params.MainnetConfig().Copy()
-		cfg.GloasForkEpoch = 2
-		cfg.HezeForkEpoch = 4
-		params.OverrideBeaconConfig(cfg)
+	p1, p2 := p2ptest.NewTestP2P(t), p2ptest.NewTestP2P(t)
 
-		ctxMap, err := ContextByteVersionsForValRoot(cfg.GenesisValidatorsRoot)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	p2.SetStreamHandler(p2p.RPCDataColumnSidecarsByRootTopicV1, func(stream network.Stream) {
+		defer wg.Done()
+		actual, err := readChunkedDataColumnSidecar(stream, p2, ctxMap)
 		require.NoError(t, err)
-		hezeDigest := params.ForkDigest(cfg.HezeForkEpoch)
-
-		expected := &ethpb.DataColumnSidecarGloas{
-			Index:           1,
-			Slot:            33,
-			BeaconBlockRoot: make([]byte, fieldparams.RootLength),
-		}
-		serveAndRead(t, hezeDigest, ctxMap, expected, func(stream network.Stream, p p2p.P2P) error {
-			actual, err := readChunkedDataColumnSidecar(stream, p, ctxMap)
-			if err != nil {
-				return err
-			}
-			require.DeepSSZEqual(t, expected, actual.DataColumnSidecarGloas())
-			return nil
-		})
+		require.DeepSSZEqual(t, expected, actual.DataColumnSidecarGloas())
 	})
 
-	t.Run("gloas unscheduled: heze context decodes a fulu sidecar", func(t *testing.T) {
-		params.SetupTestConfigCleanup(t)
-		cfg := params.MainnetConfig().Copy()
-		cfg.FuluForkEpoch = 2
-		cfg.GloasForkEpoch = cfg.FarFutureEpoch
-		cfg.HezeForkEpoch = 6
-		params.OverrideBeaconConfig(cfg)
+	p1.Connect(p2)
+	stream, err := p1.BHost.NewStream(t.Context(), p2.PeerID(), p2p.RPCDataColumnSidecarsByRootTopicV1)
+	require.NoError(t, err)
 
-		ctxMap, err := ContextByteVersionsForValRoot(cfg.GenesisValidatorsRoot)
-		require.NoError(t, err)
-		hezeDigest := params.ForkDigest(cfg.HezeForkEpoch)
+	_, err = stream.Write([]byte{responseCodeSuccess})
+	require.NoError(t, err)
+	require.NoError(t, writeContextToStream(hezeDigest[:], stream))
+	_, err = p1.Encoding().EncodeWithMaxLength(stream, expected)
+	require.NoError(t, err)
 
-		proof := make([][]byte, 0, 4)
-		for range 4 {
-			proof = append(proof, make([]byte, 32))
-		}
-		expected := &ethpb.DataColumnSidecar{
-			SignedBlockHeader: &ethpb.SignedBeaconBlockHeader{
-				Header: &ethpb.BeaconBlockHeader{
-					ParentRoot: make([]byte, fieldparams.RootLength),
-					StateRoot:  make([]byte, fieldparams.RootLength),
-					BodyRoot:   make([]byte, fieldparams.RootLength),
-				},
-				Signature: make([]byte, fieldparams.BLSSignatureLength),
-			},
-			KzgCommitmentsInclusionProof: proof,
-		}
-		serveAndRead(t, hezeDigest, ctxMap, expected, func(stream network.Stream, p p2p.P2P) error {
-			actual, err := readChunkedDataColumnSidecar(stream, p, ctxMap)
-			if err != nil {
-				return err
-			}
-			require.DeepSSZEqual(t, expected, actual.DataColumnSidecar())
-			return nil
-		})
-	})
+	if util.WaitTimeout(&wg, time.Minute) {
+		t.Fatal("Did not receive stream within 1 minute")
+	}
 }

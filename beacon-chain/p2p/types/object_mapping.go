@@ -269,14 +269,14 @@ func InitializeDataMaps() {
 	aliasHezeEntries()
 }
 
-// aliasHezeEntries maps the Heze fork version to the object types of the last
-// fork scheduled before it. Heze is a consensus-only fork: it rotates the
-// gossip digest but changes no wire containers, so Heze-versioned objects are
-// the pre-Heze types (Gloas when Gloas is scheduled, Fulu otherwise).
+// aliasHezeEntries maps the Heze fork version to the Gloas object types. Heze
+// owns its own beacon state container but reuses the Gloas wire containers:
+// blocks, metadata, attestations, slashings, light-client objects and data
+// column sidecars all keep the Gloas shape.
 func aliasHezeEntries() {
 	cfg := params.BeaconConfig()
 	heze := bytesutil.ToBytes4(cfg.HezeForkVersion)
-	shape := cfg.HezeShape().ForkVersion
+	shape := bytesutil.ToBytes4(cfg.GloasForkVersion)
 	aliasEntry(BlockMap, heze, shape)
 	aliasEntry(MetaDataMap, heze, shape)
 	aliasEntry(AttestationMap, heze, shape)

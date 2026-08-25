@@ -59,7 +59,6 @@ go_test(
         "configset_test.go",
         "export_test.go",
         "fork_test.go",
-        "heze_shape_test.go",
         "loader_test.go",
         "mainnet_config_export_test.go",
         "mainnet_config_test.go",

@@ -18,7 +18,6 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/execution"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/fulu"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/gloas"
-	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/heze"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/time"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	"github.com/OffchainLabs/prysm/v7/config/features"
@@ -427,15 +426,6 @@ func UpgradeState(ctx context.Context, state state.BeaconState) (state.BeaconSta
 
 	if time.CanUpgradeToGloas(slot) {
 		state, err = gloas.UpgradeToGloas(state)
-		if err != nil {
-			tracing.AnnotateError(span, err)
-			return nil, err
-		}
-		upgraded = true
-	}
-
-	if time.CanUpgradeToHeze(slot) {
-		state, err = heze.UpgradeToHeze(state)
 		if err != nil {
 			tracing.AnnotateError(span, err)
 			return nil, err

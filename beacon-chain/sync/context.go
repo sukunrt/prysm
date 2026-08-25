@@ -89,13 +89,12 @@ func ContextByteVersionsForValRoot(valRoot [32]byte) (ContextByteVersions, error
 	m := make(ContextByteVersions)
 	for _, entry := range params.SortedNetworkScheduleEntries() {
 		v := entry.VersionEnum
-		// Heze is a consensus-only fork: objects on the wire keep their
-		// pre-Heze shape, so Heze context bytes decode as the last fork
-		// scheduled before it. Without this, version ladders in the chunk
-		// readers (e.g. ">= Gloas" for data columns) pick the wrong container
-		// on schedules where Gloas is not activated.
+		// Heze owns its beacon state container but reuses the Gloas wire
+		// containers, so Heze context bytes decode as Gloas. Without this,
+		// version ladders in the chunk readers (e.g. ">= Gloas" for data
+		// columns) would look for Heze-shaped objects that do not exist.
 		if v == version.Heze {
-			v = params.BeaconConfig().HezeShape().VersionEnum
+			v = version.Gloas
 		}
 		m[entry.ForkDigest] = v
 	}
