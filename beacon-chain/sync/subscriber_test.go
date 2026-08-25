@@ -913,3 +913,14 @@ func createPeer(t *testing.T, topics ...string) *p2ptest.TestP2P {
 	}
 	return p
 }
+
+func TestSubscriptionOpts_OnlyTheVoteTopicIsBuffered(t *testing.T) {
+	suffix := encoder.SszNetworkEncoder{}.ProtocolSuffix()
+	vote := fmt.Sprintf(p2p.AvailableAttestationTopicFormat, [4]byte{1, 2, 3, 4}) + suffix
+	block := fmt.Sprintf(p2p.BlockSubnetTopicFormat, [4]byte{1, 2, 3, 4}) + suffix
+
+	// Gossipsub drops a message the moment a subscription's buffer is full, and
+	// a Goldfish head vote dropped there never comes back.
+	require.Equal(t, 1, len(subscriptionOpts(vote)))
+	require.Equal(t, 0, len(subscriptionOpts(block)))
+}

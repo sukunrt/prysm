@@ -21,6 +21,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
@@ -433,6 +434,25 @@ func (s *Service) subscribe(topic string, validator wrappedVal, handle subHandle
 	s.subscribeWithBase(s.addDigestToTopic(topic, nse.ForkDigest)+s.cfg.p2p.Encoding().ProtocolSuffix(), validator, handle)
 }
 
+// subscriptionOpts returns the pubsub subscribe options for a topic.
+//
+// Gossipsub hands a message to a subscription with a non-blocking send and
+// drops it when the buffer is full, reporting nothing but a RawTracer event.
+// The default buffer is 32 messages, and the Goldfish head vote topic delivers
+// a whole slot's votes in one burst: every validator publishes as soon as the
+// block reaches its own node, so the burst is one message per seat holder
+// within a few milliseconds. A vote is gossiped once, during its own slot, so
+// one dropped here is simply missing from that slot's head vote - it is not
+// late, it never arrives. Hold several slots of the topic's whole traffic.
+func subscriptionOpts(topic string) []pubsub.SubOpt {
+	if !strings.Contains(topic, p2p.GossipAvailableAttestationMessage) {
+		return nil
+	}
+	return []pubsub.SubOpt{
+		pubsub.WithBufferSize(4 * decoupled.AvailableAttestationCommitteeSize),
+	}
+}
+
 func (s *Service) subscribeWithBase(topic string, validator wrappedVal, handle subHandler) *pubsub.Subscription {
 	log := log.WithField("topic", topic)
 
@@ -448,7 +468,7 @@ func (s *Service) subscribeWithBase(topic string, validator wrappedVal, handle s
 		return nil
 	}
 
-	sub, err := s.cfg.p2p.SubscribeToTopic(topic)
+	sub, err := s.cfg.p2p.SubscribeToTopic(topic, subscriptionOpts(topic)...)
 	if err != nil {
 		// Any error subscribing to a PubSub topic would be the result of a misconfiguration of
 		// libp2p PubSub library or a subscription request to a topic that fails to match the topic
