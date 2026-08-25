@@ -179,6 +179,11 @@ func protoFiles() ([]string, error) {
 }
 
 func sszFiles() ([]string, error) {
+	ps, err := loadPresets()
+	if err != nil {
+		return nil, fmt.Errorf("loadPresets: %w", err)
+	}
+
 	targets, err := loadMethodicalTargets()
 	if err != nil {
 		return nil, fmt.Errorf("loadMethodicalTargets: %w", err)
@@ -191,7 +196,7 @@ func sszFiles() ([]string, error) {
 
 	files := slices.Clone(bzl)
 	for _, target := range targets {
-		pbs, err := pbgoFiles(target.pkg)
+		pbs, err := pbgoFiles(target.pkg, ps.nonBase())
 		if err != nil {
 			return nil, fmt.Errorf("pbgoFiles %s: %w", target.pkg, err)
 		}
@@ -200,8 +205,10 @@ func sszFiles() ([]string, error) {
 		files = append(files, filepath.ToSlash(filepath.Join(target.pkg, target.configFile)))
 
 		out := filepath.ToSlash(filepath.Join(target.pkg, target.out))
-		minOut := strings.TrimSuffix(out, ".ssz.go") + ".minimal.ssz.go"
-		files = append(files, out, minOut)
+		files = append(files, out)
+		for _, p := range ps.nonBase() {
+			files = append(files, strings.TrimSuffix(out, ".ssz.go")+"."+p+".ssz.go")
+		}
 	}
 
 	return files, nil
@@ -228,12 +235,9 @@ func mockFiles() ([]string, error) {
 	return files, nil
 }
 
-// pbgoFiles returns the .pb.go files in dir, skipping .minimal.pb.go twins.
-//
-// The .minimal.pb.go twins are not fed to sszgen: the minimal variant is
-// regenerated from .proto files into a temp dir at gen time and they are proto
-// outputs already covered by the proto manifest.
-func pbgoFiles(dir string) ([]string, error) {
+// pbgoFiles returns the .pb.go files in dir, skipping the .<preset>.pb.go
+// twins: they are proto outputs already covered by the proto manifest.
+func pbgoFiles(dir string, twinPresets []string) ([]string, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("readDir %s: %w", dir, err)
@@ -242,7 +246,7 @@ func pbgoFiles(dir string) ([]string, error) {
 	var out []string
 	for _, entry := range entries {
 		name := entry.Name()
-		if entry.IsDir() || !strings.HasSuffix(name, ".pb.go") || strings.HasSuffix(name, ".minimal.pb.go") {
+		if entry.IsDir() || !strings.HasSuffix(name, ".pb.go") || isPresetTwin(name, ".pb.go", twinPresets) {
 			continue
 		}
 
@@ -250,6 +254,18 @@ func pbgoFiles(dir string) ([]string, error) {
 	}
 
 	return out, nil
+}
+
+// isPresetTwin reports whether name is a per-preset twin of a generated file
+// with the given suffix (e.g. "state.minimal.pb.go" for suffix ".pb.go").
+func isPresetTwin(name, suffix string, twinPresets []string) bool {
+	for _, p := range twinPresets {
+		if strings.HasSuffix(name, "."+p+suffix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func goPkgFiles(dir string) ([]string, error) {

@@ -53,9 +53,9 @@ func protoPkgDirs(pkgs map[string]string) []string {
 }
 
 func genProto() error {
-	mainnet, minimal, err := loadSSZDicts()
+	ps, err := loadPresets()
 	if err != nil {
-		return fmt.Errorf("load SSZ dicts: %w", err)
+		return fmt.Errorf("load presets: %w", err)
 	}
 
 	pkgs, err := loadProtoPkgs()
@@ -79,59 +79,71 @@ func genProto() error {
 		return fmt.Errorf("build proto plugins: %w", err)
 	}
 
-	outMain := filepath.Join(tmpRoot, "mainnet")
-	if err := generateNetwork(mainnet, outMain, binDir, googleapisInc, pkgs); err != nil {
-		return fmt.Errorf("generate mainnet: %w", err)
+	outDirs := make(map[string]string, len(ps.names))
+	for _, p := range ps.names {
+		outDirs[p] = filepath.Join(tmpRoot, p)
+		if err := generateNetwork(ps.dicts[p], outDirs[p], binDir, googleapisInc, pkgs); err != nil {
+			return fmt.Errorf("generate %s: %w", p, err)
+		}
 	}
 
-	outMin := filepath.Join(tmpRoot, "minimal")
-	if err := generateNetwork(minimal, outMin, binDir, googleapisInc, pkgs); err != nil {
-		return fmt.Errorf("generate minimal: %w", err)
-	}
-
-	// Write each mainnet *.pb.go back to its source-relative path. When the
-	// mainnet and minimal generated code is byte-identical the proto is
-	// config-invariant and is written once, untagged. When they differ -- a
-	// field's Go type changed (e.g. Bitvector512 vs Bitvector32) or an
-	// ssz-size/ssz-max struct tag changed with the network -- the file is split
-	// into a //go:build !minimal file plus a <name>.minimal.pb.go twin. Keeping
-	// both variants in the tree lets the SSZ generator read the correct sizes
-	// for each network via -tags minimal, and lets `go build -tags minimal`
-	// select the right sources with no build-time codegen.
-	err = filepath.WalkDir(outMain, func(path string, d os.DirEntry, err error) error {
+	// Write each base-preset *.pb.go back to its source-relative path. Presets
+	// whose generated code is byte-identical to the base are config-invariant
+	// for that proto and get no twin. Each differing preset -- a field's Go
+	// type changed (e.g. Bitvector512 vs Bitvector32) or an ssz-size/ssz-max
+	// struct tag changed with the preset -- gets a //go:build <preset>
+	// <name>.<preset>.pb.go twin, and the base file is constrained to the
+	// conjunction of the differing presets' negations. Keeping the variants in
+	// the tree lets the SSZ generator read the correct sizes for each preset
+	// via -tags <preset>, and lets `go build -tags <preset>` select the right
+	// sources with no build-time codegen.
+	err = filepath.WalkDir(outDirs[ps.base()], func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".pb.go") {
 			return err
 		}
 
-		rel, err := filepath.Rel(outMain, path)
+		rel, err := filepath.Rel(outDirs[ps.base()], path)
 		if err != nil {
 			return fmt.Errorf("filepath.Rel: %w", err)
 		}
 		rel = filepath.ToSlash(rel)
 
-		mainData, err := os.ReadFile(path) // #nosec G304 -- path is under our own temp out dir
+		baseData, err := os.ReadFile(path) // #nosec G304 -- path is under our own temp out dir
 		if err != nil {
 			return fmt.Errorf("readFile: %w", err)
 		}
 
-		minPath := filepath.Join(outMin, rel)
-		minData, err := os.ReadFile(minPath) // #nosec G304 -- minPath is under our own temp out dir
-		if err != nil {
-			return fmt.Errorf("readFile: %w", err)
+		var differing []string
+		for _, p := range ps.nonBase() {
+			twinPath := filepath.Join(outDirs[p], rel)
+			pData, err := os.ReadFile(twinPath) // #nosec G304 -- under our own temp out dir
+			if err != nil {
+				return fmt.Errorf("readFile: %w", err)
+			}
+
+			if !bytes.Equal(baseData, pData) {
+				differing = append(differing, p)
+			}
 		}
 
-		if bytes.Equal(mainData, minData) {
+		if len(differing) == 0 {
 			return copyFile(path, rel)
 		}
 
-		if err := writeTagged("!minimal", path, rel); err != nil {
+		negations := make([]string, len(differing))
+		for i, p := range differing {
+			negations[i] = "!" + p
+		}
+
+		if err := writeTagged(strings.Join(negations, " && "), path, rel); err != nil {
 			return fmt.Errorf("writeTagged: %w", err)
 		}
 
-		minTwin := strings.TrimSuffix(rel, ".pb.go") + ".minimal.pb.go"
-
-		if err := writeTagged("minimal", minPath, minTwin); err != nil {
-			return fmt.Errorf("writeTagged: %w", err)
+		for _, p := range differing {
+			twin := strings.TrimSuffix(rel, ".pb.go") + "." + p + ".pb.go"
+			if err := writeTagged(p, filepath.Join(outDirs[p], rel), twin); err != nil {
+				return fmt.Errorf("writeTagged: %w", err)
+			}
 		}
 
 		return nil
@@ -148,7 +160,7 @@ func genProto() error {
 		return fmt.Errorf("gofmtSimplify: %w", err)
 	}
 
-	if err := applyGenModes("proto"); err != nil {
+	if err := applyGenModes("proto", ps.nonBase()); err != nil {
 		return fmt.Errorf("applyGenModes: %w", err)
 	}
 
@@ -157,16 +169,20 @@ func genProto() error {
 
 // The 0755 mode mimics the old Bazel codegen, which marked its outputs
 // executable. That makes no sense for Go source files, but we reproduce it
-// here to avoid a large mode diff across the whole proto tree.
-func applyGenModes(root string) error {
+// here to avoid a large mode diff across the whole proto tree. Preset twins
+// (.<preset>.pb.go) postdate the Bazel codegen and stay 0644.
+func applyGenModes(root string, twinPresets []string) error {
 	return filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".pb.go") {
 			return err
 		}
 
 		mode := os.FileMode(0o755)
-		if strings.HasSuffix(path, ".minimal.pb.go") {
-			mode = 0o644
+		for _, p := range twinPresets {
+			if strings.HasSuffix(path, "."+p+".pb.go") {
+				mode = 0o644
+				break
+			}
 		}
 
 		if err := os.Chmod(path, mode); err != nil {

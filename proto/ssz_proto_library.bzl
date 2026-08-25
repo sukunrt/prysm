@@ -6,6 +6,16 @@ These rules allow for variable substitution for hardcoded tag values like ssz-si
 
 ####### Configuration #######
 
+# presets lists every SSZ substitution dict defined below. Element 0 is the base
+# preset: build/gen generates it with a negative build constraint and emits every
+# other preset as a build-tagged twin. This list is the source of truth for the
+# preset set, for both Bazel and build/gen.
+presets = [
+    "mainnet",
+    "minimal",
+    "decoupled",
+]
+
 mainnet = {
     "block_roots.size": "8192,32",  # SLOTS_PER_HISTORICAL_ROOT, [32]byte
     "state_roots.size": "8192,32",  # SLOTS_PER_HISTORICAL_ROOT, [32]byte

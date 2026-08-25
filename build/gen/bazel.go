@@ -3,7 +3,7 @@ package main
 // This file is the single point where build/gen reads its generation config
 // from the Bazel files, which are the source of truth:
 //
-//   - proto/ssz_proto_library.bzl  -> the mainnet/minimal SSZ substitution dicts
+//   - proto/ssz_proto_library.bzl  -> the preset list + SSZ substitution dicts
 //   - proto/**/BUILD.bazel         -> the proto package list + plugin mode
 //                                     (go_proto_library) and the SSZ targets
 //                                     (ssz_methodical)
@@ -56,26 +56,70 @@ func topLevelAssignments(f *build.File) map[string]build.Expr {
 	return env
 }
 
-// loadSSZDicts returns the mainnet and minimal SSZ-size substitution maps.
-func loadSSZDicts() (mainnet, minimal map[string]string, err error) {
+// presets holds the preset names from the `presets` list in
+// ssz_proto_library.bzl (element 0 is the base preset) and each preset's
+// SSZ-size substitution dict.
+type presets struct {
+	names []string
+	dicts map[string]map[string]string
+}
+
+// base returns the base preset name and nonBase the build-tagged rest.
+func (p presets) base() string      { return p.names[0] }
+func (p presets) nonBase() []string { return p.names[1:] }
+
+// loadPresets returns the preset set declared in ssz_proto_library.bzl.
+func loadPresets() (presets, error) {
 	f, err := parseBazel(sszProtoLibraryBzl)
 	if err != nil {
-		return nil, nil, err
+		return presets{}, err
 	}
 
 	env := topLevelAssignments(f)
 
-	mainnet, err = stringDict(env, "mainnet")
+	names, err := stringList(env, "presets")
 	if err != nil {
-		return nil, nil, fmt.Errorf("string dict: %w", err)
+		return presets{}, fmt.Errorf("string list: %w", err)
 	}
 
-	minimal, err = stringDict(env, "minimal")
-	if err != nil {
-		return nil, nil, fmt.Errorf("string dict: %w", err)
+	if len(names) < 2 {
+		return presets{}, fmt.Errorf("%s: presets needs a base and at least one more", sszProtoLibraryBzl)
 	}
 
-	return mainnet, minimal, nil
+	dicts := make(map[string]map[string]string, len(names))
+	for _, name := range names {
+		dicts[name], err = stringDict(env, name)
+		if err != nil {
+			return presets{}, fmt.Errorf("string dict: %w", err)
+		}
+	}
+
+	return presets{names: names, dicts: dicts}, nil
+}
+
+// stringList resolves a top-level `name = [...]` assignment to a string slice.
+func stringList(env map[string]build.Expr, name string) ([]string, error) {
+	e, ok := env[name]
+	if !ok {
+		return nil, fmt.Errorf("%s: list %q not found", sszProtoLibraryBzl, name)
+	}
+
+	list, ok := e.(*build.ListExpr)
+	if !ok {
+		return nil, fmt.Errorf("%s: %q is not a list (%T)", sszProtoLibraryBzl, name, e)
+	}
+
+	out := make([]string, 0, len(list.List))
+	for _, item := range list.List {
+		s, ok := item.(*build.StringExpr)
+		if !ok {
+			return nil, fmt.Errorf("%s: %q has a non-string element", sszProtoLibraryBzl, name)
+		}
+
+		out = append(out, s.Value)
+	}
+
+	return out, nil
 }
 
 // stringDict resolves a top-level `name = {...}` assignment to a string map.

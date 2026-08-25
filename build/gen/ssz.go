@@ -22,13 +22,19 @@ import (
 // needed. methodical loads the package named by the config file's `package:`
 // field straight from the module.
 //
-// Each target is generated twice: once for mainnet (default build tags) and
-// once for minimal (--build-tags=minimal, which makes methodical's package
-// loader pick up the //go:build minimal .pb.go sources written by `make gen
-// proto`), and always written as a //go:build !minimal file plus a
-// <name>.minimal.ssz.go twin. This requires `make gen proto` to have run first
-// so both .pb.go variants are on disk.
+// Each target is generated once per preset: the base preset with the default
+// build tags, and every other preset with --build-tags=<preset>, which makes
+// methodical's package loader pick up the //go:build <preset> .pb.go sources
+// written by `make gen proto`. The base output is constrained to the
+// conjunction of the other presets' negations, and each other preset gets a
+// <name>.<preset>.ssz.go twin. This requires `make gen proto` to have run
+// first so all .pb.go variants are on disk.
 func genSSZ() error {
+	ps, err := loadPresets()
+	if err != nil {
+		return fmt.Errorf("load presets: %w", err)
+	}
+
 	targets, err := loadMethodicalTargets()
 	if err != nil {
 		return fmt.Errorf("load methodical targets: %w", err)
@@ -49,7 +55,7 @@ func genSSZ() error {
 	}
 
 	for _, t := range targets {
-		if err := genMethodical(t, !progressive); err != nil {
+		if err := genMethodical(t, ps, !progressive); err != nil {
 			return fmt.Errorf("gen methodical %s/%s: %w", t.pkg, t.out, err)
 		}
 	}
@@ -57,42 +63,49 @@ func genSSZ() error {
 	return nil
 }
 
-// genMethodical generates a single target for both networks and always writes a
-// build-tagged mainnet/minimal pair.
+// genMethodical generates a single target for every preset and always writes
+// the full build-tagged set.
 //
-// We deliberately do not collapse to one untagged file when the two outputs
-// match. Whether a target differs across networks depends on the progressive
-// flag (progressive collections merkleize size-independently, so a target that
+// We deliberately do not collapse to one untagged file when the outputs match.
+// Whether a target differs across presets depends on the progressive flag
+// (progressive collections merkleize size-independently, so a target that
 // differs under bounded merkleization can become identical under progressive)
 // and on the bounded sizes themselves. A compare-and-collapse would make the
-// .minimal.ssz.go twins appear and disappear as those inputs change; we accept
-// the duplication of an identical twin to keep the generated file set stable.
-func genMethodical(t methodicalTarget, disableProgressive bool) error {
+// preset twins appear and disappear as those inputs change; we accept the
+// duplication of an identical twin to keep the generated file set stable.
+func genMethodical(t methodicalTarget, ps presets, disableProgressive bool) error {
 	out := filepath.Join(t.pkg, t.out)
 	fmt.Printf("generating %s\n", out)
 
 	// methodical stamps the //go:build header itself (--go-build-constraint), so
 	// both this harness and the Bazel ssz_methodical rule produce byte-identical
-	// files. The mainnet variant loads the default sources and is constrained to
-	// !minimal; the minimal variant loads -tags minimal sources and is
-	// constrained to minimal.
-	mainnet, err := methodicalOne(t, disableProgressive, nil, "!minimal")
-	if err != nil {
-		return fmt.Errorf("mainnet: %w", err)
+	// files. The base variant loads the default sources and is constrained to
+	// the conjunction of the other presets' negations; each other preset loads
+	// its -tags <preset> sources and is constrained to <preset>.
+	negations := make([]string, len(ps.nonBase()))
+	for i, p := range ps.nonBase() {
+		negations[i] = "!" + p
 	}
 
-	minimal, err := methodicalOne(t, disableProgressive, []string{"minimal"}, "minimal")
+	base, err := methodicalOne(t, disableProgressive, nil, strings.Join(negations, " && "))
 	if err != nil {
-		return fmt.Errorf("minimal: %w", err)
+		return fmt.Errorf("%s: %w", ps.base(), err)
 	}
 
-	if err := os.WriteFile(out, []byte(mainnet), 0o600); err != nil {
+	if err := os.WriteFile(out, []byte(base), 0o600); err != nil {
 		return fmt.Errorf("writeFile: %w", err)
 	}
 
-	minOut := filepath.Join(t.pkg, strings.TrimSuffix(t.out, ".ssz.go")+".minimal.ssz.go")
-	if err := os.WriteFile(minOut, []byte(minimal), 0o600); err != nil {
-		return fmt.Errorf("writeFile: %w", err)
+	for _, p := range ps.nonBase() {
+		src, err := methodicalOne(t, disableProgressive, []string{p}, p)
+		if err != nil {
+			return fmt.Errorf("%s: %w", p, err)
+		}
+
+		pOut := filepath.Join(t.pkg, strings.TrimSuffix(t.out, ".ssz.go")+"."+p+".ssz.go")
+		if err := os.WriteFile(pOut, []byte(src), 0o600); err != nil {
+			return fmt.Errorf("writeFile: %w", err)
+		}
 	}
 
 	return nil

@@ -139,6 +139,7 @@ func TestSpecificFiles(t *testing.T) {
 
 	t.Run("ssz delegates to sszFiles", func(t *testing.T) {
 		writeRepo(t, map[string]string{
+			sszProtoLibraryBzl:        "presets = [\"mainnet\", \"minimal\"]\nmainnet = {}\nminimal = {}\n",
 			"proto/foo/service.pb.go": "package foo\n",
 			"proto/foo/gateway.yaml":  "package: foo\n",
 			"proto/foo/BUILD.bazel": `
