@@ -85,6 +85,66 @@ var hezeDroppedEvaluators = []string{
 	ev.ActivatesDepositedValidators.Name,
 }
 
+// TestEndToEnd_HezeGenesisCheckpointSync is the cold-start witness: a beacon
+// node that joins the chain late, from a finalized checkpoint rather than from
+// genesis, and has to reach the head and hold it.
+//
+// The goldfish design deliberately deviates from the spec so that a node
+// joining late can move: the empty-vote-slot gate abstains instead of vetoing
+// the walk, because a node importing history has no available attestation for
+// any slot it imports and none will ever arrive. Nothing else in the suite
+// exercises that: every other node either starts at genesis or is already at
+// the tip. This run is the witness for it.
+//
+// It takes five epochs because the checkpoint has to be real. The Heze chain
+// only finalizes during epoch 4, so a node that checkpoint-synced any earlier
+// would receive the genesis state as its "finalized" state and would in fact
+// be syncing from genesis. testCheckpointSync fails the run when the origin
+// block slot it reads out of the joining node's own log is zero, so a silent
+// fall back to genesis sync cannot pass here.
+//
+// The run is otherwise leaner than TestEndToEnd_HezeGenesis: no deposit phase
+// and no genesis-sync node, since the joining node is the whole point. The
+// transaction generator still runs (TestFeature keeps it on) so the chain the
+// node syncs carries payloads and blobs.
+//
+// If this run ever fails at all_nodes_have_same_head after the joining node
+// has already matched the head once, look at the initial-sync handoff before
+// suspecting the checkpoint. Initial sync hands over at whatever slot it
+// reached, and when that is a few slots behind the head the joining node has
+// to import the gap through the pending-block queue. On a Gloas chain that
+// path wedges: the block's columns were gossiped while the node was still
+// syncing and are gone, the queue calls processPendingPayloadEnvelope
+// synchronously under its own lock, and the envelope's availability check
+// (blockchain.areDataColumnsAvailable) then waits on gossip that will never
+// come, with no deadline. Nothing fetches those columns by root either -
+// sync.requestAndSaveMissingDataColumnSidecars skips Gloas blocks. The node
+// only recovers minutes later, when "Fallen behind peers" drops it back into
+// initial sync and the range fetch supplies the columns.
+func TestEndToEnd_HezeGenesisCheckpointSync(t *testing.T) {
+	cfg := params.E2EMainnetTestConfig()
+	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
+	cfg.SlotsPerRound = 8
+
+	r := e2eMinimal(t, cfg,
+		types.WithEpochs(5),
+		types.WithCheckpointSync(),
+		func(c *types.E2EConfig) {
+			// The joining node is the witness; a second genesis-syncing node
+			// and the deposit phase would only add wall time.
+			c.TestSync = false
+			c.TestDeposits = false
+		},
+		withoutEvaluators(hezeDroppedEvaluators...),
+		withEvaluators(
+			ev.ChainProducesBlocks,
+			ev.AvailableAttestationsFlow,
+			ev.AttestationsInEveryRound,
+		),
+	)
+	r.run()
+}
+
 // TestEndToEnd_HezeGenesisSlotStartFFG is the Heze run with the FFG vote cast
 // at the start of the slot instead of at the attestation due time.
 //
