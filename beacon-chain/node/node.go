@@ -331,7 +331,9 @@ func configureBeacon(cliCtx *cli.Context) error {
 		return errors.Wrap(err, "could not configure execution setting")
 	}
 
-	return nil
+	// Last: every step above can swap the active config, and a config whose
+	// SSZ sizes disagree with the compiled-in preset would fork off silently.
+	return params.VerifyPreset(params.BeaconConfig())
 }
 
 func startBaseServices(cliCtx *cli.Context, beacon *BeaconNode, depositAddress string, clearer *dbClearer) (*backfill.Store, error) {

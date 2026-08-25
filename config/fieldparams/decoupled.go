@@ -1,18 +1,22 @@
-//go:build !minimal && !decoupled
+//go:build decoupled
 
 package field_params
 
+// The decoupled preset is mainnet with 8-slot epochs. Only the sizes derived
+// from SLOTS_PER_EPOCH shrink; message, committee, sync committee and PTC
+// sizes keep their mainnet values so networking behaviour stays realistic.
+
 const (
-	Preset                                = "mainnet"
+	Preset                                = "decoupled"
 	BlockRootsLength                      = 8192              // SLOTS_PER_HISTORICAL_ROOT
 	StateRootsLength                      = 8192              // SLOTS_PER_HISTORICAL_ROOT
 	RandaoMixesLength                     = 65536             // EPOCHS_PER_HISTORICAL_VECTOR
 	HistoricalRootsLength                 = 16777216          // HISTORICAL_ROOTS_LIMIT
 	ValidatorRegistryLimit                = 1099511627776     // VALIDATOR_REGISTRY_LIMIT
 	BuilderRegistryLimit                  = 1099511627776     // BUILDER_REGISTRY_LIMIT
-	Eth1DataVotesLength                   = 2048              // SLOTS_PER_ETH1_VOTING_PERIOD
-	PreviousEpochAttestationsLength       = 4096              // MAX_ATTESTATIONS * SLOTS_PER_EPOCH
-	CurrentEpochAttestationsLength        = 4096              // MAX_ATTESTATIONS * SLOTS_PER_EPOCH
+	Eth1DataVotesLength                   = 512               // SLOTS_PER_ETH1_VOTING_PERIOD
+	PreviousEpochAttestationsLength       = 1024              // MAX_ATTESTATIONS * SLOTS_PER_EPOCH
+	CurrentEpochAttestationsLength        = 1024              // MAX_ATTESTATIONS * SLOTS_PER_EPOCH
 	SlashingsLength                       = 8192              // EPOCHS_PER_SLASHINGS_VECTOR
 	SyncCommitteeLength                   = 512               // SYNC_COMMITTEE_SIZE
 	RootLength                            = 32                // RootLength defines the byte length of a Merkle root.
@@ -23,7 +27,7 @@ const (
 	FeeRecipientLength                    = 20                // FeeRecipientLength defines the byte length of a fee recipient.
 	LogsBloomLength                       = 256               // LogsBloomLength defines the byte length of a logs bloom.
 	VersionLength                         = 4                 // VersionLength defines the byte length of a fork version number.
-	SlotsPerEpoch                         = 32                // SlotsPerEpoch defines the number of slots per epoch.
+	SlotsPerEpoch                         = 8                 // SlotsPerEpoch defines the number of slots per epoch.
 	SyncCommitteeAggregationBytesLength   = 16                // SyncCommitteeAggregationBytesLength defines the length of sync committee aggregate bytes.
 	SyncAggregateSyncCommitteeBytesLength = 64                // SyncAggregateSyncCommitteeBytesLength defines the length of sync committee bytes in a sync aggregate.
 	MaxWithdrawalsPerPayload              = 16                // MaxWithdrawalsPerPayloadLength defines the maximum number of withdrawals that can be included in a payload.

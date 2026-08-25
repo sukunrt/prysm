@@ -90,6 +90,12 @@ func NewValidatorClient(cliCtx *cli.Context) (*ValidatorClient, error) {
 		}
 	}
 
+	// A config whose SSZ sizes disagree with the compiled-in preset would make
+	// the validator sign over wrong hash tree roots, so fail loudly here.
+	if err := params.VerifyPreset(params.BeaconConfig()); err != nil {
+		return nil, err
+	}
+
 	w, err := getWallet(cliCtx)
 	if err != nil {
 		return nil, err
