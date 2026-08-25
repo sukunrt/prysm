@@ -5,6 +5,7 @@ import (
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p"
 	"github.com/OffchainLabs/prysm/v7/config/params"
+	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/pkg/errors"
@@ -87,7 +88,16 @@ type ContextByteVersions map[[4]byte]int
 func ContextByteVersionsForValRoot(valRoot [32]byte) (ContextByteVersions, error) {
 	m := make(ContextByteVersions)
 	for _, entry := range params.SortedNetworkScheduleEntries() {
-		m[entry.ForkDigest] = entry.VersionEnum
+		v := entry.VersionEnum
+		// Heze is a consensus-only fork: objects on the wire keep their
+		// pre-Heze shape, so Heze context bytes decode as the last fork
+		// scheduled before it. Without this, version ladders in the chunk
+		// readers (e.g. ">= Gloas" for data columns) pick the wrong container
+		// on schedules where Gloas is not activated.
+		if v == version.Heze {
+			v = params.BeaconConfig().HezeShape().VersionEnum
+		}
+		m[entry.ForkDigest] = v
 	}
 	return m, nil
 }

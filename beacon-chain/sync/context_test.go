@@ -7,7 +7,10 @@ import (
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p"
 	p2ptest "github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/testing"
+	"github.com/OffchainLabs/prysm/v7/config/params"
+	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
+	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
 	core "github.com/libp2p/go-libp2p/core"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -123,4 +126,36 @@ func TestValidateVersion(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestContextByteVersions_HezeMapsToShape pins the consensus-only-fork rule:
+// the Heze digest decodes wire objects with the shape of the last fork
+// scheduled before it, never as version.Heze itself.
+func TestContextByteVersions_HezeMapsToShape(t *testing.T) {
+	t.Run("gloas scheduled", func(t *testing.T) {
+		params.SetupTestConfigCleanup(t)
+		cfg := params.MainnetConfig().Copy()
+		cfg.GloasForkEpoch = 2
+		cfg.HezeForkEpoch = 4
+		params.OverrideBeaconConfig(cfg)
+
+		m, err := ContextByteVersionsForValRoot([32]byte{})
+		require.NoError(t, err)
+		digest := params.ForkDigest(cfg.HezeForkEpoch)
+		require.Equal(t, version.Gloas, m[digest])
+	})
+
+	t.Run("gloas unscheduled falls back to fulu", func(t *testing.T) {
+		params.SetupTestConfigCleanup(t)
+		cfg := params.MainnetConfig().Copy()
+		cfg.FuluForkEpoch = 2
+		cfg.GloasForkEpoch = cfg.FarFutureEpoch
+		cfg.HezeForkEpoch = 6
+		params.OverrideBeaconConfig(cfg)
+
+		m, err := ContextByteVersionsForValRoot([32]byte{})
+		require.NoError(t, err)
+		digest := params.ForkDigest(cfg.HezeForkEpoch)
+		require.Equal(t, version.Fulu, m[digest])
+	})
 }
