@@ -1,0 +1,85 @@
+# ethpandaops/ethereum-package args for the decoupled fork.
+#
+#   kurtosis run --enclave rounds-06-short ~/dev/ethereum-package \
+#       --args-file kurtosis/runs/06-short/network_params.yaml
+#
+# Run 06: a short, cheap smoke run of the per-round finality build, for one
+# headline number -- how many slots finality lags the wall clock when the FFG
+# checkpoints carry ROUNDS instead of epochs. Runs 02 and 05 measured the
+# epoch-based build on the same topology; this is the same harness with the
+# round-based justification and finalization in the beacon node.
+#
+# Deliberately smaller and simpler than run 05:
+#   * 6 beacon nodes, not 10 -- the finality numbers are identical on every
+#     node, so more nodes buy nothing here.
+#   * no late publishers. Run 05 used them to force gate retreats; a finality
+#     measurement wants the clean case, and a retreat only adds noise.
+#   * no blobsend. Empty payloads are fine when nothing is being said about
+#     data columns.
+#   * ~4 epochs of wall time, not 6.
+#
+# What is NOT smaller is the validator total. prysmctl's genesis builder never
+# returns when there are too few validators to fill the PTC window (see
+# kurtosis/README.md), so the total has to stay near 128; 6 x 22 = 132 keeps
+# the run-05 per-slot shape (132 / 8 = 16.5 attesters per slot against run
+# 05's 16.25) with fewer containers.
+
+participants:
+  - el_type: geth
+    # Pinned, not :latest -- same reasoning as run 05: geth master rejects
+    # every forkchoiceUpdatedV4 without the ePBS builder-deposit system
+    # contract, which ethereum-genesis-generator 6.0.2 does not deploy.
+    el_image: ethpandaops/geth:glamsterdam-devnet-8
+    cl_type: prysm
+    # Built by kurtosis/build-images.sh from this tree. Also tagged with the
+    # jj change id; :local is what a run uses so the file does not churn.
+    cl_image: prysm-beacon-chain:local
+    vc_type: prysm
+    vc_image: prysm-validator:local
+    use_separate_vc: true
+    # Fulu is at epoch 0, and the package refuses to start a PeerDAS network
+    # unless a node is a supernode. Full custody on every node, as in run 05.
+    supernode: true
+    count: 6
+
+network_params:
+  network: kurtosis
+  network_id: "3151908"
+  preset: mainnet
+  seconds_per_slot: 6
+  slot_duration_ms: 6000
+  # 6 x 22 = 132 validators; see the note above on the 128 floor.
+  num_validator_keys_per_node: 22
+  # Enough for six nodes' images, keys and genesis before slot 0.
+  genesis_delay: 180
+
+  # Genesis is Heze. Nothing upgrades into Heze at runtime -- prysmctl builds
+  # the Heze state directly -- so every fork is at epoch 0.
+  deneb_fork_epoch: 0
+  electra_fork_epoch: 0
+  fulu_fork_epoch: 0
+  gloas_fork_epoch: 0
+  heze_fork_epoch: 0
+
+  # An explicit single-entry BLOB_SCHEDULE, as in run 05.
+  bpo_1_epoch: 0
+  bpo_1_max_blobs: 6
+  bpo_1_target_blobs: 3
+  bpo_2_epoch: 18446744073709551615
+
+ethereum_genesis_generator_params:
+  # Patched generator: Heze stripped from the CL->EL fork mapping (Heze is
+  # CL-only), SLOTS_PER_ROUND added to the CL config template, and the CL
+  # genesis state built by prysmctl.
+  image: prysm-genesis-gen:local
+  extra_env:
+    # Four rounds to the 32-slot epoch. This is the whole point of the run:
+    # with round-based FFG, justification and finalization move on this
+    # cadence, so finality should lag the clock by a couple of rounds rather
+    # than a couple of epochs.
+    SLOTS_PER_ROUND: 8
+    AVAILABLE_ATTESTATION_DUE_BPS_HEZE: 2500
+
+additional_services: []
+wait_for_finalization: false
+global_log_level: info
