@@ -2281,6 +2281,29 @@ func withBidGasLimit(t *testing.T, rob blocks.ROBlock, root [32]byte, gasLimit u
 // definition, and no payload envelope is ever imported for it. Without its full node the first
 // proposer builds on the genesis bid's parent block hash, which is the zero hash.
 func TestInsertGloasGenesis_CreatesFullNode(t *testing.T) {
+	ctx := t.Context()
+	f, genesisRoot, genesisHash := setupGloasGenesis(t)
+
+	require.Equal(t, true, f.HasFullNode(genesisRoot))
+	gasLimit, err := f.GasLimit(genesisRoot)
+	require.NoError(t, err)
+	require.Equal(t, uint64(30000000), gasLimit)
+	// Forkchoice must prefer the full genesis, so the first proposer sees a full parent.
+	require.Equal(t, true, f.FullBeatsEmpty(genesisRoot))
+
+	// A block at slot 1 that builds on the genesis payload hangs off the full genesis node.
+	childRoot := indexToHash(2)
+	st, child, err := prepareGloasForkchoiceState(ctx, 1, childRoot, genesisRoot, indexToHash(101),
+		genesisHash, 0, 0)
+	require.NoError(t, err)
+	require.NoError(t, f.InsertNode(ctx, st, child))
+	require.Equal(t, genesisHash, f.ParentHash(childRoot))
+}
+
+// setupGloasGenesis returns a forkchoice rooted at a Gloas genesis block, plus its root and the
+// execution genesis block hash its bid commits to.
+func setupGloasGenesis(t *testing.T) (*ForkChoice, [32]byte, [32]byte) {
+	t.Helper()
 	params.SetupTestConfigCleanup(t)
 	cfg := params.BeaconConfig()
 	cfg.GloasForkEpoch = 0
@@ -2301,18 +2324,32 @@ func TestInsertGloasGenesis_CreatesFullNode(t *testing.T) {
 	require.NoError(t, err)
 	rob = withBidGasLimit(t, rob, genesisRoot, 30000000)
 	require.NoError(t, f.InsertNode(ctx, st, rob))
+	return f, genesisRoot, genesisHash
+}
 
-	require.Equal(t, true, f.HasFullNode(genesisRoot))
-	gasLimit, err := f.GasLimit(genesisRoot)
+// The PTC votes payload-missing for genesis -- there is no envelope for it -- so forkchoice bets
+// on the empty genesis at the slot-1 boundary. The payload an empty genesis builds on is still
+// the execution genesis block; the zero hash reaches the engine as a forkchoiceUpdated with
+// headBlockHash 0x0 and comes back INVALID.
+func TestGenesisParentHash_EmptyGenesisStillNamesExecutionGenesis(t *testing.T) {
+	ctx := t.Context()
+	f, genesisRoot, genesisHash := setupGloasGenesis(t)
+
+	require.Equal(t, genesisHash, f.ParentHash(genesisRoot))
+
+	_, bh, full, err := f.FullHead(ctx)
 	require.NoError(t, err)
-	require.Equal(t, uint64(30000000), gasLimit)
-	// Forkchoice must prefer the full genesis, so the first proposer sees a full parent.
-	require.Equal(t, true, f.FullBeatsEmpty(genesisRoot))
+	require.Equal(t, true, full)
+	require.Equal(t, genesisHash, bh)
 
-	// A block at slot 1 that builds on the genesis payload hangs off the full genesis node.
+	// A child that builds on the empty genesis walks past genesis's full twin to nil.
 	childRoot := indexToHash(2)
-	st, child, err := prepareGloasForkchoiceState(ctx, 1, childRoot, genesisRoot, indexToHash(101), genesisHash, 0, 0)
+	st, child, err := prepareGloasForkchoiceState(ctx, 1, childRoot, genesisRoot, indexToHash(101),
+		indexToHash(999), 0, 0)
 	require.NoError(t, err)
 	require.NoError(t, f.InsertNode(ctx, st, child))
 	require.Equal(t, genesisHash, f.ParentHash(childRoot))
+	gasLimit, err := f.GasLimit(childRoot)
+	require.NoError(t, err)
+	require.Equal(t, uint64(30000000), gasLimit)
 }

@@ -154,21 +154,33 @@ func (s *Store) setNodeAndParentValidated(ctx context.Context, pn *PayloadNode) 
 	return s.setNodeAndParentValidated(ctx, pn.node.parent)
 }
 
-// fullParent returns the latest full node that this block builds on.
+// fullParent returns the latest full node that this block builds on. The walk stops at genesis:
+// its bid commits to the execution genesis block, which exists by definition, so genesis is full
+// whichever of its two payload nodes a child hangs off.
 func (s *Store) fullParent(pn *PayloadNode) *PayloadNode {
 	parent := pn.node.parent
-	for ; parent != nil && !parent.full; parent = parent.node.parent {
+	for ; parent != nil && !parent.full && parent.node.slot != 0; parent = parent.node.parent {
+	}
+	if parent != nil && !parent.full {
+		if fn := s.fullNodeByRoot[parent.node.root]; fn != nil {
+			return fn
+		}
 	}
 	return parent
 }
 
 // parentHash return the payload hash of the latest full node that this block builds on.
 func (s *Store) parentHash(pn *PayloadNode) [32]byte {
-	fullParent := s.fullParent(pn)
-	if fullParent == nil {
-		return [32]byte{}
+	if fullParent := s.fullParent(pn); fullParent != nil {
+		return fullParent.node.blockHash
 	}
-	return fullParent.node.blockHash
+	if pn != nil && pn.node != nil && pn.node.slot == 0 {
+		// Genesis has no ancestor: the payload it builds on is its own, the execution
+		// genesis block. The zero hash here reaches the engine as a forkchoiceUpdated
+		// with headBlockHash 0x0, which is answered INVALID.
+		return pn.node.blockHash
+	}
+	return [32]byte{}
 }
 
 // checkpointPayloadHashForRoot returns the payload hash associated with a checkpoint root.
@@ -735,9 +747,5 @@ func (f *ForkChoice) FullHead(ctx context.Context) ([32]byte, [32]byte, bool, er
 	if pn.full {
 		return hr, pn.node.blockHash, true, nil
 	}
-	fullAncestor := f.store.fullParent(pn)
-	if fullAncestor == nil {
-		return hr, [32]byte{}, false, nil
-	}
-	return hr, fullAncestor.node.blockHash, false, nil
+	return hr, f.store.parentHash(pn), false, nil
 }
