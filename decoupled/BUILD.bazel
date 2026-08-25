@@ -5,7 +5,10 @@ go_library(
     srcs = ["available_attestation_committee.go"],
     importpath = "github.com/OffchainLabs/prysm/v7/decoupled",
     visibility = ["//visibility:public"],
-    deps = ["//consensus-types/primitives:go_default_library"],
+    deps = [
+        "//config/params:go_default_library",
+        "//consensus-types/primitives:go_default_library",
+    ],
 )
 
 go_test(

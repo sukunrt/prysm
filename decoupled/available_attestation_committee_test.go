@@ -85,3 +85,13 @@ func TestAvailableAttestationSeatMultiple(t *testing.T) {
 		})
 	}
 }
+
+func TestAvailableAttestationSeats_IndexOutsideTheCommittee(t *testing.T) {
+	// A validator that joined after genesis is outside the mock committee. It
+	// must get no seats rather than wrap onto an existing validator's, or the
+	// receiver would check its signature against the wrong public key.
+	const validatorCount = 256
+	require.Equal(t, 0, len(AvailableAttestationSeats(3, validatorCount, validatorCount)))
+	require.Equal(t, 0, len(AvailableAttestationSeats(3, validatorCount+7, validatorCount)))
+	require.Equal(t, true, len(AvailableAttestationSeats(3, validatorCount-1, validatorCount)) > 0)
+}

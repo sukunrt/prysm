@@ -50,7 +50,9 @@ func newGoldfishVotes() *goldfishVotes {
 // insert records a validator's vote for the given slot. A second vote with
 // different content moves the validator to the slot's equivocation set; the
 // first vote is kept so the validator still counts in the denominator.
-func (g *goldfishVotes) insert(slot primitives.Slot, index primitives.ValidatorIndex, v goldfishVote) {
+func (g *goldfishVotes) insert(
+	slot primitives.Slot, index primitives.ValidatorIndex, v goldfishVote,
+) {
 	if g.equivocators[slot][index] {
 		return
 	}
@@ -79,14 +81,11 @@ func (g *goldfishVotes) insert(slot primitives.Slot, index primitives.ValidatorI
 // prune drops every slot that is more than goldfishVoteRetention behind the
 // given slot.
 func (g *goldfishVotes) prune(current primitives.Slot) {
+	// An equivocation is only ever recorded for a slot that already holds a
+	// vote, so the two maps have the same slot keys.
 	for slot := range g.votes {
 		if slot+goldfishVoteRetention < current {
 			delete(g.votes, slot)
-			delete(g.equivocators, slot)
-		}
-	}
-	for slot := range g.equivocators {
-		if slot+goldfishVoteRetention < current {
 			delete(g.equivocators, slot)
 		}
 	}
@@ -307,7 +306,10 @@ func (s *Store) goldfishBestPayload(
 // given payload node, over the ones that clear the gate. Ties break on the
 // larger root, as in the spec's max key.
 func (s *Store) goldfishBestChild(
-	p *PayloadNode, sc *goldfishScores, current primitives.Slot, justifiedEpoch, currentEpoch primitives.Epoch,
+	p *PayloadNode,
+	sc *goldfishScores,
+	current primitives.Slot,
+	justifiedEpoch, currentEpoch primitives.Epoch,
 ) (best *Node, hadCandidates bool) {
 	bestScore := uint64(0)
 	for _, child := range p.children {

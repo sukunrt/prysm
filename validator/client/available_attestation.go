@@ -98,8 +98,7 @@ func (v *validator) SubmitAvailableAttestation(
 		return
 	}
 
-	validatorCount := params.BeaconConfig().MinGenesisActiveValidatorCount
-	seats := decoupled.AvailableAttestationSeats(slot, st.index, validatorCount)
+	seats := decoupled.AvailableAttestationSeats(slot, st.index, decoupled.CommitteeValidatorCount())
 	if len(seats) == 0 {
 		log.Error("validator not scheduled for duty!")
 		return

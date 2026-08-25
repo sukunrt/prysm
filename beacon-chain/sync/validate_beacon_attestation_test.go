@@ -962,6 +962,13 @@ func TestService_validateUnaggregatedAttTopic_SubnetMatch(t *testing.T) {
 }
 
 func TestService_validateAvailableAttestation(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	// The mock available committee is drawn from the genesis validator set, so
+	// the config has to name the same count the test state has.
+	cfg.MinGenesisActiveValidatorCount = 64
+	params.OverrideBeaconConfig(cfg)
+
 	p := p2ptest.NewTestP2P(t)
 	db := dbtest.SetupDB(t)
 	// Two slots past genesis so that stale (slot 1) and current (slot 2) votes are
@@ -995,7 +1002,7 @@ func TestService_validateAvailableAttestation(t *testing.T) {
 	validBlockRoot, err := blk.Block.HashTreeRoot()
 	require.NoError(t, err)
 
-	validatorCount := uint64(64)
+	validatorCount := decoupled.CommitteeValidatorCount()
 	savedState, keys := util.DeterministicGenesisState(t, validatorCount)
 	require.NoError(t, savedState.SetSlot(currentSlot))
 	require.NoError(t, db.SaveState(ctx, savedState, validBlockRoot))
