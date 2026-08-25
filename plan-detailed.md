@@ -790,6 +790,40 @@ constant within the epoch; only its attesting slots multiply to
 `slot + k*SlotsPerRound`, k = 0..rounds-1. The fix is to fan a duty out to
 its repeat slots, not to recompute assignments per round.
 
+## 5.0a Executed 2026-08-19: the genesis block-production blockers <added by executor>
+
+Step 4's smoke test stalled at slot 1. The step-4 notes blamed the missing
+forkchoice full node; that was real but only the **first of four** blockers,
+each found by re-running the smoke test after fixing the previous one. Four
+jj changes (`zlwsxtvw`, `kmtkyqvs`, `qkltmqws`, `mvoupxyn`), each with a
+test that fails without its fix:
+
+1. **Forkchoice**: `store.insert` now creates the full node itself when a
+   Gloas+ block has no parent and slot 0 — the one choke point both fresh
+   bootstrap and restart go through (not `MarkFullNode` from
+   `saveGenesisData` as the step-4 note suggested). `head.full` also set in
+   `saveGenesisData` and `initializeHead`.
+2. **Genesis has no payload envelope**: `applyParentExecutionPayloadToHead`
+   / `setParentExecutionRequests` looked up the parent envelope in the DB;
+   a slot-0 parent now yields empty execution requests — exactly what the
+   genesis bid's `execution_requests_root` commits to.
+3. **Genesis block root mismatch**: step 4's `setLatestBlockHeader` header
+   committed to a zero bid while `NewGenesisBlockForState` mirrors the real
+   bid (upstream PR #16821 fixed the same thing). Shared
+   `genesisExecutionPayloadBid()` now feeds both.
+4. **Version-pair check**: `ProcessBlockNoVerifyAnySig` required
+   `st.Version() == blk.Version()`; a Heze state now accepts its
+   Gloas-shaped block via a local `blockVersionForState`, per-consumer
+   style as step 3 established.
+
+Smoke: geth 1.17.6 + bn + 256-key validator, 12 blocks over slots 1–13,
+parent-hash chain intact, zero INVALID / zero-hash forkchoice requests
+(`step5a-smoke6-*.log`; one missed slot was CPU contention from a
+concurrent build). Known visible difference from other clients: our genesis
+bid's `parent_block_hash` is zero, not `latest_block_hash` as in the
+PR #16821 canonical devnet genesis — nothing depends on it now that the
+parent is full.
+
 ## 5.1 There is no devnet preset
 
 A preset is compile-time and fixes SSZ array sizes. `SLOTS_PER_ROUND` sizes
