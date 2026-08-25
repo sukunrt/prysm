@@ -60,3 +60,6 @@ CLAUDE.local.md
 third_party/testdata
 # methodical generated tests, which include large fixtures
 testing/spectest/methodical
+
+# stray build/gen binary built at the repo root
+/gen
