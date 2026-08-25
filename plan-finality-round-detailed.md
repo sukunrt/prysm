@@ -188,9 +188,11 @@ Checkpoint is shared by all forks. The rule for fixing each error:
       those sections as the per-site conversion guide. Reviewed blast
       radius: ~108 non-test `Target/Source.Epoch` references plus ~117
       checkpoint `.Epoch` reads across ~30 packages, of which an
-      estimated 60-100 are real compile errors and ~20-25 need judgment
-      (the enumerated lists plus 4.0) — a 1-2 day sweep. List the
-      touched-package tally in the executor note.
+      estimated 60-100 are real compile errors; only ~20-25 need any
+      judgment, and each of those has its conversion prescribed in the
+      enumerated lists plus 4.0 — the rest are one-line mechanical
+      conversions. The long pole is the verification runs, not the
+      edits. List the touched-package tally in the executor note.
 - [ ] Accept: `go build ./...` green; full test suite green with zero
       expectation edits (identity rule — the values are unchanged
       everywhere; only types moved).
