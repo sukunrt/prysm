@@ -124,21 +124,30 @@ Decisions:
    epoch to round.
 2. The Goldfish gate is the head input: score children with the previous
    slot's votes and apply the majority gate. Without it, all weights are zero.
-3. Build order (section 18). This is a code order, not a runtime cutover
-   order. Nothing runs on a devnet until (a) to (d) are all in; unit tests
-   carry the correctness load. (a) New store fields beside the FFG fields.
-   No FFG comparison oracle: without attestations, FFG gets no votes after
-   the fork. (b) Clockless state machine, driven from
-   `handleBlockAttestations`; unit-test the branch order. (c) Finality vote
-   message on cloned attestation topics; one vote per validator per 8-slot
-   round. (d) The four interface swaps: anchor cascade, height filter,
-   lexicographic updates, prune from `store.F`. The FFG code path serves
-   pre-fork slots only. (e) Round math: a sub-round is one slot. Skip
-   view-merge and TSQ.
+3. Build order (revised 2026-08-15: networking first, then the middle).
+   This is a code order, not a runtime cutover order. Finality is not
+   measurable on a devnet until (e) is in; unit tests carry the
+   correctness load. Skip view-merge and TSQ.
+   (a) Round math: `compute_round_at_slot` and its inverse. A sub-round is
+   one slot; a round is 8 slots. The duty and the seen-cache need it first.
+   (b) Finality vote message with dummy content, on the cloned attestation
+   path: types, subnet and aggregate topics, block-body list. Seen-cache
+   key is round, not epoch.
+   (c) Send path: duty at slot start, fields frozen at round start, one
+   vote per validator per round. Dummy values until (e).
+   (d) Receive path: gossip validators with real verdicts. Structural,
+   timing, and signature checks only; semantic checks against gadget
+   state arrive with (e).
+   (e) The middle: new store fields beside the FFG fields (no check that
+   compares the gadget with FFG: after the fork, FFG gets no votes);
+   clockless state machine driven from `handleBlockAttestations`,
+   branch order unit-tested; the four interface swaps: anchor cascade,
+   height filter, lexicographic updates, prune from `store.F`. The FFG
+   code path serves pre-fork slots only.
 4. Quorums count validators.
 5. `targets` and `timeouts` are sparse maps.
 6. Open: pad the registry with exited validators for mainnet state size.
-7. After the fork, only the gadget prunes. Until 3d lands, nothing prunes
+7. After the fork, only the gadget prunes. Until 3e lands, nothing prunes
    and memory grows; keep runs short. If the gadget stalls, pruning stops;
    watch for it.
 8. The Goldfish gate must be live at the fork, or all head weights are zero.

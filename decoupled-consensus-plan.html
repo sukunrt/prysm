@@ -71,24 +71,31 @@ the previous slot. Then apply the majority gate. <span class="warn">The gate
 must be live at the fork. If it is not, all head weights are zero.</span></p>
 
 <h2>Build order</h2>
-<p>This is a code order, not a runtime order. Do not start a devnet before
-steps (a) to (d) are complete. Unit tests carry the correctness load.</p>
+<p>Networking first, then the middle. This is a code order, not a runtime
+order. Finality is not measurable before step (e). Unit tests carry the
+correctness load. Do not build view-merge or the TSQ duty.</p>
 <ol type="a">
-<li>Add the new store fields beside the FFG fields. Do not build a check
-that compares the gadget with FFG: after the fork, FFG gets no votes.</li>
-<li>Write the clockless state machine. Drive it from
-<code>handleBlockAttestations</code>. Unit-test the branch order.</li>
-<li>Add the finality vote message on the cloned attestation topics. One vote
-per validator per round.</li>
-<li>Make the four interface swaps: the anchor cascade, the height filter, the
-lexicographic updates, and the prune from <code>store.F</code>.</li>
-<li>Add the round math. A sub-round is one slot. A round is 8 slots. Do not
-build view-merge or the TSQ duty.</li>
+<li>Add the round math: <code>compute_round_at_slot</code> and its inverse.
+A sub-round is one slot. A round is 8 slots. The duty and the seen-cache
+need this first.</li>
+<li>Add the finality vote message with dummy content, on the cloned
+attestation path: the types, the subnet and aggregate topics, and the
+block-body list. The seen-cache key is the round, not the epoch.</li>
+<li>Build the send path: the duty at slot start, fields frozen at round
+start, one vote per validator per round. Dummy values until (e).</li>
+<li>Build the receive path: gossip validators with real verdicts. Check
+structure, timing, and signature. Semantic checks come with (e).</li>
+<li>Build the middle: the new store fields beside the FFG fields, the
+clockless state machine driven from <code>handleBlockAttestations</code>
+with the branch order unit-tested, and the four interface swaps: the
+anchor cascade, the height filter, the lexicographic updates, and the
+prune from <code>store.F</code>. Do not compare the gadget with FFG: it
+gets no votes after the fork.</li>
 </ol>
 
 <h2>Rules</h2>
 <p>Quorums count validators. <code>targets</code> and <code>timeouts</code> are
-sparse maps. After the fork, only the gadget prunes. Until step (d) is in,
+sparse maps. After the fork, only the gadget prunes. Until step (e) is in,
 nothing prunes and memory grows: keep the runs short. If the gadget stalls,
 pruning stops. Watch for it.</p>
 
