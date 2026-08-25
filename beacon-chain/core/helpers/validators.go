@@ -423,20 +423,18 @@ func isEligibleForActivationQueueElectra(activationEligibilityEpoch primitives.E
 //	      # Has not yet been activated
 //	      and validator.activation_epoch == FAR_FUTURE_EPOCH
 //	  )
-func IsEligibleForActivation(state state.ReadOnlyCheckpoint, validator *ethpb.Validator) bool {
-	finalizedEpoch, err := CheckpointEpoch(state.FinalizedCheckpointRound())
-	if err != nil {
-		return false
-	}
+//
+// finalizedEpoch is the epoch holding the state's finalized checkpoint round; the
+// caller converts it once with CheckpointEpoch, which cannot then be swallowed here
+// -- this predicate has no error return -- and keeps the conversion out of the
+// per-validator loop in ProcessRegistryUpdates.
+func IsEligibleForActivation(finalizedEpoch primitives.Epoch, validator *ethpb.Validator) bool {
 	return isEligibleForActivation(validator.ActivationEligibilityEpoch, validator.ActivationEpoch, finalizedEpoch)
 }
 
 // IsEligibleForActivationUsingROVal checks if the validator is eligible for activation using the provided read only validator.
-func IsEligibleForActivationUsingROVal(state state.ReadOnlyCheckpoint, validator state.ReadOnlyValidator) bool {
-	finalizedEpoch, err := CheckpointEpoch(state.FinalizedCheckpointRound())
-	if err != nil {
-		return false
-	}
+// finalizedEpoch carries the same meaning as in IsEligibleForActivation.
+func IsEligibleForActivationUsingROVal(finalizedEpoch primitives.Epoch, validator state.ReadOnlyValidator) bool {
 	return isEligibleForActivation(validator.ActivationEligibilityEpoch(), validator.ActivationEpoch(), finalizedEpoch)
 }
 

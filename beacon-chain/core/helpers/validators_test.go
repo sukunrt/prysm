@@ -819,7 +819,9 @@ func TestIsIsEligibleForActivation(t *testing.T) {
 
 			s, err := state_native.InitializeFromProtoPhase0(tt.state)
 			require.NoError(t, err)
-			assert.Equal(t, tt.want, helpers.IsEligibleForActivation(s, tt.validator), "IsEligibleForActivation()")
+			finalizedEpoch, err := helpers.CheckpointEpoch(s.FinalizedCheckpointRound())
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, helpers.IsEligibleForActivation(finalizedEpoch, tt.validator), "IsEligibleForActivation()")
 		})
 	}
 }

@@ -163,27 +163,22 @@ func TestIsEligibleForActivation_GatesOnTheCheckpointsEpochAt8Over32(t *testing.
 	setupRoundsConfig(t, 1)
 	// Finalized round 6 sits in epoch 1 (round 6 starts at slot 48).
 	finalizedRound := primitives.Round(6)
-	st, err := state_native.InitializeFromProtoPhase0(&ethpb.BeaconState{
-		FinalizedCheckpoint: &ethpb.Checkpoint{Epoch: finalizedRound, Root: make([]byte, 32)},
-	})
+	finalizedEpoch, err := helpers.CheckpointEpoch(finalizedRound)
 	require.NoError(t, err)
-
-	e, err := helpers.CheckpointEpoch(finalizedRound)
-	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(1), e)
+	require.Equal(t, primitives.Epoch(1), finalizedEpoch)
 
 	eligibleInEpoch1 := &ethpb.Validator{
 		ActivationEligibilityEpoch: 1,
 		ActivationEpoch:            params.BeaconConfig().FarFutureEpoch,
 	}
-	assert.Equal(t, true, helpers.IsEligibleForActivation(st, eligibleInEpoch1))
+	assert.Equal(t, true, helpers.IsEligibleForActivation(finalizedEpoch, eligibleInEpoch1))
 
 	// Epoch 2 is NOT finalized: reading round 6 as epoch 6 would let it through.
 	eligibleInEpoch2 := &ethpb.Validator{
 		ActivationEligibilityEpoch: 2,
 		ActivationEpoch:            params.BeaconConfig().FarFutureEpoch,
 	}
-	assert.Equal(t, false, helpers.IsEligibleForActivation(st, eligibleInEpoch2))
+	assert.Equal(t, false, helpers.IsEligibleForActivation(finalizedEpoch, eligibleInEpoch2))
 }
 
 func TestValidateSlotTargetRound_At8Over32(t *testing.T) {

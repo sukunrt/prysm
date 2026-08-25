@@ -51,6 +51,12 @@ func ProcessRegistryUpdates(ctx context.Context, st state.BeaconState) (state.Be
 	currentEpoch := time.CurrentEpoch(st)
 	var err error
 	ejectionBal := params.BeaconConfig().EjectionBalance
+	// The activation queue is finalized per the finalized checkpoint's EPOCH; the
+	// checkpoint itself carries a round. Convert once, not once per validator.
+	finalizedEpoch, err := helpers.CheckpointEpoch(st.FinalizedCheckpointRound())
+	if err != nil {
+		return nil, err
+	}
 
 	// To avoid copying the state validator set via st.Validators(), we will perform a read only pass
 	// over the validator set while collecting validator indices where the validator copy is actually
@@ -73,7 +79,7 @@ func ProcessRegistryUpdates(ctx context.Context, st state.BeaconState) (state.Be
 		}
 
 		// Collect validators eligible for activation and not yet dequeued for activation.
-		if helpers.IsEligibleForActivationUsingROVal(st, val) {
+		if helpers.IsEligibleForActivationUsingROVal(finalizedEpoch, val) {
 			eligibleForActivation = append(eligibleForActivation, idx)
 		}
 	}
