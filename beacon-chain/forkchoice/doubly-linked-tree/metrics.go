@@ -72,6 +72,36 @@ var (
 			Help: "The number of PTC votes recorded by forkchoice.",
 		},
 	)
+	goldfishSeatFraction = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "goldfish_seat_fraction",
+			Help: "Fraction of the available committee seats whose votes for a slot arrived before the next slot started.",
+		},
+	)
+	goldfishGateStopCount = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "goldfish_gate_stop_total",
+			Help: "The number of times the Goldfish walk stopped because no child cleared the majority gate.",
+		},
+	)
+	goldfishLateVoteCount = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "goldfish_late_vote_total",
+			Help: "The number of available attestation votes that arrived after their slot had ended.",
+		},
+	)
+	goldfishGateRetreatCount = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "goldfish_gate_retreat",
+			Help: "The number of times the Goldfish walk moved the head back to an ancestor of the previous head.",
+		},
+	)
+	goldfishEquivocationCount = promauto.NewCounter(
+		prometheus.CounterOpts{
+			Name: "goldfish_equivocation_total",
+			Help: "The number of validators observed signing two different available attestations for the same slot.",
+		},
+	)
 )
 
 func updatePayloadNodeMetrics(s *Store) {

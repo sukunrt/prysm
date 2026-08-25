@@ -36,6 +36,7 @@ func New() *ForkChoice {
 		fullNodeByRoot:                make(map[[fieldparams.RootLength]byte]*PayloadNode),
 		slashedIndices:                make(map[primitives.ValidatorIndex]bool),
 		blockRootsBySlotProposer:      make(map[proposerSlotKey][][32]byte),
+		goldfishVotes:                 newGoldfishVotes(),
 		receivedBlocksLastEpoch:       [fieldparams.SlotsPerEpoch]primitives.Slot{},
 	}
 

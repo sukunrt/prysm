@@ -130,6 +130,7 @@ type blockchainService interface {
 	blockchain.ForkFetcher
 	blockchain.AttestationReceiver
 	blockchain.PayloadAttestationReceiver
+	blockchain.AvailableAttestationReceiver
 	blockchain.TimeFetcher
 	blockchain.GenesisFetcher
 	blockchain.CanonicalFetcher

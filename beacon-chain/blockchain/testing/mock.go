@@ -70,33 +70,35 @@ type ChainService struct {
 	CanonicalRoots              map[[32]byte]bool
 	// Ancestors lets a test stub the result of Ancestor(root, slot) without
 	// wiring a full forkchoice store. Keyed by the input root.
-	Ancestors                   map[[32]byte][32]byte
-	Fork                        *ethpb.Fork
-	RecordedEquivocations       map[EquivocationKey][][32]byte
-	MockCanonicalFull           map[primitives.Slot]bool
-	ETH1Data                    *ethpb.Eth1Data
-	ReceivePayloadEnvelopeErr   error
-	stateNotifier               statefeed.Notifier
-	VerifyBlkDescendantErr      error
-	Block                       interfaces.ReadOnlySignedBeaconBlock
-	PtcLookupStateErr           error
-	HeadStateErr                error
-	State                       state.BeaconState
-	DB                          db.Database
-	blockNotifier               blockfeed.Notifier
-	opNotifier                  opfeed.Notifier
-	ReceiveBlockMockErr         error
-	ForkChoiceStore             forkchoice.ForkChoicer
-	SyncSelectionProofDomain    []byte
-	SyncContributionProofDomain []byte
-	SyncCommitteePubkeys        [][]byte
-	Genesis                     time.Time
-	SyncCommitteeIndices        []primitives.CommitteeIndex
-	Root                        []byte
-	BlocksReceived              []interfaces.ReadOnlySignedBeaconBlock
-	Blobs                       []blocks.VerifiedROBlob
-	DataColumns                 []blocks.VerifiedRODataColumn
-	SyncCommitteeDomain         []byte
+	Ancestors                      map[[32]byte][32]byte
+	Fork                           *ethpb.Fork
+	RecordedEquivocations          map[EquivocationKey][][32]byte
+	MockCanonicalFull              map[primitives.Slot]bool
+	ETH1Data                       *ethpb.Eth1Data
+	ReceivePayloadEnvelopeErr      error
+	stateNotifier                  statefeed.Notifier
+	VerifyBlkDescendantErr         error
+	Block                          interfaces.ReadOnlySignedBeaconBlock
+	PtcLookupStateErr              error
+	AvailableAttestations          []*ethpb.AvailableAttestation
+	ReceiveAvailableAttestationErr error
+	HeadStateErr                   error
+	State                          state.BeaconState
+	DB                             db.Database
+	blockNotifier                  blockfeed.Notifier
+	opNotifier                     opfeed.Notifier
+	ReceiveBlockMockErr            error
+	ForkChoiceStore                forkchoice.ForkChoicer
+	SyncSelectionProofDomain       []byte
+	SyncContributionProofDomain    []byte
+	SyncCommitteePubkeys           [][]byte
+	Genesis                        time.Time
+	SyncCommitteeIndices           []primitives.CommitteeIndex
+	Root                           []byte
+	BlocksReceived                 []interfaces.ReadOnlySignedBeaconBlock
+	Blobs                          []blocks.VerifiedROBlob
+	DataColumns                    []blocks.VerifiedRODataColumn
+	SyncCommitteeDomain            []byte
 }
 
 type EquivocationKey struct {
@@ -954,6 +956,12 @@ func (c *ChainService) ReceiveDataColumns(dcs []blocks.VerifiedRODataColumn) err
 // ReceivePayloadAttestationMessage implements the same method in the chain service.
 func (c *ChainService) ReceivePayloadAttestationMessage(_ context.Context, _ *ethpb.PayloadAttestationMessage) error {
 	return nil
+}
+
+// ReceiveAvailableAttestation implements the same method in the chain service.
+func (c *ChainService) ReceiveAvailableAttestation(_ context.Context, att *ethpb.AvailableAttestation) error {
+	c.AvailableAttestations = append(c.AvailableAttestations, att)
+	return c.ReceiveAvailableAttestationErr
 }
 
 // PtcLookupState implements the same method in the chain service.

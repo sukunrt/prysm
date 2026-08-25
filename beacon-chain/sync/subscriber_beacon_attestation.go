@@ -63,11 +63,12 @@ func attesterSubnetIndices(currentSlot primitives.Slot) map[uint64]bool {
 	return subnets
 }
 
-func (s *Service) availableAttestationSubscriber(_ context.Context, msg proto.Message) error {
-	_, ok := msg.(*eth.AvailableAttestation)
+func (s *Service) availableAttestationSubscriber(ctx context.Context, msg proto.Message) error {
+	att, ok := msg.(*eth.AvailableAttestation)
 	if !ok {
-		return fmt.Errorf("message was not type eth.Att, type=%T", msg)
+		return fmt.Errorf("message was not type eth.AvailableAttestation, type=%T", msg)
 	}
-	// TODO: save to an attestation pool like committee attestations
-	return nil
+	// The available attestation is the Goldfish head vote: it is not aggregated
+	// and it is not included in blocks, so forkchoice is its only consumer.
+	return s.cfg.chain.ReceiveAvailableAttestation(ctx, att)
 }

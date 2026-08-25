@@ -527,9 +527,11 @@ func (s *Service) validateAvailableAttestation(
 		//		attestationVerificationGossipSummary.Observe(float64(time.Since(start).Milliseconds()))
 	}()
 
-	if pid == s.cfg.p2p.PeerID() {
-		return pubsub.ValidationAccept, nil
-	}
+	// A message we published ourselves still has to reach the subscriber: the
+	// available attestation is the Goldfish head vote, and a node that dropped
+	// its own validators' votes would walk on half an electorate. Only the
+	// signature check is skipped, we signed it.
+	self := pid == s.cfg.p2p.PeerID()
 	// Attestation processing requires the target block to be present in the database, so we'll skip
 	// validating or processing attestations until fully synced.
 	if s.cfg.initialSync.Syncing() {
@@ -613,9 +615,11 @@ func (s *Service) validateAvailableAttestation(
 	// 	return pubsub.ValidationIgnore, blockchain.ErrNotDescendantOfFinalized
 	// }
 
-	validationRes, err := s.validateUnaggregatedAvailableAttWithState(ctx, att, state)
-	if validationRes != pubsub.ValidationAccept {
-		return validationRes, err
+	if !self {
+		validationRes, err := s.validateUnaggregatedAvailableAttWithState(ctx, att, state)
+		if validationRes != pubsub.ValidationAccept {
+			return validationRes, err
+		}
 	}
 
 	msg.ValidatorData = att
