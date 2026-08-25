@@ -243,6 +243,10 @@ func GethTestnetGenesis(genesis time.Time, cfg *clparams.BeaconChainConfig) *cor
 			BPO1:   params.DefaultBPO1BlobConfig,
 			BPO2:   params.DefaultBPO2BlobConfig,
 			BPO3:   params.DefaultBPO3BlobConfig,
+			// geth refuses a genesis that schedules a fork with blobs but
+			// gives it no blob schedule entry, and Amsterdam is at genesis
+			// whenever Gloas is. It keeps Osaka's blob parameters.
+			Amsterdam: params.DefaultOsakaBlobConfig,
 		},
 	}
 	da := defaultDepositContractAllocation(cfg.DepositContractAddress)
