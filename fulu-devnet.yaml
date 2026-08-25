@@ -1,0 +1,33 @@
+CONFIG_NAME: fulu-devnet
+PRESET_BASE: "mainnet"
+
+# Genesis
+# ---------------------------------------------------------------
+MIN_GENESIS_ACTIVE_VALIDATOR_COUNT: 256
+GENESIS_FORK_VERSION: 0x10000000
+
+# Forking
+# ---------------------------------------------------------------
+# Everything through Fulu activates at genesis. The highest fork
+# with epoch 0 wins the tie-break, so the chain starts at Fulu.
+ALTAIR_FORK_VERSION: 0x11000000
+ALTAIR_FORK_EPOCH: 0
+BELLATRIX_FORK_VERSION: 0x12000000
+BELLATRIX_FORK_EPOCH: 0
+CAPELLA_FORK_VERSION: 0x13000000
+CAPELLA_FORK_EPOCH: 0
+DENEB_FORK_VERSION: 0x14000000
+DENEB_FORK_EPOCH: 0
+ELECTRA_FORK_VERSION: 0x15000000
+ELECTRA_FORK_EPOCH: 0
+FULU_FORK_VERSION: 0x16000000
+FULU_FORK_EPOCH: 0
+
+# Gloas and Heze stay unscheduled (inherited FAR_FUTURE_EPOCH).
+GLOAS_FORK_VERSION: 0x17000000
+HEZE_FORK_VERSION: 0x18000000
+
+# Deposit contract
+# ---------------------------------------------------------------                       DEPOSIT_CHAIN_ID: 4242
+DEPOSIT_NETWORK_ID: 4242
+DEPOSIT_CONTRACT_ADDRESS: 0x4242424242424242424242424242424242424242

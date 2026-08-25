@@ -26,12 +26,12 @@ ELECTRA_FORK_EPOCH: 0
 FULU_FORK_VERSION: 0x16000000
 FULU_FORK_EPOCH: 0
 
-# Gloas and Hegota get fork versions but no epochs, so they inherit
+# Gloas and Heze get fork versions but no epochs, so they inherit
 # FAR_FUTURE_EPOCH and stay unscheduled. Setting either to 0 does not
 # work: prysmctl cannot build a genesis state above Fulu, and the
 # upgrade path only fires when the chain crosses the boundary.
 GLOAS_FORK_VERSION: 0x17000000
-HEGOTA_FORK_VERSION: 0x18000000
+HEZE_FORK_VERSION: 0x18000000
 
 # Deposit contract
 # ---------------------------------------------------------------
