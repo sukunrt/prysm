@@ -34,6 +34,13 @@ const orphanLateBlockProposingEarly = 2
 func (f *ForkChoice) ShouldOverrideFCU() (override bool) {
 	override = false
 
+	// After Heze the Goldfish gate is the reorg mechanism: a late block loses
+	// the current-slot passthrough one slot later and the head retreats on its
+	// own. The LMD weight heuristics below have no input to read.
+	if f.store.goldfishActive() {
+		return
+	}
+
 	// We only need to override FCU if our current consensusHead is from the current
 	// slot. This differs from the spec implementation in that we assume
 	// that we will call this function in the previous slot to proposing.
@@ -106,6 +113,11 @@ func (f *ForkChoice) GetProposerHead() [32]byte {
 	consensusHead := f.store.headNode
 	if consensusHead == nil {
 		return [32]byte{}
+	}
+	// After Heze the proposer builds on the Goldfish walk head, whatever its
+	// LMD weight. Orphaning is the gate's job.
+	if f.store.goldfishActive() {
+		return consensusHead.root
 	}
 	// Only reorg blocks from the previous slot.
 	currentSlot := slots.CurrentSlot(f.store.genesisTime)

@@ -2,6 +2,7 @@ package doublylinkedtree
 
 import (
 	"testing"
+	"time"
 
 	forkchoicetypes "github.com/OffchainLabs/prysm/v7/beacon-chain/forkchoice/types"
 	"github.com/OffchainLabs/prysm/v7/config/params"
@@ -482,4 +483,99 @@ func TestGoldfishWalk_FullHeadResolvesPreviousSlotPayload(t *testing.T) {
 	r, full := f.CanonicalNodeAtSlot(1)
 	require.Equal(t, rootA, r)
 	require.Equal(t, true, full)
+}
+
+func TestGoldfish_ProposerBoostNotApplied(t *testing.T) {
+	f := setupGoldfish(t, 0, 0)
+	zero := params.BeaconConfig().ZeroHash
+	rootA := indexToHash(1)
+
+	driftGenesisTime(f, 1, 0)
+	insertGoldfishBlock(t, f, 1, rootA, zero, true)
+	head, err := f.Head(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootA, head)
+
+	// The block was timely, so the boost root is recorded - the walk's payload
+	// tiebreaker reads it - but no boost weight lands on the node.
+	require.Equal(t, rootA, f.store.proposerBoostRoot)
+	require.Equal(t, uint64(0), f.store.emptyNodeByRoot[rootA].node.balance)
+	require.Equal(t, uint64(0), f.store.emptyNodeByRoot[rootA].node.weight)
+}
+
+func TestGoldfish_LateBlockReorgOff(t *testing.T) {
+	f := setupGoldfish(t, 0, 0)
+	zero := params.BeaconConfig().ZeroHash
+	rootA, rootB := indexToHash(1), indexToHash(2)
+
+	// A block that arrives late in its slot on a weak head: pre-Heze this is
+	// exactly the shape ShouldOverrideFCU and GetProposerHead act on.
+	driftGenesisTime(f, 2, 11*time.Second)
+	insertGoldfishBlock(t, f, 1, rootA, zero, true)
+	f.InsertAvailableAttestation(1, 1, 4, rootA, false)
+	insertGoldfishBlock(t, f, 2, rootB, rootA, false)
+	head, err := f.Head(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootB, head)
+
+	require.Equal(t, false, f.ShouldOverrideFCU())
+	require.Equal(t, rootB, f.GetProposerHead())
+}
+
+func TestGoldfish_PreviousSlotPayloadDecisionFollowsTheNewBlock(t *testing.T) {
+	f := setupGoldfish(t, 0, 0)
+	zero := params.BeaconConfig().ZeroHash
+	rootA, rootC := indexToHash(1), indexToHash(2)
+
+	driftGenesisTime(f, 2, 0)
+	insertGoldfishBlock(t, f, 1, rootA, zero, true)
+	pe, err := prepareGloasForkchoicePayload(rootA)
+	require.NoError(t, err)
+	require.NoError(t, f.InsertPayload(pe))
+	f.InsertAvailableAttestation(1, 1, 4, rootA, false)
+
+	// The slot-2 block built on A's empty payload node. Both of A's payload
+	// nodes pass through as previous-slot decisions, so the tiebreaker decides,
+	// and it must follow the new block or the walk would stop at A.
+	insertGoldfishBlock(t, f, 2, rootC, rootA, false)
+	head, err := f.Head(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootC, head)
+}
+
+func TestGoldfish_ProposerBuildsOnWalkHead(t *testing.T) {
+	f := setupGoldfish(t, 0, 0)
+	zero := params.BeaconConfig().ZeroHash
+	rootA, rootB := indexToHash(1), indexToHash(2)
+
+	driftGenesisTime(f, 2, 0)
+	insertGoldfishBlock(t, f, 1, rootA, zero, true)
+	pe, err := prepareGloasForkchoicePayload(rootA)
+	require.NoError(t, err)
+	require.NoError(t, f.InsertPayload(pe))
+	f.InsertAvailableAttestation(1, 1, 4, rootA, false)
+
+	head, headHash, full, err := f.FullHead(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootA, head)
+	// The three values a proposer reads - GetProposerHead for the parent root,
+	// CachedHeadRoot for the head it processed slots from, and FullBeatsEmpty
+	// for the parentFull flag that picks the block hash - all agree with the
+	// walk head.
+	require.Equal(t, head, f.GetProposerHead())
+	require.Equal(t, head, f.CachedHeadRoot())
+	require.Equal(t, full, f.FullBeatsEmpty(head))
+	require.Equal(t, blockHashFor(rootA), headHash)
+
+	// A block whose own payload has not arrived moves all three together.
+	insertGoldfishBlock(t, f, 2, rootB, rootA, true)
+	head, headHash, full, err = f.FullHead(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, rootB, head)
+	require.Equal(t, false, full)
+	require.Equal(t, head, f.GetProposerHead())
+	require.Equal(t, head, f.CachedHeadRoot())
+	require.Equal(t, full, f.FullBeatsEmpty(head))
+	// With no payload for B the head hash is its full ancestor's, that is A's.
+	require.Equal(t, blockHashFor(rootA), headHash)
 }

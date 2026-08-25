@@ -11,7 +11,12 @@ func (f *ForkChoice) applyProposerBoostScore() error {
 	s := f.store
 	proposerScore := uint64(0)
 	s.removePreviousProposerBoost()
-	if s.shouldApplyProposerBoost() {
+	// After Heze the current-slot passthrough in the Goldfish walk is what
+	// admits a fresh block, so the boost weight is not applied. The boost root
+	// itself is still recorded at insert time: it is the only record of which
+	// block arrived timely this slot, and the walk's payload tiebreaker reads
+	// it through shouldExtendPayload.
+	if !s.goldfishActive() && s.shouldApplyProposerBoost() {
 		proposerScore = s.applyNewProposerBoost()
 	}
 	s.previousProposerBoostRoot = s.proposerBoostRoot
