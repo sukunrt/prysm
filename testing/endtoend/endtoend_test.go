@@ -7,11 +7,15 @@ package endtoend
 import (
 	"context"
 	"fmt"
+	"io"
 	"math"
 	"math/big"
+	"net/http"
 	"os"
 	"path"
+	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -303,6 +307,71 @@ func (r *testRunner) waitForMatchingHead(ctx context.Context, timeout time.Durat
 	}
 }
 
+// checkpointOriginMsg is logged by the checkpoint sync initializer inside the
+// syncing node's own process, once it has downloaded the origin state and
+// block. A node that ignored the checkpoint flags and synced from genesis
+// never logs it.
+const checkpointOriginMsg = "Downloaded checkpoint sync state and block."
+
+var checkpointOriginSlotRE = regexp.MustCompile(`blockSlot=(\d+)`)
+
+// checkpointOriginSlot returns the slot of the origin block that the beacon
+// node at the given index checkpoint-synced from, read from that node's log.
+// It is the witness that the node really did start from a checkpoint: the
+// caller fails the run when the slot is zero, which is what a fall back to
+// genesis sync looks like.
+func checkpointOriginSlot(index int) (uint64, error) {
+	name := path.Join(e2e.TestParams.LogPath, fmt.Sprintf(e2e.BeaconNodeLogFileName, index))
+	f, err := os.Open(name) // #nosec G304 -- test log path
+	if err != nil {
+		return 0, errors.Wrap(err, "could not open checkpoint sync node log")
+	}
+	defer func() { _ = f.Close() }()
+	if err := helpers.WaitForTextInFile(f, checkpointOriginMsg); err != nil {
+		return 0, errors.Wrap(err, "checkpoint sync node never downloaded an origin")
+	}
+	contents, err := os.ReadFile(name) // #nosec G304 -- test log path
+	if err != nil {
+		return 0, errors.Wrap(err, "could not read checkpoint sync node log")
+	}
+	for line := range strings.SplitSeq(string(contents), "\n") {
+		if !strings.Contains(line, checkpointOriginMsg) {
+			continue
+		}
+		m := checkpointOriginSlotRE.FindStringSubmatch(line)
+		if m == nil {
+			return 0, errors.Errorf("no blockSlot field in checkpoint origin log line %q", line)
+		}
+		return strconv.ParseUint(m[1], 10, 64)
+	}
+	return 0, errors.New("checkpoint origin log line disappeared from the log")
+}
+
+// goldfishCounters returns the goldfish forkchoice samples the beacon node at
+// the given index is publishing. Gate stops and gate retreats on a node that
+// joined the chain late are the reason the empty-vote-slot gate abstains, so
+// the run records them even when it passes.
+func goldfishCounters(index int) (string, error) {
+	port := e2e.TestParams.Ports.PrysmBeaconNodeMetricsPort + index
+	url := fmt.Sprintf("http://127.0.0.1:%d/metrics", port)
+	resp, err := http.Get(url) // #nosec G107 -- local test endpoint
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	var samples []string
+	for line := range strings.SplitSeq(string(body), "\n") {
+		if strings.HasPrefix(line, "goldfish_") {
+			samples = append(samples, line)
+		}
+	}
+	return strings.Join(samples, ", "), nil
+}
+
 func (r *testRunner) testCheckpointSync(ctx context.Context, g *errgroup.Group, i int, conns []*grpc.ClientConn, bnAPI, enr, minerEnr string) error {
 	ethNode := eth1.NewNode(i, minerEnr)
 	g.Go(func() error {
@@ -347,6 +416,15 @@ func (r *testRunner) testCheckpointSync(ctx context.Context, g *errgroup.Group, 
 	if err := helpers.ComponentsStarted(ctx, []e2etypes.ComponentRunner{cpsyncer}); err != nil {
 		return fmt.Errorf("checkpoint sync beacon node not ready: %w", err)
 	}
+	originSlot, err := checkpointOriginSlot(i)
+	if err != nil {
+		return err
+	}
+	if originSlot == 0 {
+		return errors.New("checkpoint sync node started from genesis: origin block slot is 0")
+	}
+	r.t.Logf("Checkpoint sync node %d starts from origin block slot %d", i, originSlot)
+
 	c, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", e2e.TestParams.Ports.PrysmBeaconNodeRPCPort+i), grpc.WithInsecure())
 	require.NoError(r.t, err, "Failed to dial")
 
@@ -355,6 +433,11 @@ func (r *testRunner) testCheckpointSync(ctx context.Context, g *errgroup.Group, 
 	err = r.waitForMatchingHead(ctx, syncMatchTimeout, c, conns[0])
 	if err != nil {
 		return err
+	}
+	if counters, err := goldfishCounters(i); err != nil {
+		r.t.Logf("Could not read goldfish counters from checkpoint sync node %d: %v", i, err)
+	} else {
+		r.t.Logf("Checkpoint sync node %d goldfish counters: %s", i, counters)
 	}
 
 	syncEvaluators := []e2etypes.Evaluator{ev.FinishedSyncing, ev.AllNodesHaveSameHead}
