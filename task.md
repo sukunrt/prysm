@@ -69,9 +69,10 @@ sends one vote per signer, so message counts do not change.
 Deferred 2026-08-14: items 1 to 3 move into the simplex work. The store
 shape depends on how the Goldfish gate reads it, so we design it at use time.
 
-Next task: rewrite the HTML files so they align on the decided plan: the
-real gadget, no parallel FFG run, the cutover at the fork, and the cloned
-attestation path for the finality vote.
+Done 2026-08-15: the plan doc `decoupled-consensus-plan.html` states the
+decided plan: the real gadget, no parallel FFG run, the cutover at the
+fork, and the cloned attestation path for the finality vote. The four old
+HTML files are removed; jj history keeps them.
 
 Left to build on the receive path:
 
@@ -97,10 +98,8 @@ The traffic-only mock is replaced. New target: implement the finality gadget
 real beacon state. The simulation then measures time to finality, timeout
 rounds under loss, and stalls under partition. Traffic measurement comes free.
 
-References: `gossip-forkchoice.html` (Prysm map, gadget algorithm, the
-section 18 build order we follow), `decoupled-consensus-networking-mock.html`
-(topics, message shapes, rates, fidelity traps; its stub tables no longer
-bind), and the executable specification — the wire authority — at
+References: `decoupled-consensus-plan.html` (the plan) and the executable
+specification — the wire authority — at
 `../decoupled-consensus-networking/consensus-specs/specs/_features/simplex/`.
 
 Rejected:
