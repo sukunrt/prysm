@@ -423,6 +423,29 @@ from a pre-fork header.
 - The chain produces and processes blocks past slot 1, which exercises
   `process_parent_execution_payload` against the genesis bid.
 
+### Executed 2026-08-19 <added by executor>
+
+Done in four jj changes (`wyottnnr`, `suyovqzw`, `tstzmsks`, `kzqkrosx`). The
+first two acceptance criteria hold: `prysmctl testnet generate-genesis
+--fork=heze` (the flag is `--fork`, not `--fork-name`) produces a state that
+round-trips and reports `version.Heze`, and a real node plus geth plus a
+validator client starts on it at the Heze digest with attester, proposer and
+PTC duties.
+
+**The third does not.** The node never produces a block: forkchoice has no
+*full* payload node for the genesis block, so `parentFull` is false, the
+proposer sends the genesis bid's zero `parent_block_hash` as the engine head,
+and the engine answers INVALID. The genesis state is right; the bootstrap is
+missing `MarkFullNode` for genesis at Gloas and later. Step 5 must fix it.
+
+Four things the plan did not name, all required: the proposer lookahead (never
+set by premine, and its absence breaks the SSZ round trip above Fulu); the
+bid's `execution_requests_root`, which must be the empty-requests root and not
+a zero root; `testing/endtoend`'s `GenesisFork` and `InitForkCfg`, which stop
+at Fulu and do **not** pick Heze up for free; and the execution genesis, which
+needs an Amsterdam time or geth rejects `engine_forkchoiceUpdatedV4`. Full list
+and the answer to open question 1 in `plan-detailed.md` 4.6.
+
 ---
 
 ## Step 5: verify
@@ -487,3 +510,12 @@ because Heze is CL-only; see `Dockerfile.genesis-gen`.
 
 1. `builder_pending_payments` is sized `2 * SLOTS_PER_EPOCH` and stays
    epoch-sized. Confirm nothing in the Gloas payment path assumes the round.
+
+   **Answered 2026-08-19 <by executor>.** The vector's size and indexing are
+   safe: every write and settle is keyed on `slot % SLOTS_PER_EPOCH`, so each
+   slot of the epoch still gets its own entry when the round is shorter. But
+   `get_builder_payment_quorum_threshold` divides the total active balance by
+   `SLOTS_PER_EPOCH` to estimate one slot's attesting balance. With
+   `SLOTS_PER_ROUND = 8` a slot's committees hold a quarter of the active set,
+   so the threshold is four times what any payment can reach and no builder
+   payment ever settles. That divisor should follow `SLOTS_PER_ROUND`.

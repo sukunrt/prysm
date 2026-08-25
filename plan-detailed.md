@@ -656,6 +656,124 @@ The Heze arm uses the same `s.GB` to fill `ExecutionPayloadBid`
       `interop.NewPreminedGenesis` with a version, so e2e picks this up for
       free once the version is Heze.
 
+## 4.6 Executed 2026-08-19 <added by executor>
+
+Done as four jj changes: `wyottnnr` (premine Heze arms), `suyovqzw` (config and
+e2e fork plumbing), `tstzmsks` (tests), `kzqkrosx` (execution-genesis Amsterdam
+time). `go build ./...`, `bazelisk build //...` and the touched packages' tests
+are green.
+
+**Genesis at Heze works. Block production does not, for a reason outside this
+step.** See "The forkchoice gap" below — step 5 must fix it.
+
+### Sites the plan did not name, all required
+
+- **`proposer_lookahead` was never set by premine.** Only
+  `InitializeFromProtoUnsafeFulu` pads the vector, so a Gloas- or Heze-shaped
+  genesis failed to marshal ("bytes array does not have the correct length").
+  New `setProposerLookahead` runs `helpers.InitializeProposerLookahead` for
+  `version >= Fulu`. This also fixes a latent Fulu-genesis bug: with an all-zero
+  lookahead, validator 0 proposes every slot of the first two epochs.
+- **`execution_requests_root` must be the empty-requests root, not a zero
+  root.** 4.3's table is wrong. `gloas.ProcessParentExecutionPayload` at slot 1
+  hashes the block's empty `parent_execution_requests` and compares it with the
+  parent bid's root; a zero root rejects the first block. The spec says
+  `hash_tree_root(ExecutionRequests())` and `upgrade.go` uses
+  `enginev1.EmptyExecutionRequestsHashTreeRoot()`. So does the Heze arm.
+- **`testing/endtoend` does not pick Heze up for free** (4.5's last bullet is
+  wrong). `types.GenesisFork()` checked down from Fulu and `types.InitForkCfg`
+  had no Gloas or Heze arms, so a Heze e2e config would have produced a Fulu
+  genesis. Both now handle Gloas and Heze.
+- **The prysmctl flag is `--fork`, not `--fork-name`.** `heze` appears in its
+  enum, as 4.4 predicted.
+- **`empty` also allocates `builders`, `builder_pending_withdrawals` and
+  `payload_expected_withdrawals` as empty slices**, not just the two vectors.
+- **`setLatestBlockHeader`'s Gloas body needs its own new fields filled** —
+  `signed_execution_payload_bid`, `payload_attestations`,
+  `parent_execution_requests` — or the body root cannot be computed.
+- **The execution genesis needs an Amsterdam time.** prysmctl wrote fork times
+  up to Osaka. With Gloas at epoch 0 the node calls
+  `engine_forkchoiceUpdatedV4`, and geth answers "Unsupported fork: fcuV4 must
+  only be called for amsterdam payloads". New `interop.GethAmsterdamTime` maps
+  Amsterdam to `GloasForkEpoch`. The devnet yamls also needed an explicit
+  single-entry `BLOB_SCHEDULE`: without one they inherit mainnet's absolute BPO
+  epochs, and geth rejects any BPO scheduled after Amsterdam.
+
+### Named but different in practice
+
+- The `setExecutionPayload` arm keys on `s.Version >= version.Gloas`, matching
+  the `>=` ladder the rest of the function already uses.
+- `ptc_window` and `builders` are set from a new `setPTCWindowAndBuilders` step
+  in `populate`, after deposits; the other six fields are set in `empty`.
+- Both devnet yamls got their stale comments corrected — `fulu-devnet-4.yaml`
+  claimed "Setting either to 0 does not work: prysmctl cannot build a genesis
+  state above Fulu", which is exactly what this step changed.
+
+### Two traps worth recording
+
+- **`initialize_ptc_window` does not terminate with too few validators.**
+  `compute_ptc` loops until it has PTC_SIZE members, drawing from
+  `get_beacon_committee`. On the mainnet preset with 10 validators most slots
+  have an empty committee, so the loop spins forever. 256 validators (the
+  devnet and e2e minimum) is fine. Any genesis needs at least one validator per
+  slot of the epoch.
+- **`UpgradeToGloas` is never reached at genesis, even with
+  `GloasForkEpoch = 0`.** `transition.UpgradeState` is only called after
+  `SetSlot(slot+1)`, so it never sees slot 0, and `CanUpgradeToGloas` needs an
+  epoch-start slot. Checked because a stray upgrade would silently downgrade
+  the Heze genesis to Gloas.
+
+### The forkchoice gap (step 5)
+
+A single node was run: geth 1.17.6 plus a beacon node plus a 256-key validator
+client on a `prysmctl --fork=heze` genesis and `fulu-devnet.yaml`. Results:
+
+- The node **starts on the Heze genesis** and runs at the Heze fork digest.
+  The validator client gets attester, proposer and PTC duties.
+- It **never produces a block**. Every slot logs
+  `could not prepare payload: payload status is INVALID`, and geth logs
+  `Forkchoice requested update to zero hash`.
+
+Cause: forkchoice never gets a **full** payload node for the genesis block.
+`vs.parentFull(genesisRoot)` is therefore false, so
+`getParentBlockHash` returns the genesis bid's `parent_block_hash` — which is
+the zero hash, because the geth genesis block has no parent — instead of its
+`block_hash`. The engine gets a zero head and answers INVALID.
+
+The genesis block *is* full: `execution_payload_availability` bit 0 is set and
+`latest_block_hash == latest_execution_payload_bid.block_hash`. The fix is in
+the bootstrap, not in the genesis state: at Gloas and later, the genesis block
+must be inserted into forkchoice with a full payload node
+(`ForkChoice.MarkFullNode(genesisRoot, bid.GasLimit)` or equivalent) alongside
+its empty node. Today the only paths that create a full node are
+`InsertPayload` (from an execution payload envelope) and the tree-reconstruction
+path in `forkchoice.go`, and neither runs for genesis.
+
+Also seen and **not** a Heze problem: `wanted chain ID 1, got 1337` from the
+eth1 deposit poller, because `interop.GethTestnetGenesis` hardcodes chain id
+1337 while `fulu-devnet.yaml` sets `DEPOSIT_CHAIN_ID: 4242`. Pre-existing; it
+only disables eth1 deposit following.
+
+### The open question, answered
+
+`builder_pending_payments` stays epoch-sized and epoch-indexed, and that is
+fine: `process_execution_payload_bid` writes at
+`SLOTS_PER_EPOCH + slot % SLOTS_PER_EPOCH`, `apply_parent_execution_payload`
+settles at `parent_slot % SLOTS_PER_EPOCH`, and `RotateBuilderPendingPayments`
+shifts by `SLOTS_PER_EPOCH` each epoch. Every slot of the epoch still maps to a
+distinct entry when the round is shorter.
+
+**But one payment-path constant does assume the round.**
+`get_builder_payment_quorum_threshold`
+(`beacon-chain/core/gloas/pending_payment.go`) is
+`total_active_balance / SLOTS_PER_EPOCH * numerator / denominator`. That divisor
+is the balance expected to attest in one slot. With `SLOTS_PER_ROUND = 8` and
+`SLOTS_PER_EPOCH = 32` each slot's committees hold a quarter of the active set,
+so the threshold is four times the achievable weight and no builder payment
+ever reaches quorum. `UpdatePendingPaymentWeight` accumulates real attester
+balances, so the mismatch is real, not cosmetic. The divisor should follow
+`SLOTS_PER_ROUND` once a config uses a short round.
+
 ---
 
 # Step 5 — verify
