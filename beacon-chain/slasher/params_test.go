@@ -19,7 +19,7 @@ func TestDefaultParams(t *testing.T) {
 func TestParams_cellIndex(t *testing.T) {
 	type args struct {
 		validatorIndex primitives.ValidatorIndex
-		epoch          primitives.Epoch
+		epoch          primitives.Round
 	}
 	tests := []struct {
 		name   string
@@ -160,7 +160,7 @@ func TestParams_chunkIndex(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields *Parameters
-		epoch  primitives.Epoch
+		epoch  primitives.Round
 		want   uint64
 	}{
 		{
@@ -355,7 +355,7 @@ func TestParams_chunkOffset(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields *Parameters
-		epoch  primitives.Epoch
+		epoch  primitives.Round
 		want   uint64
 	}{
 		{
@@ -480,7 +480,7 @@ func TestParameters_firstEpoch(t *testing.T) {
 		name       string
 		params     *Parameters
 		chunkIndex uint64
-		want       primitives.Epoch
+		want       primitives.Round
 	}{
 		{
 			name:       "first epoch of chunk 0 is 0",
@@ -511,7 +511,7 @@ func TestParameters_lastEpoch(t *testing.T) {
 		name       string
 		params     *Parameters
 		chunkIndex uint64
-		want       primitives.Epoch
+		want       primitives.Round
 	}{
 		{
 			name: "with chunk_size = 3, last epoch of chunk 0 is 2",

@@ -181,7 +181,7 @@ func TestROLocking(t *testing.T) {
 		{
 			name: "targetRootForEpochCalled",
 			call: targetRootForEpochCalled,
-			cb:   func(g FastGetter) { _, err := g.TargetRootForEpoch([32]byte{}, 0); _discard(t, err) },
+			cb:   func(g FastGetter) { _, err := g.TargetRootForRound([32]byte{}, 0); _discard(t, err) },
 		},
 		{
 			name: "dependentRootCalled",
@@ -382,8 +382,8 @@ func (ro *mockROForkchoice) DependentRootForEpoch(_ [32]byte, _ primitives.Epoch
 	return [32]byte{}, nil
 }
 
-// TargetRootForEpoch implements FastGetter.
-func (ro *mockROForkchoice) TargetRootForEpoch(_ [32]byte, _ primitives.Epoch) ([32]byte, error) {
+// TargetRootForRound implements FastGetter.
+func (ro *mockROForkchoice) TargetRootForRound(_ [32]byte, _ primitives.Round) ([32]byte, error) {
 	ro.calls = append(ro.calls, targetRootForEpochCalled)
 	return [32]byte{}, nil
 }

@@ -344,9 +344,9 @@ func (s *Service) processPastLogs(ctx context.Context) error {
 	// state we are referring to and whether our cached
 	// finalized state is referring to our current finalized checkpoint.
 	// The current code does ignore an edge case where the finalized
-	// block is in a different epoch from the checkpoint's epoch.
+	// block is in a different round from the checkpoint's round.
 	// This only happens in skipped slots, so pruning it is not an issue.
-	if isNil || slots.ToEpoch(fState.Slot()) != c.Epoch {
+	if isNil || slots.RoundAt(fState.Slot()) != c.Epoch {
 		fState, err = s.cfg.stateGen.StateByRoot(ctx, fRoot)
 		if err != nil {
 			return err

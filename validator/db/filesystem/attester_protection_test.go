@@ -45,15 +45,15 @@ func TestStore_LowestSignedTargetEpoch(t *testing.T) {
 	require.NoError(t, err, "could not create store")
 
 	// Get the lowest signed target epoch.
-	_, exists, err := store.LowestSignedTargetEpoch(t.Context(), [fieldparams.BLSPubkeyLength]byte{})
+	_, exists, err := store.LowestSignedTargetRound(t.Context(), [fieldparams.BLSPubkeyLength]byte{})
 	require.NoError(t, err, "could not get lowest signed target epoch")
 	require.Equal(t, false, exists, "lowest signed target epoch should not exist")
 
 	// Create an attestation with both source and target epoch
 	attestation := &ethpb.IndexedAttestation{
 		Data: &ethpb.AttestationData{
-			Source: &ethpb.Checkpoint{Epoch: primitives.Epoch(savedSourceEpoch)},
-			Target: &ethpb.Checkpoint{Epoch: primitives.Epoch(savedTargetEpoch)},
+			Source: &ethpb.Checkpoint{Epoch: primitives.Round(savedSourceEpoch)},
+			Target: &ethpb.Checkpoint{Epoch: primitives.Round(savedTargetEpoch)},
 		},
 	}
 
@@ -62,8 +62,8 @@ func TestStore_LowestSignedTargetEpoch(t *testing.T) {
 	require.NoError(t, err, "SaveAttestationForPubKey should not return an error")
 
 	// Get the lowest signed target epoch.
-	expected := primitives.Epoch(savedTargetEpoch)
-	actual, exists, err := store.LowestSignedTargetEpoch(t.Context(), pubkey)
+	expected := primitives.Round(savedTargetEpoch)
+	actual, exists, err := store.LowestSignedTargetRound(t.Context(), pubkey)
 	require.NoError(t, err, "could not get lowest signed target epoch")
 	require.Equal(t, true, exists, "lowest signed target epoch should not exist")
 	require.Equal(t, expected, actual, "lowest signed target epoch should match")
@@ -78,7 +78,7 @@ func TestStore_LowestSignedSourceEpoch(t *testing.T) {
 	require.NoError(t, err, "could not create store")
 
 	// Get the lowest signed target epoch.
-	_, exists, err := store.LowestSignedSourceEpoch(t.Context(), [fieldparams.BLSPubkeyLength]byte{})
+	_, exists, err := store.LowestSignedSourceRound(t.Context(), [fieldparams.BLSPubkeyLength]byte{})
 	require.NoError(t, err, "could not get lowest signed source epoch")
 	require.Equal(t, false, exists, "lowest signed source epoch should not exist")
 
@@ -86,8 +86,8 @@ func TestStore_LowestSignedSourceEpoch(t *testing.T) {
 	savedSourceEpoch, savedTargetEpoch := 42, 43
 	attestation := &ethpb.IndexedAttestation{
 		Data: &ethpb.AttestationData{
-			Source: &ethpb.Checkpoint{Epoch: primitives.Epoch(savedSourceEpoch)},
-			Target: &ethpb.Checkpoint{Epoch: primitives.Epoch(savedTargetEpoch)},
+			Source: &ethpb.Checkpoint{Epoch: primitives.Round(savedSourceEpoch)},
+			Target: &ethpb.Checkpoint{Epoch: primitives.Round(savedTargetEpoch)},
 		},
 	}
 
@@ -96,8 +96,8 @@ func TestStore_LowestSignedSourceEpoch(t *testing.T) {
 	require.NoError(t, err, "SaveAttestationForPubKey should not return an error")
 
 	// Get the lowest signed target epoch.
-	expected := primitives.Epoch(savedSourceEpoch)
-	actual, exists, err := store.LowestSignedSourceEpoch(t.Context(), pubkey)
+	expected := primitives.Round(savedSourceEpoch)
+	actual, exists, err := store.LowestSignedSourceRound(t.Context(), pubkey)
 	require.NoError(t, err, "could not get lowest signed target epoch")
 	require.Equal(t, true, exists, "lowest signed target epoch should exist")
 	require.Equal(t, expected, actual, "lowest signed target epoch should match")
@@ -323,14 +323,14 @@ func TestStore_SaveAttestationsForPubKey2(t *testing.T) {
 			incomingAtts: []*ethpb.IndexedAttestation{
 				{
 					Data: &ethpb.AttestationData{
-						Source: &ethpb.Checkpoint{Epoch: primitives.Epoch(40)},
-						Target: &ethpb.Checkpoint{Epoch: primitives.Epoch(45)},
+						Source: &ethpb.Checkpoint{Epoch: primitives.Round(40)},
+						Target: &ethpb.Checkpoint{Epoch: primitives.Round(45)},
 					},
 				},
 				{
 					Data: &ethpb.AttestationData{
-						Source: &ethpb.Checkpoint{Epoch: primitives.Epoch(30)},
-						Target: &ethpb.Checkpoint{Epoch: primitives.Epoch(40)},
+						Source: &ethpb.Checkpoint{Epoch: primitives.Round(30)},
+						Target: &ethpb.Checkpoint{Epoch: primitives.Round(40)},
 					},
 				},
 			},
@@ -347,15 +347,15 @@ func TestStore_SaveAttestationsForPubKey2(t *testing.T) {
 			//                   42 ======> 45   <----- Will be recorded into DB (max source and target epochs)
 			existingAttInDB: &ethpb.IndexedAttestation{
 				Data: &ethpb.AttestationData{
-					Source: &ethpb.Checkpoint{Epoch: primitives.Epoch(40)},
-					Target: &ethpb.Checkpoint{Epoch: primitives.Epoch(45)},
+					Source: &ethpb.Checkpoint{Epoch: primitives.Round(40)},
+					Target: &ethpb.Checkpoint{Epoch: primitives.Round(45)},
 				},
 			},
 			incomingAtts: []*ethpb.IndexedAttestation{
 				{
 					Data: &ethpb.AttestationData{
-						Source: &ethpb.Checkpoint{Epoch: primitives.Epoch(42)},
-						Target: &ethpb.Checkpoint{Epoch: primitives.Epoch(43)},
+						Source: &ethpb.Checkpoint{Epoch: primitives.Round(42)},
+						Target: &ethpb.Checkpoint{Epoch: primitives.Round(43)},
 					},
 				},
 			},
@@ -373,15 +373,15 @@ func TestStore_SaveAttestationsForPubKey2(t *testing.T) {
 			//                   42 =============> 50   <----- Will be recorded into DB (max source and target epochs)
 			existingAttInDB: &ethpb.IndexedAttestation{
 				Data: &ethpb.AttestationData{
-					Source: &ethpb.Checkpoint{Epoch: primitives.Epoch(42)},
-					Target: &ethpb.Checkpoint{Epoch: primitives.Epoch(45)},
+					Source: &ethpb.Checkpoint{Epoch: primitives.Round(42)},
+					Target: &ethpb.Checkpoint{Epoch: primitives.Round(45)},
 				},
 			},
 			incomingAtts: []*ethpb.IndexedAttestation{
 				{
 					Data: &ethpb.AttestationData{
-						Source: &ethpb.Checkpoint{Epoch: primitives.Epoch(40)},
-						Target: &ethpb.Checkpoint{Epoch: primitives.Epoch(50)},
+						Source: &ethpb.Checkpoint{Epoch: primitives.Round(40)},
+						Target: &ethpb.Checkpoint{Epoch: primitives.Round(50)},
 					},
 				},
 			},
@@ -437,8 +437,8 @@ func TestStore_AttestationHistoryForPubKey(t *testing.T) {
 	savedSourceEpoch, savedTargetEpoch := 42, 43
 	attestation := &ethpb.IndexedAttestation{
 		Data: &ethpb.AttestationData{
-			Source: &ethpb.Checkpoint{Epoch: primitives.Epoch(savedSourceEpoch)},
-			Target: &ethpb.Checkpoint{Epoch: primitives.Epoch(savedTargetEpoch)},
+			Source: &ethpb.Checkpoint{Epoch: primitives.Round(savedSourceEpoch)},
+			Target: &ethpb.Checkpoint{Epoch: primitives.Round(savedTargetEpoch)},
 		},
 	}
 
@@ -450,8 +450,8 @@ func TestStore_AttestationHistoryForPubKey(t *testing.T) {
 	expected := []*common.AttestationRecord{
 		{
 			PubKey: pubkey,
-			Source: primitives.Epoch(savedSourceEpoch),
-			Target: primitives.Epoch(savedTargetEpoch),
+			Source: primitives.Round(savedSourceEpoch),
+			Target: primitives.Round(savedTargetEpoch),
 		},
 	}
 

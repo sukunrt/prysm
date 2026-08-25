@@ -59,7 +59,7 @@ func MockAttestingAndProposalHistories(pubkeys [][fieldparams.BLSPubkeyLength]by
 	proposalData := make([]common.ProposalHistoryForPubkey, numValidators)
 	gen := rand.NewGenerator()
 	for v := range numValidators {
-		latestTarget := primitives.Epoch(gen.Intn(int(params.BeaconConfig().WeakSubjectivityPeriod) / 1000))
+		latestTarget := primitives.Round(gen.Intn(int(params.BeaconConfig().WeakSubjectivityPeriod) / 1000))
 		// If 0, we change the value to 1 as we compute source by doing (target-1)
 		// to prevent any underflows in this setup helper.
 		if latestTarget == 0 {
@@ -67,7 +67,7 @@ func MockAttestingAndProposalHistories(pubkeys [][fieldparams.BLSPubkeyLength]by
 		}
 		historicalAtts := make([]*common.AttestationRecord, 0)
 		proposals := make([]common.Proposal, 0)
-		for i := primitives.Epoch(1); i < latestTarget; i++ {
+		for i := primitives.Round(1); i < latestTarget; i++ {
 			var signingRoot [32]byte
 			signingRootStr := fmt.Sprintf("%d", i)
 			copy(signingRoot[:], signingRootStr)
@@ -78,7 +78,7 @@ func MockAttestingAndProposalHistories(pubkeys [][fieldparams.BLSPubkeyLength]by
 				PubKey:      pubkeys[v],
 			})
 		}
-		for i := primitives.Epoch(1); i <= latestTarget; i++ {
+		for i := primitives.Round(1); i <= latestTarget; i++ {
 			var signingRoot [32]byte
 			signingRootStr := fmt.Sprintf("%d", i)
 			copy(signingRoot[:], signingRootStr)

@@ -1662,7 +1662,7 @@ func TestGetAttestationData(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, beaconState.SetSlot(slot))
 		justifiedCheckpt := &ethpbalpha.Checkpoint{
-			Epoch: slots.ToEpoch(1500),
+			Epoch: slots.RoundAt(1500),
 			Root:  justifiedBlockRoot[:],
 		}
 		require.NoError(t, beaconState.SetCurrentJustifiedCheckpoint(justifiedCheckpt))
@@ -1756,7 +1756,7 @@ func TestGetAttestationData(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, beaconState.SetSlot(slot))
 		justifiedCheckpt := &ethpbalpha.Checkpoint{
-			Epoch: slots.ToEpoch(1500),
+			Epoch: slots.RoundAt(1500),
 			Root:  justifiedBlockRoot[:],
 		}
 		require.NoError(t, beaconState.SetCurrentJustifiedCheckpoint(justifiedCheckpt))
@@ -1789,7 +1789,7 @@ func TestGetAttestationData(t *testing.T) {
 			BeaconBlockRoot: blockRoot[:],
 			CommitteeIndex:  0,
 			Source: &ethpbalpha.Checkpoint{
-				Epoch: slots.ToEpoch(1500),
+				Epoch: slots.RoundAt(1500),
 				Root:  justifiedBlockRoot[:],
 			},
 			Target: &ethpbalpha.Checkpoint{

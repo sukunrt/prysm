@@ -293,7 +293,7 @@ func defaultTestHeadState(t *testing.T, cfg *params.BeaconChainConfig) (state.Be
 	var validatorCount, avgBalance uint64 = 100, 35
 	require.NoError(t, populateValidators(cfg, st, validatorCount, avgBalance))
 	require.NoError(t, st.SetFinalizedCheckpoint(&ethpb.Checkpoint{
-		Epoch: fork.Epoch - 10,
+		Epoch: primitives.Round(fork.Epoch) - 10,
 		Root:  make([]byte, 32),
 	}))
 	// to see the math for this, look at helpers.LatestWeakSubjectivityEpoch

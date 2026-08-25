@@ -215,7 +215,7 @@ func TestFFGUpdates_TwoBranches(t *testing.T) {
 	assert.Equal(t, indexToHash(7), r, "Incorrect head with justified epoch at 0")
 }
 
-func setup(justifiedEpoch, finalizedEpoch primitives.Epoch) *ForkChoice {
+func setup(justifiedEpoch, finalizedEpoch primitives.Round) *ForkChoice {
 	ctx := context.TODO()
 	f := New()
 	f.store.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: justifiedEpoch, Root: params.BeaconConfig().ZeroHash}

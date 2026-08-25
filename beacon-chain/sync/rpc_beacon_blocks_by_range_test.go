@@ -909,7 +909,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 			}
 			require.NoError(t, d.SaveStateSummaries(t.Context(), stateSummaries))
 			require.NoError(t, d.SaveFinalizedCheckpoint(t.Context(), &ethpb.Checkpoint{
-				Epoch: slots.ToEpoch(stateSummaries[len(stateSummaries)-1].Slot),
+				Epoch: slots.RoundAt(stateSummaries[len(stateSummaries)-1].Slot),
 				Root:  stateSummaries[len(stateSummaries)-1].Root,
 			}))
 		}
@@ -960,7 +960,7 @@ func TestRPCBeaconBlocksByRange_FilterBlocks(t *testing.T) {
 			}
 			require.NoError(t, d.SaveStateSummaries(t.Context(), stateSummaries))
 			require.NoError(t, d.SaveFinalizedCheckpoint(t.Context(), &ethpb.Checkpoint{
-				Epoch: slots.ToEpoch(stateSummaries[len(stateSummaries)-1].Slot),
+				Epoch: slots.RoundAt(stateSummaries[len(stateSummaries)-1].Slot),
 				Root:  stateSummaries[len(stateSummaries)-1].Root,
 			}))
 		}

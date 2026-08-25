@@ -142,7 +142,7 @@ func TestNode_UpdateBestDescendant_LowerWeightChild(t *testing.T) {
 func TestNode_ViableForHead(t *testing.T) {
 	tests := []struct {
 		n              *Node
-		justifiedEpoch primitives.Epoch
+		justifiedEpoch primitives.Round
 		want           bool
 	}{
 		{&Node{}, 0, true},

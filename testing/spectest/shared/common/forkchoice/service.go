@@ -48,7 +48,7 @@ func startChainService(t testing.TB,
 	require.NoError(t, db.SaveGenesisBlockRoot(ctx, r))
 
 	cp := &ethpb.Checkpoint{
-		Epoch: coreTime.CurrentEpoch(st),
+		Epoch: coreTime.CurrentRound(st),
 		Root:  r[:],
 	}
 	require.NoError(t, db.SaveState(ctx, st, r))

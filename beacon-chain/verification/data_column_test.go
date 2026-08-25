@@ -250,7 +250,7 @@ func TestColumnSlotAboveFinalized(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			finalizedCheckpoint := func() *forkchoicetypes.Checkpoint {
 				return &forkchoicetypes.Checkpoint{
-					Epoch: slots.ToEpoch(tc.finalizedSlot),
+					Epoch: slots.RoundAt(tc.finalizedSlot),
 					Root:  [fieldparams.RootLength]byte{},
 				}
 			}
@@ -410,7 +410,7 @@ func TestValidProposerSignature(t *testing.T) {
 					hsp: tc.headStateProvider,
 					fc: &mockForkchoicer{
 						DependentRootForEpochCB: fcReturnsDependentRoot(),
-						TargetRootForEpochCB:    fcReturnsTargetRoot([fieldparams.RootLength]byte{}),
+						TargetRootForRoundCB:    fcReturnsTargetRoot([fieldparams.RootLength]byte{}),
 					},
 				},
 			}
@@ -1154,7 +1154,7 @@ func TestGetVerifyingStateEdgeCases(t *testing.T) {
 
 	t.Run("different dependent roots - uses StateByRoot path", func(t *testing.T) {
 		// Parent and head are on different forks with different dependent roots.
-		// This forces the code to use TargetRootForEpoch -> StateByRoot path.
+		// This forces the code to use TargetRootForRound -> StateByRoot path.
 		signatureCache := &mockSignatureCache{
 			svcb: func(signatureData signatureData) (bool, error) {
 				return false, nil // Cache miss
@@ -1186,7 +1186,7 @@ func TestGetVerifyingStateEdgeCases(t *testing.T) {
 					DependentRootForEpochCB: func(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
 						return root, nil // Returns input, so parent [0...] != head [0xff...]
 					},
-					TargetRootForEpochCB: fcReturnsTargetRoot([fieldparams.RootLength]byte{}),
+					TargetRootForRoundCB: fcReturnsTargetRoot([fieldparams.RootLength]byte{}),
 				},
 			},
 		}
@@ -1225,7 +1225,7 @@ func TestGetVerifyingStateEdgeCases(t *testing.T) {
 					DependentRootForEpochCB: func(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
 						return [32]byte{0xaa}, nil // Same for all inputs
 					},
-					TargetRootForEpochCB: fcReturnsTargetRoot([fieldparams.RootLength]byte{}),
+					TargetRootForRoundCB: fcReturnsTargetRoot([fieldparams.RootLength]byte{}),
 				},
 			},
 		}

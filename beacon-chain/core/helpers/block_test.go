@@ -234,13 +234,13 @@ func TestFFGTargetRoot_ShiftedOneSlotBack(t *testing.T) {
 	anchor := [32]byte{0}
 	assert.DeepEqual(t, anchor[:], r)
 
-	// Every later epoch names the last slot of the previous epoch.
-	slotsPerEpoch := uint64(params.BeaconConfig().SlotsPerEpoch)
-	for _, epoch := range []primitives.Epoch{1, 2, 5} {
-		r, err := helpers.FFGTargetRoot(st, epoch)
+	// Every later round names the last slot of the previous round.
+	slotsPerRound := uint64(params.BeaconConfig().SlotsPerRound)
+	for _, round := range []primitives.Round{1, 2, 5} {
+		r, err := helpers.FFGTargetRoot(st, round)
 		require.NoError(t, err)
-		want := [32]byte{byte(uint64(epoch)*slotsPerEpoch - 1)}
-		assert.DeepEqual(t, want[:], r, "epoch %d", epoch)
+		want := [32]byte{byte(uint64(round)*slotsPerRound - 1)}
+		assert.DeepEqual(t, want[:], r, "round %d", round)
 	}
 }
 

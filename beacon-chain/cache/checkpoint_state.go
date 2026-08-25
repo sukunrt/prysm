@@ -82,9 +82,13 @@ func (c *CheckpointStateCache) AddCheckpointState(cp *ethpb.Checkpoint, s state.
 	return nil
 }
 
-// EvictUpTo removes all entries from the cache whose state epoch is at
-// or before the given epoch. Returns the number of evicted entries.
-func (c *CheckpointStateCache) EvictUpTo(epoch primitives.Epoch) int {
+// EvictUpTo removes all entries from the cache whose state round is at
+// or before the given round. Returns the number of evicted entries.
+//
+// The cache is keyed by checkpoint, which carries a ROUND, so the eviction bound
+// is a round too -- an epoch bound would over-evict once rounds run faster than
+// epochs.
+func (c *CheckpointStateCache) EvictUpTo(round primitives.Round) int {
 	evicted := 0
 	for _, key := range c.cache.Keys() {
 		// Peek is used here to avoid updating the recency of the entry,
@@ -95,7 +99,7 @@ func (c *CheckpointStateCache) EvictUpTo(epoch primitives.Epoch) int {
 		}
 
 		st := v.(state.ReadOnlyBeaconState)
-		if slots.ToEpoch(st.Slot()) <= epoch {
+		if slots.RoundAt(st.Slot()) <= round {
 			c.cache.Remove(key)
 			evicted++
 		}

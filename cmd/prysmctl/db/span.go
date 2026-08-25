@@ -99,7 +99,7 @@ func spanAction(cliCtx *cli.Context) error {
 	var (
 		chunk                      slasher.Chunker
 		validatorChunkIdx          uint64
-		lastEpochForValidatorIndex primitives.Epoch
+		lastEpochForValidatorIndex primitives.Round
 
 		err error
 	)
@@ -111,7 +111,7 @@ func spanAction(cliCtx *cli.Context) error {
 	chunkKind := getChunkKind()
 	params := getSlasherParams()
 	i := primitives.ValidatorIndex(f.ValidatorIndex)
-	epoch := primitives.Epoch(f.Epoch)
+	epoch := primitives.Round(f.Epoch)
 
 	// display configuration
 	fmt.Printf("############################# SLASHER PARAMS ###############################\n")
@@ -246,7 +246,7 @@ func spanAction(cliCtx *cli.Context) error {
 // getSpanOrNonApplicable checks if there's some epoch that are not correct in chunk due to the round robin
 // nature of 2D chunking when an epoch gets overwritten by an epoch eg. (params.historyLength + next_epoch) > params.historyLength
 // if we are out of the range, we display a n/a value otherwise the span value
-func getSpanOrNonApplicable(firstEpoch primitives.Epoch, y int, minLowerBound primitives.Epoch, lastEpochForValidatorIndex primitives.Epoch, span uint16) string {
+func getSpanOrNonApplicable(firstEpoch primitives.Round, y int, minLowerBound primitives.Round, lastEpochForValidatorIndex primitives.Round, span uint16) string {
 	if firstEpoch.Add(uint64(y)) < minLowerBound || firstEpoch.Add(uint64(y)) > lastEpochForValidatorIndex {
 		return "-"
 	}
@@ -258,10 +258,10 @@ func displayTable(tw table.Writer) {
 	fmt.Println(tw.Render())
 }
 
-func addEpochsHeader(tw table.Writer, nbEpoch uint64, firstEpoch primitives.Epoch) {
+func addEpochsHeader(tw table.Writer, nbEpoch uint64, firstEpoch primitives.Round) {
 	header := table.Row{"Validator / Epoch"}
 	for y := 0; uint64(y) < nbEpoch; y++ {
-		header = append(header, firstEpoch+primitives.Epoch(y))
+		header = append(header, firstEpoch+primitives.Round(y))
 	}
 	tw.AppendHeader(header)
 }
@@ -277,7 +277,7 @@ func getChunkKind() types.ChunkKind {
 func getSlasherParams() *slasher.Parameters {
 	var (
 		chunkSize, validatorChunkSize uint64
-		historyLength                 primitives.Epoch
+		historyLength                 primitives.Round
 	)
 	if f.ChunkSize != 0 && f.ChunkSize != slasherDefaultParams.ChunkSize() {
 		chunkSize = f.ChunkSize
@@ -290,7 +290,7 @@ func getSlasherParams() *slasher.Parameters {
 		validatorChunkSize = slasherDefaultParams.ValidatorChunkSize()
 	}
 	if f.HistoryLength != 0 && f.HistoryLength != uint64(slasherDefaultParams.HistoryLength()) {
-		historyLength = primitives.Epoch(f.HistoryLength)
+		historyLength = primitives.Round(f.HistoryLength)
 	} else {
 		historyLength = slasherDefaultParams.HistoryLength()
 	}

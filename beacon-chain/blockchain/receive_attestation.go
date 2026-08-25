@@ -39,7 +39,7 @@ type AttestationReceiver interface {
 
 // AttestationTargetState returns the pre state of attestation.
 func (s *Service) AttestationTargetState(ctx context.Context, target *ethpb.Checkpoint) (state.ReadOnlyBeaconState, error) {
-	ss, err := slots.EpochStart(target.Epoch)
+	ss, err := slots.RoundStart(target.Epoch)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (s *Service) AttestationTargetState(ctx context.Context, target *ethpb.Chec
 
 // VerifyLmdFfgConsistency verifies that attestation's LMD and FFG votes are consistency to each other.
 func (s *Service) VerifyLmdFfgConsistency(ctx context.Context, a ethpb.Att) error {
-	r, err := s.TargetRootForEpoch([32]byte(a.GetData().BeaconBlockRoot), a.GetData().Target.Epoch)
+	r, err := s.TargetRootForRound([32]byte(a.GetData().BeaconBlockRoot), a.GetData().Target.Epoch)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (s *Service) processAttestations(ctx context.Context, disparity time.Durati
 			log.WithError(err).Error("Could not delete fork choice attestation in pool")
 		}
 
-		if !helpers.VerifyCheckpointEpoch(a.GetData().Target, s.genesisTime) {
+		if !helpers.VerifyCheckpointRound(a.GetData().Target, s.genesisTime) {
 			continue
 		}
 

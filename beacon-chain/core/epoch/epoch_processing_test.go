@@ -177,10 +177,11 @@ func TestProcessRegistryUpdates_NoRotation(t *testing.T) {
 }
 
 func TestProcessRegistryUpdates_EligibleToActivate(t *testing.T) {
+	finalizedRound := primitives.Round(4)
 	finalizedEpoch := primitives.Epoch(4)
 	base := &ethpb.BeaconState{
 		Slot:                5 * params.BeaconConfig().SlotsPerEpoch,
-		FinalizedCheckpoint: &ethpb.Checkpoint{Epoch: finalizedEpoch, Root: make([]byte, fieldparams.RootLength)},
+		FinalizedCheckpoint: &ethpb.Checkpoint{Epoch: finalizedRound, Root: make([]byte, fieldparams.RootLength)},
 	}
 	limit := helpers.ValidatorActivationChurnLimit(0)
 	for i := uint64(0); i < limit+10; i++ {
@@ -208,10 +209,11 @@ func TestProcessRegistryUpdates_EligibleToActivate(t *testing.T) {
 }
 
 func TestProcessRegistryUpdates_EligibleToActivate_Cancun(t *testing.T) {
+	finalizedRound := primitives.Round(4)
 	finalizedEpoch := primitives.Epoch(4)
 	base := &ethpb.BeaconStateDeneb{
 		Slot:                5 * params.BeaconConfig().SlotsPerEpoch,
-		FinalizedCheckpoint: &ethpb.Checkpoint{Epoch: finalizedEpoch, Root: make([]byte, fieldparams.RootLength)},
+		FinalizedCheckpoint: &ethpb.Checkpoint{Epoch: finalizedRound, Root: make([]byte, fieldparams.RootLength)},
 	}
 	cfg := params.BeaconConfig()
 	cfg.MinPerEpochChurnLimit = 10

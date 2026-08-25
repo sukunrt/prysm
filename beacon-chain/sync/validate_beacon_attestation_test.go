@@ -270,7 +270,7 @@ func TestService_validateCommitteeIndexBeaconAttestation(t *testing.T) {
 			if tt.validAttestationSignature {
 				com, err := helpers.BeaconCommitteeFromState(t.Context(), savedState, tt.msg.GetData().Slot, tt.msg.GetData().CommitteeIndex)
 				require.NoError(t, err)
-				domain, err := signing.Domain(savedState.Fork(), tt.msg.GetData().Target.Epoch, params.BeaconConfig().DomainBeaconAttester, savedState.GenesisValidatorsRoot())
+				domain, err := signing.Domain(savedState.Fork(), slots.ToEpoch(tt.msg.GetData().Slot), params.BeaconConfig().DomainBeaconAttester, savedState.GenesisValidatorsRoot())
 				require.NoError(t, err)
 				attRoot, err := signing.ComputeSigningRoot(tt.msg.GetData(), domain)
 				require.NoError(t, err)
@@ -380,7 +380,7 @@ func TestService_validateCommitteeIndexBeaconAttestationElectra(t *testing.T) {
 					CommitteeIndex:  0,
 					Slot:            s.cfg.clock.CurrentSlot(),
 					Target: &ethpb.Checkpoint{
-						Epoch: s.cfg.clock.CurrentEpoch(),
+						Epoch: slots.RoundAt(s.cfg.clock.CurrentSlot()),
 						Root:  validBlockRoot[:],
 					},
 					Source: &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
@@ -397,7 +397,7 @@ func TestService_validateCommitteeIndexBeaconAttestationElectra(t *testing.T) {
 					CommitteeIndex:  1,
 					Slot:            s.cfg.clock.CurrentSlot(),
 					Target: &ethpb.Checkpoint{
-						Epoch: s.cfg.clock.CurrentEpoch(),
+						Epoch: slots.RoundAt(s.cfg.clock.CurrentSlot()),
 						Root:  validBlockRoot[:],
 					},
 					Source: &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
@@ -414,7 +414,7 @@ func TestService_validateCommitteeIndexBeaconAttestationElectra(t *testing.T) {
 					CommitteeIndex:  1,
 					Slot:            s.cfg.clock.CurrentSlot(),
 					Target: &ethpb.Checkpoint{
-						Epoch: s.cfg.clock.CurrentEpoch(),
+						Epoch: slots.RoundAt(s.cfg.clock.CurrentSlot()),
 						Root:  validBlockRoot[:],
 					},
 					Source: &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
@@ -430,7 +430,7 @@ func TestService_validateCommitteeIndexBeaconAttestationElectra(t *testing.T) {
 			helpers.ClearCache()
 			com, err := helpers.BeaconCommitteeFromState(t.Context(), savedState, tt.msg.GetData().Slot, tt.msg.GetData().CommitteeIndex)
 			require.NoError(t, err)
-			domain, err := signing.Domain(savedState.Fork(), tt.msg.GetData().Target.Epoch, params.BeaconConfig().DomainBeaconAttester, savedState.GenesisValidatorsRoot())
+			domain, err := signing.Domain(savedState.Fork(), slots.ToEpoch(tt.msg.GetData().Slot), params.BeaconConfig().DomainBeaconAttester, savedState.GenesisValidatorsRoot())
 			require.NoError(t, err)
 			attRoot, err := signing.ComputeSigningRoot(tt.msg.GetData(), domain)
 			require.NoError(t, err)
@@ -552,12 +552,12 @@ func TestService_validateCommitteeIndexBeaconAttestation_RepeatSlotsOfARound(t *
 					BeaconBlockRoot: validBlockRoot[:],
 					CommitteeIndex:  0,
 					Slot:            slot,
-					Target:          &ethpb.Checkpoint{Epoch: slots.ToEpoch(slot), Root: validBlockRoot[:]},
+					Target:          &ethpb.Checkpoint{Epoch: slots.RoundAt(slot), Root: validBlockRoot[:]},
 					Source:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
 				},
 				AttesterIndex: attester,
 			}
-			domain, err := signing.Domain(savedState.Fork(), att.Data.Target.Epoch, params.BeaconConfig().DomainBeaconAttester, savedState.GenesisValidatorsRoot())
+			domain, err := signing.Domain(savedState.Fork(), slots.ToEpoch(att.Data.Slot), params.BeaconConfig().DomainBeaconAttester, savedState.GenesisValidatorsRoot())
 			require.NoError(t, err)
 			attRoot, err := signing.ComputeSigningRoot(att.Data, domain)
 			require.NoError(t, err)

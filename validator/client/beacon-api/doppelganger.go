@@ -15,7 +15,7 @@ import (
 )
 
 type DoppelGangerInfo struct {
-	validatorEpoch primitives.Epoch
+	validatorRound primitives.Round
 	response       *ethpb.DoppelGangerResponse_ValidatorResponse
 }
 
@@ -53,7 +53,7 @@ func (c *beaconApiValidatorClient) checkDoppelGanger(ctx context.Context, in *et
 		stringPubKeys[i] = stringPubKey
 
 		stringPubKeyToDoppelGangerInfo[stringPubKey] = DoppelGangerInfo{
-			validatorEpoch: vr.Epoch,
+			validatorRound: vr.Epoch,
 			response: &ethpb.DoppelGangerResponse_ValidatorResponse{
 				PublicKey:       pubKey,
 				DuplicateExists: false,
@@ -102,10 +102,13 @@ func (c *beaconApiValidatorClient) checkDoppelGanger(ctx context.Context, in *et
 	}
 
 	headSlot := primitives.Slot(headSlotUint64)
+	// The liveness API below is epoch-keyed; the recency check compares stored
+	// attestation targets, which are ROUNDS.
 	currentEpoch := slots.ToEpoch(headSlot)
+	currentRound := slots.RoundAt(headSlot)
 
-	// Extract input pubkeys we did not validate for the 2 last epochs.
-	// If we detect onchain liveness for these keys during the 2 last epochs, a doppelganger may exist somewhere.
+	// Extract input pubkeys we did not validate for the 2 last rounds.
+	// If we detect onchain liveness for these keys during the 2 last rounds, a doppelganger may exist somewhere.
 	var notRecentStringPubKeys []string
 
 	for _, spk := range stringPubKeys {
@@ -114,7 +117,7 @@ func (c *beaconApiValidatorClient) checkDoppelGanger(ctx context.Context, in *et
 			return nil, errors.New("failed to retrieve doppelganger info from string public key")
 		}
 
-		if dph.validatorEpoch+2 < currentEpoch {
+		if dph.validatorRound+2 < currentRound {
 			notRecentStringPubKeys = append(notRecentStringPubKeys, spk)
 		}
 	}

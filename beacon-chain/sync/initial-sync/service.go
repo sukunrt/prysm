@@ -12,6 +12,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain"
 	blockfeed "github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/block"
 	statefeed "github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/state"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/peerdas"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/das"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/db"
@@ -335,7 +336,12 @@ func (s *Service) waitForMinimumPeers() ([]peer.ID, error) {
 			return nil, s.ctx.Err()
 		}
 		cp := s.cfg.Chain.FinalizedCheckpt()
-		_, peers := s.cfg.P2P.Peers().BestNonFinalized(flags.Get().MinimumSyncPeers, cp.Epoch)
+		// BestNonFinalized votes on head EPOCHS; the checkpoint carries a round.
+		finalizedEpoch, err := helpers.CheckpointEpoch(cp.Epoch)
+		if err != nil {
+			return nil, err
+		}
+		_, peers := s.cfg.P2P.Peers().BestNonFinalized(flags.Get().MinimumSyncPeers, finalizedEpoch)
 		if len(peers) >= required {
 			return peers, nil
 		}

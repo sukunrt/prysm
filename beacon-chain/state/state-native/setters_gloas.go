@@ -486,7 +486,7 @@ func (b *BeaconState) UpdatePendingPaymentWeight(att ethpb.Att, indices []uint64
 		slotsPerEpoch := params.BeaconConfig().SlotsPerEpoch
 		var epochParticipation []byte
 
-		if data.Target != nil && data.Target.Epoch == slots.ToEpoch(b.slot) {
+		if data.Target != nil && data.Target.Epoch == slots.RoundAt(b.slot) {
 			paymentSlot = slotsPerEpoch + (data.Slot % slotsPerEpoch)
 			epochParticipation = b.currentEpochParticipation
 		} else {

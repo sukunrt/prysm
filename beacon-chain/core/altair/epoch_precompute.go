@@ -101,7 +101,12 @@ func ProcessInactivityScores(
 	bias := cfg.InactivityScoreBias
 	recoveryRate := cfg.InactivityScoreRecoveryRate
 	prevEpoch := time.PrevEpoch(beaconState)
-	finalizedEpoch := beaconState.FinalizedCheckpointEpoch()
+	// The inactivity leak stays epoch-based; the finalized checkpoint carries a ROUND, so
+	// convert that one input (plan-finality-round 2.5).
+	finalizedEpoch, err := helpers.CheckpointEpoch(beaconState.FinalizedCheckpointRound())
+	if err != nil {
+		return nil, nil, err
+	}
 	for i, v := range vals {
 		if !precompute.EligibleForRewards(v) {
 			continue
@@ -266,7 +271,12 @@ func AttestationsDelta(beaconState state.BeaconState, bal *precompute.Balance, v
 
 	cfg := params.BeaconConfig()
 	prevEpoch := time.PrevEpoch(beaconState)
-	finalizedEpoch := beaconState.FinalizedCheckpointEpoch()
+	// The inactivity leak stays epoch-based; the finalized checkpoint carries a ROUND, so
+	// convert that one input (plan-finality-round 2.5).
+	finalizedEpoch, err := helpers.CheckpointEpoch(beaconState.FinalizedCheckpointRound())
+	if err != nil {
+		return nil, err
+	}
 	increment := cfg.EffectiveBalanceIncrement
 	factor := cfg.BaseRewardFactor
 	baseRewardMultiplier := increment * factor / math.CachedSquareRoot(bal.ActiveCurrentEpoch)

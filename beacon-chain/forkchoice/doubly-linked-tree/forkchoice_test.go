@@ -29,8 +29,8 @@ func prepareForkchoiceState(
 	blockRoot [32]byte,
 	parentRoot [32]byte,
 	payloadHash [32]byte,
-	justifiedEpoch primitives.Epoch,
-	finalizedEpoch primitives.Epoch,
+	justifiedEpoch primitives.Round,
+	finalizedEpoch primitives.Round,
 ) (state.BeaconState, blocks.ROBlock, error) {
 	blockHeader := &ethpb.BeaconBlockHeader{
 		ParentRoot: parentRoot[:],

@@ -537,10 +537,10 @@ message ChainHead {
         "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"
   ];
 
-  // Epoch of the finalized block.
+  // Round of the finalized checkpoint (field keeps its `epoch` name).
   uint64 finalized_epoch = 5 [
     (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"
+        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"
   ];
 
   // Most recent 32 byte finalized block root.
@@ -552,10 +552,10 @@ message ChainHead {
         "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"
   ];
 
-  // Epoch of the justified block.
+  // Round of the justified checkpoint (field keeps its `epoch` name).
   uint64 justified_epoch = 8 [
     (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"
+        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"
   ];
 
   // Most recent 32 byte justified block root.
@@ -567,10 +567,10 @@ message ChainHead {
         "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"
   ];
 
-  // Epoch of the previous justified block.
+  // Round of the previous justified checkpoint (field keeps its `epoch` name).
   uint64 previous_justified_epoch = 11 [
     (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"
+        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"
   ];
 
   // Previous 32 byte justified block root.

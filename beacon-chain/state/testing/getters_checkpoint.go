@@ -78,8 +78,8 @@ func VerifyBeaconStateFinalizedCheckpointNil(t *testing.T, factory getState) {
 
 	checkpoint := s.FinalizedCheckpoint()
 	require.Equal(t, (*ethpb.Checkpoint)(nil), checkpoint)
-	epoch := s.FinalizedCheckpointEpoch()
-	require.Equal(t, primitives.Epoch(0), epoch)
+	round := s.FinalizedCheckpointRound()
+	require.Equal(t, primitives.Round(0), round)
 }
 
 func VerifyBeaconStateFinalizedCheckpoint(t *testing.T, factory getStateWithCheckpoint) {
@@ -94,6 +94,6 @@ func VerifyBeaconStateFinalizedCheckpoint(t *testing.T, factory getStateWithChec
 
 	checkpoint := s.FinalizedCheckpoint()
 	require.DeepEqual(t, orgCheckpoint.Root, checkpoint.Root)
-	epoch := s.FinalizedCheckpointEpoch()
-	require.Equal(t, orgCheckpoint.Epoch, epoch)
+	round := s.FinalizedCheckpointRound()
+	require.Equal(t, orgCheckpoint.Epoch, round)
 }

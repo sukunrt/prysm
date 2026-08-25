@@ -17,6 +17,7 @@ import (
 
 func TestGenesisBeaconState_OK(t *testing.T) {
 	genesisEpoch := primitives.Epoch(0)
+	genesisRound := primitives.Round(0)
 
 	assert.DeepEqual(t, []byte{0, 0, 0, 0}, params.BeaconConfig().GenesisForkVersion, "GenesisSlot( should be {0,0,0,0} for these tests to pass")
 	genesisForkVersion := params.BeaconConfig().GenesisForkVersion
@@ -65,9 +66,9 @@ func TestGenesisBeaconState_OK(t *testing.T) {
 	assert.DeepEqual(t, eth1Data.BlockHash, mix, "RandaoMixes was not correctly initialized")
 
 	// Finality fields checks.
-	assert.Equal(t, genesisEpoch, newState.PreviousJustifiedCheckpoint().Epoch, "PreviousJustifiedCheckpoint.Epoch was not correctly initialized")
-	assert.Equal(t, genesisEpoch, newState.CurrentJustifiedCheckpoint().Epoch, "JustifiedEpoch was not correctly initialized")
-	assert.Equal(t, genesisEpoch, newState.FinalizedCheckpointEpoch(), "FinalizedSlot was not correctly initialized")
+	assert.Equal(t, genesisRound, newState.PreviousJustifiedCheckpoint().Epoch, "PreviousJustifiedCheckpoint.Epoch was not correctly initialized")
+	assert.Equal(t, genesisRound, newState.CurrentJustifiedCheckpoint().Epoch, "JustifiedEpoch was not correctly initialized")
+	assert.Equal(t, genesisRound, newState.FinalizedCheckpointRound(), "FinalizedSlot was not correctly initialized")
 	assert.Equal(t, uint8(0x00), newState.JustificationBits()[0], "JustificationBits was not correctly initialized")
 
 	// Recent state checks.

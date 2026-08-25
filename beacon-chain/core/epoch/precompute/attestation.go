@@ -70,14 +70,15 @@ func ProcessAttestations(
 	return vp, pBal, nil
 }
 
-// AttestedCurrentEpoch returns true if attestation `a` attested once in current epoch and/or epoch boundary block.
+// AttestedCurrentEpoch returns true if attestation `a` attested once in the current round and/or
+// round boundary block. (Pre-Altair path; unreachable at Heze.)
 func AttestedCurrentEpoch(s state.ReadOnlyBeaconState, a *ethpb.PendingAttestation) (bool, bool, error) {
-	currentEpoch := time.CurrentEpoch(s)
+	currentRound := time.CurrentRound(s)
 	var votedCurrentEpoch, votedTarget bool
-	// Did validator vote current epoch.
-	if a.Data.Target.Epoch == currentEpoch {
+	// Did validator vote current round.
+	if a.Data.Target.Epoch == currentRound {
 		votedCurrentEpoch = true
-		same, err := SameTarget(s, a, currentEpoch)
+		same, err := SameTarget(s, a, currentRound)
 		if err != nil {
 			return false, false, err
 		}
@@ -90,12 +91,12 @@ func AttestedCurrentEpoch(s state.ReadOnlyBeaconState, a *ethpb.PendingAttestati
 
 // AttestedPrevEpoch returns true if attestation `a` attested once in previous epoch and epoch boundary block and/or the same head.
 func AttestedPrevEpoch(s state.ReadOnlyBeaconState, a *ethpb.PendingAttestation) (bool, bool, bool, error) {
-	prevEpoch := time.PrevEpoch(s)
+	prevRound := time.PrevRound(s)
 	var votedPrevEpoch, votedTarget, votedHead bool
-	// Did validator vote previous epoch.
-	if a.Data.Target.Epoch == prevEpoch {
+	// Did validator vote previous round.
+	if a.Data.Target.Epoch == prevRound {
 		votedPrevEpoch = true
-		same, err := SameTarget(s, a, prevEpoch)
+		same, err := SameTarget(s, a, prevRound)
 		if err != nil {
 			return false, false, false, errors.Wrap(err, "could not check same target")
 		}
@@ -117,12 +118,12 @@ func AttestedPrevEpoch(s state.ReadOnlyBeaconState, a *ethpb.PendingAttestation)
 }
 
 // SameTarget returns true if attestation `a` attested to the same target block in state.
-func SameTarget(state state.ReadOnlyBeaconState, a *ethpb.PendingAttestation, e primitives.Epoch) (bool, error) {
-	r, err := helpers.FFGTargetRoot(state, e)
+func SameTarget(state state.ReadOnlyBeaconState, a *ethpb.PendingAttestation, r primitives.Round) (bool, error) {
+	root, err := helpers.FFGTargetRoot(state, r)
 	if err != nil {
 		return false, err
 	}
-	if bytes.Equal(a.Data.Target.Root, r) {
+	if bytes.Equal(a.Data.Target.Root, root) {
 		return true, nil
 	}
 	return false, nil

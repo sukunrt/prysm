@@ -67,7 +67,7 @@ func TestCheckpointStateCache_MaxSize(t *testing.T) {
 
 	for i := uint64(0); i < uint64(cache.MaxCheckpointStateSize()+100); i++ {
 		require.NoError(t, st.SetSlot(primitives.Slot(i)))
-		require.NoError(t, c.AddCheckpointState(&ethpb.Checkpoint{Epoch: primitives.Epoch(i), Root: make([]byte, 32)}, st))
+		require.NoError(t, c.AddCheckpointState(&ethpb.Checkpoint{Epoch: primitives.Round(i), Root: make([]byte, 32)}, st))
 	}
 
 	assert.Equal(t, cache.MaxCheckpointStateSize(), len(c.Cache().Keys()))

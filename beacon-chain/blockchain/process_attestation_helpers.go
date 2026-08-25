@@ -21,8 +21,9 @@ import (
 
 // The caller of this function must have a lock on forkchoice.
 func (s *Service) getRecentPreState(ctx context.Context, c *ethpb.Checkpoint) state.ReadOnlyBeaconState {
-	headEpoch := slots.ToEpoch(s.HeadSlot())
-	if c.Epoch+1 < headEpoch || c.Epoch == 0 {
+	headSlot := s.HeadSlot()
+	headRound := slots.RoundAt(headSlot)
+	if c.Epoch+1 < headRound || c.Epoch == 0 {
 		return nil
 	}
 	// Only use head state if the head state is compatible with the target checkpoint.
@@ -30,8 +31,17 @@ func (s *Service) getRecentPreState(ctx context.Context, c *ethpb.Checkpoint) st
 	if err != nil {
 		return nil
 	}
-	// headEpoch - 1 equals c.Epoch if c is from the previous epoch and equals c.Epoch - 1 if c is from the current epoch.
-	// We don't use the smaller c.Epoch - 1 because forkchoice would not have the data to answer that.
+	// The shuffling-compatibility check stays EPOCH-keyed: dependent roots are about
+	// shuffling, not FFG. The checkpoint's own epoch is the epoch containing its round's
+	// first slot, and we compare against the epoch just before the head's.
+	headEpoch := slots.ToEpoch(headSlot)
+	checkpointStart, err := slots.RoundStart(c.Epoch)
+	if err != nil {
+		return nil
+	}
+	if slots.ToEpoch(checkpointStart)+1 < headEpoch {
+		return nil
+	}
 	headDependent, err := s.cfg.ForkChoiceStore.DependentRootForEpoch([32]byte(headRoot), headEpoch-1)
 	if err != nil {
 		return nil
@@ -45,26 +55,26 @@ func (s *Service) getRecentPreState(ctx context.Context, c *ethpb.Checkpoint) st
 	}
 
 	// If the head state alone is enough, we can return it directly read only.
-	if c.Epoch <= headEpoch {
+	if c.Epoch <= headRound {
 		st, err := s.HeadStateReadOnly(ctx)
 		if err != nil {
 			return nil
 		}
 		return st
 	}
-	// At this point we can only have c.Epoch > headEpoch.
+	// At this point we can only have c.Epoch > headRound.
 	if !s.cfg.ForkChoiceStore.IsCanonical([32]byte(c.Root)) {
 		return nil
 	}
-	// Advance the head state to the start of the target epoch.
-	// This point can only be reached if c.Root == headRoot and c.Epoch > headEpoch.
-	slot, err := slots.EpochStart(c.Epoch)
+	// Advance the head state to the start of the target round.
+	// This point can only be reached if c.Root == headRoot and c.Epoch > headRound.
+	slot, err := slots.RoundStart(c.Epoch)
 	if err != nil {
 		return nil
 	}
 	// Try if we have already set the checkpoint cache. This will be tried again if we fail here but the check is cheap anyway.
-	epochKey := strconv.FormatUint(uint64(c.Epoch), 10 /* base 10 */)
-	lock := async.NewMultilock(string(c.Root) + epochKey)
+	roundKey := strconv.FormatUint(uint64(c.Epoch), 10 /* base 10 */)
+	lock := async.NewMultilock(string(c.Root) + roundKey)
 	lock.Lock()
 	defer lock.Unlock()
 	cachedState, err := s.checkpointStateCache.StateByCheckpoint(c)
@@ -96,10 +106,10 @@ func (s *Service) getAttPreState(ctx context.Context, c *ethpb.Checkpoint) (stat
 	if st := s.getRecentPreState(ctx, c); st != nil {
 		return st, nil
 	}
-	// Use a multilock to allow scoped holding of a mutex by a checkpoint root + epoch
+	// Use a multilock to allow scoped holding of a mutex by a checkpoint root + round
 	// allowing us to behave smarter in terms of how this function is used concurrently.
-	epochKey := strconv.FormatUint(uint64(c.Epoch), 10 /* base 10 */)
-	lock := async.NewMultilock(string(c.Root) + epochKey)
+	roundKey := strconv.FormatUint(uint64(c.Epoch), 10 /* base 10 */)
+	lock := async.NewMultilock(string(c.Root) + roundKey)
 	lock.Lock()
 	defer lock.Unlock()
 	cachedState, err := s.checkpointStateCache.StateByCheckpoint(c)
@@ -109,11 +119,11 @@ func (s *Service) getAttPreState(ctx context.Context, c *ethpb.Checkpoint) (stat
 	if cachedState != nil && !cachedState.IsNil() {
 		return cachedState, nil
 	}
-	// Try the next slot cache for the early epoch calls, this should mostly have been covered already
+	// Try the next slot cache for the early round calls, this should mostly have been covered already
 	// but is cheap
-	slot, err := slots.EpochStart(c.Epoch)
+	slot, err := slots.RoundStart(c.Epoch)
 	if err != nil {
-		return nil, errors.Wrap(err, "could not compute epoch start")
+		return nil, errors.Wrap(err, "could not compute round start")
 	}
 	cachedState = transition.NextSlotState(c.Root, slot)
 	if cachedState != nil && !cachedState.IsNil() {
@@ -135,23 +145,23 @@ func (s *Service) getAttPreState(ctx context.Context, c *ethpb.Checkpoint) (stat
 		return nil, errors.Wrap(err, "could not check checkpoint condition in forkchoice")
 	}
 	if !ok {
-		return nil, errors.Wrap(ErrNotCheckpoint, fmt.Sprintf("epoch %d root %#x", c.Epoch, c.Root))
+		return nil, errors.Wrap(ErrNotCheckpoint, fmt.Sprintf("round %d root %#x", c.Epoch, c.Root))
 	}
 
 	// Fallback to state regeneration.
-	log.WithFields(logrus.Fields{"epoch": c.Epoch, "root": fmt.Sprintf("%#x", c.Root)}).Debug("Regenerating attestation pre-state")
+	log.WithFields(logrus.Fields{"round": c.Epoch, "root": fmt.Sprintf("%#x", c.Root)}).Debug("Regenerating attestation pre-state")
 	baseState, err := s.cfg.StateGen.StateByRoot(ctx, bytesutil.ToBytes32(c.Root))
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not get pre state for epoch %d", c.Epoch)
+		return nil, errors.Wrapf(err, "could not get pre state for round %d", c.Epoch)
 	}
 
-	epochStartSlot, err := slots.EpochStart(c.Epoch)
+	roundStartSlot, err := slots.RoundStart(c.Epoch)
 	if err != nil {
 		return nil, err
 	}
-	baseState, err = transition.ProcessSlotsIfPossible(ctx, baseState, epochStartSlot)
+	baseState, err = transition.ProcessSlotsIfPossible(ctx, baseState, roundStartSlot)
 	if err != nil {
-		return nil, errors.Wrapf(err, "could not process slots up to epoch %d", c.Epoch)
+		return nil, errors.Wrapf(err, "could not process slots up to round %d", c.Epoch)
 	}
 
 	// Sharing the same state across caches is perfectly fine here, the fetching
@@ -164,17 +174,17 @@ func (s *Service) getAttPreState(ctx context.Context, c *ethpb.Checkpoint) (stat
 	return baseState, nil
 }
 
-// verifyAttTargetEpoch validates attestation is from the current or previous epoch.
-func verifyAttTargetEpoch(_ context.Context, genesis, now time.Time, c *ethpb.Checkpoint) error {
+// verifyAttTargetRound validates attestation is from the current or previous round.
+func verifyAttTargetRound(_ context.Context, genesis, now time.Time, c *ethpb.Checkpoint) error {
 	currentSlot := slots.At(genesis, now)
-	currentEpoch := slots.ToEpoch(currentSlot)
-	var prevEpoch primitives.Epoch
-	// Prevents previous epoch under flow
-	if currentEpoch > 1 {
-		prevEpoch = currentEpoch - 1
+	currentRound := slots.RoundAt(currentSlot)
+	var prevRound primitives.Round
+	// Prevents previous round under flow
+	if currentRound > 1 {
+		prevRound = currentRound - 1
 	}
-	if c.Epoch != prevEpoch && c.Epoch != currentEpoch {
-		return fmt.Errorf("target epoch %d does not match current epoch %d or prev epoch %d", c.Epoch, currentEpoch, prevEpoch)
+	if c.Epoch != prevRound && c.Epoch != currentRound {
+		return fmt.Errorf("target round %d does not match current round %d or prev round %d", c.Epoch, currentRound, prevRound)
 	}
 	return nil
 }

@@ -157,8 +157,8 @@ func TestDB_ConvertDatabase(t *testing.T) {
 				expectedAttestationRecords1 := []*common.AttestationRecord{
 					{
 						PubKey:      pubkey1,
-						Source:      primitives.Epoch(2),
-						Target:      primitives.Epoch(3),
+						Source:      primitives.Round(2),
+						Target:      primitives.Round(3),
 						SigningRoot: signingRootBytes,
 					},
 				}
@@ -166,8 +166,8 @@ func TestDB_ConvertDatabase(t *testing.T) {
 				expectedAttestationRecords2 := []*common.AttestationRecord{
 					{
 						PubKey:      pubkey2,
-						Source:      primitives.Epoch(2),
-						Target:      primitives.Epoch(3),
+						Source:      primitives.Round(2),
+						Target:      primitives.Round(3),
 						SigningRoot: signingRootBytes,
 					},
 				}

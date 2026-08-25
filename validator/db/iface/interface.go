@@ -50,9 +50,9 @@ type ValidatorDB interface {
 	// slashing protection imports.
 	EIPImportBlacklistedPublicKeys(ctx context.Context) ([][fieldparams.BLSPubkeyLength]byte, error)
 	SaveEIPImportBlacklistedPublicKeys(ctx context.Context, publicKeys [][fieldparams.BLSPubkeyLength]byte) error
-	SigningRootAtTargetEpoch(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte, target primitives.Epoch) ([]byte, error)
-	LowestSignedTargetEpoch(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Epoch, bool, error)
-	LowestSignedSourceEpoch(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Epoch, bool, error)
+	SigningRootAtTargetRound(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte, target primitives.Round) ([]byte, error)
+	LowestSignedTargetRound(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Round, bool, error)
+	LowestSignedSourceRound(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Round, bool, error)
 	AttestedPublicKeys(ctx context.Context) ([][fieldparams.BLSPubkeyLength]byte, error)
 	SlashableAttestationCheck(
 		ctx context.Context, indexedAtt ethpb.IndexedAtt, pubKey [fieldparams.BLSPubkeyLength]byte,

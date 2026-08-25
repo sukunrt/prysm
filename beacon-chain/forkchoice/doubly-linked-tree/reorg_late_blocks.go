@@ -64,8 +64,8 @@ func (f *ForkChoice) ShouldOverrideFCU() (override bool) {
 		return
 	}
 	// Only reorg if we have been finalizing
-	finalizedEpoch := f.store.finalizedCheckpoint.Epoch
-	if slots.ToEpoch(consensusHead.slot+1) > finalizedEpoch+params.BeaconConfig().ReorgMaxEpochsSinceFinalization {
+	finalizedRound := f.store.finalizedCheckpoint.Epoch
+	if slots.RoundAt(consensusHead.slot+1) > finalizedRound.Add(uint64(params.BeaconConfig().ReorgMaxEpochsSinceFinalization)) {
 		return
 	}
 	// Only orphan a single block
@@ -141,8 +141,8 @@ func (f *ForkChoice) GetProposerHead() [32]byte {
 		return consensusHead.root
 	}
 	// Only reorg if we have been finalizing
-	finalizedEpoch := f.store.finalizedCheckpoint.Epoch
-	if slots.ToEpoch(consensusHead.slot+1) > finalizedEpoch+params.BeaconConfig().ReorgMaxEpochsSinceFinalization {
+	finalizedRound := f.store.finalizedCheckpoint.Epoch
+	if slots.RoundAt(consensusHead.slot+1) > finalizedRound.Add(uint64(params.BeaconConfig().ReorgMaxEpochsSinceFinalization)) {
 		return consensusHead.root
 	}
 	// Only orphan a single block

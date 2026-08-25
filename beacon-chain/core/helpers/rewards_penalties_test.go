@@ -193,23 +193,25 @@ func TestFinalityDelay(t *testing.T) {
 	// Set values for each test case
 	setVal := func() {
 		prevEpoch = time.PrevEpoch(beaconState)
-		finalizedEpoch = beaconState.FinalizedCheckpointEpoch()
+		e, err := helpers.CheckpointEpoch(beaconState.FinalizedCheckpointRound())
+		require.NoError(t, err)
+		finalizedEpoch = e
 	}
 	setVal()
 	d := helpers.FinalityDelay(prevEpoch, finalizedEpoch)
-	w := time.PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
+	w := time.PrevEpoch(beaconState) - finalizedEpoch
 	assert.Equal(t, w, d, "Did not get wanted finality delay")
 
 	require.NoError(t, beaconState.SetFinalizedCheckpoint(&ethpb.Checkpoint{Epoch: 4}))
 	setVal()
 	d = helpers.FinalityDelay(prevEpoch, finalizedEpoch)
-	w = time.PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
+	w = time.PrevEpoch(beaconState) - finalizedEpoch
 	assert.Equal(t, w, d, "Did not get wanted finality delay")
 
 	require.NoError(t, beaconState.SetFinalizedCheckpoint(&ethpb.Checkpoint{Epoch: 5}))
 	setVal()
 	d = helpers.FinalityDelay(prevEpoch, finalizedEpoch)
-	w = time.PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
+	w = time.PrevEpoch(beaconState) - finalizedEpoch
 	assert.Equal(t, w, d, "Did not get wanted finality delay")
 }
 
@@ -225,7 +227,9 @@ func TestIsInInactivityLeak(t *testing.T) {
 	// Set values for each test case
 	setVal := func() {
 		prevEpoch = time.PrevEpoch(beaconState)
-		finalizedEpoch = beaconState.FinalizedCheckpointEpoch()
+		e, err := helpers.CheckpointEpoch(beaconState.FinalizedCheckpointRound())
+		require.NoError(t, err)
+		finalizedEpoch = e
 	}
 	setVal()
 	assert.Equal(t, true, helpers.IsInInactivityLeak(prevEpoch, finalizedEpoch), "Wanted inactivity leak true")

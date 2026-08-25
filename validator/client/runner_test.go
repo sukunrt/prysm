@@ -482,7 +482,7 @@ func TestRunnerPushesProposerSettings_ValidContext(t *testing.T) {
 		r := rand.New(rand.NewSource(123))
 		root := bytesutil.PadTo([]byte("root_"+strconv.Itoa(r.Intn(100_000))), 32)
 		root2 := bytesutil.PadTo([]byte("root_"+strconv.Itoa(r.Intn(100_000))), 32)
-		ckpt := &ethpb.Checkpoint{Root: root2, Epoch: slots.ToEpoch(req.Slot)}
+		ckpt := &ethpb.Checkpoint{Root: root2, Epoch: slots.RoundAt(req.Slot)}
 		return &ethpb.AttestationData{
 			Slot:            req.Slot,
 			CommitteeIndex:  req.CommitteeIndex,

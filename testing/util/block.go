@@ -300,6 +300,7 @@ func GenerateAttesterSlashingForValidator(
 	idx primitives.ValidatorIndex,
 ) (ethpb.AttSlashing, error) {
 	currentEpoch := time.CurrentEpoch(bState)
+	currentRound := time.CurrentRound(bState)
 
 	if bState.Version() >= version.Electra {
 		att1 := &ethpb.IndexedAttestationElectra{
@@ -308,11 +309,11 @@ func GenerateAttesterSlashingForValidator(
 				CommitteeIndex:  0,
 				BeaconBlockRoot: make([]byte, fieldparams.RootLength),
 				Target: &ethpb.Checkpoint{
-					Epoch: currentEpoch,
+					Epoch: currentRound,
 					Root:  params.BeaconConfig().ZeroHash[:],
 				},
 				Source: &ethpb.Checkpoint{
-					Epoch: currentEpoch + 1,
+					Epoch: currentRound + 1,
 					Root:  params.BeaconConfig().ZeroHash[:],
 				},
 			},
@@ -330,11 +331,11 @@ func GenerateAttesterSlashingForValidator(
 				CommitteeIndex:  0,
 				BeaconBlockRoot: make([]byte, fieldparams.RootLength),
 				Target: &ethpb.Checkpoint{
-					Epoch: currentEpoch,
+					Epoch: currentRound,
 					Root:  params.BeaconConfig().ZeroHash[:],
 				},
 				Source: &ethpb.Checkpoint{
-					Epoch: currentEpoch,
+					Epoch: currentRound,
 					Root:  params.BeaconConfig().ZeroHash[:],
 				},
 			},
@@ -357,11 +358,11 @@ func GenerateAttesterSlashingForValidator(
 			CommitteeIndex:  0,
 			BeaconBlockRoot: make([]byte, fieldparams.RootLength),
 			Target: &ethpb.Checkpoint{
-				Epoch: currentEpoch,
+				Epoch: currentRound,
 				Root:  params.BeaconConfig().ZeroHash[:],
 			},
 			Source: &ethpb.Checkpoint{
-				Epoch: currentEpoch + 1,
+				Epoch: currentRound + 1,
 				Root:  params.BeaconConfig().ZeroHash[:],
 			},
 		},
@@ -379,11 +380,11 @@ func GenerateAttesterSlashingForValidator(
 			CommitteeIndex:  0,
 			BeaconBlockRoot: make([]byte, fieldparams.RootLength),
 			Target: &ethpb.Checkpoint{
-				Epoch: currentEpoch,
+				Epoch: currentRound,
 				Root:  params.BeaconConfig().ZeroHash[:],
 			},
 			Source: &ethpb.Checkpoint{
-				Epoch: currentEpoch,
+				Epoch: currentRound,
 				Root:  params.BeaconConfig().ZeroHash[:],
 			},
 		},

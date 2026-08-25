@@ -15,7 +15,7 @@ const ProcessAttestationsThreshold = 10 * time.Second
 // viableForHead returns true if the node is viable to head.
 // Any node with different finalized or justified epoch than
 // the ones in fork choice store should not be viable to head.
-func (n *Node) viableForHead(justifiedEpoch, currentEpoch primitives.Epoch) bool {
+func (n *Node) viableForHead(justifiedEpoch, currentEpoch primitives.Round) bool {
 	if justifiedEpoch == 0 {
 		return true
 	}
@@ -25,7 +25,7 @@ func (n *Node) viableForHead(justifiedEpoch, currentEpoch primitives.Epoch) bool
 	return n.justifiedEpoch == justifiedEpoch || n.justifiedEpoch+2 >= currentEpoch
 }
 
-func (n *Node) leadsToViableHead(justifiedEpoch, currentEpoch primitives.Epoch) bool {
+func (n *Node) leadsToViableHead(justifiedEpoch, currentEpoch primitives.Round) bool {
 	if n.bestDescendant == nil {
 		return n.viableForHead(justifiedEpoch, currentEpoch)
 	}

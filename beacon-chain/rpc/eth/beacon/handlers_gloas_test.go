@@ -53,7 +53,7 @@ var _ verification.ExecutionPayloadEnvelopeVerifier = &mockEnvelopeVerifier{}
 
 func (*mockEnvelopeVerifier) VerifyBlockRootSeen(_ func([32]byte) bool) error  { return nil }
 func (*mockEnvelopeVerifier) VerifyBlockRootValid(_ func([32]byte) bool) error { return nil }
-func (m *mockEnvelopeVerifier) VerifySlotAboveFinalized(_ primitives.Epoch) error {
+func (m *mockEnvelopeVerifier) VerifySlotAboveFinalized(_ primitives.Round) error {
 	return m.errSlotAboveFinalized
 }
 func (m *mockEnvelopeVerifier) VerifySlotMatchesBlock(_ primitives.Slot) error {

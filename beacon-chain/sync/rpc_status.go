@@ -330,7 +330,7 @@ func (s *Service) buildStatusFromStream(
 	stream libp2pcore.Stream,
 	forkDigest [4]byte,
 	finalizedRoot []byte,
-	FinalizedEpoch primitives.Epoch,
+	FinalizedEpoch primitives.Round,
 	headRoot []byte,
 ) (ssz.Marshaler, error) {
 	// Get the stream version from the protocol.
@@ -385,7 +385,7 @@ func (s *Service) buildStatusFromEpoch(
 	epoch primitives.Epoch,
 	forkDigest [4]byte,
 	finalizedRoot []byte,
-	FinalizedEpoch primitives.Epoch,
+	FinalizedEpoch primitives.Round,
 	headRoot []byte,
 ) (ssz.Marshaler, error) {
 	// Get the stream version from the protocol.
@@ -434,20 +434,20 @@ func (s *Service) validateStatusMessage(ctx context.Context, genericMsg any) err
 	}
 	genesis := s.cfg.clock.GenesisTime()
 	cp := s.cfg.chain.FinalizedCheckpt()
-	finalizedEpoch := cp.Epoch
-	maxEpoch := slots.EpochsSinceGenesis(genesis)
-	// It would take a minimum of 2 epochs to finalize a
-	// previous epoch
-	maxFinalizedEpoch := primitives.Epoch(0)
-	if maxEpoch > 2 {
-		maxFinalizedEpoch = maxEpoch - 2
+	finalizedRound := cp.Epoch
+	maxRound := slots.RoundsSinceGenesis(genesis)
+	// It would take a minimum of 2 rounds to finalize a
+	// previous round
+	maxFinalizedRound := primitives.Round(0)
+	if maxRound > 2 {
+		maxFinalizedRound = maxRound - 2
 	}
-	if msg.FinalizedEpoch > maxFinalizedEpoch {
+	if msg.FinalizedEpoch > maxFinalizedRound {
 		return p2ptypes.ErrInvalidEpoch
 	}
-	// Exit early if the peer's finalized epoch
+	// Exit early if the peer's finalized round
 	// is less than that of the remote peer's.
-	if finalizedEpoch < msg.FinalizedEpoch {
+	if finalizedRound < msg.FinalizedEpoch {
 		return nil
 	}
 	finalizedAtGenesis := msg.FinalizedEpoch == 0
@@ -467,11 +467,11 @@ func (s *Service) validateStatusMessage(ctx context.Context, genericMsg any) err
 	if blk == nil || blk.IsNil() {
 		return p2ptypes.ErrGeneric
 	}
-	if slots.ToEpoch(blk.Block().Slot()) == msg.FinalizedEpoch {
+	if slots.RoundAt(blk.Block().Slot()) == msg.FinalizedEpoch {
 		return nil
 	}
 
-	startSlot, err := slots.EpochStart(msg.FinalizedEpoch)
+	startSlot, err := slots.RoundStart(msg.FinalizedEpoch)
 	if err != nil {
 		return p2ptypes.ErrGeneric
 	}
@@ -486,13 +486,13 @@ func (s *Service) validateStatusMessage(ctx context.Context, genericMsg any) err
 			return nil
 		}
 		// If the child finalized block has a smaller slot number we return an
-		// error: that child, not this block, would be the epoch's checkpoint.
+		// error: that child, not this block, would be the round's checkpoint.
 		//
 		// The bound is strict because the FFG target is the block at
-		// StartSlot(E)-1, so the checkpoint block's child sitting exactly on
-		// the epoch's first slot is the ordinary case, not a contradiction.
-		// This is the same boundary move that prune and IsViableForCheckpoint
-		// took with the target shift.
+		// RoundStart(R)-FFG_TARGET_OFFSET_SLOTS, so the checkpoint block's child
+		// sitting exactly on the round's first slot is the ordinary case, not a
+		// contradiction. This is the same boundary move that prune and
+		// IsViableForCheckpoint took with the target shift.
 		if startSlot > childBlock.Block().Slot() {
 			return p2ptypes.ErrInvalidEpoch
 		}

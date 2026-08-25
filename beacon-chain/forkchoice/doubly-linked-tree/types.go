@@ -51,6 +51,10 @@ type Store struct {
 	allTipsAreInvalid             bool                                       // tracks if all tips are not viable for head
 }
 
+// genesisRound is the round the genesis checkpoint carries; GENESIS_EPOCH's twin
+// in the round unit.
+const genesisRound = primitives.Round(0)
+
 // Node defines the individual block which includes its block parent, ancestor and how much weight accounted for it.
 // This is used as an array based stateful DAG for efficient fork choice look up.
 type Node struct {
@@ -61,10 +65,10 @@ type Node struct {
 	parent                      *PayloadNode                 // parent index of this node.
 	target                      *Node                        // target checkpoint for
 	bestDescendant              *Node                        // bestDescendant node of this node.
-	justifiedEpoch              primitives.Epoch             // justifiedEpoch of this node.
-	unrealizedJustifiedEpoch    primitives.Epoch             // the epoch that would be justified if the block would be advanced to the next epoch.
-	finalizedEpoch              primitives.Epoch             // finalizedEpoch of this node.
-	unrealizedFinalizedEpoch    primitives.Epoch             // the epoch that would be finalized if the block would be advanced to the next epoch.
+	justifiedEpoch              primitives.Round             // justified ROUND of this node (field name mirrors the proto).
+	unrealizedJustifiedEpoch    primitives.Round             // the round that would be justified if the block were advanced to the next round.
+	finalizedEpoch              primitives.Round             // finalized ROUND of this node (field name mirrors the proto).
+	unrealizedFinalizedEpoch    primitives.Round             // the round that would be finalized if the block were advanced to the next round.
 	balance                     uint64                       // the balance that voted for this node directly
 	weight                      uint64                       // weight of this node: the total balance including children
 	payloadAvailabilityVote     bitfield.Bitvector512        // PTC payload availability votes

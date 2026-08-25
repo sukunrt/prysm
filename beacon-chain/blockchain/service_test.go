@@ -239,7 +239,7 @@ func TestChainService_InitializeChainInfo(t *testing.T) {
 	require.NoError(t, beaconDB.SaveState(ctx, headState, headRoot))
 	require.NoError(t, beaconDB.SaveState(ctx, headState, genesisRoot))
 	util.SaveBlock(t, ctx, beaconDB, headBlock)
-	require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.ToEpoch(finalizedSlot), Root: headRoot[:]}))
+	require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.RoundAt(finalizedSlot), Root: headRoot[:]}))
 	require.NoError(t, stateGen.SaveState(ctx, headRoot, headState))
 
 	require.NoError(t, c.StartFromSavedState(headState))
@@ -289,7 +289,7 @@ func TestChainService_InitializeChainInfo_SetHeadAtGenesis(t *testing.T) {
 		Root: headRoot[:],
 	}
 	require.NoError(t, beaconDB.SaveStateSummary(ctx, ss))
-	require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Root: headRoot[:], Epoch: slots.ToEpoch(finalizedSlot)}))
+	require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Root: headRoot[:], Epoch: slots.RoundAt(finalizedSlot)}))
 
 	require.NoError(t, c.StartFromSavedState(headState))
 	s, err := c.HeadState(ctx)
@@ -415,11 +415,11 @@ func TestChainService_EverythingOptimistic(t *testing.T) {
 	require.NoError(t, beaconDB.SaveState(ctx, headState, headRoot))
 	require.NoError(t, beaconDB.SaveState(ctx, headState, genesisRoot))
 	util.SaveBlock(t, ctx, beaconDB, headBlock)
-	require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.ToEpoch(finalizedSlot), Root: headRoot[:]}))
+	require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.RoundAt(finalizedSlot), Root: headRoot[:]}))
 
 	require.NoError(t, err)
 	require.NoError(t, stateGen.SaveState(ctx, headRoot, headState))
-	require.NoError(t, beaconDB.SaveLastValidatedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.ToEpoch(finalizedSlot), Root: headRoot[:]}))
+	require.NoError(t, beaconDB.SaveLastValidatedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.RoundAt(finalizedSlot), Root: headRoot[:]}))
 	require.NoError(t, c.StartFromSavedState(headState))
 	require.Equal(t, true, c.cfg.ForkChoiceStore.HasNode(headRoot))
 	op, err := c.cfg.ForkChoiceStore.IsOptimistic(headRoot)
@@ -471,11 +471,11 @@ func TestStartFromSavedState_ValidatorIndexCacheUpdated(t *testing.T) {
 	require.NoError(t, beaconDB.SaveState(ctx, headState, headRoot))
 	require.NoError(t, beaconDB.SaveState(ctx, headState, genesisRoot))
 	util.SaveBlock(t, ctx, beaconDB, headBlock)
-	require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.ToEpoch(finalizedSlot), Root: headRoot[:]}))
+	require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.RoundAt(finalizedSlot), Root: headRoot[:]}))
 
 	require.NoError(t, err)
 	require.NoError(t, stateGen.SaveState(ctx, headRoot, headState))
-	require.NoError(t, beaconDB.SaveLastValidatedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.ToEpoch(finalizedSlot), Root: headRoot[:]}))
+	require.NoError(t, beaconDB.SaveLastValidatedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.RoundAt(finalizedSlot), Root: headRoot[:]}))
 	require.NoError(t, c.StartFromSavedState(headState))
 
 	index, ok := headState.ValidatorIndexByPubkey(bytesutil.ToBytes48(key))

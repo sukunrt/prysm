@@ -45,7 +45,7 @@ var cache = &testCache{}
 
 type peerData struct {
 	blocks         []primitives.Slot // slots that peer has blocks
-	finalizedEpoch primitives.Epoch
+	finalizedEpoch primitives.Round
 	headSlot       primitives.Slot
 	failureSlots   []primitives.Slot // slots at which the peer will return an error
 	forkedPeer     bool
@@ -325,7 +325,7 @@ func connectPeerHavingBlocks(
 
 	p.Connect(host)
 
-	finalizedEpoch := slots.ToEpoch(finalizedSlot)
+	finalizedEpoch := slots.RoundAt(finalizedSlot)
 	headRoot, err := blks[len(blks)-1].Block.HashTreeRoot()
 	require.NoError(t, err)
 

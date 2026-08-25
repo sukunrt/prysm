@@ -8,6 +8,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 )
@@ -131,7 +132,7 @@ func TestGoldfishActive_GatedOnHeze(t *testing.T) {
 
 // setupGoldfish returns a forkchoice store on a config where Heze (and so the
 // Goldfish head walk) is active from genesis, with four rounds to the epoch.
-func setupGoldfish(t *testing.T, justified, finalized primitives.Epoch) *ForkChoice {
+func setupGoldfish(t *testing.T, justified, finalized primitives.Round) *ForkChoice {
 	t.Helper()
 	params.SetupTestConfigCleanup(t)
 	cfg := params.BeaconConfig().Copy()
@@ -167,12 +168,22 @@ func insertGoldfishBlock(
 	t *testing.T, f *ForkChoice, slot primitives.Slot, root, parentRoot [32]byte, onFull bool,
 ) {
 	t.Helper()
+	insertGoldfishBlockAtRound(t, f, slot, root, parentRoot, onFull, 0)
+}
+
+// insertGoldfishBlockAtRound inserts a block whose node carries the given justified
+// ROUND, as a checkpoint-synced node's forkchoice does for the blocks it imports.
+func insertGoldfishBlockAtRound(
+	t *testing.T, f *ForkChoice, slot primitives.Slot, root, parentRoot [32]byte, onFull bool,
+	justifiedRound primitives.Round,
+) {
+	t.Helper()
 	parentBlockHash := [32]byte{'n', 'o', 'p', 'e'}
 	if onFull {
 		parentBlockHash = blockHashFor(parentRoot)
 	}
 	st, blk, err := prepareGloasForkchoiceState(
-		t.Context(), slot, root, parentRoot, blockHashFor(root), parentBlockHash, 0, 0)
+		t.Context(), slot, root, parentRoot, blockHashFor(root), parentBlockHash, justifiedRound, 0)
 	require.NoError(t, err)
 	require.NoError(t, f.InsertNode(t.Context(), st, blk))
 }
@@ -417,11 +428,15 @@ func TestGoldfishWalk_ColdStarts(t *testing.T) {
 	})
 
 	t.Run("checkpoint sync with a justified root past genesis", func(t *testing.T) {
-		f := setupGoldfish(t, 1, 0)
+		// Checkpoints carry ROUNDS: slot 32 sits in round 4 at this config's
+		// 8-slot rounds, and a checkpoint-synced node's imported blocks carry the
+		// anchor round as their justified round.
+		anchorRound := slots.RoundAt(32)
+		f := setupGoldfish(t, anchorRound, 0)
 		driftGenesisTime(f, 34, 0)
-		insertGoldfishBlock(t, f, 32, rootA, zero, true)
-		f.store.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: rootA}
-		insertGoldfishBlock(t, f, 33, rootB, rootA, false)
+		insertGoldfishBlockAtRound(t, f, 32, rootA, zero, true, anchorRound)
+		f.store.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: anchorRound, Root: rootA}
+		insertGoldfishBlockAtRound(t, f, 33, rootB, rootA, false, anchorRound)
 
 		// No votes: the walk follows the imported chain rather than stopping at
 		// the justified root, panicking or returning a zero head.

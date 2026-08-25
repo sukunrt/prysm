@@ -70,7 +70,12 @@ func AttestationsDelta(state state.ReadOnlyBeaconState, pBal *Balance, vp []*Val
 	rewards := make([]uint64, numOfVals)
 	penalties := make([]uint64, numOfVals)
 	prevEpoch := time.PrevEpoch(state)
-	finalizedEpoch := state.FinalizedCheckpointEpoch()
+	// The finalized checkpoint carries a ROUND; the phase0 reward formula is
+	// epoch-based, so convert the checkpoint side. (Pre-Altair, unreachable at Heze.)
+	finalizedEpoch, err := helpers.CheckpointEpoch(state.FinalizedCheckpointRound())
+	if err != nil {
+		return nil, nil, err
+	}
 
 	sqrtActiveCurrentEpoch := math.CachedSquareRoot(pBal.ActiveCurrentEpoch)
 	for i, v := range vp {

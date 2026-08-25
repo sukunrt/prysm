@@ -168,7 +168,7 @@ func ConvertDatabase(ctx context.Context, sourceDataDir string, targetDataDir st
 			continue
 		}
 
-		highestSource, highestTarget := primitives.Epoch(0), primitives.Epoch(0)
+		highestSource, highestTarget := primitives.Round(0), primitives.Round(0)
 		for _, record := range attestationRecords {
 			// If the record is nil, skip it.
 			if record == nil {

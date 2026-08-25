@@ -93,7 +93,7 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 		tracing.AnnotateError(span, err)
 		return pubsub.ValidationIgnore, err
 	}
-	if err := helpers.ValidateSlotTargetEpoch(data); err != nil {
+	if err := helpers.ValidateSlotTargetRound(data); err != nil {
 		return pubsub.ValidationReject, wrapAttestationError(err, att)
 	}
 
@@ -504,14 +504,14 @@ func wrapAttestationError(err error, att eth.Att) error {
 	oldCommitteeIndex := attData.CommitteeIndex
 	blockRoot := fmt.Sprintf("%#x", attData.BeaconBlockRoot)
 	sourceRoot := fmt.Sprintf("%#x", attData.Source.Root)
-	sourceEpoch := attData.Source.Epoch
-	targetEpoch := attData.Target.Epoch
+	sourceRound := attData.Source.Epoch
+	targetRound := attData.Target.Epoch
 	targetRoot := fmt.Sprintf("%#x", attData.Target.Root)
 
 	return errors.Wrapf(
 		err,
-		"attSlot: %d, attSlotInEpoch: %d, attOldCommitteeIndex: %d, attCommitteeIndex: %d, attBlockRoot: %s, attSource: {root: %s, epoch: %d}, attTarget: {root: %s, epoch: %d}",
-		slot, slotInEpoch, oldCommitteeIndex, committeeIndex, blockRoot, sourceRoot, sourceEpoch, targetRoot, targetEpoch,
+		"attSlot: %d, attSlotInEpoch: %d, attOldCommitteeIndex: %d, attCommitteeIndex: %d, attBlockRoot: %s, attSource: {root: %s, round: %d}, attTarget: {root: %s, round: %d}",
+		slot, slotInEpoch, oldCommitteeIndex, committeeIndex, blockRoot, sourceRoot, sourceRound, targetRoot, targetRound,
 	)
 }
 
@@ -615,14 +615,14 @@ func (s *Service) validateAvailableAttWithBlock(
 	att *eth.AvailableAttestation,
 	blockRoot [32]byte,
 ) (pubsub.ValidationResult, error) {
-	epoch := slots.ToEpoch(att.Data.Slot)
-	targetRoot, err := s.cfg.chain.TargetRootForEpoch(blockRoot, epoch)
+	round := slots.RoundAt(att.Data.Slot)
+	targetRoot, err := s.cfg.chain.TargetRootForRound(blockRoot, round)
 	if err != nil {
 		// We can reject this, it's an invalid attestation but there might be some reason the peer forwarded this.
 		return pubsub.ValidationIgnore, nil
 	}
 	state, err := s.cfg.chain.AttestationTargetState(ctx, &ethpb.Checkpoint{
-		Epoch: epoch,
+		Epoch: round,
 		Root:  targetRoot[:],
 	})
 	if err != nil {

@@ -55,7 +55,7 @@ func GetProposerRewardNumerator(
 	}
 
 	var participation customtypes.ReadOnlyParticipation
-	if data.Target.Epoch == time.CurrentEpoch(st) {
+	if data.Target.Epoch == time.CurrentRound(st) {
 		participation, err = st.CurrentEpochParticipationReadOnly()
 	} else {
 		participation, err = st.PreviousEpochParticipationReadOnly()

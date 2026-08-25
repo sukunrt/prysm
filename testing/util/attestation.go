@@ -97,6 +97,7 @@ func GenerateAttestations(bState state.BeaconState, privs []bls.SecretKey, numTo
 		generateHeadState = true
 	}
 	currentEpoch := slots.ToEpoch(slot)
+	currentRound := slots.RoundAt(slot)
 
 	targetRoot := make([]byte, fieldparams.RootLength)
 	var headRoot []byte
@@ -207,7 +208,7 @@ func GenerateAttestations(bState state.BeaconState, privs []bls.SecretKey, numTo
 		if err != nil {
 			return nil, err
 		}
-		targetRoot, err = helpers.FFGTargetRoot(headState, currentEpoch)
+		targetRoot, err = helpers.FFGTargetRoot(headState, currentRound)
 		if err != nil {
 			return nil, err
 		}
@@ -278,7 +279,7 @@ func GenerateAttestations(bState state.BeaconState, privs []bls.SecretKey, numTo
 			BeaconBlockRoot: headRoot,
 			Source:          bState.CurrentJustifiedCheckpoint(),
 			Target: &ethpb.Checkpoint{
-				Epoch: currentEpoch,
+				Epoch: currentRound,
 				Root:  targetRoot,
 			},
 		}

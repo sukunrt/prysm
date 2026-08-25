@@ -239,7 +239,9 @@ func (v *validator) signAtt(ctx context.Context, pubKey [fieldparams.BLSPubkeyLe
 }
 
 func (v *validator) domainAndSigningRoot(ctx context.Context, data *ethpb.AttestationData) (*ethpb.DomainResponse, [32]byte, error) {
-	domain, err := v.domainData(ctx, data.Target.Epoch, params.BeaconConfig().DomainBeaconAttester[:])
+	// The signing domain is an EPOCH concept: derive it from the attestation's slot, not
+	// from the (round-valued) target checkpoint.
+	domain, err := v.domainData(ctx, slots.ToEpoch(data.Slot), params.BeaconConfig().DomainBeaconAttester[:])
 	if err != nil {
 		return nil, [32]byte{}, err
 	}

@@ -241,7 +241,7 @@ func TestProcessPendingPayloadEnvelopes_SkipsUnknownRoot(t *testing.T) {
 }
 
 func TestPrunePendingPayloadEnvelopes(t *testing.T) {
-	finalizedEpoch := primitives.Epoch(3)
+	finalizedEpoch := primitives.Round(3)
 	slotsPerEpoch := params.BeaconConfig().SlotsPerEpoch
 	s := &Service{
 		pendingPayloadEnvelopes: make(map[[32]byte]map[uint64]*ethpb.SignedExecutionPayloadEnvelope),

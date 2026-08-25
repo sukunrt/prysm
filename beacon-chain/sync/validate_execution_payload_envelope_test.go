@@ -228,7 +228,7 @@ func (m *mockExecutionPayloadEnvelopeVerifier) VerifyBlockRootValid(_ func([32]b
 	return m.errBlockRootValid
 }
 
-func (m *mockExecutionPayloadEnvelopeVerifier) VerifySlotAboveFinalized(_ primitives.Epoch) error {
+func (m *mockExecutionPayloadEnvelopeVerifier) VerifySlotAboveFinalized(_ primitives.Round) error {
 	return m.errSlotAboveFinalized
 }
 
@@ -270,7 +270,7 @@ func (r *recordingEnvelopeVerifier) VerifyBlockRootValid(_ func([32]byte) bool) 
 	return nil
 }
 
-func (r *recordingEnvelopeVerifier) VerifySlotAboveFinalized(_ primitives.Epoch) error {
+func (r *recordingEnvelopeVerifier) VerifySlotAboveFinalized(_ primitives.Round) error {
 	r.recorded[verification.RequireEnvelopeSlotAboveFinalized] = true
 	return nil
 }

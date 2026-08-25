@@ -48,10 +48,10 @@ func TestProcessJustificationAndFinalizationPreCompute_ConsecutiveEpochs(t *test
 	// epoch starts.
 	rt := [32]byte{byte(63)}
 	assert.DeepEqual(t, rt[:], newState.CurrentJustifiedCheckpoint().Root, "Unexpected justified root")
-	assert.Equal(t, primitives.Epoch(2), newState.CurrentJustifiedCheckpoint().Epoch, "Unexpected justified epoch")
-	assert.Equal(t, primitives.Epoch(0), newState.PreviousJustifiedCheckpoint().Epoch, "Unexpected previous justified epoch")
+	assert.Equal(t, primitives.Round(2), newState.CurrentJustifiedCheckpoint().Epoch, "Unexpected justified epoch")
+	assert.Equal(t, primitives.Round(0), newState.PreviousJustifiedCheckpoint().Epoch, "Unexpected previous justified epoch")
 	assert.DeepEqual(t, params.BeaconConfig().ZeroHash[:], newState.FinalizedCheckpoint().Root, "Unexpected finalized root")
-	assert.Equal(t, primitives.Epoch(0), newState.FinalizedCheckpointEpoch(), "Unexpected finalized epoch")
+	assert.Equal(t, primitives.Round(0), newState.FinalizedCheckpointRound(), "Unexpected finalized epoch")
 }
 
 func TestProcessJustificationAndFinalizationPreCompute_JustifyCurrentEpoch(t *testing.T) {
@@ -87,10 +87,10 @@ func TestProcessJustificationAndFinalizationPreCompute_JustifyCurrentEpoch(t *te
 	// epoch starts.
 	rt := [32]byte{byte(63)}
 	assert.DeepEqual(t, rt[:], newState.CurrentJustifiedCheckpoint().Root, "Unexpected current justified root")
-	assert.Equal(t, primitives.Epoch(2), newState.CurrentJustifiedCheckpoint().Epoch, "Unexpected justified epoch")
-	assert.Equal(t, primitives.Epoch(0), newState.PreviousJustifiedCheckpoint().Epoch, "Unexpected previous justified epoch")
+	assert.Equal(t, primitives.Round(2), newState.CurrentJustifiedCheckpoint().Epoch, "Unexpected justified epoch")
+	assert.Equal(t, primitives.Round(0), newState.PreviousJustifiedCheckpoint().Epoch, "Unexpected previous justified epoch")
 	assert.DeepEqual(t, params.BeaconConfig().ZeroHash[:], newState.FinalizedCheckpoint().Root)
-	assert.Equal(t, primitives.Epoch(0), newState.FinalizedCheckpointEpoch(), "Unexpected finalized epoch")
+	assert.Equal(t, primitives.Round(0), newState.FinalizedCheckpointRound(), "Unexpected finalized epoch")
 }
 
 func TestProcessJustificationAndFinalizationPreCompute_JustifyPrevEpoch(t *testing.T) {
@@ -125,10 +125,10 @@ func TestProcessJustificationAndFinalizationPreCompute_JustifyPrevEpoch(t *testi
 	// epoch starts.
 	rt := [32]byte{byte(63)}
 	assert.DeepEqual(t, rt[:], newState.CurrentJustifiedCheckpoint().Root, "Unexpected current justified root")
-	assert.Equal(t, primitives.Epoch(0), newState.PreviousJustifiedCheckpoint().Epoch, "Unexpected previous justified epoch")
-	assert.Equal(t, primitives.Epoch(2), newState.CurrentJustifiedCheckpoint().Epoch, "Unexpected justified epoch")
+	assert.Equal(t, primitives.Round(0), newState.PreviousJustifiedCheckpoint().Epoch, "Unexpected previous justified epoch")
+	assert.Equal(t, primitives.Round(2), newState.CurrentJustifiedCheckpoint().Epoch, "Unexpected justified epoch")
 	assert.DeepEqual(t, params.BeaconConfig().ZeroHash[:], newState.FinalizedCheckpoint().Root)
-	assert.Equal(t, primitives.Epoch(0), newState.FinalizedCheckpointEpoch(), "Unexpected finalized epoch")
+	assert.Equal(t, primitives.Round(0), newState.FinalizedCheckpointRound(), "Unexpected finalized epoch")
 }
 
 func TestUnrealizedCheckpoints(t *testing.T) {
@@ -143,8 +143,8 @@ func TestUnrealizedCheckpoints(t *testing.T) {
 	}
 	pjr := [32]byte{'p'}
 	cjr := [32]byte{'c'}
-	je := primitives.Epoch(3)
-	fe := primitives.Epoch(2)
+	je := primitives.Round(3)
+	fe := primitives.Round(2)
 	pjcp := &ethpb.Checkpoint{Root: pjr[:], Epoch: fe}
 	cjcp := &ethpb.Checkpoint{Root: cjr[:], Epoch: je}
 	fcp := &ethpb.Checkpoint{Root: pjr[:], Epoch: fe}
@@ -152,7 +152,7 @@ func TestUnrealizedCheckpoints(t *testing.T) {
 		name                                 string
 		slot                                 primitives.Slot
 		prevVals, currVals                   int
-		expectedJustified, expectedFinalized primitives.Epoch // The expected unrealized checkpoint epochs
+		expectedJustified, expectedFinalized primitives.Round // The expected unrealized checkpoint rounds
 	}{
 		{
 			"Not enough votes, keep previous justification",
@@ -267,5 +267,5 @@ func Test_ComputeCheckpoints_CantUpdateToLower(t *testing.T) {
 	jb.SetBitAt(1, true)
 	cp, _, err := precompute.ComputeCheckpoints(st, jb)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(2), cp.Epoch)
+	require.Equal(t, primitives.Round(2), cp.Epoch)
 }

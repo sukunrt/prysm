@@ -582,7 +582,7 @@ func (c *Checkpoint) ToConsensus() (*eth.Checkpoint, error) {
 	}
 
 	return &eth.Checkpoint{
-		Epoch: primitives.Epoch(epoch),
+		Epoch: primitives.Round(epoch),
 		Root:  root,
 	}, nil
 }

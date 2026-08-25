@@ -170,7 +170,7 @@ func TestStore_OnBlockBatch(t *testing.T) {
 	// blks[i] is the block at slot i+1, and epoch 2's FFG target is the block at
 	// slot 63.
 	require.Equal(t, blks[62].Root(), jroot)
-	require.Equal(t, primitives.Epoch(2), service.cfg.ForkChoiceStore.JustifiedCheckpoint().Epoch)
+	require.Equal(t, primitives.Round(2), service.cfg.ForkChoiceStore.JustifiedCheckpoint().Epoch)
 }
 
 func TestStore_OnBlockBatch_NotifyNewPayload(t *testing.T) {
@@ -382,8 +382,8 @@ func TestFillForkChoiceMissingBlocks_FinalizedSibling(t *testing.T) {
 func TestFillForkChoiceMissingBlocks_ErrorCases(t *testing.T) {
 	tests := []struct {
 		name           string
-		finalizedEpoch primitives.Epoch
-		justifiedEpoch primitives.Epoch
+		finalizedEpoch primitives.Round
+		justifiedEpoch primitives.Round
 		expectedError  error
 	}{
 		{
@@ -751,9 +751,9 @@ func TestOnBlock_CanFinalize_WithOnTick(t *testing.T) {
 		require.NoError(t, err)
 	}
 	cp := service.CurrentJustifiedCheckpt()
-	require.Equal(t, primitives.Epoch(3), cp.Epoch)
+	require.Equal(t, primitives.Round(3), cp.Epoch)
 	cp = service.FinalizedCheckpt()
-	require.Equal(t, primitives.Epoch(2), cp.Epoch)
+	require.Equal(t, primitives.Round(2), cp.Epoch)
 
 	// The update should persist in DB.
 	j, err := service.cfg.BeaconDB.JustifiedCheckpoint(ctx)
@@ -803,9 +803,9 @@ func TestOnBlock_CanFinalize(t *testing.T) {
 		require.NoError(t, err)
 	}
 	cp := service.CurrentJustifiedCheckpt()
-	require.Equal(t, primitives.Epoch(3), cp.Epoch)
+	require.Equal(t, primitives.Round(3), cp.Epoch)
 	cp = service.FinalizedCheckpt()
-	require.Equal(t, primitives.Epoch(2), cp.Epoch)
+	require.Equal(t, primitives.Round(2), cp.Epoch)
 
 	// The update should persist in DB.
 	j, err := service.cfg.BeaconDB.JustifiedCheckpoint(ctx)
@@ -1515,7 +1515,7 @@ func TestStore_NoViableHead_NewPayload(t *testing.T) {
 	}
 	// Check that we haven't justified the second epoch yet
 	jc := service.cfg.ForkChoiceStore.JustifiedCheckpoint()
-	require.Equal(t, primitives.Epoch(0), jc.Epoch)
+	require.Equal(t, primitives.Round(0), jc.Epoch)
 
 	// import a block that justifies the second epoch
 	driftGenesisTime(service, 18, 0)
@@ -1539,7 +1539,7 @@ func TestStore_NoViableHead_NewPayload(t *testing.T) {
 	service.cfg.ForkChoiceStore.Unlock()
 	require.NoError(t, err)
 	jc = service.cfg.ForkChoiceStore.JustifiedCheckpoint()
-	require.Equal(t, primitives.Epoch(2), jc.Epoch)
+	require.Equal(t, primitives.Round(2), jc.Epoch)
 
 	sjc := validHeadState.CurrentJustifiedCheckpoint()
 	require.Equal(t, primitives.Epoch(0), sjc.Epoch)
@@ -1988,7 +1988,7 @@ func TestNoViableHead_Reboot(t *testing.T) {
 	require.NoError(t, err)
 	lvh := b.Block.Body.ExecutionPayload.BlockHash
 	validjc := validHeadState.CurrentJustifiedCheckpoint()
-	require.Equal(t, primitives.Epoch(0), validjc.Epoch)
+	require.Equal(t, primitives.Round(0), validjc.Epoch)
 
 	// import blocks 13 through 18 to justify 12
 	for i := 13; i < 19; i++ {
@@ -2020,7 +2020,7 @@ func TestNoViableHead_Reboot(t *testing.T) {
 	}
 	// Check that we have justified the second epoch
 	jc := service.cfg.ForkChoiceStore.JustifiedCheckpoint()
-	require.Equal(t, primitives.Epoch(2), jc.Epoch)
+	require.Equal(t, primitives.Round(2), jc.Epoch)
 	time.Sleep(20 * time.Millisecond) // wait for async forkchoice update to be processed
 
 	// import block 19 to find out that the whole chain 13--18 was in fact

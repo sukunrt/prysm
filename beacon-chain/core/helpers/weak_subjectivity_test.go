@@ -207,7 +207,7 @@ func TestWeakSubjectivity_ParseWeakSubjectivityInputString(t *testing.T) {
 		{
 			name:      "Too many columns in string",
 			input:     "0x010203:123:456",
-			wantedErr: "weak subjectivity checkpoint input should be in `block_root:epoch_number` format",
+			wantedErr: "weak subjectivity checkpoint input should be in `block_root:round_number` format",
 		},
 		{
 			name:      "Incorrect block root length",
@@ -219,7 +219,7 @@ func TestWeakSubjectivity_ParseWeakSubjectivityInputString(t *testing.T) {
 			input: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:123456789",
 			checkpt: &ethpb.Checkpoint{
 				Root:  []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
-				Epoch: primitives.Epoch(123456789),
+				Epoch: primitives.Round(123456789),
 			},
 		},
 		{
@@ -227,7 +227,7 @@ func TestWeakSubjectivity_ParseWeakSubjectivityInputString(t *testing.T) {
 			input: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:123456789",
 			checkpt: &ethpb.Checkpoint{
 				Root:  []byte{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
-				Epoch: primitives.Epoch(123456789),
+				Epoch: primitives.Round(123456789),
 			},
 		},
 		{
@@ -235,7 +235,7 @@ func TestWeakSubjectivity_ParseWeakSubjectivityInputString(t *testing.T) {
 			input: "0xF0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:123456789",
 			checkpt: &ethpb.Checkpoint{
 				Root:  []byte{0xf0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
-				Epoch: primitives.Epoch(123456789),
+				Epoch: primitives.Round(123456789),
 			},
 		},
 		{
@@ -243,7 +243,7 @@ func TestWeakSubjectivity_ParseWeakSubjectivityInputString(t *testing.T) {
 			input: "F0FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:123456789",
 			checkpt: &ethpb.Checkpoint{
 				Root:  []byte{0xf0, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
-				Epoch: primitives.Epoch(123456789),
+				Epoch: primitives.Round(123456789),
 			},
 		},
 	}

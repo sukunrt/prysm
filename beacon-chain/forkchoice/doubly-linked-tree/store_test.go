@@ -12,13 +12,13 @@ import (
 )
 
 func TestStore_JustifiedEpoch(t *testing.T) {
-	j := primitives.Epoch(100)
+	j := primitives.Round(100)
 	f := setup(j, j)
 	require.Equal(t, j, f.JustifiedCheckpoint().Epoch)
 }
 
 func TestStore_FinalizedEpoch(t *testing.T) {
-	j := primitives.Epoch(50)
+	j := primitives.Round(50)
 	f := setup(j, j)
 	require.Equal(t, j, f.FinalizedCheckpoint().Epoch)
 }
@@ -132,8 +132,8 @@ func TestStore_Insert(t *testing.T) {
 	assert.Equal(t, 1, len(children), "Incorrect children number")
 	assert.Equal(t, payloadHash, children[0].blockHash, "Incorrect payload hash")
 	child := children[0]
-	assert.Equal(t, primitives.Epoch(1), child.justifiedEpoch, "Incorrect justification")
-	assert.Equal(t, primitives.Epoch(1), child.finalizedEpoch, "Incorrect finalization")
+	assert.Equal(t, primitives.Round(1), child.justifiedEpoch, "Incorrect justification")
+	assert.Equal(t, primitives.Round(1), child.finalizedEpoch, "Incorrect finalization")
 	assert.Equal(t, indexToHash(100), child.root, "Incorrect root")
 }
 
@@ -454,7 +454,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	require.NoError(t, f.InsertNode(ctx, state, blk))
 	// The FFG target for epoch 1 is the block at slot 31, which here is the
 	// genesis block the store was set up with.
-	target, err := f.TargetRootForEpoch(blk.Root(), 1)
+	target, err := f.TargetRootForRound(blk.Root(), 1)
 	require.NoError(t, err)
 	require.Equal(t, params.BeaconConfig().ZeroHash, target)
 	dependent, err := f.DependentRoot(1)
@@ -468,7 +468,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	headRoot, err := f.Head(ctx) // To cache the head root
 	require.NoError(t, err)
 	require.Equal(t, headRoot, blk1.Root())
-	target, err = f.TargetRootForEpoch(blk1.Root(), 1)
+	target, err = f.TargetRootForRound(blk1.Root(), 1)
 	require.NoError(t, err)
 	require.Equal(t, params.BeaconConfig().ZeroHash, target)
 	dependent, err = f.DependentRoot(1)
@@ -483,7 +483,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	headRoot, err = f.Head(ctx)
 	require.NoError(t, err)
 	require.Equal(t, headRoot, blk2.Root())
-	target, err = f.TargetRootForEpoch(blk2.Root(), 2)
+	target, err = f.TargetRootForRound(blk2.Root(), 2)
 	require.NoError(t, err)
 	require.Equal(t, target, blk1.Root())
 	dependent, err = f.DependentRoot(1)
@@ -503,7 +503,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	headRoot, err = f.Head(ctx)
 	require.NoError(t, err)
 	require.Equal(t, headRoot, blk3.Root())
-	target, err = f.TargetRootForEpoch(blk2.Root(), 2)
+	target, err = f.TargetRootForRound(blk2.Root(), 2)
 	require.NoError(t, err)
 	require.Equal(t, target, blk1.Root())
 	dependent, err = f.DependentRoot(2)
@@ -517,7 +517,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	require.NoError(t, s.prune(ctx))
 	// The block at slot 31 is pruned away, so the new tree root is its own
 	// target and the dependent root falls back to the saved one.
-	target, err = f.TargetRootForEpoch(blk1.Root(), 1)
+	target, err = f.TargetRootForRound(blk1.Root(), 1)
 	require.NoError(t, err)
 	require.Equal(t, blk1.Root(), target)
 	dependent, err = f.DependentRoot(1)
@@ -535,7 +535,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, headRoot, blk4.Root())
 	// Slot 95 was missed, so epoch 3's target is the block at slot 33.
-	target, err = f.TargetRootForEpoch(blk4.Root(), 3)
+	target, err = f.TargetRootForRound(blk4.Root(), 3)
 	require.NoError(t, err)
 	require.Equal(t, blk1.Root(), target)
 	dependent, err = f.DependentRoot(3)
@@ -552,7 +552,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	headRoot, err = f.Head(ctx)
 	require.NoError(t, err)
 	require.Equal(t, headRoot, blk5.Root())
-	target, err = f.TargetRootForEpoch(blk5.Root(), 3)
+	target, err = f.TargetRootForRound(blk5.Root(), 3)
 	require.NoError(t, err)
 	require.Equal(t, blk1.Root(), target)
 	dependent, err = f.DependentRoot(3)
@@ -563,12 +563,12 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	require.Equal(t, dependent, blk1.Root())
 
 	// Target root where the target epoch is same or ahead of the block slot
-	target, err = f.TargetRootForEpoch(blk5.Root(), 4)
+	target, err = f.TargetRootForRound(blk5.Root(), 4)
 	require.NoError(t, err)
 	require.Equal(t, target, blk5.Root())
 
 	// Target root where the target epoch is two epochs ago
-	target, err = f.TargetRootForEpoch(blk5.Root(), 2)
+	target, err = f.TargetRootForRound(blk5.Root(), 2)
 	require.NoError(t, err)
 	require.Equal(t, blk1.Root(), target) // the parent of root4 in epoch 3 is root 1 in epoch 1
 
@@ -579,7 +579,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	headRoot, err = f.Head(ctx)
 	require.NoError(t, err)
 	require.Equal(t, headRoot, blk6.Root())
-	target, err = f.TargetRootForEpoch(blk6.Root(), 4)
+	target, err = f.TargetRootForRound(blk6.Root(), 4)
 	require.NoError(t, err)
 	require.Equal(t, target, blk5.Root())
 	dependent, err = f.DependentRoot(4)
@@ -591,14 +591,14 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	dependent, err = f.DependentRoot(1)
 	require.NoError(t, err)
 	require.Equal(t, blk.Root(), dependent)
-	target, err = f.TargetRootForEpoch(blk6.Root(), 2)
+	target, err = f.TargetRootForRound(blk6.Root(), 2)
 	require.NoError(t, err)
 	require.Equal(t, target, blk1.Root())
 
 	// Prune finalization, finalize the block at slot 96
 	s.finalizedCheckpoint.Root = blk4.Root()
 	require.NoError(t, s.prune(ctx))
-	target, err = f.TargetRootForEpoch(blk4.Root(), 3)
+	target, err = f.TargetRootForRound(blk4.Root(), 3)
 	require.NoError(t, err)
 	require.Equal(t, blk4.Root(), target)
 	// Dependent root for the finalized block should be the root of the pruned block at slot 33
@@ -723,9 +723,9 @@ func TestStore_FFGTargetShift(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, f.InsertNode(ctx, st, blk))
 	}
-	target := func(root [32]byte, epoch primitives.Epoch) [32]byte {
+	target := func(root [32]byte, epoch primitives.Round) [32]byte {
 		t.Helper()
-		tr, err := f.TargetRootForEpoch(root, epoch)
+		tr, err := f.TargetRootForRound(root, epoch)
 		require.NoError(t, err)
 		return tr
 	}
@@ -783,7 +783,7 @@ func TestStore_PruneKeepsTheEpochStartChild(t *testing.T) {
 
 	require.Equal(t, true, f.HasNode(canonical))
 	require.Equal(t, false, f.HasNode(competing))
-	target, err := f.TargetRootForEpoch(canonical, 1)
+	target, err := f.TargetRootForRound(canonical, 1)
 	require.NoError(t, err)
 	require.Equal(t, checkpoint, target)
 }

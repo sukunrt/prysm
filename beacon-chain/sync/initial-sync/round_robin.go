@@ -92,7 +92,7 @@ func (s *Service) startBlocksQueue(ctx context.Context, highestSlot primitives.S
 
 // syncToFinalizedEpoch sync from head to the best known finalized epoch.
 func (s *Service) syncToFinalizedEpoch(ctx context.Context) error {
-	highestFinalizedSlot, err := slots.EpochStart(s.highestFinalizedEpoch())
+	highestFinalizedSlot, err := slots.RoundStart(s.highestFinalizedRound())
 	if err != nil {
 		return err
 	}
@@ -304,11 +304,11 @@ func syncFields(b blocks.ROBlock) logrus.Fields {
 	}
 }
 
-// highestFinalizedEpoch returns the absolute highest finalized epoch of all connected peers.
+// highestFinalizedRound returns the absolute highest finalized round of all connected peers.
 // It returns `0` if no peers are connected.
 // Note this can be lower than our finalized epoch if our connected peers are all behind us.
-func (s *Service) highestFinalizedEpoch() primitives.Epoch {
-	highest := primitives.Epoch(0)
+func (s *Service) highestFinalizedRound() primitives.Round {
+	highest := primitives.Round(0)
 	for _, pid := range s.cfg.P2P.Peers().Connected() {
 		peerChainState, err := s.cfg.P2P.Peers().ChainState(pid)
 
@@ -584,7 +584,7 @@ func (s *Service) updatePeerScorerStats(data *blocksQueueFetchedData, count uint
 // isProcessedBlock checks DB and local cache for presence of a given block, to avoid duplicates.
 func (s *Service) isProcessedBlock(ctx context.Context, blk blocks.ROBlock) bool {
 	cp := s.cfg.Chain.FinalizedCheckpt()
-	finalizedSlot, err := slots.EpochStart(cp.Epoch)
+	finalizedSlot, err := slots.RoundStart(cp.Epoch)
 	if err != nil {
 		return false
 	}

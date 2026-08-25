@@ -109,19 +109,19 @@ func (s *Store) AttestationHistoryForPubKey(ctx context.Context, pubKey [fieldpa
 		sourceEpochsBucket := pkBucket.Bucket(attestationSourceEpochsBucket)
 
 		return sourceEpochsBucket.ForEach(func(sourceBytes, targetEpochsList []byte) error {
-			targetEpochs := make([]primitives.Epoch, 0)
+			targetEpochs := make([]primitives.Round, 0)
 			for i := 0; i < len(targetEpochsList); i += 8 {
-				epoch := bytesutil.BytesToEpochBigEndian(targetEpochsList[i : i+8])
+				epoch := bytesutil.BytesToRoundBigEndian(targetEpochsList[i : i+8])
 				targetEpochs = append(targetEpochs, epoch)
 			}
-			sourceEpoch := bytesutil.BytesToEpochBigEndian(sourceBytes)
+			sourceEpoch := bytesutil.BytesToRoundBigEndian(sourceBytes)
 			for _, targetEpoch := range targetEpochs {
 				record := &common.AttestationRecord{
 					PubKey: pubKey,
 					Source: sourceEpoch,
 					Target: targetEpoch,
 				}
-				signingRoot := signingRootsBucket.Get(bytesutil.EpochToBytesBigEndian(targetEpoch))
+				signingRoot := signingRootsBucket.Get(bytesutil.RoundToBytesBigEndian(targetEpoch))
 				if len(signingRoot) != 0 {
 					record.SigningRoot = make([]byte, fieldparams.RootLength)
 					copy(record.SigningRoot, signingRoot)
@@ -152,7 +152,7 @@ func (s *Store) SlashableAttestationCheck(
 
 	// Based on EIP-3076, validator should refuse to sign any attestation with source epoch less
 	// than the minimum source epoch present in that signer’s attestations.
-	lowestSourceEpoch, exists, err := s.LowestSignedSourceEpoch(ctx, pubKey)
+	lowestSourceEpoch, exists, err := s.LowestSignedSourceRound(ctx, pubKey)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func (s *Store) SlashableAttestationCheck(
 			lowestSourceEpoch,
 		)
 	}
-	existingSigningRoot, err := s.SigningRootAtTargetEpoch(ctx, pubKey, indexedAtt.GetData().Target.Epoch)
+	existingSigningRoot, err := s.SigningRootAtTargetRound(ctx, pubKey, indexedAtt.GetData().Target.Epoch)
 	if err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func (s *Store) SlashableAttestationCheck(
 	// Based on EIP-3076, validator should refuse to sign any attestation with target epoch less
 	// than or equal to the minimum target epoch present in that signer’s attestations, except
 	// if it is a repeat signing as determined by the signingRoot.
-	lowestTargetEpoch, exists, err := s.LowestSignedTargetEpoch(ctx, pubKey)
+	lowestTargetEpoch, exists, err := s.LowestSignedTargetRound(ctx, pubKey)
 	if err != nil {
 		return err
 	}
@@ -228,7 +228,7 @@ func (s *Store) CheckSlashableAttestation(
 		// First we check for double votes.
 		signingRootsBucket := pkBucket.Bucket(attestationSigningRootsBucket)
 		if signingRootsBucket != nil {
-			targetEpochBytes := bytesutil.EpochToBytesBigEndian(att.GetData().Target.Epoch)
+			targetEpochBytes := bytesutil.RoundToBytesBigEndian(att.GetData().Target.Epoch)
 			existingSigningRoot := signingRootsBucket.Get(targetEpochBytes)
 
 			// If a signing root exists in the database, and if this database signing root is empty => We consider the new attestation as a double vote.
@@ -273,15 +273,15 @@ func (*Store) checkSurroundedVote(
 ) (SlashingKind, error) {
 	c := targetEpochsBucket.Cursor()
 	for k, v := c.Last(); k != nil; k, v = c.Prev() {
-		existingTargetEpoch := bytesutil.BytesToEpochBigEndian(k)
+		existingTargetEpoch := bytesutil.BytesToRoundBigEndian(k)
 		if existingTargetEpoch <= att.GetData().Target.Epoch {
 			break
 		}
 
 		// There can be multiple source epochs attested per target epoch.
-		attestedSourceEpochs := make([]primitives.Epoch, 0, len(v)/8)
+		attestedSourceEpochs := make([]primitives.Round, 0, len(v)/8)
 		for i := 0; i < len(v); i += 8 {
-			sourceEpoch := bytesutil.BytesToEpochBigEndian(v[i : i+8])
+			sourceEpoch := bytesutil.BytesToRoundBigEndian(v[i : i+8])
 			attestedSourceEpochs = append(attestedSourceEpochs, sourceEpoch)
 		}
 
@@ -313,15 +313,15 @@ func (*Store) checkSurroundingVote(
 ) (SlashingKind, error) {
 	c := sourceEpochsBucket.Cursor()
 	for k, v := c.Last(); k != nil; k, v = c.Prev() {
-		existingSourceEpoch := bytesutil.BytesToEpochBigEndian(k)
+		existingSourceEpoch := bytesutil.BytesToRoundBigEndian(k)
 		if existingSourceEpoch <= att.GetData().Source.Epoch {
 			break
 		}
 
 		// There can be multiple target epochs attested per source epoch.
-		attestedTargetEpochs := make([]primitives.Epoch, 0, len(v)/8)
+		attestedTargetEpochs := make([]primitives.Round, 0, len(v)/8)
 		for i := 0; i < len(v); i += 8 {
-			targetEpoch := bytesutil.BytesToEpochBigEndian(v[i : i+8])
+			targetEpoch := bytesutil.BytesToRoundBigEndian(v[i : i+8])
 			attestedTargetEpochs = append(attestedTargetEpochs, targetEpoch)
 		}
 
@@ -509,8 +509,8 @@ func (s *Store) saveAttestationRecords(ctx context.Context, atts []*common.Attes
 			if err != nil {
 				return errors.Wrap(err, "could not create public key bucket")
 			}
-			sourceEpochBytes := bytesutil.EpochToBytesBigEndian(att.Source)
-			targetEpochBytes := bytesutil.EpochToBytesBigEndian(att.Target)
+			sourceEpochBytes := bytesutil.RoundToBytesBigEndian(att.Source)
+			targetEpochBytes := bytesutil.RoundToBytesBigEndian(att.Target)
 
 			signingRootsBucket, err := pkBucket.CreateBucketIfNotExists(attestationSigningRootsBucket)
 			if err != nil {
@@ -555,13 +555,13 @@ func (s *Store) saveAttestationRecords(ctx context.Context, atts []*common.Attes
 
 			// If the incoming source epoch is lower than the lowest signed source epoch, override.
 			lowestSignedSourceBytes := lowestSourceBucket.Get(att.PubKey[:])
-			var lowestSignedSourceEpoch primitives.Epoch
+			var lowestSignedSourceEpoch primitives.Round
 			if len(lowestSignedSourceBytes) >= 8 {
-				lowestSignedSourceEpoch = bytesutil.BytesToEpochBigEndian(lowestSignedSourceBytes)
+				lowestSignedSourceEpoch = bytesutil.BytesToRoundBigEndian(lowestSignedSourceBytes)
 			}
 			if len(lowestSignedSourceBytes) == 0 || att.Source < lowestSignedSourceEpoch {
 				if err := lowestSourceBucket.Put(
-					att.PubKey[:], bytesutil.EpochToBytesBigEndian(att.Source),
+					att.PubKey[:], bytesutil.RoundToBytesBigEndian(att.Source),
 				); err != nil {
 					return err
 				}
@@ -569,13 +569,13 @@ func (s *Store) saveAttestationRecords(ctx context.Context, atts []*common.Attes
 
 			// If the incoming target epoch is lower than the lowest signed target epoch, override.
 			lowestSignedTargetBytes := lowestTargetBucket.Get(att.PubKey[:])
-			var lowestSignedTargetEpoch primitives.Epoch
+			var lowestSignedTargetEpoch primitives.Round
 			if len(lowestSignedTargetBytes) >= 8 {
-				lowestSignedTargetEpoch = bytesutil.BytesToEpochBigEndian(lowestSignedTargetBytes)
+				lowestSignedTargetEpoch = bytesutil.BytesToRoundBigEndian(lowestSignedTargetBytes)
 			}
 			if len(lowestSignedTargetBytes) == 0 || att.Target < lowestSignedTargetEpoch {
 				if err := lowestTargetBucket.Put(
-					att.PubKey[:], bytesutil.EpochToBytesBigEndian(att.Target),
+					att.PubKey[:], bytesutil.RoundToBytesBigEndian(att.Target),
 				); err != nil {
 					return err
 				}
@@ -603,10 +603,10 @@ func (s *Store) AttestedPublicKeys(ctx context.Context) ([][fieldparams.BLSPubke
 	return attestedPublicKeys, err
 }
 
-// SigningRootAtTargetEpoch checks for an existing signing root at a specified
+// SigningRootAtTargetRound checks for an existing signing root at a specified
 // target epoch for a given validator public key.
-func (s *Store) SigningRootAtTargetEpoch(ctx context.Context, pubKey [fieldparams.BLSPubkeyLength]byte, target primitives.Epoch) ([]byte, error) {
-	_, span := trace.StartSpan(ctx, "Validator.SigningRootAtTargetEpoch")
+func (s *Store) SigningRootAtTargetRound(ctx context.Context, pubKey [fieldparams.BLSPubkeyLength]byte, target primitives.Round) ([]byte, error) {
+	_, span := trace.StartSpan(ctx, "Validator.SigningRootAtTargetRound")
 	defer span.End()
 
 	var (
@@ -632,7 +632,7 @@ func (s *Store) SigningRootAtTargetEpoch(ctx context.Context, pubKey [fieldparam
 		}
 
 		// If no signing root exists for this target epoch, we return nil.
-		sr := signingRootsBucket.Get(bytesutil.EpochToBytesBigEndian(target))
+		sr := signingRootsBucket.Get(bytesutil.RoundToBytesBigEndian(target))
 		if len(sr) == 0 {
 			return nil
 		}
@@ -650,47 +650,47 @@ func (s *Store) SigningRootAtTargetEpoch(ctx context.Context, pubKey [fieldparam
 	return signingRoot, err
 }
 
-// LowestSignedSourceEpoch returns the lowest signed source epoch for a validator public key.
+// LowestSignedSourceRound returns the lowest signed source epoch for a validator public key.
 // If no data exists, returning 0 is a sensible default.
-func (s *Store) LowestSignedSourceEpoch(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Epoch, bool, error) {
-	_, span := trace.StartSpan(ctx, "Validator.LowestSignedSourceEpoch")
+func (s *Store) LowestSignedSourceRound(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Round, bool, error) {
+	_, span := trace.StartSpan(ctx, "Validator.LowestSignedSourceRound")
 	defer span.End()
 
 	var err error
-	var lowestSignedSourceEpoch primitives.Epoch
+	var lowestSignedSourceEpoch primitives.Round
 	var exists bool
 	err = s.view(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(lowestSignedSourceBucket)
 		lowestSignedSourceBytes := bucket.Get(publicKey[:])
-		// 8 because bytesutil.BytesToEpochBigEndian will return 0 if input is less than 8 bytes.
+		// 8 because bytesutil.BytesToRoundBigEndian will return 0 if input is less than 8 bytes.
 		if len(lowestSignedSourceBytes) < 8 {
 			return nil
 		}
 		exists = true
-		lowestSignedSourceEpoch = bytesutil.BytesToEpochBigEndian(lowestSignedSourceBytes)
+		lowestSignedSourceEpoch = bytesutil.BytesToRoundBigEndian(lowestSignedSourceBytes)
 		return nil
 	})
 	return lowestSignedSourceEpoch, exists, err
 }
 
-// LowestSignedTargetEpoch returns the lowest signed target epoch for a validator public key.
+// LowestSignedTargetRound returns the lowest signed target epoch for a validator public key.
 // If no data exists, returning 0 is a sensible default.
-func (s *Store) LowestSignedTargetEpoch(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Epoch, bool, error) {
-	_, span := trace.StartSpan(ctx, "Validator.LowestSignedTargetEpoch")
+func (s *Store) LowestSignedTargetRound(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Round, bool, error) {
+	_, span := trace.StartSpan(ctx, "Validator.LowestSignedTargetRound")
 	defer span.End()
 
 	var err error
-	var lowestSignedTargetEpoch primitives.Epoch
+	var lowestSignedTargetEpoch primitives.Round
 	var exists bool
 	err = s.view(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(lowestSignedTargetBucket)
 		lowestSignedTargetBytes := bucket.Get(publicKey[:])
-		// 8 because bytesutil.BytesToEpochBigEndian will return 0 if input is less than 8 bytes.
+		// 8 because bytesutil.BytesToRoundBigEndian will return 0 if input is less than 8 bytes.
 		if len(lowestSignedTargetBytes) < 8 {
 			return nil
 		}
 		exists = true
-		lowestSignedTargetEpoch = bytesutil.BytesToEpochBigEndian(lowestSignedTargetBytes)
+		lowestSignedTargetEpoch = bytesutil.BytesToRoundBigEndian(lowestSignedTargetBytes)
 		return nil
 	})
 	return lowestSignedTargetEpoch, exists, err

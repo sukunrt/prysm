@@ -424,13 +424,20 @@ func isEligibleForActivationQueueElectra(activationEligibilityEpoch primitives.E
 //	      and validator.activation_epoch == FAR_FUTURE_EPOCH
 //	  )
 func IsEligibleForActivation(state state.ReadOnlyCheckpoint, validator *ethpb.Validator) bool {
-	finalizedEpoch := state.FinalizedCheckpointEpoch()
+	finalizedEpoch, err := CheckpointEpoch(state.FinalizedCheckpointRound())
+	if err != nil {
+		return false
+	}
 	return isEligibleForActivation(validator.ActivationEligibilityEpoch, validator.ActivationEpoch, finalizedEpoch)
 }
 
 // IsEligibleForActivationUsingROVal checks if the validator is eligible for activation using the provided read only validator.
 func IsEligibleForActivationUsingROVal(state state.ReadOnlyCheckpoint, validator state.ReadOnlyValidator) bool {
-	return isEligibleForActivation(validator.ActivationEligibilityEpoch(), validator.ActivationEpoch(), state.FinalizedCheckpointEpoch())
+	finalizedEpoch, err := CheckpointEpoch(state.FinalizedCheckpointRound())
+	if err != nil {
+		return false
+	}
+	return isEligibleForActivation(validator.ActivationEligibilityEpoch(), validator.ActivationEpoch(), finalizedEpoch)
 }
 
 // isEligibleForActivation carries out the logic for IsEligibleForActivation*

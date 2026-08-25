@@ -238,16 +238,16 @@ func Test_ValidateAttestationTime(t *testing.T) {
 	}
 }
 
-func TestVerifyCheckpointEpoch_Ok(t *testing.T) {
+func TestVerifyCheckpointRound_Ok(t *testing.T) {
 	helpers.ClearCache()
 
 	// Genesis was 6 epochs ago exactly.
 	offset := params.BeaconConfig().SlotsPerEpoch.Mul(params.BeaconConfig().SecondsPerSlot * 6)
 	genesis := time.Now().Add(-1 * time.Second * time.Duration(offset))
-	assert.Equal(t, true, helpers.VerifyCheckpointEpoch(&ethpb.Checkpoint{Epoch: 6}, genesis))
-	assert.Equal(t, true, helpers.VerifyCheckpointEpoch(&ethpb.Checkpoint{Epoch: 5}, genesis))
-	assert.Equal(t, false, helpers.VerifyCheckpointEpoch(&ethpb.Checkpoint{Epoch: 4}, genesis))
-	assert.Equal(t, false, helpers.VerifyCheckpointEpoch(&ethpb.Checkpoint{Epoch: 2}, genesis))
+	assert.Equal(t, true, helpers.VerifyCheckpointRound(&ethpb.Checkpoint{Epoch: 6}, genesis))
+	assert.Equal(t, true, helpers.VerifyCheckpointRound(&ethpb.Checkpoint{Epoch: 5}, genesis))
+	assert.Equal(t, false, helpers.VerifyCheckpointRound(&ethpb.Checkpoint{Epoch: 4}, genesis))
+	assert.Equal(t, false, helpers.VerifyCheckpointRound(&ethpb.Checkpoint{Epoch: 2}, genesis))
 }
 
 func TestValidateNilAttestation(t *testing.T) {
@@ -331,7 +331,7 @@ func TestValidateNilAttestation(t *testing.T) {
 	}
 }
 
-func TestValidateSlotTargetEpoch(t *testing.T) {
+func TestValidateSlotTargetRound(t *testing.T) {
 	tests := []struct {
 		name        string
 		attestation *ethpb.Attestation
@@ -346,7 +346,7 @@ func TestValidateSlotTargetEpoch(t *testing.T) {
 				},
 				AggregationBits: []byte{},
 			},
-			errString: "slot 0 does not match target epoch 1",
+			errString: "slot 0 does not match target round 1",
 		},
 		{
 			name: "good attestation",
@@ -366,9 +366,9 @@ func TestValidateSlotTargetEpoch(t *testing.T) {
 			helpers.ClearCache()
 
 			if tt.errString != "" {
-				require.ErrorContains(t, tt.errString, helpers.ValidateSlotTargetEpoch(tt.attestation.Data))
+				require.ErrorContains(t, tt.errString, helpers.ValidateSlotTargetRound(tt.attestation.Data))
 			} else {
-				require.NoError(t, helpers.ValidateSlotTargetEpoch(tt.attestation.Data))
+				require.NoError(t, helpers.ValidateSlotTargetRound(tt.attestation.Data))
 			}
 		})
 	}

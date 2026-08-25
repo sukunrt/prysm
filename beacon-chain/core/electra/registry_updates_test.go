@@ -17,6 +17,7 @@ import (
 )
 
 func TestProcessRegistryUpdates(t *testing.T) {
+	finalizedRound := primitives.Round(4)
 	finalizedEpoch := primitives.Epoch(4)
 
 	tests := []struct {
@@ -54,7 +55,7 @@ func TestProcessRegistryUpdates(t *testing.T) {
 			state: func() state.BeaconState {
 				base := &eth.BeaconStateElectra{
 					Slot:                5 * params.BeaconConfig().SlotsPerEpoch,
-					FinalizedCheckpoint: &eth.Checkpoint{Epoch: finalizedEpoch, Root: make([]byte, fieldparams.RootLength)},
+					FinalizedCheckpoint: &eth.Checkpoint{Epoch: finalizedRound, Root: make([]byte, fieldparams.RootLength)},
 				}
 				for range uint64(10) {
 					base.Validators = append(base.Validators, &eth.Validator{
@@ -80,7 +81,7 @@ func TestProcessRegistryUpdates(t *testing.T) {
 			state: func() state.BeaconState {
 				base := &eth.BeaconStateElectra{
 					Slot:                5 * params.BeaconConfig().SlotsPerEpoch,
-					FinalizedCheckpoint: &eth.Checkpoint{Epoch: finalizedEpoch, Root: make([]byte, fieldparams.RootLength)},
+					FinalizedCheckpoint: &eth.Checkpoint{Epoch: finalizedRound, Root: make([]byte, fieldparams.RootLength)},
 				}
 				for range uint64(10) {
 					base.Validators = append(base.Validators, &eth.Validator{
@@ -106,7 +107,7 @@ func TestProcessRegistryUpdates(t *testing.T) {
 			state: func() state.BeaconState {
 				base := &eth.BeaconStateElectra{
 					Slot:                5 * params.BeaconConfig().SlotsPerEpoch,
-					FinalizedCheckpoint: &eth.Checkpoint{Epoch: finalizedEpoch, Root: make([]byte, fieldparams.RootLength)},
+					FinalizedCheckpoint: &eth.Checkpoint{Epoch: finalizedRound, Root: make([]byte, fieldparams.RootLength)},
 				}
 				for range uint64(10) {
 					base.Validators = append(base.Validators, &eth.Validator{

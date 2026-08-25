@@ -303,7 +303,7 @@ func createFullBlockWithOperations(t *testing.T) (state.BeaconState,
 	blockAtt := util.HydrateAttestation(&ethpb.Attestation{
 		Data: &ethpb.AttestationData{
 			Slot:   beaconState.Slot(),
-			Target: &ethpb.Checkpoint{Epoch: time.CurrentEpoch(beaconState)},
+			Target: &ethpb.Checkpoint{Epoch: time.CurrentRound(beaconState)},
 			Source: &ethpb.Checkpoint{Root: mockRoot[:]}},
 		AggregationBits: aggBits,
 	})

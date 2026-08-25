@@ -109,12 +109,12 @@ func (s *Service) processAttestations(
 	attestations []*slashertypes.IndexedAttestationWrapper,
 	currentSlot primitives.Slot,
 ) map[[fieldparams.RootLength]byte]ethpb.AttSlashing {
-	// Get the current epoch from the current slot.
-	currentEpoch := slots.ToEpoch(currentSlot)
+	// Get the current round from the current slot.
+	currentRound := slots.RoundAt(currentSlot)
 
 	// Take all the attestations in the queue and filter out
 	// those which are valid now and valid in the future.
-	validAttestations, validInFutureAttestations, numDropped := s.filterAttestations(attestations, currentEpoch)
+	validAttestations, validInFutureAttestations, numDropped := s.filterAttestations(attestations, currentRound)
 
 	// Increase corresponding prometheus metrics.
 	deferredAttestationsTotal.Add(float64(len(validInFutureAttestations)))
@@ -132,7 +132,7 @@ func (s *Service) processAttestations(
 	// Log useful information.
 	log.WithFields(logrus.Fields{
 		"currentSlot":     currentSlot,
-		"currentEpoch":    currentEpoch,
+		"currentRound":    currentRound,
 		"numValidAtts":    validAttestationsCount,
 		"numDeferredAtts": validInFutureAttestationsCount,
 		"numDroppedAtts":  numDropped,
@@ -142,7 +142,7 @@ func (s *Service) processAttestations(
 	start := time.Now()
 
 	// Check for attestations slashings (double, surrounding, surrounded votes).
-	slashings, err := s.checkSlashableAttestations(ctx, currentEpoch, validAttestations)
+	slashings, err := s.checkSlashableAttestations(ctx, currentRound, validAttestations)
 	if err != nil {
 		log.WithError(err).Error(couldNotCheckSlashableAtt)
 		return nil
@@ -175,13 +175,13 @@ func (s *Service) processQueuedBlocks(ctx context.Context, slotTicker <-chan pri
 		select {
 		case currentSlot := <-slotTicker:
 			blocks := s.blksQueue.dequeue()
-			currentEpoch := slots.ToEpoch(currentSlot)
+			currentRound := slots.RoundAt(currentSlot)
 
 			receivedBlocksTotal.Add(float64(len(blocks)))
 
 			log.WithFields(logrus.Fields{
 				"currentSlot":  currentSlot,
-				"currentEpoch": currentEpoch,
+				"currentRound": currentRound,
 				"numBlocks":    len(blocks),
 			}).Info("Processing queued blocks for slashing detection")
 
@@ -216,8 +216,8 @@ func (s *Service) pruneSlasherData(ctx context.Context, slotTicker <-chan primit
 	for {
 		select {
 		case <-slotTicker:
-			headEpoch := slots.ToEpoch(s.serviceCfg.HeadStateFetcher.HeadSlot())
-			if err := s.pruneSlasherDataWithinSlidingWindow(ctx, headEpoch); err != nil {
+			headRound := slots.RoundAt(s.serviceCfg.HeadStateFetcher.HeadSlot())
+			if err := s.pruneSlasherDataWithinSlidingWindow(ctx, headRound); err != nil {
 				log.WithError(err).Error("Could not prune slasher data")
 				continue
 			}
@@ -231,8 +231,8 @@ func (s *Service) pruneSlasherData(ctx context.Context, slotTicker <-chan primit
 // All data before that window is unnecessary for slasher, so can be periodically deleted.
 // Say HISTORY_LENGTH is 4 and we have data for epochs 0, 1, 2, 3. Once we hit epoch 4, the sliding window
 // we care about is 1, 2, 3, 4, so we can delete data for epoch 0.
-func (s *Service) pruneSlasherDataWithinSlidingWindow(ctx context.Context, currentEpoch primitives.Epoch) error {
-	var maxPruningEpoch primitives.Epoch
+func (s *Service) pruneSlasherDataWithinSlidingWindow(ctx context.Context, currentEpoch primitives.Round) error {
+	var maxPruningEpoch primitives.Round
 	if currentEpoch >= s.params.historyLength {
 		maxPruningEpoch = currentEpoch - s.params.historyLength
 	} else {

@@ -162,7 +162,7 @@ type HeadAccessDatabase interface {
 type SlasherDatabase interface {
 	io.Closer
 	SaveLastEpochWrittenForValidators(
-		ctx context.Context, epochByValidator map[primitives.ValidatorIndex]primitives.Epoch,
+		ctx context.Context, epochByValidator map[primitives.ValidatorIndex]primitives.Round,
 	) error
 	SaveAttestationRecordsForValidators(
 		ctx context.Context,
@@ -178,7 +178,7 @@ type SlasherDatabase interface {
 		ctx context.Context, validatorIndices []primitives.ValidatorIndex,
 	) ([]*slashertypes.AttestedEpochForValidator, error)
 	AttestationRecordForValidator(
-		ctx context.Context, validatorIdx primitives.ValidatorIndex, targetEpoch primitives.Epoch,
+		ctx context.Context, validatorIdx primitives.ValidatorIndex, targetRound primitives.Round,
 	) (*slashertypes.IndexedAttestationWrapper, error)
 	BlockProposalForValidator(
 		ctx context.Context, validatorIdx primitives.ValidatorIndex, slot primitives.Slot,
@@ -193,10 +193,10 @@ type SlasherDatabase interface {
 		ctx context.Context, proposals []*slashertypes.SignedBlockHeaderWrapper,
 	) ([]*ethpb.ProposerSlashing, error)
 	PruneAttestationsAtEpoch(
-		ctx context.Context, maxEpoch primitives.Epoch,
+		ctx context.Context, maxEpoch primitives.Round,
 	) (numPruned uint, err error)
 	PruneProposalsAtEpoch(
-		ctx context.Context, maxEpoch primitives.Epoch,
+		ctx context.Context, maxEpoch primitives.Round,
 	) (numPruned uint, err error)
 	HighestAttestations(
 		ctx context.Context,
@@ -204,7 +204,7 @@ type SlasherDatabase interface {
 	) ([]*ethpb.HighestAttestation, error)
 	DatabasePath() string
 	ClearDB() error
-	Migrate(ctx context.Context, headEpoch, maxPruningEpoch primitives.Epoch, batchSize int) error
+	Migrate(ctx context.Context, headEpoch, maxPruningEpoch primitives.Round, batchSize int) error
 }
 
 // Database interface with full access.

@@ -832,7 +832,7 @@ func TestServer_GetChainHead(t *testing.T) {
 	require.NoError(t, err)
 
 	b := util.NewBeaconBlock()
-	b.Block.Slot, err = slots.EpochStart(st.PreviousJustifiedCheckpoint().Epoch)
+	b.Block.Slot, err = slots.RoundStart(st.PreviousJustifiedCheckpoint().Epoch)
 	require.NoError(t, err)
 	b.Block.Slot++
 	wsb, err := blocks.NewSignedBeaconBlock(b)

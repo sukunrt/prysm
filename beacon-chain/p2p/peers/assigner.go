@@ -13,7 +13,7 @@ import (
 // StatusProvider describes the minimum capability that Assigner needs from peer status tracking.
 // That is, the ability to retrieve the best peers by finalized checkpoint.
 type StatusProvider interface {
-	BestFinalized(ourFinalized primitives.Epoch) (primitives.Epoch, []peer.ID)
+	BestFinalized(ourFinalized primitives.Round) (primitives.Round, []peer.ID)
 }
 
 // FinalizedCheckpointer describes the minimum capability that Assigner needs from forkchoice.

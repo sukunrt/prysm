@@ -160,9 +160,9 @@ func TestEIP3076SpecTests(t *testing.T) {
 							shouldSucceed = sa.ShouldSucceedMinimal
 						}
 
-						target, err := helpers.EpochFromString(sa.TargetEpoch)
+						target, err := helpers.RoundFromString(sa.TargetEpoch)
 						require.NoError(t, err)
-						source, err := helpers.EpochFromString(sa.SourceEpoch)
+						source, err := helpers.RoundFromString(sa.SourceEpoch)
 						require.NoError(t, err)
 						pk, err := helpers.PubKeyFromHex(sa.Pubkey)
 						require.NoError(t, err)

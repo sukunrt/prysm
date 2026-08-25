@@ -88,12 +88,12 @@ func pruneBucket(bkt *bolt.Bucket) error {
 
 	// We obtain the highest target epoch from the signing roots bucket.
 	highestEpochBytes, _ := bkt.Cursor().Last()
-	highestEpoch := bytesutil.BytesToEpochBigEndian(highestEpochBytes)
-	upperBounds := pruningEpochCutoff(highestEpoch)
+	highestEpoch := bytesutil.BytesToRoundBigEndian(highestEpochBytes)
+	upperBounds := pruningRoundCutoff(highestEpoch)
 
 	c := bkt.Cursor()
 	for k, _ := c.First(); k != nil; k, _ = c.Next() {
-		targetEpoch := bytesutil.BytesToEpochBigEndian(k)
+		targetEpoch := bytesutil.BytesToRoundBigEndian(k)
 		if targetEpoch >= upperBounds {
 			return nil
 		}
@@ -105,14 +105,17 @@ func pruneBucket(bkt *bolt.Bucket) error {
 	return nil
 }
 
-// This helper function determines the cutoff epoch where, for all epochs before it, we should prune
-// the slashing protection database. This is computed by taking in an epoch and subtracting
-// SLASHING_PROTECTION_PRUNING_EPOCHS from the value. For example, if we are keeping track of 512 epochs
-// in the database, if we pass in epoch 612, then we want to prune all epochs before epoch 100.
-func pruningEpochCutoff(epoch primitives.Epoch) primitives.Epoch {
-	minEpoch := primitives.Epoch(0)
-	if epoch > params.BeaconConfig().SlashingProtectionPruningEpochs {
-		minEpoch = epoch - params.BeaconConfig().SlashingProtectionPruningEpochs
+// This helper function determines the cutoff round where, for all rounds before it, we should prune
+// the slashing protection database. This is computed by taking in a round and subtracting
+// SLASHING_PROTECTION_PRUNING_EPOCHS from the value. For example, if we are keeping track of 512
+// entries in the database, if we pass in round 612, then we want to prune all rounds before 100.
+//
+// The retention window is a plain count, not an epoch value: the protection DB indexes attestations
+// by their (round-valued) target and never converts one to a slot.
+func pruningRoundCutoff(round primitives.Round) primitives.Round {
+	window := uint64(params.BeaconConfig().SlashingProtectionPruningEpochs)
+	if uint64(round) <= window {
+		return 0
 	}
-	return minEpoch
+	return round.Sub(window)
 }

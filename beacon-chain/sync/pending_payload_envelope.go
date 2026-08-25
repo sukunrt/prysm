@@ -105,15 +105,15 @@ func (s *Service) processPendingPayloadEnvelopes(ctx context.Context) {
 }
 
 // prunePendingPayloadEnvelopes removes entries whose slot is at or below the
-// finalized epoch start slot, following the same pattern as validatePendingSlots.
+// finalized round start slot, following the same pattern as validatePendingSlots.
 func (s *Service) prunePendingPayloadEnvelopes() {
 	s.pendingEnvelopeLock.Lock()
 	defer s.pendingEnvelopeLock.Unlock()
 
-	finalizedEpoch := s.cfg.chain.FinalizedCheckpt().Epoch
+	finalizedRound := s.cfg.chain.FinalizedCheckpt().Epoch
 	for root, inner := range s.pendingPayloadEnvelopes {
 		for _, env := range inner {
-			if env.Message != nil && env.Message.Payload != nil && slots.ToEpoch(primitives.Slot(env.Message.Payload.SlotNumber)) < finalizedEpoch {
+			if env.Message != nil && env.Message.Payload != nil && slots.RoundAt(primitives.Slot(env.Message.Payload.SlotNumber)) < finalizedRound {
 				delete(s.pendingPayloadEnvelopes, root)
 			}
 			break // only need one envelope per root; admission enforces current-slot

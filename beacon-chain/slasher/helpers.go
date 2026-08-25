@@ -62,7 +62,7 @@ func (s *Service) groupByChunkIndex(
 // This function returns a list of valid attestations, a list of attestations that are
 // valid in the future, and the number of attestations dropped.
 func (s *Service) filterAttestations(
-	attWrappers []*slashertypes.IndexedAttestationWrapper, currentEpoch primitives.Epoch,
+	attWrappers []*slashertypes.IndexedAttestationWrapper, currentEpoch primitives.Round,
 ) (valid, validInFuture []*slashertypes.IndexedAttestationWrapper, numDropped int) {
 	valid = make([]*slashertypes.IndexedAttestationWrapper, 0, len(attWrappers))
 	validInFuture = make([]*slashertypes.IndexedAttestationWrapper, 0, len(attWrappers))
@@ -164,7 +164,7 @@ func isDoubleProposal(incomingSigningRoot, existingSigningRoot [32]byte) bool {
 type GetChunkFromDatabaseFilters struct {
 	ChunkKind                     slashertypes.ChunkKind
 	ValidatorIndex                primitives.ValidatorIndex
-	SourceEpoch                   primitives.Epoch
+	SourceEpoch                   primitives.Round
 	IsDisplayAllValidatorsInChunk bool
 	IsDisplayAllEpochsInChunk     bool
 }
@@ -176,7 +176,7 @@ func GetChunkFromDatabase(
 	dbPath string,
 	filters GetChunkFromDatabaseFilters,
 	params *Parameters,
-) (lastEpochForValidatorIndex primitives.Epoch, chunkIndex, validatorChunkIndex uint64, chunk Chunker, err error) {
+) (lastEpochForValidatorIndex primitives.Round, chunkIndex, validatorChunkIndex uint64, chunk Chunker, err error) {
 	// init store
 	d, err := slasherkv.NewKVStore(ctx, dbPath)
 	if err != nil {

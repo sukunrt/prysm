@@ -17,13 +17,13 @@ const (
 	littleEndian
 )
 
-func encodeEpochLittleEndian(epoch primitives.Epoch) []byte {
+func encodeEpochLittleEndian(epoch primitives.Round) []byte {
 	buf := make([]byte, 8)
 	binary.LittleEndian.PutUint64(buf, uint64(epoch))
 	return buf
 }
 
-func createAttestation(signingRootBucket, attRecordsBucket *bolt.Bucket, epoch primitives.Epoch, encoding endianness) error {
+func createAttestation(signingRootBucket, attRecordsBucket *bolt.Bucket, epoch primitives.Round, encoding endianness) error {
 	// Encode the target epoch.
 	var key []byte
 	if encoding == bigEndian {
@@ -46,7 +46,7 @@ func createAttestation(signingRootBucket, attRecordsBucket *bolt.Bucket, epoch p
 	return err
 }
 
-func createProposal(proposalBucket *bolt.Bucket, epoch primitives.Epoch, encoding endianness) error {
+func createProposal(proposalBucket *bolt.Bucket, epoch primitives.Round, encoding endianness) error {
 	// Get the slot for the epoch.
 	slot := primitives.Slot(epoch) * params.BeaconConfig().SlotsPerEpoch
 
@@ -70,8 +70,8 @@ func createProposal(proposalBucket *bolt.Bucket, epoch primitives.Epoch, encodin
 
 func TestMigrate(t *testing.T) {
 	const (
-		headEpoch       = primitives.Epoch(65000)
-		maxPruningEpoch = primitives.Epoch(60000)
+		headEpoch       = primitives.Round(65000)
+		maxPruningEpoch = primitives.Round(60000)
 		batchSize       = 3
 	)
 
@@ -107,14 +107,14 @@ func TestMigrate(t *testing.T) {
 
 	*/
 
-	beforeLittleEndianEpochs := []primitives.Epoch{
+	beforeLittleEndianEpochs := []primitives.Round{
 		59000, 59100, 59300, 59400, 59500, 59600, 59700, 59800, 59900,
 		60000, 60100, 60200, 60300, 60500, 60600, 60700, 60800, 60900,
 	}
 
-	beforeBigEndianEpochs := []primitives.Epoch{59200, 60400}
+	beforeBigEndianEpochs := []primitives.Round{59200, 60400}
 
-	afterBigEndianEpochs := []primitives.Epoch{
+	afterBigEndianEpochs := []primitives.Round{
 		59200, 60100, 60200, 60300, 60400, 60500, 60600, 60700, 60800, 60900,
 	}
 

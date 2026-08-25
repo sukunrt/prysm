@@ -1489,7 +1489,12 @@ func recordGloasStateMetrics(b *BeaconState) {
 	var activeBuildersBalanceGwei uint64
 	finalizedEpoch := primitives.Epoch(0)
 	if b.finalizedCheckpoint != nil {
-		finalizedEpoch = b.finalizedCheckpoint.Epoch
+		e, err := checkpointEpoch(b.finalizedCheckpoint)
+		if err != nil {
+			log.WithError(err).Error("Could not convert finalized round to epoch")
+			return
+		}
+		finalizedEpoch = e
 	}
 	for _, builder := range b.builders {
 		if builder == nil {

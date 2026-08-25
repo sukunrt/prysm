@@ -568,7 +568,7 @@ func (s *Service) markForChainStart() {
 // pruneDataColumnCache removes entries from the data column cache that are older than the finalized slot.
 func (s *Service) pruneDataColumnCache() {
 	finalizedCheckpoint := s.cfg.chain.FinalizedCheckpt()
-	finalizedSlot, err := slots.EpochStart(finalizedCheckpoint.Epoch)
+	finalizedSlot, err := slots.RoundStart(finalizedCheckpoint.Epoch)
 	if err != nil {
 		log.WithError(err).Error("Could not calculate finalized slot for cache pruning")
 		return

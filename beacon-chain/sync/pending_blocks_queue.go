@@ -606,7 +606,7 @@ func (s *Service) validatePendingSlots() error {
 	oldBlockRoots := make(map[[32]byte]bool)
 
 	cp := s.cfg.chain.FinalizedCheckpt()
-	finalizedEpoch := cp.Epoch
+	finalizedRound := cp.Epoch
 	if s.slotToPendingBlocks == nil {
 		return errors.New("slotToPendingBlocks cache can't be nil")
 	}
@@ -615,7 +615,7 @@ func (s *Service) validatePendingSlots() error {
 		slot := cacheKeyToSlot(k)
 		blks := s.pendingBlocksInCache(slot)
 		for _, b := range blks {
-			epoch := slots.ToEpoch(slot)
+			round := slots.RoundAt(slot)
 			// remove all descendant blocks of old blocks
 			if oldBlockRoots[b.Block().ParentRoot()] {
 				root, err := b.Block().HashTreeRoot()
@@ -629,7 +629,7 @@ func (s *Service) validatePendingSlots() error {
 				continue
 			}
 			// don't process old blocks
-			if finalizedEpoch > 0 && epoch <= finalizedEpoch {
+			if finalizedRound > 0 && round <= finalizedRound {
 				blkRoot, err := b.Block().HashTreeRoot()
 				if err != nil {
 					return err

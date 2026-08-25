@@ -105,16 +105,16 @@ func importAttestations(ctx context.Context, pubkey [fieldparams.BLSPubkeyLength
 		// Get signed attestation
 		sa := item.SignedAttestations[i]
 
-		// Convert source epoch to primitives.Epoch
-		source, err := helpers.EpochFromString(sa.SourceEpoch)
+		// Convert source epoch to primitives.Round
+		source, err := helpers.RoundFromString(sa.SourceEpoch)
 		if err != nil {
-			return errors.Wrap(err, "could not convert source epoch to primitives.Epoch")
+			return errors.Wrap(err, "could not convert source epoch to primitives.Round")
 		}
 
-		// Convert target epoch to primitives.Epoch
-		target, err := helpers.EpochFromString(sa.TargetEpoch)
+		// Convert target epoch to primitives.Round
+		target, err := helpers.RoundFromString(sa.TargetEpoch)
 		if err != nil {
-			return errors.Wrap(err, "could not convert target epoch to primitives.Epoch")
+			return errors.Wrap(err, "could not convert target epoch to primitives.Round")
 		}
 
 		// Create indexed attestation

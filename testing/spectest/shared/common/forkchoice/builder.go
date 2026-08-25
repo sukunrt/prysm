@@ -195,7 +195,7 @@ func (bb *Builder) Check(t testing.TB, c *Check) {
 	}
 	if c.JustifiedCheckPoint != nil {
 		cp := &ethpb.Checkpoint{
-			Epoch: primitives.Epoch(c.JustifiedCheckPoint.Epoch),
+			Epoch: primitives.Round(c.JustifiedCheckPoint.Epoch),
 			Root:  common.FromHex(c.JustifiedCheckPoint.Root),
 		}
 		got := bb.service.CurrentJustifiedCheckpt()
@@ -203,7 +203,7 @@ func (bb *Builder) Check(t testing.TB, c *Check) {
 	}
 	if c.FinalizedCheckPoint != nil {
 		cp := &ethpb.Checkpoint{
-			Epoch: primitives.Epoch(c.FinalizedCheckPoint.Epoch),
+			Epoch: primitives.Round(c.FinalizedCheckPoint.Epoch),
 			Root:  common.FromHex(c.FinalizedCheckPoint.Root),
 		}
 		got := bb.service.FinalizedCheckpt()

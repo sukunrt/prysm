@@ -31,8 +31,8 @@ func TestStore_AttestationRecordForValidator_SaveRetrieve(t *testing.T) {
 
 		attWrapper := createAttestationWrapper(
 			version.Phase0,
-			primitives.Epoch(i),
-			primitives.Epoch(i+1),
+			primitives.Round(i),
+			primitives.Round(i+1),
 			[]uint64{uint64(phase0ValidatorIndex)},
 			dataRoot[:],
 		)
@@ -46,8 +46,8 @@ func TestStore_AttestationRecordForValidator_SaveRetrieve(t *testing.T) {
 
 		attWrapper := createAttestationWrapper(
 			version.Electra,
-			primitives.Epoch(i),
-			primitives.Epoch(i+1),
+			primitives.Round(i),
+			primitives.Round(i+1),
 			[]uint64{uint64(electraValidatorIndex)},
 			dataRoot[:],
 		)
@@ -77,7 +77,7 @@ func TestStore_AttestationRecordForValidator_SaveRetrieve(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Check on a sample of validators that no attestation records are available.
 			for i := 0; i < attestationsCount; i += 100 {
-				attRecord, err := beaconDB.AttestationRecordForValidator(ctx, tc.vi, primitives.Epoch(i+1))
+				attRecord, err := beaconDB.AttestationRecordForValidator(ctx, tc.vi, primitives.Round(i+1))
 				require.NoError(t, err)
 				require.Equal(t, true, attRecord == nil)
 			}
@@ -89,7 +89,7 @@ func TestStore_AttestationRecordForValidator_SaveRetrieve(t *testing.T) {
 			// Check on a sample of validators that attestation records are available.
 			for i := 0; i < attestationsCount; i += 100 {
 				expected := attWrappers[i]
-				actual, err := beaconDB.AttestationRecordForValidator(ctx, tc.vi, primitives.Epoch(i+1))
+				actual, err := beaconDB.AttestationRecordForValidator(ctx, tc.vi, primitives.Round(i+1))
 				require.NoError(t, err)
 
 				require.DeepEqual(t, expected.IndexedAttestation.GetData().Source.Epoch, actual.IndexedAttestation.GetData().Source.Epoch)
@@ -104,14 +104,14 @@ func TestStore_LastEpochWrittenForValidators(t *testing.T) {
 
 	validatorsCount := 11000
 	indices := make([]primitives.ValidatorIndex, validatorsCount)
-	epochs := make([]primitives.Epoch, validatorsCount)
+	epochs := make([]primitives.Round, validatorsCount)
 
 	for i := range validatorsCount {
 		indices[i] = primitives.ValidatorIndex(i)
-		epochs[i] = primitives.Epoch(i)
+		epochs[i] = primitives.Round(i)
 	}
 
-	epochsByValidator := make(map[primitives.ValidatorIndex]primitives.Epoch, validatorsCount)
+	epochsByValidator := make(map[primitives.ValidatorIndex]primitives.Round, validatorsCount)
 	for i := range validatorsCount {
 		epochsByValidator[indices[i]] = epochs[i]
 	}
@@ -581,7 +581,7 @@ func BenchmarkHighestAttestations(b *testing.B) {
 	}
 	atts := make([]*slashertypes.IndexedAttestationWrapper, count)
 	for i := range count {
-		atts[i] = createAttestationWrapper(version.Phase0, primitives.Epoch(i), primitives.Epoch(i+2), indicesPerAtt[i], []byte{})
+		atts[i] = createAttestationWrapper(version.Phase0, primitives.Round(i), primitives.Round(i+2), indicesPerAtt[i], []byte{})
 	}
 
 	ctx := b.Context()
@@ -618,7 +618,7 @@ func BenchmarkStore_CheckDoubleBlockProposals(b *testing.B) {
 	}
 	atts := make([]*slashertypes.IndexedAttestationWrapper, count)
 	for i := range count {
-		atts[i] = createAttestationWrapper(version.Phase0, primitives.Epoch(i), primitives.Epoch(i+2), indicesPerAtt[i], []byte{})
+		atts[i] = createAttestationWrapper(version.Phase0, primitives.Round(i), primitives.Round(i+2), indicesPerAtt[i], []byte{})
 	}
 
 	ctx := b.Context()
@@ -657,7 +657,7 @@ func createProposalWrapper(t *testing.T, slot primitives.Slot, proposerIndex pri
 	}
 }
 
-func createAttestationWrapper(ver int, source, target primitives.Epoch, indices []uint64, dataRootBytes []byte) *slashertypes.IndexedAttestationWrapper {
+func createAttestationWrapper(ver int, source, target primitives.Round, indices []uint64, dataRootBytes []byte) *slashertypes.IndexedAttestationWrapper {
 	dataRoot := bytesutil.ToBytes32(dataRootBytes)
 	if dataRootBytes == nil {
 		dataRoot = params.BeaconConfig().ZeroHash

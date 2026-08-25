@@ -22,7 +22,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/util"
 )
 
-func setupGloas(t testing.TB, justified, finalized primitives.Epoch) *ForkChoice {
+func setupGloas(t testing.TB, justified, finalized primitives.Round) *ForkChoice {
 	t.Helper()
 	params.SetupTestConfigCleanup(t)
 	cfg := params.BeaconConfig()
@@ -38,8 +38,8 @@ func prepareGloasForkchoiceState(
 	parentRoot [32]byte,
 	blockHash [32]byte,
 	parentBlockHash [32]byte,
-	justifiedEpoch primitives.Epoch,
-	finalizedEpoch primitives.Epoch,
+	justifiedEpoch primitives.Round,
+	finalizedEpoch primitives.Round,
 ) (state.BeaconState, blocks.ROBlock, error) {
 	blockHeader := &ethpb.BeaconBlockHeader{
 		ParentRoot: parentRoot[:],

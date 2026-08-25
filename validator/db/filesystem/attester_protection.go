@@ -25,13 +25,13 @@ func (*Store) SaveEIPImportBlacklistedPublicKeys(_ context.Context, _ [][fieldpa
 	return nil
 }
 
-// SigningRootAtTargetEpoch is implemented only to satisfy the interface.
-func (*Store) SigningRootAtTargetEpoch(_ context.Context, _ [fieldparams.BLSPubkeyLength]byte, _ primitives.Epoch) ([]byte, error) {
+// SigningRootAtTargetRound is implemented only to satisfy the interface.
+func (*Store) SigningRootAtTargetRound(_ context.Context, _ [fieldparams.BLSPubkeyLength]byte, _ primitives.Round) ([]byte, error) {
 	return nil, errors.New("not implemented")
 }
 
-// LowestSignedTargetEpoch returns the lowest signed target epoch for a public key, a boolean indicating if it exists and an error.
-func (s *Store) LowestSignedTargetEpoch(_ context.Context, pubKey [fieldparams.BLSPubkeyLength]byte) (primitives.Epoch, bool, error) {
+// LowestSignedTargetRound returns the lowest signed target epoch for a public key, a boolean indicating if it exists and an error.
+func (s *Store) LowestSignedTargetRound(_ context.Context, pubKey [fieldparams.BLSPubkeyLength]byte) (primitives.Round, bool, error) {
 	// Get validator slashing protection.
 	validatorSlashingProtection, err := s.validatorSlashingProtection(pubKey)
 	if err != nil {
@@ -44,11 +44,11 @@ func (s *Store) LowestSignedTargetEpoch(_ context.Context, pubKey [fieldparams.B
 	}
 
 	// Return the lowest (and unique) signed target epoch.
-	return primitives.Epoch(*validatorSlashingProtection.LastSignedAttestationTargetEpoch), true, nil
+	return primitives.Round(*validatorSlashingProtection.LastSignedAttestationTargetEpoch), true, nil
 }
 
-// LowestSignedSourceEpoch is implemented only to satisfy the interface.
-func (s *Store) LowestSignedSourceEpoch(_ context.Context, pubKey [fieldparams.BLSPubkeyLength]byte) (primitives.Epoch, bool, error) {
+// LowestSignedSourceRound is implemented only to satisfy the interface.
+func (s *Store) LowestSignedSourceRound(_ context.Context, pubKey [fieldparams.BLSPubkeyLength]byte) (primitives.Round, bool, error) {
 	// Get validator slashing protection.
 	validatorSlashingProtection, err := s.validatorSlashingProtection(pubKey)
 	if err != nil {
@@ -61,7 +61,7 @@ func (s *Store) LowestSignedSourceEpoch(_ context.Context, pubKey [fieldparams.B
 	}
 
 	// Return the lowest (and unique) signed source epoch.
-	return primitives.Epoch(validatorSlashingProtection.LastSignedAttestationSourceEpoch), true, nil
+	return primitives.Round(validatorSlashingProtection.LastSignedAttestationSourceEpoch), true, nil
 }
 
 // AttestedPublicKeys returns the list of public keys in the database.
@@ -286,16 +286,16 @@ func (s *Store) AttestationHistoryForPubKey(
 	return []*common.AttestationRecord{
 		{
 			PubKey: pubKey,
-			Source: primitives.Epoch(validatorSlashingProtection.LastSignedAttestationSourceEpoch),
-			Target: primitives.Epoch(*validatorSlashingProtection.LastSignedAttestationTargetEpoch),
+			Source: primitives.Round(validatorSlashingProtection.LastSignedAttestationSourceEpoch),
+			Target: primitives.Round(*validatorSlashingProtection.LastSignedAttestationTargetEpoch),
 		},
 	}, nil
 }
 
 // maxSourceTargetEpoch gets the maximum source and target epoch from atts.
-func maxSourceTargetEpoch(atts []*ethpb.IndexedAttestation) (primitives.Epoch, primitives.Epoch, error) {
-	maxSourceEpoch := primitives.Epoch(0)
-	maxTargetEpoch := primitives.Epoch(0)
+func maxSourceTargetEpoch(atts []*ethpb.IndexedAttestation) (primitives.Round, primitives.Round, error) {
+	maxSourceEpoch := primitives.Round(0)
+	maxTargetEpoch := primitives.Round(0)
 
 	for _, att := range atts {
 		if att == nil || att.Data == nil || att.Data.Source == nil || att.Data.Target == nil {

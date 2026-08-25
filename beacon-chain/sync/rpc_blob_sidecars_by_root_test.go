@@ -16,6 +16,7 @@ import (
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/libp2p/go-libp2p/core/network"
 )
 
@@ -202,7 +203,7 @@ func TestBlobsByRootValidation(t *testing.T) {
 	dmc := defaultMockChain(t, ce)
 	capellaSlot := util.SlotAtEpoch(t, params.BeaconConfig().CapellaForkEpoch)
 	dmc.Slot = &capellaSlot
-	dmc.FinalizedCheckPoint = &ethpb.Checkpoint{Epoch: params.BeaconConfig().CapellaForkEpoch}
+	dmc.FinalizedCheckPoint = &ethpb.Checkpoint{Epoch: slots.RoundAt(capellaSlot)}
 	maxBlobs := params.BeaconConfig().MaxBlobsPerBlockAtEpoch(params.BeaconConfig().DenebForkEpoch)
 	cases := []*blobsTestCase{
 		{

@@ -288,7 +288,7 @@ func TestPeerChainState(t *testing.T) {
 	oldChainStartLastUpdated, err := p.ChainStateLastUpdated(id)
 	require.NoError(t, err)
 
-	finalizedEpoch := primitives.Epoch(123)
+	finalizedEpoch := primitives.Round(123)
 	p.SetChainState(id, &pb.StatusV2{FinalizedEpoch: finalizedEpoch})
 
 	resChainState, err := p.ChainState(id)
@@ -601,7 +601,7 @@ func TestTrimmedOrderedPeers(t *testing.T) {
 	})
 
 	const (
-		expectedTarget = primitives.Epoch(2)
+		expectedTarget = primitives.Round(2)
 		maxPeers       = 3
 	)
 
@@ -871,15 +871,15 @@ func TestPrunePeers_TrustedPeers(t *testing.T) {
 func TestStatus_BestPeer(t *testing.T) {
 	type peerConfig struct {
 		headSlot       primitives.Slot
-		finalizedEpoch primitives.Epoch
+		finalizedEpoch primitives.Round
 	}
 
 	tests := []struct {
 		name               string
 		peers              []*peerConfig
 		limitPeers         int
-		ourFinalizedEpoch  primitives.Epoch
-		targetEpoch        primitives.Epoch
+		ourFinalizedEpoch  primitives.Round
+		targetEpoch        primitives.Round
 		targetEpochSupport int // Denotes how many peers support returned epoch.
 	}{
 		{

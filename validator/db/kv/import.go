@@ -241,11 +241,11 @@ func transformSignedAttestations(pubKey [fieldparams.BLSPubkeyLength]byte, atts 
 	historicalAtts := make([]*common.AttestationRecord, 0)
 
 	for _, attestation := range atts {
-		target, err := helpers.EpochFromString(attestation.TargetEpoch)
+		target, err := helpers.RoundFromString(attestation.TargetEpoch)
 		if err != nil {
 			return nil, fmt.Errorf("%s is not a valid epoch: %w", attestation.TargetEpoch, err)
 		}
-		source, err := helpers.EpochFromString(attestation.SourceEpoch)
+		source, err := helpers.RoundFromString(attestation.SourceEpoch)
 		if err != nil {
 			return nil, fmt.Errorf("%s is not a valid epoch: %w", attestation.SourceEpoch, err)
 		}
@@ -307,8 +307,8 @@ func filterSlashablePubKeysFromAttestations(
 	// First we need to find attestations that are slashable with respect to other
 	// attestations within the same JSON import.
 	for pubKey, signedAtts := range signedAttsByPubKey {
-		signingRootsByTarget := make(map[primitives.Epoch][]byte)
-		targetEpochsBySource := make(map[primitives.Epoch][]primitives.Epoch)
+		signingRootsByTarget := make(map[primitives.Round][]byte)
+		targetEpochsBySource := make(map[primitives.Round][]primitives.Round)
 
 		bar := common.InitializeProgressBar(
 			len(signedAtts),
@@ -422,7 +422,7 @@ func saveAttestations(ctx context.Context, attestingHistoryByPubKey map[[fieldpa
 	return nil
 }
 
-func createAttestation(source, target primitives.Epoch) *ethpb.IndexedAttestation {
+func createAttestation(source, target primitives.Round) *ethpb.IndexedAttestation {
 	return &ethpb.IndexedAttestation{
 		Data: &ethpb.AttestationData{
 			Source: &ethpb.Checkpoint{

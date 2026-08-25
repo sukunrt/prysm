@@ -201,7 +201,7 @@ func (s *Store) checkpointPayloadHashForRoot(root [32]byte) [32]byte {
 
 // updateBestDescendantPayloadNode updates the best descendant of this node and its
 // children.
-func (s *Store) updateBestDescendantPayloadNode(ctx context.Context, n *PayloadNode, justifiedEpoch, finalizedEpoch, currentEpoch primitives.Epoch) error {
+func (s *Store) updateBestDescendantPayloadNode(ctx context.Context, n *PayloadNode, justifiedEpoch, finalizedEpoch, currentEpoch primitives.Round) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -248,7 +248,7 @@ func (s *Store) updateBestDescendantPayloadNode(ctx context.Context, n *PayloadN
 
 // updateBestDescendantConsensusNode updates the best descendant of this node and its
 // children.
-func (s *Store) updateBestDescendantConsensusNode(ctx context.Context, n *Node, justifiedEpoch, finalizedEpoch, currentEpoch primitives.Epoch) error {
+func (s *Store) updateBestDescendantConsensusNode(ctx context.Context, n *Node, justifiedEpoch, finalizedEpoch, currentEpoch primitives.Round) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}

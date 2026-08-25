@@ -93,8 +93,8 @@ func TestMinSpanChunksSlice_CheckSlashable(t *testing.T) {
 				historyLength:      3,
 			}
 			validatorIdx := primitives.ValidatorIndex(1)
-			source := primitives.Epoch(1)
-			target := primitives.Epoch(2)
+			source := primitives.Round(1)
+			target := primitives.Round(2)
 			att := createAttestationWrapperEmptySig(t, v, source, target, nil, nil)
 
 			// A faulty chunk should lead to error.
@@ -128,8 +128,8 @@ func TestMinSpanChunksSlice_CheckSlashable(t *testing.T) {
 			// Next up we initialize an empty chunks slice and mark an attestation
 			// with (source 1, target 2) as attested.
 			chunk = EmptyMinSpanChunksSlice(params)
-			source = primitives.Epoch(1)
-			target = primitives.Epoch(2)
+			source = primitives.Round(1)
+			target = primitives.Round(2)
 			att = createAttestationWrapperEmptySig(t, v, source, target, nil, nil)
 			chunkIndex := uint64(0)
 			startEpoch := target
@@ -139,8 +139,8 @@ func TestMinSpanChunksSlice_CheckSlashable(t *testing.T) {
 
 			// Next up, we create a surrounding vote, but it should NOT be slashable
 			// because we DO NOT have an existing attestation record in our database at the min target epoch.
-			source = primitives.Epoch(0)
-			target = primitives.Epoch(3)
+			source = primitives.Round(0)
+			target = primitives.Round(3)
 			surroundingVote := createAttestationWrapperEmptySig(t, v, source, target, nil, nil)
 
 			slashing, err = chunk.CheckSlashable(ctx, slasherDB, validatorIdx, surroundingVote)
@@ -183,8 +183,8 @@ func TestMinSpanChunksSlice_CheckSlashable_DifferentVersions(t *testing.T) {
 		historyLength:      3,
 	}
 	validatorIdx := primitives.ValidatorIndex(1)
-	source := primitives.Epoch(1)
-	target := primitives.Epoch(2)
+	source := primitives.Round(1)
+	target := primitives.Round(2)
 
 	// We create a vote with Phase0 version.
 	att := createAttestationWrapperEmptySig(t, version.Phase0, source, target, nil, nil)
@@ -198,8 +198,8 @@ func TestMinSpanChunksSlice_CheckSlashable_DifferentVersions(t *testing.T) {
 	require.NoError(t, err)
 
 	// We create a surrounding vote with Electra version.
-	source = primitives.Epoch(0)
-	target = primitives.Epoch(3)
+	source = primitives.Round(0)
+	target = primitives.Round(3)
 	surroundingVote := createAttestationWrapperEmptySig(t, version.Electra, source, target, nil, nil)
 
 	// We save the old attestation record, then check if the surrounding vote is indeed slashable.
@@ -231,8 +231,8 @@ func TestMaxSpanChunksSlice_CheckSlashable(t *testing.T) {
 				historyLength:      4,
 			}
 			validatorIdx := primitives.ValidatorIndex(1)
-			source := primitives.Epoch(1)
-			target := primitives.Epoch(2)
+			source := primitives.Round(1)
+			target := primitives.Round(2)
 			att := createAttestationWrapperEmptySig(t, v, source, target, nil, nil)
 
 			// A faulty chunk should lead to error.
@@ -266,8 +266,8 @@ func TestMaxSpanChunksSlice_CheckSlashable(t *testing.T) {
 			// Next up we initialize an empty chunks slice and mark an attestation
 			// with (source 0, target 3) as attested.
 			chunk = EmptyMaxSpanChunksSlice(params)
-			source = primitives.Epoch(0)
-			target = primitives.Epoch(3)
+			source = primitives.Round(0)
+			target = primitives.Round(3)
 			att = createAttestationWrapperEmptySig(t, v, source, target, nil, nil)
 			chunkIndex := uint64(0)
 			startEpoch := source
@@ -277,8 +277,8 @@ func TestMaxSpanChunksSlice_CheckSlashable(t *testing.T) {
 
 			// Next up, we create a surrounded vote, but it should NOT be slashable
 			// because we DO NOT have an existing attestation record in our database at the max target epoch.
-			source = primitives.Epoch(1)
-			target = primitives.Epoch(2)
+			source = primitives.Round(1)
+			target = primitives.Round(2)
 			surroundedVote := createAttestationWrapperEmptySig(t, v, source, target, nil, nil)
 
 			slashing, err = chunk.CheckSlashable(ctx, slasherDB, validatorIdx, surroundedVote)
@@ -324,8 +324,8 @@ func TestMaxSpanChunksSlice_CheckSlashable_DifferentVersions(t *testing.T) {
 		historyLength:      4,
 	}
 	validatorIdx := primitives.ValidatorIndex(1)
-	source := primitives.Epoch(0)
-	target := primitives.Epoch(3)
+	source := primitives.Round(0)
+	target := primitives.Round(3)
 
 	// We create a vote with Phase0 version.
 	att := createAttestationWrapperEmptySig(t, version.Phase0, source, target, nil, nil)
@@ -337,8 +337,8 @@ func TestMaxSpanChunksSlice_CheckSlashable_DifferentVersions(t *testing.T) {
 	require.NoError(t, err)
 
 	// We create a surrounded vote with Electra version.
-	source = primitives.Epoch(1)
-	target = primitives.Epoch(2)
+	source = primitives.Round(1)
+	target = primitives.Round(2)
 	surroundedVote := createAttestationWrapperEmptySig(t, version.Electra, source, target, nil, nil)
 
 	// We save the old attestation record, then check if the surrounded vote is indeed slashable.
@@ -398,7 +398,7 @@ func TestMinSpanChunksSlice_Update_MultipleChunks(t *testing.T) {
 		historyLength:      4,
 	}
 	chunk := EmptyMinSpanChunksSlice(params)
-	target := primitives.Epoch(3)
+	target := primitives.Round(3)
 	chunkIndex := uint64(1)
 	validatorIndex := primitives.ValidatorIndex(0)
 	startEpoch := target
@@ -415,7 +415,7 @@ func TestMinSpanChunksSlice_Update_MultipleChunks(t *testing.T) {
 	chunk = EmptyMinSpanChunksSlice(params)
 	chunkIndex = uint64(0)
 	validatorIndex = primitives.ValidatorIndex(0)
-	startEpoch = primitives.Epoch(1)
+	startEpoch = primitives.Round(1)
 	currentEpoch = target
 	keepGoing, err = chunk.Update(chunkIndex, currentEpoch, validatorIndex, startEpoch, target)
 	require.NoError(t, err)
@@ -431,10 +431,10 @@ func TestMaxSpanChunksSlice_Update_MultipleChunks(t *testing.T) {
 		historyLength:      4,
 	}
 	chunk := EmptyMaxSpanChunksSlice(params)
-	target := primitives.Epoch(3)
+	target := primitives.Round(3)
 	chunkIndex := uint64(0)
 	validatorIdx := primitives.ValidatorIndex(0)
-	startEpoch := primitives.Epoch(0)
+	startEpoch := primitives.Round(0)
 	currentEpoch := target
 	keepGoing, err := chunk.Update(chunkIndex, currentEpoch, validatorIdx, startEpoch, target)
 	require.NoError(t, err)
@@ -448,7 +448,7 @@ func TestMaxSpanChunksSlice_Update_MultipleChunks(t *testing.T) {
 	chunk = EmptyMaxSpanChunksSlice(params)
 	chunkIndex = uint64(1)
 	validatorIdx = primitives.ValidatorIndex(0)
-	startEpoch = primitives.Epoch(2)
+	startEpoch = primitives.Round(2)
 	currentEpoch = target
 	keepGoing, err = chunk.Update(chunkIndex, currentEpoch, validatorIdx, startEpoch, target)
 	require.NoError(t, err)
@@ -487,7 +487,7 @@ func TestMinSpanChunksSlice_Update_SingleChunk(t *testing.T) {
 		historyLength:      2,
 	}
 	chunk := EmptyMinSpanChunksSlice(params)
-	target := primitives.Epoch(1)
+	target := primitives.Round(1)
 	chunkIndex := uint64(0)
 	validatorIdx := primitives.ValidatorIndex(0)
 	startEpoch := target
@@ -506,10 +506,10 @@ func TestMaxSpanChunksSlice_Update_SingleChunk(t *testing.T) {
 		historyLength:      4,
 	}
 	chunk := EmptyMaxSpanChunksSlice(params)
-	target := primitives.Epoch(3)
+	target := primitives.Round(3)
 	chunkIndex := uint64(0)
 	validatorIdx := primitives.ValidatorIndex(0)
-	startEpoch := primitives.Epoch(0)
+	startEpoch := primitives.Round(0)
 	currentEpoch := target
 	keepGoing, err := chunk.Update(chunkIndex, currentEpoch, validatorIdx, startEpoch, target)
 	require.NoError(t, err)
@@ -520,14 +520,14 @@ func TestMaxSpanChunksSlice_Update_SingleChunk(t *testing.T) {
 
 func TestMinSpanChunksSlice_StartEpoch(t *testing.T) {
 	type args struct {
-		sourceEpoch  primitives.Epoch
-		currentEpoch primitives.Epoch
+		sourceEpoch  primitives.Round
+		currentEpoch primitives.Round
 	}
 	tests := []struct {
 		name           string
 		params         *Parameters
 		args           args
-		wantEpoch      primitives.Epoch
+		wantEpoch      primitives.Round
 		shouldNotExist bool
 	}{
 		{
@@ -586,14 +586,14 @@ func TestMinSpanChunksSlice_StartEpoch(t *testing.T) {
 
 func TestMaxSpanChunksSlice_StartEpoch(t *testing.T) {
 	type args struct {
-		sourceEpoch  primitives.Epoch
-		currentEpoch primitives.Epoch
+		sourceEpoch  primitives.Round
+		currentEpoch primitives.Round
 	}
 	tests := []struct {
 		name           string
 		params         *Parameters
 		args           args
-		wantEpoch      primitives.Epoch
+		wantEpoch      primitives.Round
 		shouldNotExist bool
 	}{
 		{
@@ -640,8 +640,8 @@ func TestMinSpanChunksSlice_NextChunkStartEpoch(t *testing.T) {
 	tests := []struct {
 		name       string
 		params     *Parameters
-		startEpoch primitives.Epoch
-		want       primitives.Epoch
+		startEpoch primitives.Round
+		want       primitives.Round
 	}{
 		{
 			name: "Start epoch 0",
@@ -686,8 +686,8 @@ func TestMaxSpanChunksSlice_NextChunkStartEpoch(t *testing.T) {
 	tests := []struct {
 		name       string
 		params     *Parameters
-		startEpoch primitives.Epoch
-		want       primitives.Epoch
+		startEpoch primitives.Round
+		want       primitives.Round
 	}{
 		{
 			name: "Start epoch 0",
@@ -737,14 +737,14 @@ func Test_chunkDataAtEpoch_SetRetrieve(t *testing.T) {
 	}
 	chunk := []uint16{2, 2, 2, 2, 2, 2}
 	validatorIdx := primitives.ValidatorIndex(1)
-	epochInChunk := primitives.Epoch(1)
+	epochInChunk := primitives.Round(1)
 
 	// We expect a chunk with the wrong length to throw an error.
 	_, err := chunkDataAtEpoch(params, []uint16{}, validatorIdx, epochInChunk)
 	require.ErrorContains(t, "chunk has wrong length", err)
 
 	// We update the value for epoch 1 using target epoch 6.
-	targetEpoch := primitives.Epoch(6)
+	targetEpoch := primitives.Round(6)
 	err = setChunkDataAtEpoch(params, chunk, validatorIdx, epochInChunk, targetEpoch)
 	require.NoError(t, err)
 

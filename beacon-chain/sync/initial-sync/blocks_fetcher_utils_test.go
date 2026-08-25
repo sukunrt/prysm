@@ -162,7 +162,7 @@ func TestBlocksFetcher_findFork(t *testing.T) {
 	// Chain contains blocks from 8 epochs (from 0 to 7, 256 is the start slot of epoch8).
 	chain1 := extendBlockSequence(t, []*ethpb.SignedBeaconBlock{}, 250)
 	finalizedSlot := primitives.Slot(63)
-	finalizedEpoch := slots.ToEpoch(finalizedSlot)
+	finalizedEpoch := slots.RoundAt(finalizedSlot)
 
 	genesisBlock := chain1[0]
 	util.SaveBlock(t, t.Context(), beaconDB, genesisBlock)
@@ -472,7 +472,7 @@ func TestBlocksFetcher_findAncestor(t *testing.T) {
 
 	knownBlocks := extendBlockSequence(t, []*ethpb.SignedBeaconBlock{}, 128)
 	finalizedSlot := primitives.Slot(63)
-	finalizedEpoch := slots.ToEpoch(finalizedSlot)
+	finalizedEpoch := slots.RoundAt(finalizedSlot)
 
 	genesisBlock := knownBlocks[0]
 	util.SaveBlock(t, t.Context(), beaconDB, genesisBlock)
@@ -536,7 +536,7 @@ func TestBlocksFetcher_currentHeadAndTargetEpochs(t *testing.T) {
 		name               string
 		syncMode           syncMode
 		peers              []*peerData
-		ourFinalizedEpoch  primitives.Epoch
+		ourFinalizedEpoch  primitives.Round
 		ourHeadSlot        primitives.Slot
 		expectedHeadEpoch  primitives.Epoch
 		targetEpoch        primitives.Epoch
@@ -627,11 +627,17 @@ func TestBlocksFetcher_currentHeadAndTargetEpochs(t *testing.T) {
 			require.NoError(t, mc.State.SetSlot(tt.ourHeadSlot))
 			fetcher.mode = tt.syncMode
 
-			// Head and target epochs calculation.
-			headEpoch, targetEpoch, peers := fetcher.calculateHeadAndTargetEpochs()
-			assert.Equal(t, tt.expectedHeadEpoch, headEpoch, "Unexpected head epoch")
-			assert.Equal(t, tt.targetEpoch, targetEpoch, "Unexpected target epoch")
-			assert.Equal(t, tt.targetEpochSupport, len(peers), "Unexpected number of peers supporting target epoch")
+			// Head and target bound calculation. The bounds are the first slot past the
+			// head/target unit, so under the identity configs they are the epoch starts of
+			// expectedHeadEpoch+1 and targetEpoch+1.
+			headBound, targetBound, peers := fetcher.calculateHeadAndTargetBounds()
+			wantHeadBound, err := slots.EpochStart(tt.expectedHeadEpoch + 1)
+			require.NoError(t, err)
+			wantTargetBound, err := slots.EpochStart(tt.targetEpoch + 1)
+			require.NoError(t, err)
+			assert.Equal(t, wantHeadBound, headBound, "Unexpected head bound")
+			assert.Equal(t, wantTargetBound, targetBound, "Unexpected target bound")
+			assert.Equal(t, tt.targetEpochSupport, len(peers), "Unexpected number of peers supporting target")
 
 			// Best finalized and non-finalized slots.
 			finalizedSlot := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(tt.targetEpoch))

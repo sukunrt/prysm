@@ -19,7 +19,7 @@ import (
 // Takes in a list of indexed attestation wrappers and returns any
 // found attester slashings to the caller.
 func (s *Service) checkSlashableAttestations(
-	ctx context.Context, currentEpoch primitives.Epoch, atts []*slashertypes.IndexedAttestationWrapper,
+	ctx context.Context, currentEpoch primitives.Round, atts []*slashertypes.IndexedAttestationWrapper,
 ) (map[[fieldparams.RootLength]byte]ethpb.AttSlashing, error) {
 	slashings := map[[fieldparams.RootLength]byte]ethpb.AttSlashing{}
 
@@ -53,7 +53,7 @@ func (s *Service) checkSlashableAttestations(
 func (s *Service) checkSurroundVotes(
 	ctx context.Context,
 	attWrappers []*slashertypes.IndexedAttestationWrapper,
-	currentEpoch primitives.Epoch,
+	currentEpoch primitives.Round,
 ) (map[[fieldparams.RootLength]byte]ethpb.AttSlashing, error) {
 	// With 256 validators and 16 epochs per chunk, there is 4096 `uint16` elements per chunk.
 	// 4096 `uint16` elements = 8192 bytes = 8KB
@@ -153,7 +153,7 @@ func (s *Service) checkDoubleVotes(
 
 	type attestationInfo struct {
 		validatorIndex uint64
-		epoch          primitives.Epoch
+		epoch          primitives.Round
 	}
 
 	slashings := map[[fieldparams.RootLength]byte]ethpb.AttSlashing{}
@@ -360,7 +360,7 @@ func (s *Service) checkDoubleVotes(
 func (s *Service) updatedChunkByChunkIndex(
 	ctx context.Context,
 	chunkKind slashertypes.ChunkKind,
-	currentEpoch primitives.Epoch,
+	currentEpoch primitives.Round,
 	validatorChunkIndex uint64,
 ) (map[uint64]Chunker, error) {
 	// Every validator may have a first epoch to update.
@@ -373,7 +373,7 @@ func (s *Service) updatedChunkByChunkIndex(
 	// minFirstEpochToUpdate is set to the smallest first epoch to update for all validators in the chunk
 	// corresponding to the `validatorChunkIndex`.
 	var (
-		minFirstEpochToUpdate *primitives.Epoch
+		minFirstEpochToUpdate *primitives.Round
 		neededChunkIndexesMap map[uint64]bool
 
 		err error
@@ -443,8 +443,8 @@ func (s *Service) updatedChunkByChunkIndex(
 // it loops over the validator indexes and finds the first epoch to update for each validator index.
 func (s *Service) findNeededChunkIndexes(
 	validatorIndexes []primitives.ValidatorIndex,
-	currentEpoch primitives.Epoch,
-	minFirstEpochToUpdate *primitives.Epoch,
+	currentEpoch primitives.Round,
+	minFirstEpochToUpdate *primitives.Round,
 ) (map[uint64]bool, error) {
 	neededChunkIndexesMap := map[uint64]bool{}
 
@@ -480,13 +480,13 @@ func (s *Service) findNeededChunkIndexes(
 
 // firstEpochToUpdate, given a validator index and the current epoch, returns a boolean indicating
 // if there is an epoch to write. If it is the case, it returns the first epoch to write.
-func (s *Service) firstEpochToUpdate(validatorIndex primitives.ValidatorIndex, currentEpoch primitives.Epoch) (bool, primitives.Epoch, error) {
+func (s *Service) firstEpochToUpdate(validatorIndex primitives.ValidatorIndex, currentEpoch primitives.Round) (bool, primitives.Round, error) {
 	latestEpochUpdated, ok := s.latestEpochUpdatedForValidator[validatorIndex]
 
 	// Start from the epoch just after the latest updated epoch.
 	epochToUpdate, err := latestEpochUpdated.SafeAdd(1)
 	if err != nil {
-		return false, primitives.Epoch(0), errors.Wrap(err, "could not add 1 to latest updated epoch")
+		return false, primitives.Round(0), errors.Wrap(err, "could not add 1 to latest updated epoch")
 	}
 
 	if !ok {
@@ -495,12 +495,12 @@ func (s *Service) firstEpochToUpdate(validatorIndex primitives.ValidatorIndex, c
 
 	if latestEpochUpdated == currentEpoch {
 		// If the latest updated epoch is the current epoch, we do not need to update anything.
-		return false, primitives.Epoch(0), nil
+		return false, primitives.Round(0), nil
 	}
 
 	// Latest updated epoch should not be greater than the current epoch.
 	if latestEpochUpdated > currentEpoch {
-		return false, primitives.Epoch(0), errors.Errorf("epoch to write `%d` should not be greater than the current epoch `%d`", epochToUpdate, currentEpoch)
+		return false, primitives.Round(0), errors.Errorf("epoch to write `%d` should not be greater than the current epoch `%d`", epochToUpdate, currentEpoch)
 	}
 
 	// It is useless to update more than `historyLength` epochs, since
@@ -526,7 +526,7 @@ func (s *Service) updateSpans(
 	attWrapperByChunkIdx map[uint64][]*slashertypes.IndexedAttestationWrapper,
 	kind slashertypes.ChunkKind,
 	validatorChunkIndex uint64,
-	currentEpoch primitives.Epoch,
+	currentEpoch primitives.Round,
 ) (map[[fieldparams.RootLength]byte]ethpb.AttSlashing, error) {
 	ctx, span := trace.StartSpan(ctx, "Slasher.updateSpans")
 	defer span.End()
@@ -591,7 +591,7 @@ func (s *Service) applyAttestationForValidator(
 	chunkKind slashertypes.ChunkKind,
 	validatorChunkIndex uint64,
 	validatorIndex primitives.ValidatorIndex,
-	currentEpoch primitives.Epoch,
+	currentEpoch primitives.Round,
 ) (ethpb.AttSlashing, error) {
 	ctx, span := trace.StartSpan(ctx, "Slasher.applyAttestationForValidator")
 	defer span.End()

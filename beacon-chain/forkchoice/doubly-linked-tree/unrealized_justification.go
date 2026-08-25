@@ -14,7 +14,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (s *Store) setUnrealizedJustifiedEpoch(root [32]byte, epoch primitives.Epoch) error {
+func (s *Store) setUnrealizedJustifiedEpoch(root [32]byte, epoch primitives.Round) error {
 	en, ok := s.emptyNodeByRoot[root]
 	if !ok || en == nil {
 		return errors.Wrap(ErrNilNode, "could not set unrealized justified epoch")
@@ -26,7 +26,7 @@ func (s *Store) setUnrealizedJustifiedEpoch(root [32]byte, epoch primitives.Epoc
 	return nil
 }
 
-func (s *Store) setUnrealizedFinalizedEpoch(root [32]byte, epoch primitives.Epoch) error {
+func (s *Store) setUnrealizedFinalizedEpoch(root [32]byte, epoch primitives.Round) error {
 	en, ok := s.emptyNodeByRoot[root]
 	if !ok || en == nil {
 		return errors.Wrap(ErrNilNode, "could not set unrealized finalized epoch")
@@ -64,14 +64,14 @@ func (s *Store) pullTips(state state.BeaconState, node *Node, jc, fc *ethpb.Chec
 		return jc, fc
 	}
 	pn := node.parent.node
-	currentEpoch := slots.ToEpoch(slots.CurrentSlot(s.genesisTime))
+	currentRound := slots.RoundAt(slots.CurrentSlot(s.genesisTime))
 	stateSlot := state.Slot()
-	stateEpoch := slots.ToEpoch(stateSlot)
-	currJustified := pn.unrealizedJustifiedEpoch == currentEpoch
-	prevJustified := pn.unrealizedJustifiedEpoch+1 == currentEpoch
-	tooEarlyForCurr := slots.SinceEpochStarts(stateSlot)*3 < params.BeaconConfig().SlotsPerEpoch*2
+	stateRound := slots.RoundAt(stateSlot)
+	currJustified := pn.unrealizedJustifiedEpoch == currentRound
+	prevJustified := pn.unrealizedJustifiedEpoch+1 == currentRound
+	tooEarlyForCurr := slots.SinceRoundStarts(stateSlot)*3 < params.BeaconConfig().SlotsPerRound*2
 	// Exit early if it's justified or too early to be justified.
-	if currJustified || (stateEpoch == currentEpoch && prevJustified && tooEarlyForCurr) {
+	if currJustified || (stateRound == currentRound && prevJustified && tooEarlyForCurr) {
 		node.unrealizedJustifiedEpoch = pn.unrealizedJustifiedEpoch
 		node.unrealizedFinalizedEpoch = pn.unrealizedFinalizedEpoch
 		return jc, fc
@@ -100,7 +100,7 @@ func (s *Store) pullTips(state state.BeaconState, node *Node, jc, fc *ethpb.Chec
 
 	// Update node's checkpoints.
 	node.unrealizedJustifiedEpoch, node.unrealizedFinalizedEpoch = uj.Epoch, uf.Epoch
-	if stateEpoch < currentEpoch {
+	if stateRound < currentRound {
 		jc, fc = uj, uf
 		node.justifiedEpoch = uj.Epoch
 		node.finalizedEpoch = uf.Epoch

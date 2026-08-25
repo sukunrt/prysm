@@ -109,7 +109,7 @@ func TestSlotAboveFinalized(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			finalizedCB := func() *forkchoicetypes.Checkpoint {
 				return &forkchoicetypes.Checkpoint{
-					Epoch: slots.ToEpoch(c.finalizedSlot),
+					Epoch: slots.RoundAt(c.finalizedSlot),
 					Root:  [32]byte{},
 				}
 			}
@@ -454,7 +454,7 @@ func TestSidecarProposerExpected(t *testing.T) {
 	_, blobs := util.GenerateTestDenebBlockWithSidecar(t, [32]byte{}, 1, 1)
 	b := blobs[0]
 	t.Run("state lookup failure", func(t *testing.T) {
-		ini := Initializer{shared: &sharedResources{sr: sbrNotFound(t, b.ParentRoot()), pc: &mockProposerCache{}, fc: &mockForkchoicer{TargetRootForEpochCB: fcReturnsTargetRoot([32]byte{})}}}
+		ini := Initializer{shared: &sharedResources{sr: sbrNotFound(t, b.ParentRoot()), pc: &mockProposerCache{}, fc: &mockForkchoicer{TargetRootForRoundCB: fcReturnsTargetRoot([32]byte{})}}}
 		v := ini.NewBlobVerifier(b, GossipBlobSidecarRequirements)
 		require.ErrorIs(t, v.SidecarProposerExpected(ctx), errSidecarUnexpectedProposer)
 		require.Equal(t, true, v.results.executed(RequireSidecarProposerExpected))
@@ -468,7 +468,7 @@ func TestSidecarProposerExpected(t *testing.T) {
 				return b.ProposerIndex(), nil
 			},
 		}
-		ini := Initializer{shared: &sharedResources{sr: sbrForValOverride(b.ProposerIndex(), &ethpb.Validator{}), pc: pc, fc: &mockForkchoicer{TargetRootForEpochCB: fcReturnsTargetRoot([32]byte{})}}}
+		ini := Initializer{shared: &sharedResources{sr: sbrForValOverride(b.ProposerIndex(), &ethpb.Validator{}), pc: pc, fc: &mockForkchoicer{TargetRootForRoundCB: fcReturnsTargetRoot([32]byte{})}}}
 		v := ini.NewBlobVerifier(b, GossipBlobSidecarRequirements)
 		require.NoError(t, v.SidecarProposerExpected(ctx))
 		require.Equal(t, true, v.results.executed(RequireSidecarProposerExpected))
@@ -481,7 +481,7 @@ func TestSidecarProposerExpected(t *testing.T) {
 				return b.ProposerIndex() + 1, nil
 			},
 		}
-		ini := Initializer{shared: &sharedResources{sr: sbrForValOverride(b.ProposerIndex(), &ethpb.Validator{}), pc: pc, fc: &mockForkchoicer{TargetRootForEpochCB: fcReturnsTargetRoot([32]byte{})}}}
+		ini := Initializer{shared: &sharedResources{sr: sbrForValOverride(b.ProposerIndex(), &ethpb.Validator{}), pc: pc, fc: &mockForkchoicer{TargetRootForRoundCB: fcReturnsTargetRoot([32]byte{})}}}
 		v := ini.NewBlobVerifier(b, GossipBlobSidecarRequirements)
 		require.ErrorIs(t, v.SidecarProposerExpected(ctx), errSidecarUnexpectedProposer)
 		require.Equal(t, true, v.results.executed(RequireSidecarProposerExpected))
@@ -494,7 +494,7 @@ func TestSidecarProposerExpected(t *testing.T) {
 				return 0, errors.New("ComputeProposer failed")
 			},
 		}
-		ini := Initializer{shared: &sharedResources{sr: sbrForValOverride(b.ProposerIndex(), &ethpb.Validator{}), pc: pc, fc: &mockForkchoicer{TargetRootForEpochCB: fcReturnsTargetRoot([32]byte{})}}}
+		ini := Initializer{shared: &sharedResources{sr: sbrForValOverride(b.ProposerIndex(), &ethpb.Validator{}), pc: pc, fc: &mockForkchoicer{TargetRootForRoundCB: fcReturnsTargetRoot([32]byte{})}}}
 		v := ini.NewBlobVerifier(b, GossipBlobSidecarRequirements)
 		require.ErrorIs(t, v.SidecarProposerExpected(ctx), errSidecarUnexpectedProposer)
 		require.Equal(t, true, v.results.executed(RequireSidecarProposerExpected))
@@ -534,7 +534,7 @@ type mockForkchoicer struct {
 	IsCanonicalCB           func(root [32]byte) bool
 	SlotCB                  func([32]byte) (primitives.Slot, error)
 	DependentRootForEpochCB func([32]byte, primitives.Epoch) ([32]byte, error)
-	TargetRootForEpochCB    func([32]byte, primitives.Epoch) ([32]byte, error)
+	TargetRootForRoundCB    func([32]byte, primitives.Round) ([32]byte, error)
 }
 
 var _ Forkchoicer = &mockForkchoicer{}
@@ -559,12 +559,12 @@ func (m *mockForkchoicer) DependentRootForEpoch(root [32]byte, epoch primitives.
 	return m.DependentRootForEpochCB(root, epoch)
 }
 
-func (m *mockForkchoicer) TargetRootForEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
-	return m.TargetRootForEpochCB(root, epoch)
+func (m *mockForkchoicer) TargetRootForRound(root [32]byte, round primitives.Round) ([32]byte, error) {
+	return m.TargetRootForRoundCB(root, round)
 }
 
-func fcReturnsTargetRoot(root [32]byte) func([32]byte, primitives.Epoch) ([32]byte, error) {
-	return func([32]byte, primitives.Epoch) ([32]byte, error) {
+func fcReturnsTargetRoot(root [32]byte) func([32]byte, primitives.Round) ([32]byte, error) {
+	return func([32]byte, primitives.Round) ([32]byte, error) {
 		return root, nil
 	}
 }

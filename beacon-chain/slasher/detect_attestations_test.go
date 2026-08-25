@@ -32,8 +32,8 @@ func Test_processAttestations(t *testing.T) {
 	type (
 		attestationInfo struct {
 			ver             int
-			source          primitives.Epoch
-			target          primitives.Epoch
+			source          primitives.Round
+			target          primitives.Round
 			indices         []uint64
 			beaconBlockRoot []byte
 		}
@@ -45,7 +45,7 @@ func Test_processAttestations(t *testing.T) {
 		}
 
 		step struct {
-			currentEpoch          primitives.Epoch
+			currentEpoch          primitives.Round
 			attestationsInfo      []*attestationInfo
 			expectedSlashingsInfo []*slashingInfo
 		}
@@ -761,7 +761,7 @@ func Test_processAttestations(t *testing.T) {
 					}
 
 					// Get the currentSlot for the current epoch.
-					currentSlot, err := slots.EpochStart(step.currentEpoch)
+					currentSlot, err := slots.RoundStart(step.currentEpoch)
 					require.NoError(t, err)
 
 					// Process the attestations.
@@ -798,8 +798,8 @@ func Test_processQueuedAttestations_MultipleChunkIndices(t *testing.T) {
 	// What we want to test here is if we can proceed
 	// with processing queued attestations once the chunk index changes.
 	// For example, epochs 0 - 15 are chunk 0, epochs 16 - 31 are chunk 1, etc.
-	startEpoch := primitives.Epoch(slasherParams.chunkSize)
-	endEpoch := primitives.Epoch(slasherParams.chunkSize + 1)
+	startEpoch := primitives.Round(slasherParams.chunkSize)
+	endEpoch := primitives.Round(slasherParams.chunkSize + 1)
 
 	currentTime := time.Now()
 	totalSlots := uint64(startEpoch) * uint64(params.BeaconConfig().SlotsPerEpoch)
@@ -831,8 +831,8 @@ func Test_processQueuedAttestations_MultipleChunkIndices(t *testing.T) {
 	}()
 
 	for i := startEpoch; i <= endEpoch; i++ {
-		source := primitives.Epoch(0)
-		target := primitives.Epoch(0)
+		source := primitives.Round(0)
+		target := primitives.Round(0)
 		if i != 0 {
 			source = i - 1
 			target = i
@@ -842,7 +842,7 @@ func Test_processQueuedAttestations_MultipleChunkIndices(t *testing.T) {
 		att := createAttestationWrapperEmptySig(t, version.Phase0, source, target, []uint64{0}, sr[:])
 		s.attsQueue = newAttestationsQueue()
 		s.attsQueue.push(att)
-		slot, err := slots.EpochStart(i)
+		slot, err := slots.RoundStart(i)
 		require.NoError(t, err)
 		require.NoError(t, mockChain.State.SetSlot(slot))
 		s.serviceCfg.HeadStateFetcher = mockChain
@@ -864,7 +864,7 @@ func Test_processQueuedAttestations_OverlappingChunkIndices(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	slasherParams := DefaultParams()
 
-	startEpoch := primitives.Epoch(slasherParams.chunkSize)
+	startEpoch := primitives.Round(slasherParams.chunkSize)
 
 	currentTime := time.Now()
 	totalSlots := uint64(startEpoch) * uint64(params.BeaconConfig().SlotsPerEpoch)
@@ -896,14 +896,14 @@ func Test_processQueuedAttestations_OverlappingChunkIndices(t *testing.T) {
 	}()
 
 	// We create two attestations fully spanning chunk indices 0 and chunk 1
-	att1 := createAttestationWrapperEmptySig(t, version.Phase0, primitives.Epoch(slasherParams.chunkSize-2), primitives.Epoch(slasherParams.chunkSize), []uint64{0, 1}, nil)
-	att2 := createAttestationWrapperEmptySig(t, version.Phase0, primitives.Epoch(slasherParams.chunkSize-1), primitives.Epoch(slasherParams.chunkSize+1), []uint64{0, 1}, nil)
+	att1 := createAttestationWrapperEmptySig(t, version.Phase0, primitives.Round(slasherParams.chunkSize-2), primitives.Round(slasherParams.chunkSize), []uint64{0, 1}, nil)
+	att2 := createAttestationWrapperEmptySig(t, version.Phase0, primitives.Round(slasherParams.chunkSize-1), primitives.Round(slasherParams.chunkSize+1), []uint64{0, 1}, nil)
 
 	// We attempt to process the batch.
 	s.attsQueue = newAttestationsQueue()
 	s.attsQueue.push(att1)
 	s.attsQueue.push(att2)
-	slot, err := slots.EpochStart(att2.IndexedAttestation.GetData().Target.Epoch)
+	slot, err := slots.RoundStart(att2.IndexedAttestation.GetData().Target.Epoch)
 	require.NoError(t, err)
 	mockChain.Slot = &slot
 	s.serviceCfg.HeadStateFetcher = mockChain
@@ -923,10 +923,10 @@ func Test_updatedChunkByChunkIndex(t *testing.T) {
 		name                               string
 		chunkSize                          uint64
 		validatorChunkSize                 uint64
-		historyLength                      primitives.Epoch
-		currentEpoch                       primitives.Epoch
+		historyLength                      primitives.Round
+		currentEpoch                       primitives.Round
 		validatorChunkIndex                uint64
-		latestUpdatedEpochByValidatorIndex map[primitives.ValidatorIndex]primitives.Epoch
+		latestUpdatedEpochByValidatorIndex map[primitives.ValidatorIndex]primitives.Round
 		initialMinChunkByChunkIndex        map[uint64][]uint16
 		expectedMinChunkByChunkIndex       map[uint64][]uint16
 		initialMaxChunkByChunkIndex        map[uint64][]uint16
@@ -979,7 +979,7 @@ func Test_updatedChunkByChunkIndex(t *testing.T) {
 			historyLength:                      8,
 			currentEpoch:                       2,
 			validatorChunkIndex:                21,
-			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Epoch{42: 0, 43: 1},
+			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Round{42: 0, 43: 1},
 			initialMinChunkByChunkIndex: map[uint64][]uint16{
 				// |    validator 42    |   validator 43    |
 				0: {14, 9999, 9999, 9999, 15, 16, 9999, 9999},
@@ -1004,7 +1004,7 @@ func Test_updatedChunkByChunkIndex(t *testing.T) {
 			historyLength:                      8,
 			currentEpoch:                       5,
 			validatorChunkIndex:                21,
-			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Epoch{42: 1, 43: 2},
+			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Round{42: 1, 43: 2},
 			initialMinChunkByChunkIndex: map[uint64][]uint16{
 				// |   validator 42   |  validator 43   |
 				0: {14, 13, 9999, 9999, 15, 16, 17, 9999},
@@ -1035,7 +1035,7 @@ func Test_updatedChunkByChunkIndex(t *testing.T) {
 			historyLength:                      12,
 			currentEpoch:                       9,
 			validatorChunkIndex:                21,
-			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Epoch{42: 5, 43: 6},
+			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Round{42: 5, 43: 6},
 			initialMinChunkByChunkIndex: map[uint64][]uint16{
 				// |   validator 42   |  validator 43   |
 				1: {14, 13, 9999, 9999, 15, 16, 17, 9999},
@@ -1066,7 +1066,7 @@ func Test_updatedChunkByChunkIndex(t *testing.T) {
 			historyLength:                      12,
 			currentEpoch:                       14,
 			validatorChunkIndex:                21,
-			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Epoch{42: 9, 43: 10},
+			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Round{42: 9, 43: 10},
 			initialMinChunkByChunkIndex: map[uint64][]uint16{
 				// | validator 42 |  validator 43 |
 				0: {55, 55, 55, 55, 55, 55, 55, 55},
@@ -1105,7 +1105,7 @@ func Test_updatedChunkByChunkIndex(t *testing.T) {
 			historyLength:                      12,
 			currentEpoch:                       16,
 			validatorChunkIndex:                21,
-			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Epoch{42: 2, 43: 3},
+			latestUpdatedEpochByValidatorIndex: map[primitives.ValidatorIndex]primitives.Round{42: 2, 43: 3},
 			initialMinChunkByChunkIndex: map[uint64][]uint16{
 				// | validator 42 |  validator 43 |
 				0: {55, 55, 55, 55, 55, 55, 55, 55},
@@ -1226,14 +1226,14 @@ func Test_applyAttestationForValidator_MinSpanChunk(t *testing.T) {
 	require.NoError(t, err)
 
 	// We initialize an empty chunks slice.
-	currentEpoch := primitives.Epoch(3)
+	currentEpoch := primitives.Round(3)
 	validatorChunkIndex := uint64(0)
 	validatorIdx := primitives.ValidatorIndex(0)
 	chunksByChunkIdx := map[uint64]Chunker{}
 
 	// We apply attestation with (source 1, target 2) for our validator.
-	source := primitives.Epoch(1)
-	target := primitives.Epoch(2)
+	source := primitives.Round(1)
+	target := primitives.Round(2)
 	att := createAttestationWrapperEmptySig(t, version.Phase0, source, target, nil, nil)
 	slashing, err := srv.applyAttestationForValidator(
 		ctx,
@@ -1255,8 +1255,8 @@ func Test_applyAttestationForValidator_MinSpanChunk(t *testing.T) {
 
 	// Next, we apply an attestation with (source 0, target 3) and
 	// expect a slashable offense to be returned.
-	source = primitives.Epoch(0)
-	target = primitives.Epoch(3)
+	source = primitives.Round(0)
+	target = primitives.Round(3)
 	slashableAtt := createAttestationWrapperEmptySig(t, version.Phase0, source, target, nil, nil)
 	slashing, err = srv.applyAttestationForValidator(
 		ctx,
@@ -1283,14 +1283,14 @@ func Test_applyAttestationForValidator_MaxSpanChunk(t *testing.T) {
 	require.NoError(t, err)
 
 	// We initialize an empty chunks slice.
-	currentEpoch := primitives.Epoch(3)
+	currentEpoch := primitives.Round(3)
 	validatorChunkIndex := uint64(0)
 	validatorIdx := primitives.ValidatorIndex(0)
 	chunksByChunkIdx := map[uint64]Chunker{}
 
 	// We apply attestation with (source 0, target 3) for our validator.
-	source := primitives.Epoch(0)
-	target := primitives.Epoch(3)
+	source := primitives.Round(0)
+	target := primitives.Round(3)
 	att := createAttestationWrapperEmptySig(t, version.Phase0, source, target, nil, nil)
 	slashing, err := srv.applyAttestationForValidator(
 		ctx,
@@ -1312,8 +1312,8 @@ func Test_applyAttestationForValidator_MaxSpanChunk(t *testing.T) {
 
 	// Next, we apply an attestation with (source 1, target 2) and
 	// expect a slashable offense to be returned.
-	source = primitives.Epoch(1)
-	target = primitives.Epoch(2)
+	source = primitives.Round(1)
+	target = primitives.Round(2)
 	slashableAtt := createAttestationWrapperEmptySig(t, version.Phase0, source, target, nil, nil)
 	slashing, err = srv.applyAttestationForValidator(
 		ctx,
@@ -1375,8 +1375,8 @@ func testLoadChunks(t *testing.T, kind slashertypes.ChunkKind) {
 		existingChunk = EmptyMaxSpanChunksSlice(defaultParams)
 	}
 	validatorIdx := primitives.ValidatorIndex(0)
-	epochInChunk := primitives.Epoch(0)
-	targetEpoch := primitives.Epoch(2)
+	epochInChunk := primitives.Round(0)
+	targetEpoch := primitives.Round(2)
 	err = setChunkDataAtEpoch(
 		defaultParams,
 		existingChunk.Chunk(),
@@ -1411,7 +1411,7 @@ func TestService_processQueuedAttestations(t *testing.T) {
 
 	beaconState, err := util.NewBeaconState()
 	require.NoError(t, err)
-	slot, err := slots.EpochStart(1)
+	slot, err := slots.RoundStart(1)
 	require.NoError(t, err)
 	require.NoError(t, beaconState.SetSlot(slot))
 	mockChain := &mock.ChainService{
@@ -1557,8 +1557,8 @@ func runAttestationsBenchmark(b *testing.B, s *Service, numAtts, numValidators u
 	}
 	atts := make([]*slashertypes.IndexedAttestationWrapper, numAtts)
 	for i := range numAtts {
-		source := primitives.Epoch(i)
-		target := primitives.Epoch(i + 1)
+		source := primitives.Round(i)
+		target := primitives.Round(i + 1)
 		var signingRoot [32]byte
 		copy(signingRoot[:], fmt.Sprintf("%d", i))
 		atts[i] = createAttestationWrapperEmptySig(
@@ -1576,8 +1576,8 @@ func runAttestationsBenchmark(b *testing.B, s *Service, numAtts, numValidators u
 		genesisTime := time.Now().Add(-time.Second * time.Duration(totalSeconds))
 		s.genesisTime = genesisTime
 
-		epoch := slots.EpochsSinceGenesis(genesisTime)
-		_, err := s.checkSlashableAttestations(b.Context(), epoch, atts)
+		round := slots.RoundsSinceGenesis(genesisTime)
+		_, err := s.checkSlashableAttestations(b.Context(), round, atts)
 		require.NoError(b, err)
 	}
 }
@@ -1649,7 +1649,7 @@ func Benchmark_checkSurroundVotes(b *testing.B) {
 func createAttestationWrapperEmptySig(
 	t testing.TB,
 	ver int,
-	source, target primitives.Epoch,
+	source, target primitives.Round,
 	indices []uint64,
 	beaconBlockRoot []byte,
 ) *slashertypes.IndexedAttestationWrapper {
@@ -1698,7 +1698,7 @@ func createAttestationWrapper(
 	ver int,
 	domain []byte,
 	privateKeys []common.SecretKey,
-	source, target primitives.Epoch,
+	source, target primitives.Round,
 	indices []uint64,
 	beaconBlockRoot []byte,
 ) *slashertypes.IndexedAttestationWrapper {

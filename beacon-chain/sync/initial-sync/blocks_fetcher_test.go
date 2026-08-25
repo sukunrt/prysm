@@ -131,7 +131,7 @@ func TestBlocksFetcher_RoundRobin(t *testing.T) {
 			peers: []*peerData{
 				{
 					blocks:         makeSequence(1, 3*slotsInBatch),
-					finalizedEpoch: slots.ToEpoch(3 * slotsInBatch),
+					finalizedEpoch: slots.RoundAt(3 * slotsInBatch),
 					headSlot:       3 * slotsInBatch,
 				},
 			},
@@ -143,7 +143,7 @@ func TestBlocksFetcher_RoundRobin(t *testing.T) {
 			peers: []*peerData{
 				{
 					blocks:         makeSequence(1, 3*slotsInBatch),
-					finalizedEpoch: slots.ToEpoch(3 * slotsInBatch),
+					finalizedEpoch: slots.RoundAt(3 * slotsInBatch),
 					headSlot:       3 * slotsInBatch,
 				},
 			},
@@ -155,17 +155,17 @@ func TestBlocksFetcher_RoundRobin(t *testing.T) {
 			peers: []*peerData{
 				{
 					blocks:         makeSequence(1, 3*slotsInBatch),
-					finalizedEpoch: slots.ToEpoch(3 * slotsInBatch),
+					finalizedEpoch: slots.RoundAt(3 * slotsInBatch),
 					headSlot:       3 * slotsInBatch,
 				},
 				{
 					blocks:         makeSequence(1, 3*slotsInBatch),
-					finalizedEpoch: slots.ToEpoch(3 * slotsInBatch),
+					finalizedEpoch: slots.RoundAt(3 * slotsInBatch),
 					headSlot:       3 * slotsInBatch,
 				},
 				{
 					blocks:         makeSequence(1, 3*slotsInBatch),
-					finalizedEpoch: slots.ToEpoch(3 * slotsInBatch),
+					finalizedEpoch: slots.RoundAt(3 * slotsInBatch),
 					headSlot:       3 * slotsInBatch,
 				},
 			},
@@ -517,7 +517,7 @@ func TestBlocksFetcher_requestBeaconBlocksByRange(t *testing.T) {
 			p2p:   p2p,
 		})
 
-	_, peerIDs := p2p.Peers().BestFinalized(slots.ToEpoch(mc.HeadSlot()))
+	_, peerIDs := p2p.Peers().BestFinalized(slots.RoundAt(mc.HeadSlot()))
 	if len(peerIDs) > params.BeaconConfig().MaxPeersToSync {
 		peerIDs = peerIDs[:params.BeaconConfig().MaxPeersToSync]
 	}

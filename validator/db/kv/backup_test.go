@@ -108,12 +108,12 @@ func TestStore_NestedBackup(t *testing.T) {
 		SigningRoot: signingRoot32[:],
 	}, hist[0])
 
-	ep, exists, err := backedDB.LowestSignedSourceEpoch(t.Context(), keys[0])
+	ep, exists, err := backedDB.LowestSignedSourceRound(t.Context(), keys[0])
 	require.NoError(t, err)
 	require.Equal(t, true, exists)
 	require.Equal(t, 10, int(ep))
 
-	ep, exists, err = backedDB.LowestSignedSourceEpoch(t.Context(), keys[1])
+	ep, exists, err = backedDB.LowestSignedSourceRound(t.Context(), keys[1])
 	require.NoError(t, err)
 	require.Equal(t, true, exists)
 	require.Equal(t, 10, int(ep))

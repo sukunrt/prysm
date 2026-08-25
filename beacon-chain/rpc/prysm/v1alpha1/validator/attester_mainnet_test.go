@@ -60,7 +60,7 @@ func TestAttestationDataAtSlot_HandlesFarAwayJustifiedEpoch(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, beaconState.SetSlot(slot))
 	justifiedCheckpoint := &ethpb.Checkpoint{
-		Epoch: slots.ToEpoch(1500),
+		Epoch: slots.RoundAt(1500),
 		Root:  justifiedBlockRoot[:],
 	}
 	require.NoError(t, beaconState.SetCurrentJustifiedCheckpoint(justifiedCheckpoint))
@@ -90,7 +90,7 @@ func TestAttestationDataAtSlot_HandlesFarAwayJustifiedEpoch(t *testing.T) {
 		Slot:            req.Slot,
 		BeaconBlockRoot: blockRoot[:],
 		Source: &ethpb.Checkpoint{
-			Epoch: slots.ToEpoch(1500),
+			Epoch: slots.RoundAt(1500),
 			Root:  justifiedBlockRoot[:],
 		},
 		Target: &ethpb.Checkpoint{

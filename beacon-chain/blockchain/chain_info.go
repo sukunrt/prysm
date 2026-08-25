@@ -103,7 +103,7 @@ type HeadFetcher interface {
 	ChainHeads() ([][32]byte, []primitives.Slot)
 	IsBidCompatibleWithHead(interfaces.ROExecutionPayloadBid) bool
 	DependentRootForEpoch([32]byte, primitives.Epoch) ([32]byte, error)
-	TargetRootForEpoch([32]byte, primitives.Epoch) ([32]byte, error)
+	TargetRootForRound([32]byte, primitives.Round) ([32]byte, error)
 	HeadSyncCommitteeFetcher
 	HeadDomainFetcher
 }
@@ -508,7 +508,7 @@ func (s *Service) IsOptimisticForRoot(ctx context.Context, root [32]byte) (bool,
 	if err != nil {
 		return false, err
 	}
-	if slots.ToEpoch(ss.Slot) > validatedCheckpoint.Epoch {
+	if slots.RoundAt(ss.Slot) > validatedCheckpoint.Epoch {
 		return true, nil
 	}
 
@@ -518,7 +518,7 @@ func (s *Service) IsOptimisticForRoot(ctx context.Context, root [32]byte) (bool,
 		return false, err
 	}
 
-	if slots.ToEpoch(ss.Slot)+1 < validatedCheckpoint.Epoch {
+	if slots.RoundAt(ss.Slot)+1 < validatedCheckpoint.Epoch {
 		return !isCanonical, nil
 	}
 
@@ -559,11 +559,11 @@ func (s *Service) DependentRootForEpoch(root [32]byte, epoch primitives.Epoch) (
 	return depRoot, nil
 }
 
-// TargetRootForEpoch wraps the corresponding method in forkchoice
-func (s *Service) TargetRootForEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
+// TargetRootForRound wraps the corresponding method in forkchoice
+func (s *Service) TargetRootForRound(root [32]byte, round primitives.Round) ([32]byte, error) {
 	s.cfg.ForkChoiceStore.RLock()
 	defer s.cfg.ForkChoiceStore.RUnlock()
-	return s.cfg.ForkChoiceStore.TargetRootForEpoch(root, epoch)
+	return s.cfg.ForkChoiceStore.TargetRootForRound(root, round)
 }
 
 // Ancestor returns the block root of an ancestry block from the input block root.
@@ -663,7 +663,7 @@ func (s *Service) ShouldIgnoreData(parentRoot [32]byte, dataSlot primitives.Slot
 	if j == nil {
 		return false
 	}
-	if slots.ToEpoch(parentSlot) >= j.Epoch {
+	if slots.RoundAt(parentSlot) >= j.Epoch {
 		return false
 	}
 	return s.cfg.ForkChoiceStore.IsCanonical(parentRoot)

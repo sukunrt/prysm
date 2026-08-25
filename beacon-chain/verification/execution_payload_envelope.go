@@ -19,7 +19,7 @@ import (
 type ExecutionPayloadEnvelopeVerifier interface {
 	VerifyBlockRootSeen(func([32]byte) bool) error
 	VerifyBlockRootValid(func([32]byte) bool) error
-	VerifySlotAboveFinalized(primitives.Epoch) error
+	VerifySlotAboveFinalized(primitives.Round) error
 	VerifySlotMatchesBlock(primitives.Slot) error
 	VerifyBuilderValid(interfaces.ROExecutionPayloadBid) error
 	VerifyPayloadHash(interfaces.ROExecutionPayloadBid) error
@@ -99,16 +99,16 @@ func (v *EnvelopeVerifier) VerifyBlockRootValid(badBlock func([32]byte) bool) (e
 	return nil
 }
 
-// VerifySlotAboveFinalized ensures the envelope slot is not before the latest finalized epoch start.
-func (v *EnvelopeVerifier) VerifySlotAboveFinalized(finalizedEpoch primitives.Epoch) (err error) {
+// VerifySlotAboveFinalized ensures the envelope slot is not before the latest finalized round start.
+func (v *EnvelopeVerifier) VerifySlotAboveFinalized(finalizedRound primitives.Round) (err error) {
 	defer v.record(RequireEnvelopeSlotAboveFinalized, &err)
 	env, err := v.e.Envelope()
 	if err != nil {
 		return errors.Wrap(err, "failed to get envelope")
 	}
-	startSlot, err := slots.EpochStart(finalizedEpoch)
+	startSlot, err := slots.RoundStart(finalizedRound)
 	if err != nil {
-		return errors.Wrapf(ErrEnvelopeSlotBeforeFinalized, "error computing epoch start slot for finalized checkpoint (%d) %s", finalizedEpoch, err.Error())
+		return errors.Wrapf(ErrEnvelopeSlotBeforeFinalized, "error computing round start slot for finalized checkpoint (%d) %s", finalizedRound, err.Error())
 	}
 	if env.Slot() < startSlot {
 		return fmt.Errorf("%w: slot=%d start=%d", ErrEnvelopeSlotBeforeFinalized, env.Slot(), startSlot)

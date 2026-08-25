@@ -154,7 +154,7 @@ func TestProposeAttestationElectra(t *testing.T) {
 	params.BeaconConfig().FuluForkEpoch = 1
 
 	buildSingleAttestation := func(slot primitives.Slot) *ethpb.SingleAttestation {
-		targetEpoch := slots.ToEpoch(slot)
+		targetEpoch := slots.RoundAt(slot)
 		sourceEpoch := targetEpoch
 		if targetEpoch > 0 {
 			sourceEpoch = targetEpoch - 1

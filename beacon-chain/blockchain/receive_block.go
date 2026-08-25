@@ -31,11 +31,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// This defines how many epochs since finality the run time will begin to save hot state on to the DB.
-var epochsSinceFinalitySaveHotStateDB = primitives.Epoch(100)
+// This defines how many rounds since finality the run time will begin to save hot state on to the DB.
+var roundsSinceFinalitySaveHotStateDB = primitives.Round(100)
 
-// This defines how many epochs since finality the run time will begin to expand our respective cache sizes.
-var epochsSinceFinalityExpandCache = primitives.Epoch(4)
+// This defines how many rounds since finality the run time will begin to expand our respective cache sizes.
+var roundsSinceFinalityExpandCache = primitives.Round(4)
 
 // BlockReceiver interface defines the methods of chain service for receiving and processing new blocks.
 type BlockReceiver interface {
@@ -164,11 +164,14 @@ func (s *Service) ReceiveBlock(ctx context.Context, block interfaces.ReadOnlySig
 }
 
 type ffgCheckpoints struct {
-	j, f, c primitives.Epoch
+	// j and f carry ROUNDS (the checkpoints' unit); c is the state's current EPOCH,
+	// used only to detect an epoch transition for metrics reporting.
+	j, f primitives.Round
+	c    primitives.Epoch
 }
 
 func (s *Service) saveCurrentCheckpoints(state state.BeaconState) (cp ffgCheckpoints) {
-	// Save current justified and finalized epochs for future use.
+	// Save current justified and finalized rounds for future use.
 	cp.j = s.CurrentJustifiedCheckpt().Epoch
 	cp.f = s.FinalizedCheckpt().Epoch
 	cp.c = coreTime.CurrentEpoch(state)
@@ -517,22 +520,22 @@ func (s *Service) markIncludedBlockBLSToExecChanges(headBlock interfaces.ReadOnl
 }
 
 // This checks whether it's time to start saving hot state to DB.
-// It's time when there's `epochsSinceFinalitySaveHotStateDB` epochs of non-finality.
+// It's time when there's `roundsSinceFinalitySaveHotStateDB` rounds of non-finality.
 //
 // Requires a read lock on forkchoice
 func (s *Service) checkSaveHotStateDB(ctx context.Context) error {
-	currentEpoch := slots.ToEpoch(s.CurrentSlot())
+	currentRound := slots.RoundAt(s.CurrentSlot())
 	// Prevent `sinceFinality` going underflow.
-	var sinceFinality primitives.Epoch
+	var sinceFinality primitives.Round
 	finalized := s.cfg.ForkChoiceStore.FinalizedCheckpoint()
 	if finalized == nil {
 		return errNilFinalizedInStore
 	}
-	if currentEpoch > finalized.Epoch {
-		sinceFinality = currentEpoch - finalized.Epoch
+	if currentRound > finalized.Epoch {
+		sinceFinality = currentRound - finalized.Epoch
 	}
 
-	if sinceFinality >= epochsSinceFinalitySaveHotStateDB {
+	if sinceFinality >= roundsSinceFinalitySaveHotStateDB {
 		s.cfg.StateGen.EnableSaveHotStateToDB(ctx)
 		return nil
 	}
@@ -541,18 +544,18 @@ func (s *Service) checkSaveHotStateDB(ctx context.Context) error {
 }
 
 func (s *Service) handleCaches() error {
-	currentEpoch := slots.ToEpoch(s.CurrentSlot())
+	currentRound := slots.RoundAt(s.CurrentSlot())
 	// Prevent `sinceFinality` going underflow.
-	var sinceFinality primitives.Epoch
+	var sinceFinality primitives.Round
 	finalized := s.cfg.ForkChoiceStore.FinalizedCheckpoint()
 	if finalized == nil {
 		return errNilFinalizedInStore
 	}
-	if currentEpoch > finalized.Epoch {
-		sinceFinality = currentEpoch - finalized.Epoch
+	if currentRound > finalized.Epoch {
+		sinceFinality = currentRound - finalized.Epoch
 	}
 
-	if sinceFinality >= epochsSinceFinalityExpandCache {
+	if sinceFinality >= roundsSinceFinalityExpandCache {
 		helpers.ExpandCommitteeCache()
 		return nil
 	}
@@ -584,11 +587,11 @@ func (s *Service) validateStateTransition(ctx context.Context, preState state.Be
 
 // updateJustificationOnBlock updates the justified checkpoint on DB if the
 // incoming block has updated it on forkchoice.
-func (s *Service) updateJustificationOnBlock(ctx context.Context, preState, postState state.BeaconState, preJustifiedEpoch primitives.Epoch) error {
+func (s *Service) updateJustificationOnBlock(ctx context.Context, preState, postState state.BeaconState, preJustifiedRound primitives.Round) error {
 	justified := s.cfg.ForkChoiceStore.JustifiedCheckpoint()
 	preStateJustifiedEpoch := preState.CurrentJustifiedCheckpoint().Epoch
 	postStateJustifiedEpoch := postState.CurrentJustifiedCheckpoint().Epoch
-	if justified.Epoch > preJustifiedEpoch || (justified.Epoch == postStateJustifiedEpoch && justified.Epoch > preStateJustifiedEpoch) {
+	if justified.Epoch > preJustifiedRound || (justified.Epoch == postStateJustifiedEpoch && justified.Epoch > preStateJustifiedEpoch) {
 		if err := s.cfg.BeaconDB.SaveJustifiedCheckpoint(ctx, &ethpb.Checkpoint{
 			Epoch: justified.Epoch, Root: justified.Root[:],
 		}); err != nil {
@@ -600,11 +603,11 @@ func (s *Service) updateJustificationOnBlock(ctx context.Context, preState, post
 
 // updateFinalizationOnBlock performs some duties when the incoming block
 // changes the finalized checkpoint. It returns true when this has happened.
-func (s *Service) updateFinalizationOnBlock(ctx context.Context, preState, postState state.BeaconState, preFinalizedEpoch primitives.Epoch) (bool, error) {
+func (s *Service) updateFinalizationOnBlock(ctx context.Context, preState, postState state.BeaconState, preFinalizedRound primitives.Round) (bool, error) {
 	preStateFinalizedEpoch := preState.FinalizedCheckpoint().Epoch
 	postStateFinalizedEpoch := postState.FinalizedCheckpoint().Epoch
 	finalized := s.cfg.ForkChoiceStore.FinalizedCheckpoint()
-	if finalized.Epoch > preFinalizedEpoch || (finalized.Epoch == postStateFinalizedEpoch && finalized.Epoch > preStateFinalizedEpoch) {
+	if finalized.Epoch > preFinalizedRound || (finalized.Epoch == postStateFinalizedEpoch && finalized.Epoch > preStateFinalizedEpoch) {
 		if err := s.updateFinalized(ctx, &ethpb.Checkpoint{Epoch: finalized.Epoch, Root: finalized.Root[:]}); err != nil {
 			return true, err
 		}

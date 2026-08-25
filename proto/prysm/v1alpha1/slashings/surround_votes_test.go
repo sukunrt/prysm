@@ -83,7 +83,7 @@ func TestIsSurround(t *testing.T) {
 	}
 }
 
-func createAttestation(source, target primitives.Epoch) *ethpb.IndexedAttestation {
+func createAttestation(source, target primitives.Round) *ethpb.IndexedAttestation {
 	return &ethpb.IndexedAttestation{
 		Data: &ethpb.AttestationData{
 			Source: &ethpb.Checkpoint{Epoch: source},

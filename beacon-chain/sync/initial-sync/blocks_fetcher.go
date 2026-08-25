@@ -315,15 +315,15 @@ func (f *blocksFetcher) handleRequest(ctx context.Context, start primitives.Slot
 		return response
 	}
 
-	_, targetEpoch, peers := f.calculateHeadAndTargetEpochs()
+	_, targetBound, peers := f.calculateHeadAndTargetBounds()
 	if len(peers) == 0 {
 		response.err = errNoPeersAvailable
 		return response
 	}
 
-	// Short circuit start far exceeding the highest finalized epoch in some infinite loop.
+	// Short circuit start far exceeding the highest finalized round in some infinite loop.
 	if f.mode == modeStopOnFinalizedEpoch {
-		highestFinalizedSlot := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(targetEpoch + 1))
+		highestFinalizedSlot := targetBound
 		if start > highestFinalizedSlot {
 			response.err = fmt.Errorf(
 				"%w, slot: %d, highest finalized slot: %d",

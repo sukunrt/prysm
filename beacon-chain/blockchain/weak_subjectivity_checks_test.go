@@ -25,8 +25,8 @@ func TestService_VerifyWeakSubjectivityRoot(t *testing.T) {
 	forkRoot, err := forkBlock.Block.HashTreeRoot()
 	require.NoError(t, err)
 
-	blockEpoch := slots.ToEpoch(b.Block.Slot)
-	childSlot, err := slots.EpochStart(blockEpoch + 1)
+	blockEpoch := slots.RoundAt(b.Block.Slot)
+	childSlot, err := slots.RoundStart(blockEpoch + 1)
 	require.NoError(t, err)
 	childBlock := util.NewBeaconBlock()
 	childBlock.Block.Slot = childSlot
@@ -38,7 +38,7 @@ func TestService_VerifyWeakSubjectivityRoot(t *testing.T) {
 		disabled       bool
 		wantErr        error
 		checkpt        *ethpb.Checkpoint
-		finalizedEpoch primitives.Epoch
+		finalizedEpoch primitives.Round
 		name           string
 	}{
 		{

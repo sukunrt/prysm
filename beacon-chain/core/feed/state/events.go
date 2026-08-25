@@ -114,9 +114,10 @@ type HeadData struct {
 
 // FinalizedCheckpointData is the data sent with FinalizedCheckpoint events.
 type FinalizedCheckpointData struct {
-	Block               [32]byte
-	State               [32]byte
-	Epoch               primitives.Epoch
+	Block [32]byte
+	State [32]byte
+	// Epoch keeps its name to match the event's wire field; its value is a ROUND.
+	Epoch               primitives.Round
 	ExecutionOptimistic bool
 }
 

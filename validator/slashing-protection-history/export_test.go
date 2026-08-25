@@ -47,8 +47,8 @@ func Test_getSignedAttestationsByPubKey(t *testing.T) {
 			assert.Equal(t, 0, len(signedAttestations))
 
 			// We write a real attesting history to disk for the public key.
-			lowestSourceEpoch := primitives.Epoch(0)
-			lowestTargetEpoch := primitives.Epoch(4)
+			lowestSourceEpoch := primitives.Round(0)
+			lowestTargetEpoch := primitives.Round(4)
 
 			require.NoError(t, validatorDB.SaveAttestationForPubKey(ctx, pubKeys[0], [32]byte{4}, createAttestation(
 				lowestSourceEpoch,
@@ -106,8 +106,8 @@ func Test_getSignedAttestationsByPubKey(t *testing.T) {
 
 		// We write a real attesting history to disk for the public key with
 		// source epoch 0 and target epoch 1000.
-		lowestSourceEpoch := primitives.Epoch(0)
-		lowestTargetEpoch := primitives.Epoch(1000)
+		lowestSourceEpoch := primitives.Round(0)
+		lowestTargetEpoch := primitives.Round(1000)
 
 		// Next up, we simulate a DB affected by the bug where the next entry
 		// has a target epoch less than the previous one.
@@ -153,8 +153,8 @@ func Test_getSignedAttestationsByPubKey(t *testing.T) {
 
 		// We write a real attesting history to disk for the public key with
 		// source epoch 1 and target epoch 1000.
-		lowestSourceEpoch := primitives.Epoch(1)
-		lowestTargetEpoch := primitives.Epoch(1000)
+		lowestSourceEpoch := primitives.Round(1)
+		lowestTargetEpoch := primitives.Round(1000)
 
 		// Next up, we simulate a DB affected by the bug where the next entry
 		// has a target epoch less than the previous one.
@@ -250,7 +250,7 @@ func Test_getSignedBlocksByPubKey(t *testing.T) {
 	}
 }
 
-func createAttestation(source, target primitives.Epoch) *ethpb.IndexedAttestation {
+func createAttestation(source, target primitives.Round) *ethpb.IndexedAttestation {
 	return &ethpb.IndexedAttestation{
 		Data: &ethpb.AttestationData{
 			Source: &ethpb.Checkpoint{

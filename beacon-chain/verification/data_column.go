@@ -264,14 +264,14 @@ func (dv *RODataColumnsVerifier) SlotAboveFinalized() (err error) {
 	// Retrieve the finalized checkpoint.
 	finalizedCheckpoint := dv.fc.FinalizedCheckpoint()
 
-	// Compute the first slot of the finalized checkpoint epoch.
-	startSlot, err := slots.EpochStart(finalizedCheckpoint.Epoch)
+	// Compute the first slot of the finalized checkpoint round.
+	startSlot, err := slots.RoundStart(finalizedCheckpoint.Epoch)
 	if err != nil {
-		return columnErrBuilder(errors.Wrap(err, "epoch start"))
+		return columnErrBuilder(errors.Wrap(err, "round start"))
 	}
 
 	for _, dataColumn := range dv.dataColumns {
-		// Check if the data column slot is after first slot of the epoch corresponding to the finalized checkpoint.
+		// Check if the data column slot is after first slot of the round corresponding to the finalized checkpoint.
 		if dataColumn.Slot() <= startSlot {
 			return columnErrBuilder(errSlotNotAfterFinalized)
 		}
@@ -383,7 +383,7 @@ func (dv *RODataColumnsVerifier) getVerifyingState(ctx context.Context, dataColu
 		"parentRoot": fmt.Sprintf("%#x", parentRoot),
 		"headRoot":   fmt.Sprintf("%#x", headRoot),
 	}).Debug("Replying state for data column verification")
-	targetRoot, err := dv.fc.TargetRootForEpoch(parentRoot, dataColumnEpoch)
+	targetRoot, err := dv.fc.TargetRootForRound(parentRoot, slots.RoundAt(dataColumnSlot))
 	if err != nil {
 		return nil, err
 	}

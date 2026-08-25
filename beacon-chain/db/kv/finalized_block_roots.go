@@ -11,6 +11,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
 )
@@ -58,9 +59,21 @@ func (s *Store) updateFinalizedBlockRoots(ctx context.Context, tx *bolt.Tx, chec
 		}
 	}
 
+	// Checkpoints carry ROUNDS, so the de-index range is the round window
+	// [previousFinalized, checkpoint+1] expressed in slots.
+	deindexStart, err := slots.RoundStart(previousFinalizedCheckpoint.Epoch)
+	if err != nil {
+		tracing.AnnotateError(span, err)
+		return err
+	}
+	deindexEnd, err := slots.RoundStart(checkpoint.Epoch + 2)
+	if err != nil {
+		tracing.AnnotateError(span, err)
+		return err
+	}
 	blockRoots, err := s.BlockRoots(ctx, filters.NewFilter().
-		SetStartEpoch(previousFinalizedCheckpoint.Epoch).
-		SetEndEpoch(checkpoint.Epoch+1),
+		SetStartSlot(deindexStart).
+		SetEndSlot(deindexEnd-1),
 	)
 	if err != nil {
 		tracing.AnnotateError(span, err)
@@ -137,8 +150,18 @@ func (s *Store) updateFinalizedBlockRoots(ctx context.Context, tx *bolt.Tx, chec
 		root = pr[:]
 	}
 
-	// Upsert blocks from the current finalized epoch.
-	roots, err := s.BlockRoots(ctx, filters.NewFilter().SetStartEpoch(checkpoint.Epoch).SetEndEpoch(checkpoint.Epoch+1))
+	// Upsert blocks from the current finalized round and the next one.
+	upsertStart, err := slots.RoundStart(checkpoint.Epoch)
+	if err != nil {
+		tracing.AnnotateError(span, err)
+		return err
+	}
+	upsertEnd, err := slots.RoundStart(checkpoint.Epoch + 2)
+	if err != nil {
+		tracing.AnnotateError(span, err)
+		return err
+	}
+	roots, err := s.BlockRoots(ctx, filters.NewFilter().SetStartSlot(upsertStart).SetEndSlot(upsertEnd-1))
 	if err != nil {
 		tracing.AnnotateError(span, err)
 		return err

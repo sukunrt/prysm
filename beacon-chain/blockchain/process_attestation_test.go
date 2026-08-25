@@ -84,13 +84,13 @@ func TestStore_OnAttestation_ErrorConditions(t *testing.T) {
 		{
 			name:      "attestation's data slot not aligned with target vote",
 			a:         util.HydrateAttestation(&ethpb.Attestation{Data: &ethpb.AttestationData{Slot: params.BeaconConfig().SlotsPerEpoch, Target: &ethpb.Checkpoint{Root: make([]byte, 32)}}}),
-			wantedErr: "slot 32 does not match target epoch 0",
+			wantedErr: "slot 32 does not match target round 0",
 		},
 		{
 			name: "process attestation doesn't match current epoch",
 			a: util.HydrateAttestation(&ethpb.Attestation{Data: &ethpb.AttestationData{Slot: 100 * params.BeaconConfig().SlotsPerEpoch, Target: &ethpb.Checkpoint{Epoch: 100,
 				Root: BlkWithStateBadAttRoot[:]}}}),
-			wantedErr: "target epoch 100 does not match current epoch",
+			wantedErr: "target round 100 does not match current round",
 		},
 		{
 			name:      "process nil attestation",
@@ -447,7 +447,7 @@ func TestStore_SaveCheckpointState(t *testing.T) {
 	require.NoError(t, service.cfg.BeaconDB.SaveStateSummary(ctx, &ethpb.StateSummary{Root: bytesutil.PadTo([]byte{'B'}, fieldparams.RootLength)}))
 
 	_, err = service.getAttPreState(ctx, cp2)
-	require.ErrorContains(t, "epoch 2 root 0x4200000000000000000000000000000000000000000000000000000000000000: not a checkpoint in forkchoice", err)
+	require.ErrorContains(t, "round 2 root 0x4200000000000000000000000000000000000000000000000000000000000000: not a checkpoint in forkchoice", err)
 
 	st, root, err = prepareForkchoiceState(ctx, 33, [32]byte(cp2.Root), [32]byte(cp1.Root), [32]byte{'R'}, cp2, cp2)
 	require.NoError(t, err)
@@ -488,7 +488,7 @@ func TestStore_UpdateCheckpointState(t *testing.T) {
 	ctx := tr.ctx
 	baseState, _ := util.DeterministicGenesisState(t, 1)
 
-	epoch := primitives.Epoch(1)
+	epoch := primitives.Round(1)
 	blk := util.NewBeaconBlock()
 	r1, err := blk.Block.HashTreeRoot()
 	require.NoError(t, err)
@@ -517,7 +517,7 @@ func TestStore_UpdateCheckpointState(t *testing.T) {
 	require.NoError(t, service.cfg.ForkChoiceStore.InsertNode(ctx, st, roblock))
 	returned, err = service.getAttPreState(ctx, newCheckpoint)
 	require.NoError(t, err)
-	s, err := slots.EpochStart(newCheckpoint.Epoch)
+	s, err := slots.RoundStart(newCheckpoint.Epoch)
 	require.NoError(t, err)
 	baseState, err = transition.ProcessSlots(ctx, baseState, s)
 	require.NoError(t, err)
@@ -532,22 +532,22 @@ func TestAttEpoch_MatchPrevEpoch(t *testing.T) {
 	ctx := t.Context()
 
 	nowTime := time.Unix(int64(params.BeaconConfig().SlotsPerEpoch)*int64(params.BeaconConfig().SecondsPerSlot), 0)
-	require.NoError(t, verifyAttTargetEpoch(ctx, time.Unix(0, 0), nowTime, &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)}))
+	require.NoError(t, verifyAttTargetRound(ctx, time.Unix(0, 0), nowTime, &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)}))
 }
 
 func TestAttEpoch_MatchCurrentEpoch(t *testing.T) {
 	ctx := t.Context()
 
 	nowTime := time.Unix(int64(params.BeaconConfig().SlotsPerEpoch)*int64(params.BeaconConfig().SecondsPerSlot), 0)
-	require.NoError(t, verifyAttTargetEpoch(ctx, time.Unix(0, 0), nowTime, &ethpb.Checkpoint{Epoch: 1}))
+	require.NoError(t, verifyAttTargetRound(ctx, time.Unix(0, 0), nowTime, &ethpb.Checkpoint{Epoch: 1}))
 }
 
 func TestAttEpoch_NotMatch(t *testing.T) {
 	ctx := t.Context()
 
 	nowTime := time.Unix(2*int64(params.BeaconConfig().SlotsPerEpoch)*int64(params.BeaconConfig().SecondsPerSlot), 0)
-	err := verifyAttTargetEpoch(ctx, time.Unix(0, 0), nowTime, &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)})
-	assert.ErrorContains(t, "target epoch 0 does not match current epoch 2 or prev epoch 1", err)
+	err := verifyAttTargetRound(ctx, time.Unix(0, 0), nowTime, &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)})
+	assert.ErrorContains(t, "target round 0 does not match current round 2 or prev round 1", err)
 }
 
 func TestVerifyBeaconBlock_NoBlock(t *testing.T) {
@@ -599,7 +599,7 @@ func TestGetAttPreState_HeadState(t *testing.T) {
 	ctx := tr.ctx
 	baseState, _ := util.DeterministicGenesisState(t, 1)
 
-	epoch := primitives.Epoch(1)
+	epoch := primitives.Round(1)
 	blk := util.NewBeaconBlock()
 	r1, err := blk.Block.HashTreeRoot()
 	require.NoError(t, err)

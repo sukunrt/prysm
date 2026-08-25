@@ -76,7 +76,7 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 		},
 	})
 
-	if err := helpers.ValidateSlotTargetEpoch(data); err != nil {
+	if err := helpers.ValidateSlotTargetRound(data); err != nil {
 		return pubsub.ValidationReject, err
 	}
 

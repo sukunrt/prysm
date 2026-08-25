@@ -104,11 +104,11 @@ func testPeerIds(n int) []peer.ID {
 
 // MockStatus is a test mock for the Status interface used in Assigner.
 type MockStatus struct {
-	bestFinalizedEpoch primitives.Epoch
+	bestFinalizedEpoch primitives.Round
 	bestPeers          []peer.ID
 }
 
-func (m *MockStatus) BestFinalized(ourFinalized primitives.Epoch) (primitives.Epoch, []peer.ID) {
+func (m *MockStatus) BestFinalized(ourFinalized primitives.Round) (primitives.Round, []peer.ID) {
 	return m.bestFinalizedEpoch, m.bestPeers
 }
 
@@ -128,7 +128,7 @@ func TestAssign_HappyPath(t *testing.T) {
 	cases := []struct {
 		name           string
 		bestPeers      []peer.ID
-		finalizedEpoch primitives.Epoch
+		finalizedEpoch primitives.Round
 		filter         AssignmentFilter
 		expectedCount  int
 	}{
@@ -309,7 +309,7 @@ func TestAssign_FinalizedCheckpointUsage(t *testing.T) {
 
 	cases := []struct {
 		name           string
-		finalizedEpoch primitives.Epoch
+		finalizedEpoch primitives.Round
 		bestPeers      []peer.ID
 		expectedCount  int
 		description    string

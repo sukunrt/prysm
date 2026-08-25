@@ -80,7 +80,7 @@ func IsOptimistic(
 			if fcp == nil {
 				return true, errors.New("received nil finalized checkpoint")
 			}
-			finalizedSlot, err := slots.EpochStart(fcp.Epoch)
+			finalizedSlot, err := slots.RoundStart(fcp.Epoch)
 			if err != nil {
 				return true, errors.Wrap(err, "could not get head state's finalized slot")
 			}
@@ -88,7 +88,7 @@ func IsOptimistic(
 			if err != nil {
 				return true, errors.Wrap(err, "could not get last validated checkpoint")
 			}
-			validatedSlot, err := slots.EpochStart(lastValidatedCheckpoint.Epoch)
+			validatedSlot, err := slots.RoundStart(lastValidatedCheckpoint.Epoch)
 			if err != nil {
 				return true, errors.Wrap(err, "could not get last validated slot")
 			}

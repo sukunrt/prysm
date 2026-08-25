@@ -84,11 +84,11 @@ func (c *beaconApiValidatorClient) attestationData(
 		CommitteeIndex:  primitives.CommitteeIndex(committeeIndex),
 		Slot:            primitives.Slot(slot),
 		Source: &ethpb.Checkpoint{
-			Epoch: primitives.Epoch(sourceEpoch),
+			Epoch: primitives.Round(sourceEpoch),
 			Root:  sourceRoot,
 		},
 		Target: &ethpb.Checkpoint{
-			Epoch: primitives.Epoch(targetEpoch),
+			Epoch: primitives.Round(targetEpoch),
 			Root:  targetRoot,
 		},
 	}

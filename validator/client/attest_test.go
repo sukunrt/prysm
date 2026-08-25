@@ -895,9 +895,11 @@ func Test_slashableAttestationCheck_UpdatesLowestSignedEpochs(t *testing.T) {
 				},
 			}
 
+			// The signing domain is derived from the attestation's SLOT, not from
+			// its (round-valued) target checkpoint.
 			m.validatorClient.EXPECT().DomainData(
 				gomock.Any(), // ctx
-				&ethpb.DomainRequest{Epoch: 10, Domain: []byte{1, 0, 0, 0}},
+				&ethpb.DomainRequest{Epoch: slots.ToEpoch(att.Data.Slot), Domain: []byte{1, 0, 0, 0}},
 			).Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil /*err*/)
 			_, sr, err := validator.domainAndSigningRoot(ctx, att.Data)
 			require.NoError(t, err)
@@ -909,14 +911,14 @@ func Test_slashableAttestationCheck_UpdatesLowestSignedEpochs(t *testing.T) {
 			err = validator.db.SlashableAttestationCheck(t.Context(), att, pubKey, differentSigningRoot, false, nil)
 			require.ErrorContains(t, "could not sign attestation", err)
 
-			e, exists, err := validator.db.LowestSignedSourceEpoch(t.Context(), pubKey)
+			e, exists, err := validator.db.LowestSignedSourceRound(t.Context(), pubKey)
 			require.NoError(t, err)
 			require.Equal(t, true, exists)
-			require.Equal(t, primitives.Epoch(4), e)
-			e, exists, err = validator.db.LowestSignedTargetEpoch(t.Context(), pubKey)
+			require.Equal(t, primitives.Round(4), e)
+			e, exists, err = validator.db.LowestSignedTargetRound(t.Context(), pubKey)
 			require.NoError(t, err)
 			require.Equal(t, true, exists)
-			require.Equal(t, primitives.Epoch(10), e)
+			require.Equal(t, primitives.Round(10), e)
 		})
 	}
 }
@@ -978,14 +980,14 @@ func Test_slashableAttestationCheck_GenesisEpoch(t *testing.T) {
 			fakePubkey := bytesutil.ToBytes48([]byte("test"))
 			err := validator.db.SlashableAttestationCheck(ctx, att, fakePubkey, [32]byte{}, false, nil)
 			require.NoError(t, err, "Expected allowed attestation not to throw error")
-			e, exists, err := validator.db.LowestSignedSourceEpoch(t.Context(), fakePubkey)
+			e, exists, err := validator.db.LowestSignedSourceRound(t.Context(), fakePubkey)
 			require.NoError(t, err)
 			require.Equal(t, true, exists)
-			require.Equal(t, primitives.Epoch(0), e)
-			e, exists, err = validator.db.LowestSignedTargetEpoch(t.Context(), fakePubkey)
+			require.Equal(t, primitives.Round(0), e)
+			e, exists, err = validator.db.LowestSignedTargetRound(t.Context(), fakePubkey)
 			require.NoError(t, err)
 			require.Equal(t, true, exists)
-			require.Equal(t, primitives.Epoch(0), e)
+			require.Equal(t, primitives.Round(0), e)
 		})
 	}
 }

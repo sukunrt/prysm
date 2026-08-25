@@ -132,7 +132,10 @@ func (b *BeaconState) IsActiveBuilder(builderIndex primitives.BuilderIndex) (boo
 		return false, err
 	}
 
-	finalizedEpoch := b.finalizedCheckpoint.Epoch
+	finalizedEpoch, err := checkpointEpoch(b.finalizedCheckpoint)
+	if err != nil {
+		return false, err
+	}
 	return builder.DepositEpoch < finalizedEpoch && builder.WithdrawableEpoch == params.BeaconConfig().FarFutureEpoch, nil
 }
 

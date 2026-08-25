@@ -108,7 +108,7 @@ func ProcessAttestationNoVerifySignature(
 }
 
 // SetParticipationAndRewardProposer retrieves and sets the epoch participation bits in state. Based on the epoch participation, it rewards
-// the proposer in state.
+// the proposer in state. The participation array is selected by the attestation's target ROUND.
 //
 // Spec code:
 //
@@ -132,15 +132,15 @@ func ProcessAttestationNoVerifySignature(
 func SetParticipationAndRewardProposer(
 	ctx context.Context,
 	beaconState state.BeaconState,
-	targetEpoch primitives.Epoch,
+	targetRound primitives.Round,
 	indices []uint64,
 	participatedFlags map[uint8]bool,
 	totalBalance uint64,
 	att ethpb.Att) (state.BeaconState, error) {
 	var proposerRewardNumerator uint64
-	currentEpoch := time.CurrentEpoch(beaconState)
+	currentRound := time.CurrentRound(beaconState)
 	var stateErr error
-	if targetEpoch == currentEpoch {
+	if targetRound == currentRound {
 		stateErr = beaconState.ModifyCurrentParticipationBits(func(val []byte) ([]byte, error) {
 			propRewardNum, epochParticipation, err := EpochParticipation(beaconState, indices, val, participatedFlags, totalBalance)
 			if err != nil {
@@ -300,9 +300,9 @@ func RewardProposer(ctx context.Context, beaconState state.BeaconState, proposer
 //
 //	return participation_flag_indices
 func AttestationParticipationFlagIndices(beaconState state.ReadOnlyBeaconState, data *ethpb.AttestationData, delay primitives.Slot, parentSlot primitives.Slot) (map[uint8]bool, error) {
-	currEpoch := time.CurrentEpoch(beaconState)
+	currRound := time.CurrentRound(beaconState)
 	var justifiedCheckpt *ethpb.Checkpoint
-	if data.Target.Epoch == currEpoch {
+	if data.Target.Epoch == currRound {
 		justifiedCheckpt = beaconState.CurrentJustifiedCheckpoint()
 	} else {
 		justifiedCheckpt = beaconState.PreviousJustifiedCheckpoint()

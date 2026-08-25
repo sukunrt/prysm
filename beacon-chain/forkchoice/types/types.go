@@ -9,9 +9,12 @@ import (
 
 // Checkpoint is an array version of ethpb.Checkpoint. It is used internally in
 // forkchoice, while the slice version is used in the interface to legacy code
-// in other packages
+// in other packages.
+//
+// Epoch keeps its name to match the proto field it mirrors; its value is a
+// Simplex ROUND (see plan-finality-round.md).
 type Checkpoint struct {
-	Epoch primitives.Epoch
+	Epoch primitives.Round
 	Root  [fieldparams.RootLength]byte
 }
 

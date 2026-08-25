@@ -82,7 +82,7 @@ func (s *Store) migrateOptimalAttesterProtectionUp(_ context.Context) error {
 			}
 			// For every epoch since genesis up to the highest epoch written, we then
 			// extract historical data and insert it into the new schema.
-			for targetEpoch := primitives.Epoch(0); targetEpoch <= latestEpochWritten; targetEpoch++ {
+			for targetEpoch := primitives.Round(0); targetEpoch <= latestEpochWritten; targetEpoch++ {
 				historicalAtt, err := attestingHistory.getTargetData(targetEpoch)
 				if err != nil {
 					return err
@@ -90,8 +90,8 @@ func (s *Store) migrateOptimalAttesterProtectionUp(_ context.Context) error {
 				if historicalAtt.isEmpty() {
 					continue
 				}
-				targetEpochBytes := bytesutil.EpochToBytesBigEndian(targetEpoch)
-				sourceEpochBytes := bytesutil.EpochToBytesBigEndian(historicalAtt.Source)
+				targetEpochBytes := bytesutil.RoundToBytesBigEndian(targetEpoch)
+				sourceEpochBytes := bytesutil.RoundToBytesBigEndian(historicalAtt.Source)
 				if err := sourceEpochsBucket.Put(sourceEpochBytes, targetEpochBytes); err != nil {
 					return err
 				}
@@ -122,8 +122,8 @@ func (s *Store) migrateOptimalAttesterProtectionDown(_ context.Context) error {
 
 	// Next up, we extract the data for attested epochs and signing roots
 	// from the optimized db schema into maps we can use later.
-	signingRootsByTarget := make(map[primitives.Epoch][]byte)
-	targetEpochsBySource := make(map[primitives.Epoch][]primitives.Epoch)
+	signingRootsByTarget := make(map[primitives.Round][]byte)
+	targetEpochsBySource := make(map[primitives.Round][]primitives.Round)
 	err = s.view(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(pubKeysBucket)
 		if bkt == nil {
@@ -140,18 +140,18 @@ func (s *Store) migrateOptimalAttesterProtectionDown(_ context.Context) error {
 			if err := signingRootsBucket.ForEach(func(targetBytes, signingRoot []byte) error {
 				var sr [32]byte
 				copy(sr[:], signingRoot)
-				signingRootsByTarget[bytesutil.BytesToEpochBigEndian(targetBytes)] = sr[:]
+				signingRootsByTarget[bytesutil.BytesToRoundBigEndian(targetBytes)] = sr[:]
 				return nil
 			}); err != nil {
 				return err
 			}
 			// Next up, extract the target epochs by source.
 			if err := sourceEpochsBucket.ForEach(func(sourceBytes, targetEpochsBytes []byte) error {
-				targetEpochs := make([]primitives.Epoch, 0)
+				targetEpochs := make([]primitives.Round, 0)
 				for i := 0; i < len(targetEpochsBytes); i += 8 {
-					targetEpochs = append(targetEpochs, bytesutil.BytesToEpochBigEndian(targetEpochsBytes[i:i+8]))
+					targetEpochs = append(targetEpochs, bytesutil.BytesToRoundBigEndian(targetEpochsBytes[i:i+8]))
 				}
-				targetEpochsBySource[bytesutil.BytesToEpochBigEndian(sourceBytes)] = targetEpochs
+				targetEpochsBySource[bytesutil.BytesToRoundBigEndian(sourceBytes)] = targetEpochs
 				return nil
 			}); err != nil {
 				return err
@@ -176,7 +176,7 @@ func (s *Store) migrateOptimalAttesterProtectionDown(_ context.Context) error {
 			// Now we write the attesting history using the data we extracted
 			// from the buckets accordingly.
 			history := newDeprecatedAttestingHistory(0)
-			var maxTargetWritten primitives.Epoch
+			var maxTargetWritten primitives.Round
 			for source, targetEpochs := range targetEpochsBySource {
 				for _, target := range targetEpochs {
 					signingRoot := params.BeaconConfig().ZeroHash[:]

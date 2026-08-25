@@ -802,7 +802,7 @@ func TestValidator_CheckDoppelGanger(t *testing.T) {
 					for i, k := range keys {
 						pkey := k
 						for j := range attLimit {
-							att := createAttestation(10+primitives.Epoch(j), 12+primitives.Epoch(j))
+							att := createAttestation(10+primitives.Round(j), 12+primitives.Round(j))
 							rt, err := att.Data.HashTreeRoot()
 							assert.NoError(t, err)
 							assert.NoError(t, db.SaveAttestationForPubKey(t.Context(), pkey, rt, att))
@@ -923,7 +923,7 @@ func TestValidatorAttestationsAreOrdered(t *testing.T) {
 	}
 }
 
-func createAttestation(source, target primitives.Epoch) *ethpb.IndexedAttestation {
+func createAttestation(source, target primitives.Round) *ethpb.IndexedAttestation {
 	return &ethpb.IndexedAttestation{
 		Data: &ethpb.AttestationData{
 			Source: &ethpb.Checkpoint{

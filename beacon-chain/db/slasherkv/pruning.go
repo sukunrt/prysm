@@ -17,7 +17,7 @@ var errTimeOut = errors.New("operation timed out")
 // PruneAttestationsAtEpoch deletes all attestations from the slasher DB with target epoch
 // less than or equal to the specified epoch.
 func (s *Store) PruneAttestationsAtEpoch(
-	ctx context.Context, maxEpoch primitives.Epoch,
+	ctx context.Context, maxEpoch primitives.Round,
 ) (numPruned uint, err error) {
 	// In some cases, pruning may take a very long time and consume significant memory in the
 	// open Update transaction. Therefore, we impose a 1 minute timeout on this operation.
@@ -29,7 +29,7 @@ func (s *Store) PruneAttestationsAtEpoch(
 	binary.BigEndian.PutUint64(encodedEndPruneEpoch, uint64(maxEpoch))
 
 	// We retrieve the lowest stored epoch in the attestations bucket.
-	var lowestEpoch primitives.Epoch
+	var lowestEpoch primitives.Round
 	var hasData bool
 	if err = s.db.View(func(tx *bolt.Tx) error {
 		bkt := tx.Bucket(attestationDataRootsBucket)
@@ -39,7 +39,7 @@ func (s *Store) PruneAttestationsAtEpoch(
 			return nil
 		}
 		hasData = true
-		lowestEpoch = primitives.Epoch(binary.BigEndian.Uint64(k))
+		lowestEpoch = primitives.Round(binary.BigEndian.Uint64(k))
 		return nil
 	}); err != nil {
 		return
@@ -108,10 +108,10 @@ func (s *Store) PruneAttestationsAtEpoch(
 // PruneProposalsAtEpoch deletes all proposals from the slasher DB with epoch
 // less than or equal to the specified epoch.
 func (s *Store) PruneProposalsAtEpoch(
-	ctx context.Context, maxEpoch primitives.Epoch,
+	ctx context.Context, maxEpoch primitives.Round,
 ) (numPruned uint, err error) {
 	var endPruneSlot primitives.Slot
-	endPruneSlot, err = slots.EpochEnd(maxEpoch)
+	endPruneSlot, err = slots.RoundEnd(maxEpoch)
 	if err != nil {
 		return
 	}

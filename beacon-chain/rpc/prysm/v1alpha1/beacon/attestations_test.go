@@ -148,9 +148,9 @@ func TestServer_ListAttestations_FiltersCorrectly(t *testing.T) {
 
 	someRoot := [32]byte{1, 2, 3}
 	sourceRoot := [32]byte{4, 5, 6}
-	sourceEpoch := primitives.Epoch(5)
+	sourceEpoch := primitives.Round(5)
 	targetRoot := [32]byte{7, 8, 9}
-	targetEpoch := primitives.Epoch(7)
+	targetEpoch := primitives.Round(7)
 
 	unwrappedBlocks := []*ethpb.SignedBeaconBlock{
 		util.HydrateSignedBeaconBlock(
@@ -674,8 +674,8 @@ func TestServer_ListIndexedAttestations_OldEpoch(t *testing.T) {
 	blockRoot := bytesutil.ToBytes32([]byte("root"))
 	count := params.BeaconConfig().SlotsPerEpoch
 	atts := make([]*ethpb.Attestation, 0, count)
-	epoch := primitives.Epoch(50)
-	startSlot, err := slots.EpochStart(epoch)
+	epoch := primitives.Round(50)
+	startSlot, err := slots.RoundStart(epoch)
 	require.NoError(t, err)
 
 	for i := startSlot; i < count; i++ {
@@ -742,7 +742,7 @@ func TestServer_ListIndexedAttestations_OldEpoch(t *testing.T) {
 	require.NoError(t, db.SaveState(ctx, state, bytesutil.ToBytes32([]byte("root"))))
 	res, err := bs.ListIndexedAttestations(ctx, &ethpb.ListIndexedAttestationsRequest{
 		QueryFilter: &ethpb.ListIndexedAttestationsRequest_Epoch{
-			Epoch: epoch,
+			Epoch: primitives.Epoch(50),
 		},
 	})
 	require.NoError(t, err)

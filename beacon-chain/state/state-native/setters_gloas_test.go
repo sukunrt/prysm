@@ -195,14 +195,14 @@ func TestUpdatePendingPaymentWeight(t *testing.T) {
 	slotsPerEpoch := cfg.SlotsPerEpoch
 	slot := primitives.Slot(4)
 	stateSlot := slot + 1
-	stateEpoch := slots.ToEpoch(stateSlot)
+	stateEpoch := slots.RoundAt(stateSlot)
 
 	rootA := bytes.Repeat([]byte{0xAA}, 32)
 	rootB := bytes.Repeat([]byte{0xBB}, 32)
 
 	tests := []struct {
 		name          string
-		targetEpoch   primitives.Epoch
+		targetEpoch   primitives.Round
 		blockRoot     []byte
 		initialAmount primitives.Gwei
 		initialWeight primitives.Gwei

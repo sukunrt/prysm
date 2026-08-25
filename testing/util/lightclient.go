@@ -182,7 +182,7 @@ func (l *TestLightClient) setupTestAltair() *TestLightClient {
 		finalizedBlockRoot, err := signedFinalizedBlock.Block().HashTreeRoot()
 		require.NoError(l.T, err)
 		finalizedCheckpoint := &ethpb.Checkpoint{
-			Epoch: slots.ToEpoch(finalizedSlot),
+			Epoch: slots.RoundAt(finalizedSlot),
 			Root:  finalizedBlockRoot[:],
 		}
 
@@ -323,7 +323,7 @@ func (l *TestLightClient) setupTestBellatrix() *TestLightClient {
 		finalizedBlockRoot, err := signedFinalizedBlock.Block().HashTreeRoot()
 		require.NoError(l.T, err)
 		finalizedCheckpoint := &ethpb.Checkpoint{
-			Epoch: slots.ToEpoch(finalizedSlot),
+			Epoch: slots.RoundAt(finalizedSlot),
 			Root:  finalizedBlockRoot[:],
 		}
 		require.NoError(l.T, attestedState.SetFinalizedCheckpoint(finalizedCheckpoint))
@@ -499,7 +499,7 @@ func (l *TestLightClient) setupTestCapella() *TestLightClient {
 		finalizedBlockRoot, err := signedFinalizedBlock.Block().HashTreeRoot()
 		require.NoError(l.T, err)
 		finalizedCheckpoint := &ethpb.Checkpoint{
-			Epoch: slots.ToEpoch(finalizedSlot),
+			Epoch: slots.RoundAt(finalizedSlot),
 			Root:  finalizedBlockRoot[:],
 		}
 		require.NoError(l.T, attestedState.SetFinalizedCheckpoint(finalizedCheckpoint))
@@ -677,7 +677,7 @@ func (l *TestLightClient) setupTestDeneb() *TestLightClient {
 		finalizedBlockRoot, err := signedFinalizedBlock.Block().HashTreeRoot()
 		require.NoError(l.T, err)
 		finalizedCheckpoint := &ethpb.Checkpoint{
-			Epoch: slots.ToEpoch(finalizedSlot),
+			Epoch: slots.RoundAt(finalizedSlot),
 			Root:  finalizedBlockRoot[:],
 		}
 		require.NoError(l.T, attestedState.SetFinalizedCheckpoint(finalizedCheckpoint))
@@ -855,7 +855,7 @@ func (l *TestLightClient) setupTestElectra() *TestLightClient {
 		finalizedBlockRoot, err := signedFinalizedBlock.Block().HashTreeRoot()
 		require.NoError(l.T, err)
 		finalizedCheckpoint := &ethpb.Checkpoint{
-			Epoch: slots.ToEpoch(finalizedSlot),
+			Epoch: slots.RoundAt(finalizedSlot),
 			Root:  finalizedBlockRoot[:],
 		}
 		require.NoError(l.T, attestedState.SetFinalizedCheckpoint(finalizedCheckpoint))
@@ -1033,7 +1033,7 @@ func (l *TestLightClient) setupTestFulu() *TestLightClient {
 		finalizedBlockRoot, err := signedFinalizedBlock.Block().HashTreeRoot()
 		require.NoError(l.T, err)
 		finalizedCheckpoint := &ethpb.Checkpoint{
-			Epoch: slots.ToEpoch(finalizedSlot),
+			Epoch: slots.RoundAt(finalizedSlot),
 			Root:  finalizedBlockRoot[:],
 		}
 		require.NoError(l.T, attestedState.SetFinalizedCheckpoint(finalizedCheckpoint))

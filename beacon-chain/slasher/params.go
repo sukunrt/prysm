@@ -14,7 +14,7 @@ import (
 type Parameters struct {
 	chunkSize          uint64           // C - defines how many elements are in a chunk for a validator min or max span slice.
 	validatorChunkSize uint64           // K - defines how many validators' chunks we store in a single flat byte slice on disk.
-	historyLength      primitives.Epoch // H - defines how many epochs we keep of min or max spans.
+	historyLength      primitives.Round // H - defines how many epochs we keep of min or max spans.
 }
 
 // ChunkSize returns the chunk size.
@@ -28,7 +28,7 @@ func (p *Parameters) ValidatorChunkSize() uint64 {
 }
 
 // HistoryLength returns the history length.
-func (p *Parameters) HistoryLength() primitives.Epoch {
+func (p *Parameters) HistoryLength() primitives.Round {
 	return p.historyLength
 }
 
@@ -48,7 +48,7 @@ func DefaultParams() *Parameters {
 	}
 }
 
-func NewParams(chunkSize, validatorChunkSize uint64, historyLength primitives.Epoch) *Parameters {
+func NewParams(chunkSize, validatorChunkSize uint64, historyLength primitives.Round) *Parameters {
 	return &Parameters{
 		chunkSize:          chunkSize,
 		validatorChunkSize: validatorChunkSize,
@@ -65,7 +65,7 @@ func NewParams(chunkSize, validatorChunkSize uint64, historyLength primitives.Ep
 //	span    = [-, -, -, -, -, -]
 //	chunked = [[-, -], [-, -], [-, -]]
 //	                            |-> epoch 4, chunk idx 2
-func (p *Parameters) chunkIndex(epoch primitives.Epoch) uint64 {
+func (p *Parameters) chunkIndex(epoch primitives.Round) uint64 {
 	return uint64(epoch.Mod(uint64(p.historyLength)).Div(p.chunkSize))
 }
 
@@ -85,8 +85,8 @@ func (p *Parameters) validatorChunkIndex(validatorIndex primitives.ValidatorInde
 //	[[-, -, -], [-, -, -], [-, -, -], ...]
 //	             |
 //	             -> first epoch of chunk 1 equals 3
-func (p *Parameters) firstEpoch(chunkIndex uint64) primitives.Epoch {
-	return primitives.Epoch(chunkIndex * p.chunkSize)
+func (p *Parameters) firstEpoch(chunkIndex uint64) primitives.Round {
+	return primitives.Round(chunkIndex * p.chunkSize)
 }
 
 // Returns the epoch at the last index of a chunk at the specified chunk index.
@@ -98,7 +98,7 @@ func (p *Parameters) firstEpoch(chunkIndex uint64) primitives.Epoch {
 //	[[-, -, -], [-, -, -], [-, -, -], ...]
 //	                   |
 //	                   -> last epoch of chunk 1 equals 5
-func (p *Parameters) lastEpoch(chunkIndex uint64) primitives.Epoch {
+func (p *Parameters) lastEpoch(chunkIndex uint64) primitives.Round {
 	return p.firstEpoch(chunkIndex).Add(p.chunkSize - 1)
 }
 
@@ -124,14 +124,14 @@ func (p *Parameters) lastEpoch(chunkIndex uint64) primitives.Epoch {
 //	 {     }  {     }  {     }
 //	[-, -, -, -, -, -, -, -, -]
 //	                      |-> epoch 1 for val2
-func (p *Parameters) cellIndex(validatorIndex primitives.ValidatorIndex, epoch primitives.Epoch) uint64 {
+func (p *Parameters) cellIndex(validatorIndex primitives.ValidatorIndex, epoch primitives.Round) uint64 {
 	validatorChunkOffset := p.validatorOffset(validatorIndex)
 	chunkOffset := p.chunkOffset(epoch)
 	return validatorChunkOffset*p.chunkSize + chunkOffset
 }
 
 // Computes the start index of a chunk given an epoch.
-func (p *Parameters) chunkOffset(epoch primitives.Epoch) uint64 {
+func (p *Parameters) chunkOffset(epoch primitives.Round) uint64 {
 	return uint64(epoch.Mod(p.chunkSize))
 }
 

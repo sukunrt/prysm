@@ -39,11 +39,11 @@ func ValidateNilAttestation(attestation ethpb.Att) error {
 	return nil
 }
 
-// ValidateSlotTargetEpoch checks if attestation data's epoch matches target checkpoint's epoch.
+// ValidateSlotTargetRound checks if attestation data's round matches target checkpoint's round.
 // It is recommended to run `ValidateNilAttestation` first to ensure `data.Target` can't be nil.
-func ValidateSlotTargetEpoch(data *ethpb.AttestationData) error {
-	if slots.ToEpoch(data.Slot) != data.Target.Epoch {
-		return fmt.Errorf("slot %d does not match target epoch %d", data.Slot, data.Target.Epoch)
+func ValidateSlotTargetRound(data *ethpb.AttestationData) error {
+	if slots.RoundAt(data.Slot) != data.Target.Epoch {
+		return fmt.Errorf("slot %d does not match target round %d", data.Slot, data.Target.Epoch)
 	}
 	return nil
 }
@@ -203,18 +203,18 @@ func ValidateAvailableAttestationTime(attSlot primitives.Slot, genesis time.Time
 	return errors.New("future available attestation")
 }
 
-// VerifyCheckpointEpoch is within current epoch and previous epoch
+// VerifyCheckpointRound is within current round and previous round
 // with respect to current time. Returns true if it's within, false if it's not.
-func VerifyCheckpointEpoch(c *ethpb.Checkpoint, genesis time.Time) bool {
+func VerifyCheckpointRound(c *ethpb.Checkpoint, genesis time.Time) bool {
 	currentSlot := slots.CurrentSlot(genesis)
-	currentEpoch := slots.ToEpoch(currentSlot)
+	currentRound := slots.RoundAt(currentSlot)
 
-	var prevEpoch primitives.Epoch
-	if currentEpoch > 1 {
-		prevEpoch = currentEpoch - 1
+	var prevRound primitives.Round
+	if currentRound > 1 {
+		prevRound = currentRound - 1
 	}
 
-	if c.Epoch != prevEpoch && c.Epoch != currentEpoch {
+	if c.Epoch != prevRound && c.Epoch != currentRound {
 		return false
 	}
 

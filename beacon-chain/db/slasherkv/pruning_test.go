@@ -25,11 +25,11 @@ func TestStore_PruneProposalsAtEpoch(t *testing.T) {
 
 		// With a current epoch of 30 and a history length of 10, we should be pruning
 		// everything before epoch (30 - 10) = 20.
-		currentEpoch := primitives.Epoch(30)
-		historyLength := primitives.Epoch(10)
+		currentEpoch := primitives.Round(30)
+		historyLength := primitives.Round(10)
 
 		pruningLimitEpoch := currentEpoch - historyLength
-		lowestStoredSlot, err := slots.EpochEnd(pruningLimitEpoch)
+		lowestStoredSlot, err := slots.RoundEnd(pruningLimitEpoch)
 		require.NoError(t, err)
 
 		err = beaconDB.db.Update(func(tx *bolt.Tx) error {
@@ -54,22 +54,24 @@ func TestStore_PruneProposalsAtEpoch(t *testing.T) {
 		params.SetupTestConfigCleanup(t)
 		config := params.BeaconConfig()
 		config.SlotsPerEpoch = 2
+		// The slasher DB indexes by the attestation target, which is a ROUND.
+		config.SlotsPerRound = 2
 		params.OverrideBeaconConfig(config)
 
-		historyLength := primitives.Epoch(10)
-		currentEpoch := primitives.Epoch(30)
+		historyLength := primitives.Round(10)
+		currentEpoch := primitives.Round(30)
 		pruningLimitEpoch := currentEpoch - historyLength
 
 		// We create proposals from genesis to the current epoch, with 2 proposals
 		// at each slot to ensure the entire pruning logic works correctly.
-		slotsPerEpoch := params.BeaconConfig().SlotsPerEpoch
-		expectedNumPruned := 2 * uint(pruningLimitEpoch+1) * uint(slotsPerEpoch)
+		slotsPerRound := params.BeaconConfig().SlotsPerRound
+		expectedNumPruned := 2 * uint(pruningLimitEpoch+1) * uint(slotsPerRound)
 
-		proposals := make([]*slashertypes.SignedBlockHeaderWrapper, 0, uint64(currentEpoch)*uint64(slotsPerEpoch)*2)
+		proposals := make([]*slashertypes.SignedBlockHeaderWrapper, 0, uint64(currentEpoch)*uint64(slotsPerRound)*2)
 		for i := range currentEpoch {
-			startSlot, err := slots.EpochStart(i)
+			startSlot, err := slots.RoundStart(i)
 			require.NoError(t, err)
-			endSlot, err := slots.EpochStart(i + 1)
+			endSlot, err := slots.RoundStart(i + 1)
 			require.NoError(t, err)
 			for j := startSlot; j < endSlot; j++ {
 				prop1 := createProposalWrapper(t, j, 0 /* proposer index */, []byte{0})
@@ -89,9 +91,9 @@ func TestStore_PruneProposalsAtEpoch(t *testing.T) {
 		for i := range pruningLimitEpoch {
 			err = beaconDB.db.View(func(tx *bolt.Tx) error {
 				bkt := tx.Bucket(proposalRecordsBucket)
-				startSlot, err := slots.EpochStart(i)
+				startSlot, err := slots.RoundStart(i)
 				require.NoError(t, err)
-				endSlot, err := slots.EpochStart(i + 1)
+				endSlot, err := slots.RoundStart(i + 1)
 				require.NoError(t, err)
 				for j := startSlot; j < endSlot; j++ {
 					prop1Key := keyForValidatorProposal(j, 0)
@@ -121,8 +123,8 @@ func TestStore_PruneAttestations_OK(t *testing.T) {
 
 		// With a current epoch of 30 and a history length of 10, we should be pruning
 		// everything before epoch (30 - 10) = 20.
-		currentEpoch := primitives.Epoch(30)
-		historyLength := primitives.Epoch(10)
+		currentEpoch := primitives.Round(30)
+		historyLength := primitives.Round(10)
 
 		pruningLimitEpoch := currentEpoch - historyLength
 		lowestStoredEpoch := pruningLimitEpoch
@@ -152,28 +154,30 @@ func TestStore_PruneAttestations_OK(t *testing.T) {
 		params.SetupTestConfigCleanup(t)
 		config := params.BeaconConfig()
 		config.SlotsPerEpoch = 2
+		// The slasher DB indexes by the attestation target, which is a ROUND.
+		config.SlotsPerRound = 2
 		params.OverrideBeaconConfig(config)
 
-		historyLength := primitives.Epoch(10)
-		currentEpoch := primitives.Epoch(30)
+		historyLength := primitives.Round(10)
+		currentEpoch := primitives.Round(30)
 		pruningLimitEpoch := currentEpoch - historyLength
 
 		// We create attestations from genesis to the current epoch, with 2 attestations
 		// at each slot to ensure the entire pruning logic works correctly.
-		slotsPerEpoch := params.BeaconConfig().SlotsPerEpoch
-		expectedNumPruned := 2 * uint(pruningLimitEpoch+1) * uint(slotsPerEpoch)
+		slotsPerRound := params.BeaconConfig().SlotsPerRound
+		expectedNumPruned := 2 * uint(pruningLimitEpoch+1) * uint(slotsPerRound)
 
-		attestations := make([]*slashertypes.IndexedAttestationWrapper, 0, uint64(currentEpoch)*uint64(slotsPerEpoch)*2)
+		attestations := make([]*slashertypes.IndexedAttestationWrapper, 0, uint64(currentEpoch)*uint64(slotsPerRound)*2)
 		for i := range currentEpoch {
-			startSlot, err := slots.EpochStart(i)
+			startSlot, err := slots.RoundStart(i)
 			require.NoError(t, err)
-			endSlot, err := slots.EpochStart(i + 1)
+			endSlot, err := slots.RoundStart(i + 1)
 			require.NoError(t, err)
 			for j := startSlot; j < endSlot; j++ {
 				attester1 := uint64(2 * j)
 				attester2 := uint64(2*j + 1)
 				target := i
-				var source primitives.Epoch
+				var source primitives.Round
 				if i > 0 {
 					source = target - 1
 				}
@@ -194,9 +198,9 @@ func TestStore_PruneAttestations_OK(t *testing.T) {
 		for i := range pruningLimitEpoch {
 			err = beaconDB.db.View(func(tx *bolt.Tx) error {
 				bkt := tx.Bucket(attestationDataRootsBucket)
-				startSlot, err := slots.EpochStart(i)
+				startSlot, err := slots.RoundStart(i)
 				require.NoError(t, err)
-				endSlot, err := slots.EpochStart(i + 1)
+				endSlot, err := slots.RoundStart(i + 1)
 				require.NoError(t, err)
 				for j := startSlot; j < endSlot; j++ {
 					attester1 := primitives.ValidatorIndex(j + 10)

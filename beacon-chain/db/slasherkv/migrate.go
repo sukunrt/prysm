@@ -25,7 +25,7 @@ import (
 // is stored in little-endian. We create a new entry with the same value, but with the slot (resp. epoch)
 // part in the key stored as a big-endian.
 // We start the iterate by the highest key and iterate down until we reach the current slot (resp. epoch).
-func (s *Store) Migrate(ctx context.Context, headEpoch, maxPruningEpoch primitives.Epoch, batchSize int) error {
+func (s *Store) Migrate(ctx context.Context, headEpoch, maxPruningEpoch primitives.Round, batchSize int) error {
 	// Migrate attestations.
 	log.Info("Starting migration of attestations. This may take a while.")
 	start := time.Now()
@@ -49,7 +49,7 @@ func (s *Store) Migrate(ctx context.Context, headEpoch, maxPruningEpoch primitiv
 	return nil
 }
 
-func (s *Store) migrateAttestations(ctx context.Context, headEpoch, maxPruningEpoch primitives.Epoch, batchSize int) error {
+func (s *Store) migrateAttestations(ctx context.Context, headEpoch, maxPruningEpoch primitives.Round, batchSize int) error {
 	done := false
 	var epochLittleEndian uint64
 
@@ -103,7 +103,7 @@ func (s *Store) migrateAttestations(ctx context.Context, headEpoch, maxPruningEp
 					continue
 				}
 
-				epoch := primitives.Epoch(epochLittleEndian)
+				epoch := primitives.Round(epochLittleEndian)
 				if err := signingRootsBkt.Delete(k); err != nil {
 					return err
 				}
@@ -139,20 +139,20 @@ func (s *Store) migrateAttestations(ctx context.Context, headEpoch, maxPruningEp
 	return nil
 }
 
-func (s *Store) migrateProposals(ctx context.Context, headEpoch, maxPruningEpoch primitives.Epoch, batchSize int) error {
+func (s *Store) migrateProposals(ctx context.Context, headEpoch, maxPruningEpoch primitives.Round, batchSize int) error {
 	done := false
 
 	if !done {
 		count := 0
 
 		// Compute the max pruning slot.
-		maxPruningSlot, err := slots.EpochEnd(maxPruningEpoch)
+		maxPruningSlot, err := slots.RoundEnd(maxPruningEpoch)
 		if err != nil {
 			return errors.Wrap(err, "compute max pruning slot")
 		}
 
 		// Compute the head slot.
-		headSlot, err := slots.EpochEnd(headEpoch)
+		headSlot, err := slots.RoundEnd(headEpoch)
 		if err != nil {
 			return errors.Wrap(err, "compute head slot")
 		}

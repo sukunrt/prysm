@@ -24,6 +24,15 @@ func EpochFromString(str string) (primitives.Epoch, error) {
 	return primitives.Epoch(e), nil
 }
 
+// RoundFromString converts a string into Round.
+func RoundFromString(str string) (primitives.Round, error) {
+	r, err := Uint64FromString(str)
+	if err != nil {
+		return primitives.Round(r), err
+	}
+	return primitives.Round(r), nil
+}
+
 // SlotFromString converts a string into Slot.
 func SlotFromString(str string) (primitives.Slot, error) {
 	s, err := Uint64FromString(str)

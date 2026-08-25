@@ -36,27 +36,27 @@ func (f *blocksFetcher) nonSkippedSlotAfter(ctx context.Context, slot primitives
 	ctx, span := trace.StartSpan(ctx, "initialsync.nonSkippedSlotAfter")
 	defer span.End()
 
-	headEpoch, targetEpoch, peers := f.calculateHeadAndTargetEpochs()
+	headBound, targetBound, peers := f.calculateHeadAndTargetBounds()
 	log.WithFields(logrus.Fields{
 		"start":       slot,
-		"headEpoch":   headEpoch,
-		"targetEpoch": targetEpoch,
+		"headBound":   headBound,
+		"targetBound": targetBound,
 	}).Debug("Searching for non-skipped slot")
 
-	// Exit early if no peers with epoch higher than our known head are found.
-	if targetEpoch <= headEpoch {
+	// Exit early if no peers ahead of our known head are found.
+	if targetBound <= headBound {
 		return 0, errSlotIsTooHigh
 	}
 
 	// Transform peer list to avoid eclipsing (filter, shuffle, trim).
 	peers = f.filterPeers(ctx, peers, peersPercentagePerRequest)
-	return f.nonSkippedSlotAfterWithPeersTarget(ctx, slot, peers, targetEpoch)
+	return f.nonSkippedSlotAfterWithPeersTarget(ctx, slot, peers, targetBound)
 }
 
-// nonSkippedSlotWithPeersTarget traverse peers (supporting a given target epoch), in an attempt
-// to find non-skipped slot among returned blocks.
+// nonSkippedSlotWithPeersTarget traverse peers (supporting a given target upper-bound slot), in an
+// attempt to find non-skipped slot among returned blocks.
 func (f *blocksFetcher) nonSkippedSlotAfterWithPeersTarget(
-	ctx context.Context, slot primitives.Slot, peers []peer.ID, targetEpoch primitives.Epoch,
+	ctx context.Context, slot primitives.Slot, peers []peer.ID, targetBound primitives.Slot,
 ) (primitives.Slot, error) {
 	// Exit early if no peers are ready.
 	if len(peers) == 0 {
@@ -107,10 +107,7 @@ func (f *blocksFetcher) nonSkippedSlotAfterWithPeersTarget(
 	// The downside is that this method will be less effective during periods without
 	// finality.
 	slot += nonSkippedSlotsFullSearchEpochs * slotsPerEpoch
-	upperBoundSlot, err := slots.EpochStart(targetEpoch + 1)
-	if err != nil {
-		return 0, err
-	}
+	upperBoundSlot := targetBound
 	for ind := slot + 1; ind < upperBoundSlot; ind += slotsPerEpoch {
 		nextSlot, err := fetch(peers[pidInd%len(peers)], ind, uint64(slotsPerEpoch), 1)
 		if err != nil {
@@ -127,7 +124,7 @@ func (f *blocksFetcher) nonSkippedSlotAfterWithPeersTarget(
 	if upperBoundSlot > slotsPerEpoch {
 		upperBoundSlot -= slotsPerEpoch
 	}
-	upperBoundSlot, err = slots.EpochStart(slots.ToEpoch(upperBoundSlot))
+	upperBoundSlot, err := slots.EpochStart(slots.ToEpoch(upperBoundSlot))
 	if err != nil {
 		return 0, err
 	}
@@ -135,11 +132,7 @@ func (f *blocksFetcher) nonSkippedSlotAfterWithPeersTarget(
 	if err != nil {
 		return 0, err
 	}
-	s, err := slots.EpochStart(targetEpoch + 1)
-	if err != nil {
-		return 0, err
-	}
-	if nextSlot < slot || s < nextSlot {
+	if nextSlot < slot || targetBound < nextSlot {
 		return 0, errors.New("invalid range for non-skipped slot")
 	}
 	return nextSlot, nil
@@ -161,11 +154,10 @@ func (f *blocksFetcher) findFork(ctx context.Context, slot primitives.Slot) (*fo
 	// The current slot's epoch must be after the finalization epoch,
 	// triggering backtracking on earlier epochs is unnecessary.
 	cp := f.chain.FinalizedCheckpt()
-	finalizedEpoch := cp.Epoch
-	epoch := slots.ToEpoch(slot)
-	if epoch <= finalizedEpoch {
-		return nil, errors.New("slot is not after the finalized epoch, no backtracking is necessary")
+	if slots.RoundAt(slot) <= cp.Epoch {
+		return nil, errors.New("slot is not after the finalized round, no backtracking is necessary")
 	}
+	epoch := slots.ToEpoch(slot)
 	// Update slot to the beginning of the current epoch (preserve original slot for comparison).
 	slot, err := slots.EpochStart(epoch)
 	if err != nil {
@@ -225,8 +217,12 @@ func (f *blocksFetcher) findForkWithPeer(ctx context.Context, pid peer.ID, slot 
 	if err != nil {
 		return nil, fmt.Errorf("cannot obtain peer's status: %w", err)
 	}
+	peerBound, err := slots.EpochStart(slots.ToEpoch(pidState.HeadSlot) + 1)
+	if err != nil {
+		return nil, err
+	}
 	nonSkippedSlot, err := f.nonSkippedSlotAfterWithPeersTarget(
-		ctx, slot-slotsPerEpoch, []peer.ID{pid}, slots.ToEpoch(pidState.HeadSlot))
+		ctx, slot-slotsPerEpoch, []peer.ID{pid}, peerBound)
 	if err != nil {
 		return nil, fmt.Errorf("cannot locate non-empty slot for a peer: %w", err)
 	}
@@ -332,9 +328,14 @@ func (f *blocksFetcher) findAncestor(ctx context.Context, pid peer.ID, b interfa
 }
 
 // bestFinalizedSlot returns the highest finalized slot of the majority of connected peers.
+// Peers report their finalized ROUND, so the slot conversion is round-keyed.
 func (f *blocksFetcher) bestFinalizedSlot() primitives.Slot {
-	finalizedEpoch, _ := f.p2p.Peers().BestFinalized(f.chain.FinalizedCheckpt().Epoch)
-	return params.BeaconConfig().SlotsPerEpoch.Mul(uint64(finalizedEpoch))
+	finalizedRound, _ := f.p2p.Peers().BestFinalized(f.chain.FinalizedCheckpt().Epoch)
+	slot, err := slots.RoundStart(finalizedRound)
+	if err != nil {
+		return 0
+	}
+	return slot
 }
 
 // bestNonFinalizedSlot returns the highest non-finalized slot of enough number of connected peers.
@@ -364,22 +365,39 @@ func (f *blocksFetcher) bestNonFinalizedSlot() primitives.Slot {
 	return targetSlot
 }
 
-// calculateHeadAndTargetEpochs return node's current head epoch, along with the best known target
-// epoch. For the latter peers supporting that target epoch are returned as well.
-func (f *blocksFetcher) calculateHeadAndTargetEpochs() (headEpoch, targetEpoch primitives.Epoch, peers []peer.ID) {
+// calculateHeadAndTargetBounds returns the first slot past the node's current head unit, along
+// with the first slot past the best known target unit. Peers supporting that target are returned
+// as well.
+//
+// The unit differs by mode: peers report finalized ROUNDS, while the non-finalized head vote is
+// epoch-keyed. Returning slots keeps the two comparable without a cross-unit cast.
+func (f *blocksFetcher) calculateHeadAndTargetBounds() (headBound, targetBound primitives.Slot, peers []peer.ID) {
 	if f.mode == modeStopOnFinalizedEpoch {
 		cp := f.chain.FinalizedCheckpt()
-		headEpoch = cp.Epoch
-		targetEpoch, peers = f.p2p.Peers().BestFinalized(headEpoch)
+		targetRound, peers := f.p2p.Peers().BestFinalized(cp.Epoch)
 		if len(peers) > params.BeaconConfig().MaxPeersToSync {
 			peers = peers[:params.BeaconConfig().MaxPeersToSync]
 		}
-
-		return headEpoch, targetEpoch, peers
+		headBound, err := slots.RoundStart(cp.Epoch + 1)
+		if err != nil {
+			return 0, 0, peers
+		}
+		targetBound, err := slots.RoundStart(targetRound + 1)
+		if err != nil {
+			return 0, 0, peers
+		}
+		return headBound, targetBound, peers
 	}
 
-	headEpoch = slots.ToEpoch(f.chain.HeadSlot())
-	targetEpoch, peers = f.p2p.Peers().BestNonFinalized(flags.Get().MinimumSyncPeers, headEpoch)
-
-	return headEpoch, targetEpoch, peers
+	headEpoch := slots.ToEpoch(f.chain.HeadSlot())
+	targetEpoch, peers := f.p2p.Peers().BestNonFinalized(flags.Get().MinimumSyncPeers, headEpoch)
+	headBound, err := slots.EpochStart(headEpoch + 1)
+	if err != nil {
+		return 0, 0, peers
+	}
+	targetBound, err = slots.EpochStart(targetEpoch + 1)
+	if err != nil {
+		return 0, 0, peers
+	}
+	return headBound, targetBound, peers
 }

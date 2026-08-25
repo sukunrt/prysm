@@ -44,10 +44,10 @@ func (s *Store) head(ctx context.Context) ([32]byte, error) {
 	if bestDescendant == nil {
 		bestDescendant = jn
 	}
-	currentEpoch := slots.EpochsSinceGenesis(s.genesisTime)
-	if !bestDescendant.viableForHead(s.justifiedCheckpoint.Epoch, currentEpoch) {
+	currentRound := slots.RoundsSinceGenesis(s.genesisTime)
+	if !bestDescendant.viableForHead(s.justifiedCheckpoint.Epoch, currentRound) {
 		s.allTipsAreInvalid = true
-		return [32]byte{}, fmt.Errorf("head at slot %d with weight %d is not eligible, finalizedEpoch, justified Epoch %d, %d != %d, %d",
+		return [32]byte{}, fmt.Errorf("head at slot %d with weight %d is not eligible, finalizedRound, justified Round %d, %d != %d, %d",
 			bestDescendant.slot, bestDescendant.weight/10e9, bestDescendant.finalizedEpoch, bestDescendant.justifiedEpoch, s.finalizedCheckpoint.Epoch, s.justifiedCheckpoint.Epoch)
 	}
 	s.allTipsAreInvalid = false
@@ -70,7 +70,7 @@ func (s *Store) justifiedNode() (*Node, error) {
 	}
 	// If the justifiedCheckpoint is from genesis, then the root is zeroHash. In
 	// this case it should be the root of the forkchoice tree.
-	if s.justifiedCheckpoint.Epoch == params.BeaconConfig().GenesisEpoch {
+	if s.justifiedCheckpoint.Epoch == genesisRound {
 		return s.treeRootNode, nil
 	}
 	return nil, errors.WithMessage(errUnknownJustifiedRoot, fmt.Sprintf("%#x", s.justifiedCheckpoint.Root))
@@ -80,7 +80,7 @@ func (s *Store) justifiedNode() (*Node, error) {
 // It then updates the new node's parent with the best child and descendant node.
 func (s *Store) insert(ctx context.Context,
 	roblock consensus_blocks.ROBlock,
-	justifiedEpoch, finalizedEpoch primitives.Epoch,
+	justifiedEpoch, finalizedEpoch primitives.Round,
 ) (*PayloadNode, error) {
 	ctx, span := trace.StartSpan(ctx, "doublyLinkedForkchoice.insert")
 	defer span.End()
@@ -133,17 +133,28 @@ func (s *Store) insert(ctx context.Context,
 		payloadAttesters:            bitfield.NewBitvector512(),
 	}
 	// Set the node's target checkpoint. The decoupled fork's FFG target for
-	// epoch E is the block at slot StartSlot(E)-1, so it is the deepest
-	// ancestor in an earlier epoch. The state side computes the same root in
-	// helpers.FFGTargetRoot; the two must agree or VerifyLmdFfgConsistency
-	// rejects every vote.
-	if parent == nil {
-		// The anchor: epoch 0 underflows, and a checkpoint sync anchor has no
+	// round R is the block at slot RoundStart(R) - FFG_TARGET_OFFSET_SLOTS, so it
+	// is the deepest ancestor at or before that slot. The state side computes the
+	// same root in helpers.FFGTargetRoot off the same slots.FFGTargetSlot; the two
+	// must agree or VerifyLmdFfgConsistency rejects every vote.
+	targetSlot, err := slots.FFGTargetSlot(slots.RoundAt(slot))
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case parent == nil:
+		// The anchor: round 0 underflows, and a checkpoint sync anchor has no
 		// ancestor left. Both fall back to the anchor root itself.
 		n.target = n
-	} else if slots.ToEpoch(slot) == slots.ToEpoch(parent.node.slot) {
+	case slot <= targetSlot:
+		// Offset 0 only: a block exactly at its round's first slot is its own target.
+		// At offset 1 the target sits one slot earlier, so this arm never fires.
+		n.target = n
+	case slots.RoundAt(slot) == slots.RoundAt(parent.node.slot):
 		n.target = parent.node.target
-	} else {
+	default:
+		// A new round starting at a later slot than RoundStart (empty round start):
+		// the parent is still the deepest block at or before the target slot.
 		n.target = parent.node
 	}
 	var ret *PayloadNode
@@ -235,7 +246,7 @@ func (s *Store) insert(ctx context.Context,
 		// Update best descendants
 		jEpoch := s.justifiedCheckpoint.Epoch
 		fEpoch := s.finalizedCheckpoint.Epoch
-		if err := s.updateBestDescendantConsensusNode(ctx, s.treeRootNode, jEpoch, fEpoch, slots.ToEpoch(currentSlot)); err != nil {
+		if err := s.updateBestDescendantConsensusNode(ctx, s.treeRootNode, jEpoch, fEpoch, slots.RoundAt(currentSlot)); err != nil {
 			log.WithError(err).WithFields(logrus.Fields{
 				"slot": slot,
 				"root": root,
@@ -302,7 +313,7 @@ func (s *Store) prune(ctx context.Context) error {
 	defer span.End()
 
 	finalizedRoot := s.finalizedCheckpoint.Root
-	finalizedEpoch := s.finalizedCheckpoint.Epoch
+	finalizedRound := s.finalizedCheckpoint.Epoch
 	fen, ok := s.emptyNodeByRoot[finalizedRoot]
 	if !ok || fen == nil {
 		return errors.WithMessage(errUnknownFinalizedRoot, fmt.Sprintf("%#x", finalizedRoot))
@@ -327,12 +338,12 @@ func (s *Store) prune(ctx context.Context) error {
 
 	prunedCount.Inc()
 	// Prune all children of the finalized checkpoint block that are incompatible
-	// with it. A chain's FFG target for the finalized epoch is its deepest block
-	// before the epoch starts, so a child of the finalized node is compatible
-	// exactly when it is at or after the epoch's first slot.
-	checkpointStartSlot, err := slots.EpochStart(finalizedEpoch)
+	// with it. A chain's FFG target for the finalized round is its deepest block
+	// before the round starts, so a child of the finalized node is compatible
+	// exactly when it is at or after the round's first slot.
+	checkpointStartSlot, err := slots.RoundStart(finalizedRound)
 	if err != nil {
-		return errors.Wrap(err, "could not compute epoch start")
+		return errors.Wrap(err, "could not compute round start")
 	}
 	if fn.slot+1 >= checkpointStartSlot {
 		return nil

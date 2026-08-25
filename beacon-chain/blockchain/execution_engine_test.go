@@ -490,7 +490,7 @@ func Test_NotifyNewPayload(t *testing.T) {
 	blk.Block.Body.ExecutionPayload.BlockNumber = 1
 	bellatrixBlk, err := consensusblocks.NewSignedBeaconBlock(util.HydrateSignedBeaconBlockBellatrix(blk))
 	require.NoError(t, err)
-	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(epochsSinceFinalitySaveHotStateDB))
+	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(roundsSinceFinalitySaveHotStateDB))
 	service.genesisTime = time.Now().Add(time.Duration(-1*int64(st)*int64(params.BeaconConfig().SecondsPerSlot)) * time.Second)
 	r, err := bellatrixBlk.Block().HashTreeRoot()
 	require.NoError(t, err)

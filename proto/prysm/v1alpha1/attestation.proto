@@ -93,13 +93,14 @@ message AttestationData {
 }
 
 message Checkpoint {
-  // A checkpoint is every epoch's first slot. The goal of Casper FFG
+  // A checkpoint is every round's boundary block. The goal of Casper FFG
   // is to link the check points together for justification and finalization.
 
-  // Epoch the checkpoint references.
+  // Round the checkpoint references. The field keeps its `epoch` name and
+  // uint64 wire shape; its VALUE and Go type are a Simplex round.
   uint64 epoch = 1 [
     (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"
+        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"
   ];
 
   // Block root of the checkpoint references.

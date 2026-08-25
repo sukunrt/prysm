@@ -24,6 +24,7 @@ func (s *Simulator) generateAttestationsForSlot(ctx context.Context, ver int, sl
 	attestations := make([]ethpb.IndexedAtt, 0)
 	slashings := make([]ethpb.AttSlashing, 0)
 	currentEpoch := slots.ToEpoch(slot)
+	currentRound := slots.RoundAt(slot)
 
 	committeesPerSlot := helpers.SlotCommitteeCount(s.srvConfig.Params.NumValidators)
 	valsPerCommittee := s.srvConfig.Params.NumValidators /
@@ -33,7 +34,10 @@ func (s *Simulator) generateAttestationsForSlot(ctx context.Context, ver int, sl
 	if currentEpoch < 2 {
 		return nil, nil, nil
 	}
-	sourceEpoch := currentEpoch - 1
+	sourceRound := currentRound
+	if sourceRound > 0 {
+		sourceRound--
+	}
 
 	var slashedIndices []uint64
 	startIdx := valsPerSlot * uint64(slot%s.srvConfig.Params.SlotsPerEpoch)
@@ -44,11 +48,11 @@ func (s *Simulator) generateAttestationsForSlot(ctx context.Context, ver int, sl
 			CommitteeIndex:  c,
 			BeaconBlockRoot: bytesutil.PadTo([]byte("block"), 32),
 			Source: &ethpb.Checkpoint{
-				Epoch: sourceEpoch,
+				Epoch: sourceRound,
 				Root:  bytesutil.PadTo([]byte("source"), 32),
 			},
 			Target: &ethpb.Checkpoint{
-				Epoch: currentEpoch,
+				Epoch: currentRound,
 				Root:  bytesutil.PadTo([]byte("target"), 32),
 			},
 		}
@@ -168,7 +172,7 @@ func (s *Simulator) aggregateSigForAttestation(
 ) (bls.Signature, error) {
 	domain, err := signing.Domain(
 		beaconState.Fork(),
-		att.GetData().Target.Epoch,
+		slots.ToEpoch(att.GetData().Slot),
 		params.BeaconConfig().DomainBeaconAttester,
 		beaconState.GenesisValidatorsRoot(),
 	)

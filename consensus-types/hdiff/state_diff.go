@@ -491,7 +491,7 @@ func (ret *stateDiff) readPreviousJustifiedCheckpoint(data *[]byte) error {
 		return errors.Wrap(errDataSmall, "previousJustifiedCheckpoint")
 	}
 	ret.previousJustifiedCheckpoint = &ethpb.Checkpoint{
-		Epoch: primitives.Epoch(binary.LittleEndian.Uint64((*data)[:8])),
+		Epoch: primitives.Round(binary.LittleEndian.Uint64((*data)[:8])),
 		Root:  slices.Clone((*data)[8 : 8+fieldparams.RootLength]),
 	}
 	*data = (*data)[checkpointLength:]
@@ -503,7 +503,7 @@ func (ret *stateDiff) readCurrentJustifiedCheckpoint(data *[]byte) error {
 		return errors.Wrap(errDataSmall, "currentJustifiedCheckpoint")
 	}
 	ret.currentJustifiedCheckpoint = &ethpb.Checkpoint{
-		Epoch: primitives.Epoch(binary.LittleEndian.Uint64((*data)[:8])),
+		Epoch: primitives.Round(binary.LittleEndian.Uint64((*data)[:8])),
 		Root:  slices.Clone((*data)[8 : 8+fieldparams.RootLength]),
 	}
 	*data = (*data)[checkpointLength:]
@@ -515,7 +515,7 @@ func (ret *stateDiff) readFinalizedCheckpoint(data *[]byte) error {
 		return errors.Wrap(errDataSmall, "finalizedCheckpoint")
 	}
 	ret.finalizedCheckpoint = &ethpb.Checkpoint{
-		Epoch: primitives.Epoch(binary.LittleEndian.Uint64((*data)[:8])),
+		Epoch: primitives.Round(binary.LittleEndian.Uint64((*data)[:8])),
 		Root:  slices.Clone((*data)[8 : 8+fieldparams.RootLength]),
 	}
 	*data = (*data)[checkpointLength:]

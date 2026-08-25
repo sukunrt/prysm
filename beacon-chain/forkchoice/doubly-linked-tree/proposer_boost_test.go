@@ -28,7 +28,7 @@ func driftGenesisTime(f *ForkChoice, slot primitives.Slot, delay time.Duration) 
 // If the honest proposal is boosted at slot n+2, it will win against this attacker.
 func TestForkChoice_BoostProposerRoot_PreventsExAnteAttack(t *testing.T) {
 	ctx := t.Context()
-	jEpoch, fEpoch := primitives.Epoch(0), primitives.Epoch(0)
+	jEpoch, fEpoch := primitives.Round(0), primitives.Round(0)
 	zeroHash := params.BeaconConfig().ZeroHash
 	balances := make([]uint64, 64) // 64 active validators.
 	for i := range balances {

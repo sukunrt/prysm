@@ -26,12 +26,14 @@ option php_namespace = "Ethereum\\Eth\\v1alpha1";
 
 message HighestAttestation {
   uint64 validator_index = 1;
+  // The fields keep their `epoch` names and uint64 wire shape; their VALUES and
+  // Go types are Simplex rounds, copied straight from attestation checkpoints.
   uint64 highest_source_epoch = 2 [
     (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"
+        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"
   ];
   uint64 highest_target_epoch = 3 [
     (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"
+        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"
   ];
 }

@@ -735,10 +735,10 @@ func TestStatusRPCRequest_FinalizedBlockSkippedSlots(t *testing.T) {
 	}
 	tests := []struct {
 		name                   string
-		expectedFinalizedEpoch primitives.Epoch
+		expectedFinalizedEpoch primitives.Round
 		expectedFinalizedRoot  [32]byte
 		headSlot               primitives.Slot
-		remoteFinalizedEpoch   primitives.Epoch
+		remoteFinalizedEpoch   primitives.Round
 		remoteFinalizedRoot    [32]byte
 		remoteHeadSlot         primitives.Slot
 		expectError            bool

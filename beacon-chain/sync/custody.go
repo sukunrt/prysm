@@ -36,9 +36,9 @@ func (s *Service) maintainCustodyInfo() error {
 		return errors.New("finalized checkpoint is nil")
 	}
 
-	finalizedSlot, err := slots.EpochStart(finalizedCheckpoint.Epoch)
+	finalizedSlot, err := slots.RoundStart(finalizedCheckpoint.Epoch)
 	if err != nil {
-		return errors.Wrap(err, "epoch start for finalized slot")
+		return errors.Wrap(err, "round start for finalized slot")
 	}
 
 	justifiedCheckpoint, err := s.cfg.beaconDB.JustifiedCheckpoint(s.ctx)
@@ -50,9 +50,9 @@ func (s *Service) maintainCustodyInfo() error {
 		return errors.New("justified checkpoint is nil")
 	}
 
-	justifiedSlot, err := slots.EpochStart(justifiedCheckpoint.Epoch)
+	justifiedSlot, err := slots.RoundStart(justifiedCheckpoint.Epoch)
 	if err != nil {
-		return errors.Wrap(err, "epoch start for justified slot")
+		return errors.Wrap(err, "round start for justified slot")
 	}
 
 	slot := justifiedSlot

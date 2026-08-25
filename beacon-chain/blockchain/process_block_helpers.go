@@ -284,7 +284,7 @@ func (s *Service) verifyBlkPreState(ctx context.Context, parentRoot [field_param
 // to current finalized slot.
 func (s *Service) verifyBlkFinalizedSlot(b interfaces.ReadOnlyBeaconBlock) error {
 	finalized := s.cfg.ForkChoiceStore.FinalizedCheckpoint()
-	finalizedSlot, err := slots.EpochStart(finalized.Epoch)
+	finalizedSlot, err := slots.RoundStart(finalized.Epoch)
 	if err != nil {
 		return err
 	}
@@ -380,7 +380,7 @@ func (s *Service) fillInForkChoiceMissingBlocks(ctx context.Context, signed inte
 
 	// Fork choice only matters from last finalized slot.
 	finalized := s.cfg.ForkChoiceStore.FinalizedCheckpoint()
-	fSlot, err := slots.EpochStart(finalized.Epoch)
+	fSlot, err := slots.RoundStart(finalized.Epoch)
 	if err != nil {
 		return err
 	}

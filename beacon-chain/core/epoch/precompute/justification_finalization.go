@@ -151,29 +151,29 @@ func weighJustificationAndFinalization(state state.BeaconState, newBits bitfield
 //	if all(bits[0:2]) and old_current_justified_checkpoint.epoch + 1 == current_epoch:
 //	    state.finalized_checkpoint = old_current_justified_checkpoint
 func computeCheckpoints(state state.BeaconState, newBits bitfield.Bitvector4) (*ethpb.Checkpoint, *ethpb.Checkpoint, error) {
-	prevEpoch := time.PrevEpoch(state)
-	currentEpoch := time.CurrentEpoch(state)
+	prevRound := time.PrevRound(state)
+	currentRound := time.CurrentRound(state)
 	oldPrevJustifiedCheckpoint := state.PreviousJustifiedCheckpoint()
 	oldCurrJustifiedCheckpoint := state.CurrentJustifiedCheckpoint()
 
 	justifiedCheckpoint := state.CurrentJustifiedCheckpoint()
 	finalizedCheckpoint := state.FinalizedCheckpoint()
 
-	// If 2/3 or more of the total balance attested in the current epoch.
-	if newBits.BitAt(0) && currentEpoch >= justifiedCheckpoint.Epoch {
-		blockRoot, err := helpers.FFGTargetRoot(state, currentEpoch)
+	// If 2/3 or more of the total balance attested in the current round.
+	if newBits.BitAt(0) && currentRound >= justifiedCheckpoint.Epoch {
+		blockRoot, err := helpers.FFGTargetRoot(state, currentRound)
 		if err != nil {
-			return nil, nil, errors.Wrapf(err, "could not get block root for current epoch %d", currentEpoch)
+			return nil, nil, errors.Wrapf(err, "could not get block root for current round %d", currentRound)
 		}
-		justifiedCheckpoint.Epoch = currentEpoch
+		justifiedCheckpoint.Epoch = currentRound
 		justifiedCheckpoint.Root = blockRoot
-	} else if newBits.BitAt(1) && prevEpoch >= justifiedCheckpoint.Epoch {
-		// If 2/3 or more of total balance attested in the previous epoch.
-		blockRoot, err := helpers.FFGTargetRoot(state, prevEpoch)
+	} else if newBits.BitAt(1) && prevRound >= justifiedCheckpoint.Epoch {
+		// If 2/3 or more of total balance attested in the previous round.
+		blockRoot, err := helpers.FFGTargetRoot(state, prevRound)
 		if err != nil {
-			return nil, nil, errors.Wrapf(err, "could not get block root for previous epoch %d", prevEpoch)
+			return nil, nil, errors.Wrapf(err, "could not get block root for previous round %d", prevRound)
 		}
-		justifiedCheckpoint.Epoch = prevEpoch
+		justifiedCheckpoint.Epoch = prevRound
 		justifiedCheckpoint.Root = blockRoot
 	}
 
@@ -183,23 +183,23 @@ func computeCheckpoints(state state.BeaconState, newBits bitfield.Bitvector4) (*
 	}
 	justification := newBits.Bytes()[0]
 
-	// 2nd/3rd/4th (0b1110) most recent epochs are justified, the 2nd using the 4th as source.
-	if justification&0x0E == 0x0E && (oldPrevJustifiedCheckpoint.Epoch+3) == currentEpoch {
+	// 2nd/3rd/4th (0b1110) most recent rounds are justified, the 2nd using the 4th as source.
+	if justification&0x0E == 0x0E && (oldPrevJustifiedCheckpoint.Epoch+3) == currentRound {
 		finalizedCheckpoint = oldPrevJustifiedCheckpoint
 	}
 
-	// 2nd/3rd (0b0110) most recent epochs are justified, the 2nd using the 3rd as source.
-	if justification&0x06 == 0x06 && (oldPrevJustifiedCheckpoint.Epoch+2) == currentEpoch {
+	// 2nd/3rd (0b0110) most recent rounds are justified, the 2nd using the 3rd as source.
+	if justification&0x06 == 0x06 && (oldPrevJustifiedCheckpoint.Epoch+2) == currentRound {
 		finalizedCheckpoint = oldPrevJustifiedCheckpoint
 	}
 
-	// 1st/2nd/3rd (0b0111) most recent epochs are justified, the 1st using the 3rd as source.
-	if justification&0x07 == 0x07 && (oldCurrJustifiedCheckpoint.Epoch+2) == currentEpoch {
+	// 1st/2nd/3rd (0b0111) most recent rounds are justified, the 1st using the 3rd as source.
+	if justification&0x07 == 0x07 && (oldCurrJustifiedCheckpoint.Epoch+2) == currentRound {
 		finalizedCheckpoint = oldCurrJustifiedCheckpoint
 	}
 
-	// The 1st/2nd (0b0011) most recent epochs are justified, the 1st using the 2nd as source
-	if justification&0x03 == 0x03 && (oldCurrJustifiedCheckpoint.Epoch+1) == currentEpoch {
+	// The 1st/2nd (0b0011) most recent rounds are justified, the 1st using the 2nd as source
+	if justification&0x03 == 0x03 && (oldCurrJustifiedCheckpoint.Epoch+1) == currentRound {
 		finalizedCheckpoint = oldCurrJustifiedCheckpoint
 	}
 	return justifiedCheckpoint, finalizedCheckpoint, nil

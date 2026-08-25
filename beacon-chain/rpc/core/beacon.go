@@ -89,24 +89,26 @@ func (s *Service) ChainHead(ctx context.Context) (*ethpb.ChainHead, *RpcError) {
 		}
 	}
 
-	fSlot, err := slots.EpochStart(finalizedCheckpoint.Epoch)
+	// Checkpoints carry ROUNDS, so their slots come from RoundStart. The response's
+	// *Epoch fields carry those round values (see plan-finality-round step 5).
+	fSlot, err := slots.RoundStart(finalizedCheckpoint.Epoch)
 	if err != nil {
 		return nil, &RpcError{
-			Err:    errors.Wrapf(err, "could not get epoch start slot from finalized checkpoint epoch"),
+			Err:    errors.Wrapf(err, "could not get round start slot from finalized checkpoint round"),
 			Reason: Internal,
 		}
 	}
-	jSlot, err := slots.EpochStart(justifiedCheckpoint.Epoch)
+	jSlot, err := slots.RoundStart(justifiedCheckpoint.Epoch)
 	if err != nil {
 		return nil, &RpcError{
-			Err:    errors.Wrapf(err, "could not get epoch start slot from justified checkpoint epoch"),
+			Err:    errors.Wrapf(err, "could not get round start slot from justified checkpoint round"),
 			Reason: Internal,
 		}
 	}
-	pjSlot, err := slots.EpochStart(prevJustifiedCheckpoint.Epoch)
+	pjSlot, err := slots.RoundStart(prevJustifiedCheckpoint.Epoch)
 	if err != nil {
 		return nil, &RpcError{
-			Err:    errors.Wrapf(err, "could not get epoch start slot from prev justified checkpoint epoch"),
+			Err:    errors.Wrapf(err, "could not get round start slot from prev justified checkpoint round"),
 			Reason: Internal,
 		}
 	}

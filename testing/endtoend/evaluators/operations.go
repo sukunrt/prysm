@@ -26,6 +26,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/endtoend/policies"
 	e2etypes "github.com/OffchainLabs/prysm/v7/testing/endtoend/types"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
@@ -306,7 +307,7 @@ func activatesDepositedValidators(ec *e2etypes.EvaluationContext, conns ...*grpc
 		}
 		delete(expected, key)
 		// Validator can't be activated yet .
-		if v.ActivationEligibilityEpoch > chainHead.FinalizedEpoch {
+		if v.ActivationEligibilityEpoch > slots.ToEpoch(chainHead.FinalizedSlot) {
 			continue
 		}
 		if v.ActivationEpoch < epoch {
@@ -399,7 +400,7 @@ func depositedValidatorsAreActive(ec *e2etypes.EvaluationContext, conns ...*grpc
 			continue
 		}
 		// This is to handle the changed validator activation procedure post-electra.
-		if v.ActivationEligibilityEpoch != math.MaxUint64 && v.ActivationEligibilityEpoch > chainHead.FinalizedEpoch {
+		if v.ActivationEligibilityEpoch != math.MaxUint64 && v.ActivationEligibilityEpoch > slots.ToEpoch(chainHead.FinalizedSlot) {
 			delete(expected, key)
 			continue
 		}

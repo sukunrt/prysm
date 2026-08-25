@@ -1034,7 +1034,7 @@ func TestBlocksQueue_stuckInUnfavourableFork(t *testing.T) {
 	forkedSlot := primitives.Slot(201)
 	chain2 := extendBlockSequence(t, chain1[:forkedSlot], 100)
 	finalizedSlot := primitives.Slot(63)
-	finalizedEpoch := slots.ToEpoch(finalizedSlot)
+	finalizedEpoch := slots.RoundAt(finalizedSlot)
 
 	genesisBlock := chain1[0]
 	util.SaveBlock(t, t.Context(), beaconDB, genesisBlock)
@@ -1237,7 +1237,7 @@ func TestBlocksQueue_stuckWhenHeadIsSetToOrphanedBlock(t *testing.T) {
 
 	chain := extendBlockSequence(t, []*eth.SignedBeaconBlock{}, 128)
 	finalizedSlot := primitives.Slot(82)
-	finalizedEpoch := slots.ToEpoch(finalizedSlot)
+	finalizedEpoch := slots.RoundAt(finalizedSlot)
 
 	genesisBlock := chain[0]
 	util.SaveBlock(t, t.Context(), beaconDB, genesisBlock)
@@ -1307,7 +1307,7 @@ func TestBlocksQueue_stuckWhenHeadIsSetToOrphanedBlock(t *testing.T) {
 	require.NoError(t, queue.start())
 	isProcessedBlock := func(ctx context.Context, blk interfaces.ReadOnlySignedBeaconBlock, blkRoot [32]byte) bool {
 		cp := mc.FinalizedCheckpt()
-		finalizedSlot, err := slots.EpochStart(cp.Epoch)
+		finalizedSlot, err := slots.RoundStart(cp.Epoch)
 		if err != nil {
 			return false
 		}

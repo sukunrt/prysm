@@ -17,6 +17,7 @@ import (
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
 )
 
@@ -60,19 +61,19 @@ func VerifyAttestationNoVerifySignature(
 	if err := helpers.ValidateNilAttestation(att); err != nil {
 		return err
 	}
-	currEpoch := time.CurrentEpoch(beaconState)
-	prevEpoch := time.PrevEpoch(beaconState)
+	currRound := time.CurrentRound(beaconState)
+	prevRound := time.PrevRound(beaconState)
 	data := att.GetData()
-	if data.Target.Epoch != prevEpoch && data.Target.Epoch != currEpoch {
+	if data.Target.Epoch != prevRound && data.Target.Epoch != currRound {
 		return fmt.Errorf(
-			"expected target epoch (%d) to be the previous epoch (%d) or the current epoch (%d)",
+			"expected target round (%d) to be the previous round (%d) or the current round (%d)",
 			data.Target.Epoch,
-			prevEpoch,
-			currEpoch,
+			prevRound,
+			currRound,
 		)
 	}
 
-	if data.Target.Epoch == currEpoch {
+	if data.Target.Epoch == currRound {
 		if !beaconState.MatchCurrentJustifiedCheckpoint(data.Source) {
 			return errors.New("source check point not equal to current justified checkpoint")
 		}
@@ -82,7 +83,7 @@ func VerifyAttestationNoVerifySignature(
 		}
 	}
 
-	if err := helpers.ValidateSlotTargetEpoch(att.GetData()); err != nil {
+	if err := helpers.ValidateSlotTargetRound(att.GetData()); err != nil {
 		return err
 	}
 
@@ -108,7 +109,9 @@ func VerifyAttestationNoVerifySignature(
 			)
 		}
 	}
-	activeValidatorCount, err := helpers.ActiveValidatorCount(ctx, beaconState, att.GetData().Target.Epoch)
+	// The active set is an EPOCH concept: derive it from the attestation's slot, not from the
+	// (round-valued) target checkpoint.
+	activeValidatorCount, err := helpers.ActiveValidatorCount(ctx, beaconState, slots.ToEpoch(att.GetData().Slot))
 	if err != nil {
 		return err
 	}
@@ -212,7 +215,7 @@ func ProcessAttestationNoVerifySignature(
 		return nil, err
 	}
 
-	currEpoch := time.CurrentEpoch(beaconState)
+	currRound := time.CurrentRound(beaconState)
 	data := att.GetData()
 	s := att.GetData().Slot
 	proposerIndex, err := helpers.BeaconProposerIndex(ctx, beaconState)
@@ -226,7 +229,7 @@ func ProcessAttestationNoVerifySignature(
 		ProposerIndex:   proposerIndex,
 	}
 
-	if data.Target.Epoch == currEpoch {
+	if data.Target.Epoch == currRound {
 		if err := beaconState.AppendCurrentEpochAttestations(pendingAtt); err != nil {
 			return nil, err
 		}
@@ -263,9 +266,11 @@ func VerifyIndexedAttestation(ctx context.Context, beaconState state.ReadOnlyBea
 	if err := attestation.IsValidAttestationIndices(ctx, indexedAtt, params.BeaconConfig().MaxValidatorsPerCommittee, params.BeaconConfig().MaxCommitteesPerSlot); err != nil {
 		return err
 	}
+	// The signing domain is an EPOCH concept: derive it from the attestation's slot, not from the
+	// (round-valued) target checkpoint.
 	domain, err := signing.Domain(
 		beaconState.Fork(),
-		indexedAtt.GetData().Target.Epoch,
+		slots.ToEpoch(indexedAtt.GetData().Slot),
 		params.BeaconConfig().DomainBeaconAttester,
 		beaconState.GenesisValidatorsRoot(),
 	)

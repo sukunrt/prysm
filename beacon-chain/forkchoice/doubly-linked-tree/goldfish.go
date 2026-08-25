@@ -399,7 +399,7 @@ func (s *Store) goldfishBestChild(
 	p *PayloadNode,
 	sc *goldfishScores,
 	current primitives.Slot,
-	justifiedEpoch, currentEpoch primitives.Epoch,
+	justifiedEpoch, currentEpoch primitives.Round,
 ) (best *Node, hadCandidates bool) {
 	bestScore := uint64(0)
 	for _, child := range p.children {
@@ -451,7 +451,7 @@ func (s *Store) goldfishRoundProposal(justified *Node, current primitives.Slot) 
 	if n.slot != current || !isGoldfishAncestor(n, justified) {
 		return nil
 	}
-	if !n.leadsToViableHead(s.justifiedCheckpoint.Epoch, slots.ToEpoch(current)) {
+	if !n.leadsToViableHead(s.justifiedCheckpoint.Epoch, slots.RoundAt(current)) {
 		return nil
 	}
 	return n
@@ -464,7 +464,7 @@ func (s *Store) goldfishDescend(
 	from *Node, sc *goldfishScores, current primitives.Slot,
 ) *Node {
 	justifiedEpoch := s.justifiedCheckpoint.Epoch
-	currentEpoch := slots.ToEpoch(current)
+	currentEpoch := slots.RoundAt(current)
 	head := from
 	for {
 		p, hadPayloads := s.goldfishBestPayload(head, sc, current)

@@ -46,7 +46,7 @@ func (s *Service) OnAttestation(ctx context.Context, a ethpb.Att, disparity time
 	if err := helpers.ValidateNilAttestation(a); err != nil {
 		return err
 	}
-	if err := helpers.ValidateSlotTargetEpoch(a.GetData()); err != nil {
+	if err := helpers.ValidateSlotTargetRound(a.GetData()); err != nil {
 		return err
 	}
 	tgt := a.GetData().Target.Copy()
@@ -62,8 +62,8 @@ func (s *Service) OnAttestation(ctx context.Context, a ethpb.Att, disparity time
 		return err
 	}
 
-	// Verify attestation target is from current epoch or previous epoch.
-	if err := verifyAttTargetEpoch(ctx, s.genesisTime, time.Now().Add(disparity), tgt); err != nil {
+	// Verify attestation target is from the current round or the previous round.
+	if err := verifyAttTargetRound(ctx, s.genesisTime, time.Now().Add(disparity), tgt); err != nil {
 		return err
 	}
 
@@ -101,7 +101,9 @@ func (s *Service) OnAttestation(ctx context.Context, a ethpb.Att, disparity time
 	attData := a.GetData()
 	blockRoot := bytesutil.ToBytes32(attData.BeaconBlockRoot)
 	payloadStatus := true
-	if attData.Target.Epoch >= params.BeaconConfig().GloasForkEpoch {
+	// The fork gate is an EPOCH concept: derive it from the attestation's slot rather than
+	// from the (round-valued) target checkpoint.
+	if slots.ToEpoch(attData.Slot) >= params.BeaconConfig().GloasForkEpoch {
 		payloadStatus = attData.CommitteeIndex == 1
 		if payloadStatus {
 			if blockSlot, err := s.cfg.ForkChoiceStore.Slot(blockRoot); err == nil && blockSlot == attData.Slot {

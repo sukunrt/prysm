@@ -80,11 +80,11 @@ func TestService_pruneSlasherDataWithinSlidingWindow_AttestationsPruned(t *testi
 	require.NoError(t, err)
 
 	// Attempt to prune and discover that all data is still intact.
-	currentEpoch := primitives.Epoch(3)
+	currentEpoch := primitives.Round(3)
 	err = s.pruneSlasherDataWithinSlidingWindow(ctx, currentEpoch)
 	require.NoError(t, err)
 
-	epochs := []primitives.Epoch{0, 1, 2, 3}
+	epochs := []primitives.Round{0, 1, 2, 3}
 	for _, epoch := range epochs {
 		att, err := slasherDB.AttestationRecordForValidator(ctx, primitives.ValidatorIndex(0), epoch)
 		require.NoError(t, err)
@@ -102,7 +102,7 @@ func TestService_pruneSlasherDataWithinSlidingWindow_AttestationsPruned(t *testi
 	require.NoError(t, err)
 
 	// Attempt to prune again by setting current epoch to 4.
-	currentEpoch = primitives.Epoch(4)
+	currentEpoch = primitives.Round(4)
 	err = s.pruneSlasherDataWithinSlidingWindow(ctx, currentEpoch)
 	require.NoError(t, err)
 
@@ -115,7 +115,7 @@ func TestService_pruneSlasherDataWithinSlidingWindow_AttestationsPruned(t *testi
 	require.NoError(t, err)
 	require.Equal(t, true, att == nil)
 
-	epochs = []primitives.Epoch{1, 2, 3, 4}
+	epochs = []primitives.Round{1, 2, 3, 4}
 	for _, epoch := range epochs {
 		att, err := slasherDB.AttestationRecordForValidator(ctx, primitives.ValidatorIndex(0), epoch)
 		require.NoError(t, err)
@@ -133,6 +133,8 @@ func TestService_pruneSlasherDataWithinSlidingWindow_ProposalsPruned(t *testing.
 	params2.SetupTestConfigCleanup(t)
 	config := params2.BeaconConfig().Copy()
 	config.SlotsPerEpoch = 1
+	// Slasher windows key on attestation targets, which are ROUNDS.
+	config.SlotsPerRound = 1
 	params2.OverrideBeaconConfig(config)
 
 	params := DefaultParams()
@@ -159,7 +161,7 @@ func TestService_pruneSlasherDataWithinSlidingWindow_ProposalsPruned(t *testing.
 	require.NoError(t, err)
 
 	// Attempt to prune and discover that all data is still intact.
-	currentEpoch := primitives.Epoch(3)
+	currentEpoch := primitives.Round(3)
 	err = s.pruneSlasherDataWithinSlidingWindow(ctx, currentEpoch)
 	require.NoError(t, err)
 
@@ -181,7 +183,7 @@ func TestService_pruneSlasherDataWithinSlidingWindow_ProposalsPruned(t *testing.
 	require.NoError(t, err)
 
 	// Attempt to prune again by setting current epoch to 4.
-	currentEpoch = primitives.Epoch(4)
+	currentEpoch = primitives.Round(4)
 	err = s.pruneSlasherDataWithinSlidingWindow(ctx, currentEpoch)
 	require.NoError(t, err)
 

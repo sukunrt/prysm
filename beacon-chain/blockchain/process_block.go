@@ -592,7 +592,9 @@ func (s *Service) handleBlockAttestations(ctx context.Context, blk interfaces.Re
 		r := bytesutil.ToBytes32(a.GetData().BeaconBlockRoot)
 		if s.cfg.ForkChoiceStore.HasNode(r) {
 			payloadStatus := true
-			if a.GetData().Target.Epoch >= params.BeaconConfig().GloasForkEpoch {
+			// The fork gate is an EPOCH concept: derive it from the attestation's slot,
+			// not from the (round-valued) target checkpoint.
+			if slots.ToEpoch(a.GetData().Slot) >= params.BeaconConfig().GloasForkEpoch {
 				payloadStatus = a.GetData().CommitteeIndex == 1
 			}
 			s.cfg.ForkChoiceStore.ProcessAttestation(ctx, indices, r, a.GetData().Slot, payloadStatus)

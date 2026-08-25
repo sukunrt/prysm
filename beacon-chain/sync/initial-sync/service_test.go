@@ -130,7 +130,7 @@ func TestService_InitStartStop(t *testing.T) {
 				return &mock.ChainService{
 					State: st,
 					FinalizedCheckPoint: &eth.Checkpoint{
-						Epoch: slots.ToEpoch(futureSlot),
+						Epoch: slots.RoundAt(futureSlot),
 					},
 					Genesis:        makeGenesisTime(futureSlot),
 					ValidatorsRoot: [32]byte{},
@@ -472,7 +472,7 @@ func TestService_Resync(t *testing.T) {
 					Root:  genesisRoot[:],
 					DB:    beaconDB,
 					FinalizedCheckPoint: &eth.Checkpoint{
-						Epoch: slots.ToEpoch(futureSlot),
+						Epoch: slots.RoundAt(futureSlot),
 					},
 					Genesis:        genesis,
 					ValidatorsRoot: [32]byte{},

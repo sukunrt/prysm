@@ -144,7 +144,7 @@ func (bv *ROBlobVerifier) NotFromFutureSlot() (err error) {
 func (bv *ROBlobVerifier) SlotAboveFinalized() (err error) {
 	defer bv.recordResult(RequireSlotAboveFinalized, &err)
 	fcp := bv.fc.FinalizedCheckpoint()
-	fSlot, err := slots.EpochStart(fcp.Epoch)
+	fSlot, err := slots.RoundStart(fcp.Epoch)
 	if err != nil {
 		return errors.Wrapf(errSlotNotAfterFinalized, "error computing epoch start slot for finalized checkpoint (%d) %s", fcp.Epoch, err.Error())
 	}

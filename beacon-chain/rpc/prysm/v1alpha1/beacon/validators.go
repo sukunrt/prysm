@@ -459,9 +459,13 @@ func (bs *Server) GetValidatorQueue(
 	exitEpochs := make([]primitives.Epoch, 0)
 	activationQ := make([]primitives.ValidatorIndex, 0)
 	vals := headState.Validators()
+	finalizedEpoch, err := helpers.CheckpointEpoch(headState.FinalizedCheckpointRound())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Could not convert finalized round: %v", err)
+	}
 	for idx, validator := range vals {
 		eligibleActivated := validator.ActivationEligibilityEpoch != params.BeaconConfig().FarFutureEpoch
-		canBeActive := validator.ActivationEpoch >= helpers.ActivationExitEpoch(headState.FinalizedCheckpointEpoch())
+		canBeActive := validator.ActivationEpoch >= helpers.ActivationExitEpoch(finalizedEpoch)
 		if eligibleActivated && canBeActive {
 			activationQ = append(activationQ, primitives.ValidatorIndex(idx))
 		}

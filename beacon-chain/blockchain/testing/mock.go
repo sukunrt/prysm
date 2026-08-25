@@ -1012,8 +1012,8 @@ func (c *ChainService) DependentRootForEpoch(root [32]byte, epoch primitives.Epo
 	return c.TargetRoot, nil
 }
 
-// TargetRootForEpoch mocks the same method in the chain service
-func (c *ChainService) TargetRootForEpoch(_ [32]byte, _ primitives.Epoch) ([32]byte, error) {
+// TargetRootForRound mocks the same method in the chain service
+func (c *ChainService) TargetRootForRound(_ [32]byte, _ primitives.Round) ([32]byte, error) {
 	return c.TargetRoot, nil
 }
 

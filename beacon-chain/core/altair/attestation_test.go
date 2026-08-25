@@ -76,7 +76,7 @@ func TestProcessAttestations_NeitherCurrentNorPrevEpoch(t *testing.T) {
 	require.NoError(t, beaconState.SetPreviousJustifiedCheckpoint(pfc))
 
 	want := fmt.Sprintf(
-		"expected target epoch (%d) to be the previous epoch (%d) or the current epoch (%d)",
+		"expected target round (%d) to be the previous round (%d) or the current round (%d)",
 		att.Data.Target.Epoch,
 		time.PrevEpoch(beaconState),
 		time.CurrentEpoch(beaconState),
@@ -114,7 +114,7 @@ func TestProcessAttestations_CurrentEpochFFGDataMismatches(t *testing.T) {
 	require.NoError(t, err)
 	_, err = altair.ProcessAttestationsNoVerifySignature(t.Context(), beaconState, wsb.Block())
 	require.ErrorContains(t, want, err)
-	b.Block.Body.Attestations[0].Data.Source.Epoch = time.CurrentEpoch(beaconState)
+	b.Block.Body.Attestations[0].Data.Source.Epoch = time.CurrentRound(beaconState)
 	b.Block.Body.Attestations[0].Data.Source.Root = []byte{}
 	wsb, err = blocks.NewSignedBeaconBlock(b)
 	require.NoError(t, err)
@@ -155,8 +155,8 @@ func TestProcessAttestations_PrevEpochFFGDataMismatches(t *testing.T) {
 	require.NoError(t, err)
 	_, err = altair.ProcessAttestationsNoVerifySignature(t.Context(), beaconState, wsb.Block())
 	require.ErrorContains(t, want, err)
-	b.Block.Body.Attestations[0].Data.Source.Epoch = time.PrevEpoch(beaconState)
-	b.Block.Body.Attestations[0].Data.Target.Epoch = time.PrevEpoch(beaconState)
+	b.Block.Body.Attestations[0].Data.Source.Epoch = time.PrevRound(beaconState)
+	b.Block.Body.Attestations[0].Data.Target.Epoch = time.PrevRound(beaconState)
 	b.Block.Body.Attestations[0].Data.Source.Root = []byte{}
 	wsb, err = blocks.NewSignedBeaconBlock(b)
 	require.NoError(t, err)
@@ -494,7 +494,7 @@ func TestSetParticipationAndRewardProposer(t *testing.T) {
 		indices             []uint64
 		epochParticipation  []byte
 		participatedFlags   map[uint8]bool
-		epoch               primitives.Epoch
+		epoch               primitives.Round
 		wantedBalance       uint64
 		wantedParticipation []byte
 	}{
@@ -549,8 +549,8 @@ func TestSetParticipationAndRewardProposer(t *testing.T) {
 			beaconState, _ := util.DeterministicGenesisStateAltair(t, params.BeaconConfig().MaxValidatorsPerCommittee)
 			require.NoError(t, beaconState.SetSlot(params.BeaconConfig().SlotsPerEpoch))
 
-			currentEpoch := time.CurrentEpoch(beaconState)
-			if test.epoch == currentEpoch {
+			currentRound := time.CurrentRound(beaconState)
+			if test.epoch == currentRound {
 				require.NoError(t, beaconState.SetCurrentParticipationBits(test.epochParticipation))
 			} else {
 				require.NoError(t, beaconState.SetPreviousParticipationBits(test.epochParticipation))
@@ -567,7 +567,7 @@ func TestSetParticipationAndRewardProposer(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, test.wantedBalance, b)
 
-			if test.epoch == currentEpoch {
+			if test.epoch == currentRound {
 				p, err := beaconState.CurrentEpochParticipation()
 				require.NoError(t, err)
 				require.DeepSSZEqual(t, test.wantedParticipation, p)

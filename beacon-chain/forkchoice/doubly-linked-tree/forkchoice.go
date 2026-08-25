@@ -3,6 +3,7 @@ package doublylinkedtree
 import (
 	"context"
 	"fmt"
+	"math"
 	"slices"
 	"time"
 
@@ -76,8 +77,8 @@ func (f *ForkChoice) Head(
 
 	jc := f.JustifiedCheckpoint()
 	fc := f.FinalizedCheckpoint()
-	currentEpoch := slots.EpochsSinceGenesis(f.store.genesisTime)
-	if err := f.store.updateBestDescendantConsensusNode(ctx, f.store.treeRootNode, jc.Epoch, fc.Epoch, currentEpoch); err != nil {
+	currentRound := slots.RoundsSinceGenesis(f.store.genesisTime)
+	if err := f.store.updateBestDescendantConsensusNode(ctx, f.store.treeRootNode, jc.Epoch, fc.Epoch, currentRound); err != nil {
 		return [32]byte{}, errors.Wrap(err, "could not update best descendant")
 	}
 	return f.store.head(ctx)
@@ -270,16 +271,16 @@ func (f *ForkChoice) IsViableForCheckpoint(cp *forkchoicetypes.Checkpoint) (bool
 		return false, nil
 	}
 	node := pn.node
-	epochStart, err := slots.EpochStart(cp.Epoch)
+	roundStart, err := slots.RoundStart(cp.Epoch)
 	if err != nil {
 		return false, err
 	}
-	if node.slot > epochStart {
+	if node.slot > roundStart {
 		return false, nil
 	}
 
-	// If it's the start of the epoch, it is a checkpoint
-	if node.slot == epochStart {
+	// If it's the start of the round, it is a checkpoint
+	if node.slot == roundStart {
 		return true, nil
 	}
 	// If there are no descendants of this beacon block, it is is viable as a checkpoint
@@ -288,16 +289,22 @@ func (f *ForkChoice) IsViableForCheckpoint(cp *forkchoicetypes.Checkpoint) (bool
 		return true, nil
 	}
 	if !features.Get().IgnoreUnviableAttestations {
-		// Allow any node from the checkpoint epoch - 1 to be viable.
-		nodeEpoch := slots.ToEpoch(node.slot)
-		if nodeEpoch+1 == cp.Epoch {
+		// Allow any node from the checkpoint round - 1 to be viable.
+		nodeRound := slots.RoundAt(node.slot)
+		if nodeRound+1 == cp.Epoch {
 			return true, nil
 		}
 	}
-	// If some child is at or after the start of the epoch, the checkpoint is
-	// viable: that child's FFG target for the epoch is this node.
+	// If some child sits after this node's own FFG target slot, the checkpoint is
+	// viable: that child's FFG target for the round is this node. At offset 1 the
+	// bound is the round's first slot; at offset 0 a child exactly at the round's
+	// first slot is its own target and is not evidence for this node.
+	firstEvidenceSlot := roundStart
+	if params.BeaconConfig().FFGTargetOffsetSlots == 0 {
+		firstEvidenceSlot = roundStart + 1
+	}
 	for _, child := range children {
-		if child.slot >= epochStart {
+		if child.slot >= firstEvidenceSlot {
 			return true, nil
 		}
 	}
@@ -497,7 +504,7 @@ func (f *ForkChoice) UpdateFinalizedCheckpoint(fc *forkchoicetypes.Checkpoint) e
 	}
 	f.store.finalizedCheckpoint = fc
 	f.store.finalizedPayloadBlockHash = f.store.checkpointPayloadHashForRoot(fc.Root)
-	finalizedSlot, err := slots.EpochStart(fc.Epoch)
+	finalizedSlot, err := slots.RoundStart(fc.Epoch)
 	if err == nil {
 		for key := range f.store.blockRootsBySlotProposer {
 			if key.slot <= finalizedSlot {
@@ -815,9 +822,9 @@ func (f *ForkChoice) DependentRootForEpoch(root [32]byte, epoch primitives.Epoch
 	return f.store.dependentRootForEpoch(root, epoch)
 }
 
-// TargetRootForEpoch returns the root of the target block for a given epoch.
-func (f *ForkChoice) TargetRootForEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
-	return f.store.targetRootForEpoch(root, epoch)
+// TargetRootForRound returns the root of the target block for a given round.
+func (f *ForkChoice) TargetRootForRound(root [32]byte, round primitives.Round) ([32]byte, error) {
+	return f.store.targetRootForRound(root, round)
 }
 
 func (s *Store) dependentRoot(epoch primitives.Epoch) ([32]byte, error) {
@@ -828,8 +835,19 @@ func (s *Store) dependentRoot(epoch primitives.Epoch) ([32]byte, error) {
 	return s.dependentRootForEpoch(headRoot, epoch)
 }
 
+// dependentRootForEpoch returns the last root of the epoch prior to the requested epoch.
+// Shuffling is epoch-keyed, so this stays an EPOCH concept even though the target pointers
+// it rides are round-keyed: at the default offset the last block before EpochStart(E) is
+// exactly the target of the epoch's first round.
 func (s *Store) dependentRootForEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
-	tr, err := s.targetRootForEpoch(root, epoch)
+	// Callers pass `headEpoch-1`, which underflows to MaxUint64 at epoch 0. The
+	// epoch-keyed predecessor treated that as a unit past every node, which
+	// returns the node's own root; keep that.
+	round := primitives.Round(math.MaxUint64)
+	if epochStart, err := slots.EpochStart(epoch); err == nil {
+		round = slots.RoundAt(epochStart)
+	}
+	tr, err := s.targetRootForRound(root, round)
 	if err != nil {
 		return [32]byte{}, err
 	}
@@ -850,43 +868,43 @@ func (s *Store) dependentRootForEpoch(root [32]byte, epoch primitives.Epoch) ([3
 	return en.node.root, nil
 }
 
-// targetRootForEpoch returns the root of the target block for a given epoch.
-// The epoch parameter is crucial to identify the correct target root. For example:
+// targetRootForRound returns the root of the target block for a given round.
+// The round parameter is crucial to identify the correct target root. For example:
 // When inserting a block at slot 63 with block root 0xA and target root 0xB (pointing to the block at slot 32),
 // and at slot 64, where the block is skipped, the attestation will reference the target root as 0xA (for slot 63), not 0xB (for slot 32).
 // This implies that if the input slot exceeds the block slot, the target root will be the same as the block root.
-// We also allow for the epoch to be below the current target for this root, in
+// We also allow for the round to be below the current target for this root, in
 // which case we return the root of the checkpoint of the chain containing the
-// passed root, at the given epoch
-func (s *Store) targetRootForEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
+// passed root, at the given round
+func (s *Store) targetRootForRound(root [32]byte, round primitives.Round) ([32]byte, error) {
 	n, ok := s.emptyNodeByRoot[root]
 	if !ok || n == nil {
 		return [32]byte{}, ErrNilNode
 	}
 	node := n.node
-	nodeEpoch := slots.ToEpoch(node.slot)
-	if epoch > nodeEpoch {
+	nodeRound := slots.RoundAt(node.slot)
+	if round > nodeRound {
 		return node.root, nil
 	}
 	if node.target == nil {
 		return [32]byte{}, nil
 	}
 	targetRoot := node.target.root
-	if epoch == nodeEpoch {
+	if round == nodeRound {
 		return targetRoot, nil
 	}
 	targetNode, ok := s.emptyNodeByRoot[targetRoot]
 	if !ok || targetNode == nil {
 		return [32]byte{}, ErrNilNode
 	}
-	// If slot 0 was not missed we consider a previous block to go back at least one epoch
-	if nodeEpoch == slots.ToEpoch(targetNode.node.slot) {
+	// If slot 0 was not missed we consider a previous block to go back at least one round
+	if nodeRound == slots.RoundAt(targetNode.node.slot) {
 		targetNode = targetNode.node.parent
 		if targetNode == nil {
 			return [32]byte{}, ErrNilNode
 		}
 	}
-	return s.targetRootForEpoch(targetNode.node.root, epoch)
+	return s.targetRootForRound(targetNode.node.root, round)
 }
 
 // ParentRoot returns the block root of the parent node if it is in forkchoice.

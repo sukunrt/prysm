@@ -163,7 +163,7 @@ type ReadOnlyCheckpoint interface {
 	MatchCurrentJustifiedCheckpoint(c *ethpb.Checkpoint) bool
 	MatchPreviousJustifiedCheckpoint(c *ethpb.Checkpoint) bool
 	FinalizedCheckpoint() *ethpb.Checkpoint
-	FinalizedCheckpointEpoch() primitives.Epoch
+	FinalizedCheckpointRound() primitives.Round
 	JustificationBits() bitfield.Bitvector4
 	UnrealizedCheckpointBalances() (uint64, uint64, uint64, error)
 }

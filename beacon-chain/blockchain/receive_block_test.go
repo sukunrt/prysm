@@ -320,7 +320,7 @@ func TestService_HasBlock(t *testing.T) {
 func TestCheckSaveHotStateDB_Enabling(t *testing.T) {
 	hook := logTest.NewGlobal()
 	s, _ := minimalTestService(t)
-	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(epochsSinceFinalitySaveHotStateDB))
+	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(roundsSinceFinalitySaveHotStateDB))
 	s.genesisTime = time.Now().Add(time.Duration(-1*int64(st)*int64(params.BeaconConfig().SecondsPerSlot)) * time.Second)
 
 	require.NoError(t, s.checkSaveHotStateDB(t.Context()))
@@ -332,7 +332,7 @@ func TestCheckSaveHotStateDB_Disabling(t *testing.T) {
 
 	s, _ := minimalTestService(t)
 
-	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(epochsSinceFinalitySaveHotStateDB))
+	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(roundsSinceFinalitySaveHotStateDB))
 	s.genesisTime = time.Now().Add(time.Duration(-1*int64(st)*int64(params.BeaconConfig().SecondsPerSlot)) * time.Second)
 	require.NoError(t, s.checkSaveHotStateDB(t.Context()))
 	s.genesisTime = time.Now()
@@ -353,7 +353,7 @@ func TestCheckSaveHotStateDB_Overflow(t *testing.T) {
 func TestHandleCaches_EnablingLargeSize(t *testing.T) {
 	hook := logTest.NewGlobal()
 	s, _ := minimalTestService(t)
-	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(epochsSinceFinalitySaveHotStateDB))
+	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(roundsSinceFinalitySaveHotStateDB))
 	s.SetGenesisTime(time.Now().Add(time.Duration(-1*int64(st)*int64(params.BeaconConfig().SecondsPerSlot)) * time.Second))
 
 	helpers.ClearCache()
@@ -365,7 +365,7 @@ func TestHandleCaches_DisablingLargeSize(t *testing.T) {
 	hook := logTest.NewGlobal()
 	s, _ := minimalTestService(t)
 
-	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(epochsSinceFinalitySaveHotStateDB))
+	st := params.BeaconConfig().SlotsPerEpoch.Mul(uint64(roundsSinceFinalitySaveHotStateDB))
 	s.genesisTime = time.Now().Add(time.Duration(-1*int64(st)*int64(params.BeaconConfig().SecondsPerSlot)) * time.Second)
 	require.NoError(t, s.handleCaches())
 	s.genesisTime = time.Now()
@@ -451,7 +451,7 @@ func Test_sendNewFinalizedEvent(t *testing.T) {
 	assert.Equal(t, statefeed.FinalizedCheckpoint, int(e.Type))
 	fc, ok := e.Data.(*statefeed.FinalizedCheckpointData)
 	require.Equal(t, true, ok, "event has wrong data type")
-	assert.Equal(t, primitives.Epoch(123), fc.Epoch)
+	assert.Equal(t, primitives.Round(123), fc.Epoch)
 	assert.DeepEqual(t, sbbRoot, fc.Block)
 	assert.DeepEqual(t, finalizedStRoot, fc.State)
 	assert.Equal(t, false, fc.ExecutionOptimistic)
@@ -501,11 +501,11 @@ func Test_executePostFinalizationTasks(t *testing.T) {
 		require.NoError(t, beaconDB.SaveState(ctx, headState, headRoot))
 		require.NoError(t, beaconDB.SaveState(ctx, headState, genesisRoot))
 		util.SaveBlock(t, ctx, beaconDB, headBlock)
-		require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.ToEpoch(finalizedSlot), Root: headRoot[:]}))
+		require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.RoundAt(finalizedSlot), Root: headRoot[:]}))
 
 		require.NoError(t, err)
 		require.NoError(t, stateGen.SaveState(ctx, headRoot, headState))
-		require.NoError(t, beaconDB.SaveLastValidatedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.ToEpoch(finalizedSlot), Root: headRoot[:]}))
+		require.NoError(t, beaconDB.SaveLastValidatedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.RoundAt(finalizedSlot), Root: headRoot[:]}))
 
 		notifier := &blockchainTesting.MockStateNotifier{RecordEvents: true}
 		s.cfg.StateNotifier = notifier
@@ -518,7 +518,7 @@ func Test_executePostFinalizationTasks(t *testing.T) {
 		assert.Equal(t, statefeed.FinalizedCheckpoint, int(e.Type))
 		fc, ok := e.Data.(*statefeed.FinalizedCheckpointData)
 		require.Equal(t, true, ok, "event has wrong data type")
-		assert.Equal(t, primitives.Epoch(123), fc.Epoch)
+		assert.Equal(t, primitives.Round(123), fc.Epoch)
 		assert.DeepEqual(t, headRoot, fc.Block)
 		assert.DeepEqual(t, finalizedStRoot, fc.State)
 		assert.Equal(t, false, fc.ExecutionOptimistic)
@@ -542,11 +542,11 @@ func Test_executePostFinalizationTasks(t *testing.T) {
 		require.NoError(t, beaconDB.SaveState(ctx, headState, headRoot))
 		require.NoError(t, beaconDB.SaveState(ctx, headState, genesisRoot))
 		util.SaveBlock(t, ctx, beaconDB, headBlock)
-		require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.ToEpoch(finalizedSlot), Root: headRoot[:]}))
+		require.NoError(t, beaconDB.SaveFinalizedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.RoundAt(finalizedSlot), Root: headRoot[:]}))
 
 		require.NoError(t, err)
 		require.NoError(t, stateGen.SaveState(ctx, headRoot, headState))
-		require.NoError(t, beaconDB.SaveLastValidatedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.ToEpoch(finalizedSlot), Root: headRoot[:]}))
+		require.NoError(t, beaconDB.SaveLastValidatedCheckpoint(ctx, &ethpb.Checkpoint{Epoch: slots.RoundAt(finalizedSlot), Root: headRoot[:]}))
 
 		notifier := &blockchainTesting.MockStateNotifier{RecordEvents: true}
 		s.cfg.StateNotifier = notifier
@@ -559,7 +559,7 @@ func Test_executePostFinalizationTasks(t *testing.T) {
 		assert.Equal(t, statefeed.FinalizedCheckpoint, int(e.Type))
 		fc, ok := e.Data.(*statefeed.FinalizedCheckpointData)
 		require.Equal(t, true, ok, "event has wrong data type")
-		assert.Equal(t, primitives.Epoch(123), fc.Epoch)
+		assert.Equal(t, primitives.Round(123), fc.Epoch)
 		assert.DeepEqual(t, headRoot, fc.Block)
 		assert.DeepEqual(t, finalizedStRoot, fc.State)
 		assert.Equal(t, false, fc.ExecutionOptimistic)

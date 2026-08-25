@@ -26,7 +26,7 @@ func TestPendingAttestationRecords_Flush(t *testing.T) {
 	num := 5
 	for i := range num {
 		queue.Append(&common.AttestationRecord{
-			Target: primitives.Epoch(i),
+			Target: primitives.Round(i),
 		})
 	}
 
@@ -143,7 +143,7 @@ func TestStore_CheckSlashableAttestation_SurroundVote_MultipleTargetsPerSource(t
 func TestStore_CheckSlashableAttestation_SurroundVote_54kEpochs(t *testing.T) {
 	ctx := t.Context()
 	numValidators := 1
-	numEpochs := primitives.Epoch(54000)
+	numEpochs := primitives.Round(54000)
 	pubKeys := make([][fieldparams.BLSPubkeyLength]byte, numValidators)
 	validatorDB := setupDB(t, pubKeys)
 
@@ -159,10 +159,10 @@ func TestStore_CheckSlashableAttestation_SurroundVote_54kEpochs(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		for epoch := primitives.Epoch(1); epoch < numEpochs; epoch++ {
+		for epoch := primitives.Round(1); epoch < numEpochs; epoch++ {
 			att := createAttestation(epoch-1, epoch)
-			sourceEpoch := bytesutil.EpochToBytesBigEndian(att.Data.Source.Epoch)
-			targetEpoch := bytesutil.EpochToBytesBigEndian(att.Data.Target.Epoch)
+			sourceEpoch := bytesutil.RoundToBytesBigEndian(att.Data.Source.Epoch)
+			targetEpoch := bytesutil.RoundToBytesBigEndian(att.Data.Target.Epoch)
 			if err := sourceEpochsBucket.Put(sourceEpoch, targetEpoch); err != nil {
 				return err
 			}
@@ -232,12 +232,12 @@ func TestLowestSignedSourceEpoch_SaveRetrieve(t *testing.T) {
 		t,
 		validatorDB.SaveAttestationForPubKey(ctx, p1, [32]byte{}, createAttestation(200, 201)),
 	)
-	got, _, err := validatorDB.LowestSignedSourceEpoch(ctx, p0)
+	got, _, err := validatorDB.LowestSignedSourceRound(ctx, p0)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(100), got)
-	got, _, err = validatorDB.LowestSignedSourceEpoch(ctx, p1)
+	require.Equal(t, primitives.Round(100), got)
+	got, _, err = validatorDB.LowestSignedSourceRound(ctx, p1)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(200), got)
+	require.Equal(t, primitives.Round(200), got)
 
 	// Can replace.
 	require.NoError(
@@ -248,12 +248,12 @@ func TestLowestSignedSourceEpoch_SaveRetrieve(t *testing.T) {
 		t,
 		validatorDB.SaveAttestationForPubKey(ctx, p1, [32]byte{}, createAttestation(199, 200)),
 	)
-	got, _, err = validatorDB.LowestSignedSourceEpoch(ctx, p0)
+	got, _, err = validatorDB.LowestSignedSourceRound(ctx, p0)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(99), got)
-	got, _, err = validatorDB.LowestSignedSourceEpoch(ctx, p1)
+	require.Equal(t, primitives.Round(99), got)
+	got, _, err = validatorDB.LowestSignedSourceRound(ctx, p1)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(199), got)
+	require.Equal(t, primitives.Round(199), got)
 
 	// Can not replace.
 	require.NoError(
@@ -264,12 +264,12 @@ func TestLowestSignedSourceEpoch_SaveRetrieve(t *testing.T) {
 		t,
 		validatorDB.SaveAttestationForPubKey(ctx, p1, [32]byte{}, createAttestation(200, 201)),
 	)
-	got, _, err = validatorDB.LowestSignedSourceEpoch(ctx, p0)
+	got, _, err = validatorDB.LowestSignedSourceRound(ctx, p0)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(99), got)
-	got, _, err = validatorDB.LowestSignedSourceEpoch(ctx, p1)
+	require.Equal(t, primitives.Round(99), got)
+	got, _, err = validatorDB.LowestSignedSourceRound(ctx, p1)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(199), got)
+	require.Equal(t, primitives.Round(199), got)
 }
 
 func TestLowestSignedTargetEpoch_SaveRetrieveReplace(t *testing.T) {
@@ -291,12 +291,12 @@ func TestLowestSignedTargetEpoch_SaveRetrieveReplace(t *testing.T) {
 		t,
 		validatorDB.SaveAttestationForPubKey(ctx, p1, [32]byte{}, createAttestation(199, 200)),
 	)
-	got, _, err := validatorDB.LowestSignedTargetEpoch(ctx, p0)
+	got, _, err := validatorDB.LowestSignedTargetRound(ctx, p0)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(100), got)
-	got, _, err = validatorDB.LowestSignedTargetEpoch(ctx, p1)
+	require.Equal(t, primitives.Round(100), got)
+	got, _, err = validatorDB.LowestSignedTargetRound(ctx, p1)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(200), got)
+	require.Equal(t, primitives.Round(200), got)
 
 	// Can replace.
 	require.NoError(
@@ -307,12 +307,12 @@ func TestLowestSignedTargetEpoch_SaveRetrieveReplace(t *testing.T) {
 		t,
 		validatorDB.SaveAttestationForPubKey(ctx, p1, [32]byte{}, createAttestation(198, 199)),
 	)
-	got, _, err = validatorDB.LowestSignedTargetEpoch(ctx, p0)
+	got, _, err = validatorDB.LowestSignedTargetRound(ctx, p0)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(99), got)
-	got, _, err = validatorDB.LowestSignedTargetEpoch(ctx, p1)
+	require.Equal(t, primitives.Round(99), got)
+	got, _, err = validatorDB.LowestSignedTargetRound(ctx, p1)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(199), got)
+	require.Equal(t, primitives.Round(199), got)
 
 	// Can not replace.
 	require.NoError(
@@ -323,12 +323,12 @@ func TestLowestSignedTargetEpoch_SaveRetrieveReplace(t *testing.T) {
 		t,
 		validatorDB.SaveAttestationForPubKey(ctx, p1, [32]byte{}, createAttestation(199, 200)),
 	)
-	got, _, err = validatorDB.LowestSignedTargetEpoch(ctx, p0)
+	got, _, err = validatorDB.LowestSignedTargetRound(ctx, p0)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(99), got)
-	got, _, err = validatorDB.LowestSignedTargetEpoch(ctx, p1)
+	require.Equal(t, primitives.Round(99), got)
+	got, _, err = validatorDB.LowestSignedTargetRound(ctx, p1)
 	require.NoError(t, err)
-	require.Equal(t, primitives.Epoch(199), got)
+	require.Equal(t, primitives.Round(199), got)
 }
 
 func TestStore_SaveAttestationsForPubKey(t *testing.T) {
@@ -338,7 +338,7 @@ func TestStore_SaveAttestationsForPubKey(t *testing.T) {
 	validatorDB := setupDB(t, pubKeys)
 	atts := make([]*ethpb.IndexedAttestation, 0)
 	signingRoots := make([][]byte, 0)
-	for i := primitives.Epoch(1); i < 10; i++ {
+	for i := primitives.Round(1); i < 10; i++ {
 		atts = append(atts, createAttestation(i-1, i))
 		var sr []byte
 		copy(sr, fmt.Sprintf("%d", i))
@@ -383,7 +383,7 @@ func TestSaveAttestationForPubKey_BatchWrites_FullCapacity(t *testing.T) {
 	var wg sync.WaitGroup
 	for i, pubKey := range pubKeys {
 		wg.Go(func() {
-			j := primitives.Epoch(i)
+			j := primitives.Round(i)
 			var signingRoot [32]byte
 			copy(signingRoot[:], fmt.Sprintf("%d", j))
 			att := createAttestation(j, j+1)
@@ -439,7 +439,7 @@ func TestSaveAttestationForPubKey_BatchWrites_LowCapacity_TimerReached(t *testin
 	var wg sync.WaitGroup
 	for i, pubKey := range pubKeys {
 		wg.Go(func() {
-			j := primitives.Epoch(i)
+			j := primitives.Round(i)
 			var signingRoot [32]byte
 			copy(signingRoot[:], fmt.Sprintf("%d", j))
 			att := createAttestation(j, j+1)
@@ -481,14 +481,14 @@ func TestSaveAttestationForPubKey_BatchWrites_LowCapacity_TimerReached(t *testin
 
 func BenchmarkStore_CheckSlashableAttestation_Surround_SafeAttestation_54kEpochs(b *testing.B) {
 	numValidators := 1
-	numEpochs := primitives.Epoch(54000)
+	numEpochs := primitives.Round(54000)
 	pubKeys := make([][fieldparams.BLSPubkeyLength]byte, numValidators)
 	benchCheckSurroundVote(b, pubKeys, numEpochs, false /* surround */)
 }
 
 func BenchmarkStore_CheckSurroundVote_Surround_Slashable_54kEpochs(b *testing.B) {
 	numValidators := 1
-	numEpochs := primitives.Epoch(54000)
+	numEpochs := primitives.Round(54000)
 	pubKeys := make([][fieldparams.BLSPubkeyLength]byte, numValidators)
 	benchCheckSurroundVote(b, pubKeys, numEpochs, true /* surround */)
 }
@@ -496,7 +496,7 @@ func BenchmarkStore_CheckSurroundVote_Surround_Slashable_54kEpochs(b *testing.B)
 func benchCheckSurroundVote(
 	b *testing.B,
 	pubKeys [][fieldparams.BLSPubkeyLength]byte,
-	numEpochs primitives.Epoch,
+	numEpochs primitives.Round,
 	shouldSurround bool,
 ) {
 	ctx := b.Context()
@@ -521,10 +521,10 @@ func benchCheckSurroundVote(
 			if err != nil {
 				return err
 			}
-			for epoch := primitives.Epoch(1); epoch < numEpochs; epoch++ {
+			for epoch := primitives.Round(1); epoch < numEpochs; epoch++ {
 				att := createAttestation(epoch-1, epoch)
-				sourceEpoch := bytesutil.EpochToBytesBigEndian(att.Data.Source.Epoch)
-				targetEpoch := bytesutil.EpochToBytesBigEndian(att.Data.Target.Epoch)
+				sourceEpoch := bytesutil.RoundToBytesBigEndian(att.Data.Source.Epoch)
+				targetEpoch := bytesutil.RoundToBytesBigEndian(att.Data.Target.Epoch)
 				if err := sourceEpochsBucket.Put(sourceEpoch, targetEpoch); err != nil {
 					return err
 				}

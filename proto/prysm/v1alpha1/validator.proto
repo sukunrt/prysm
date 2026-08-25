@@ -1074,8 +1074,9 @@ message DoppelGangerRequest {
       (ethereum.eth.ext.ssz_size) = "48",
       (ethereum.eth.ext.spec_name) = "pubkey"
     ];
-    // The validator's last recorded epoch to attest.
-    uint64 epoch = 3 [(ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"];
+    // The validator's last recorded attestation target. The field keeps its
+    // `epoch` name; its VALUE and Go type are a Simplex round.
+    uint64 epoch = 3 [(ethereum.eth.ext.cast_type) = "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"];
     // The validator's last recorded signed root.
     bytes signed_root = 2 [(ethereum.eth.ext.ssz_size) = "32"];
   }

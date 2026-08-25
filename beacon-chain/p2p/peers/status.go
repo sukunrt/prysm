@@ -704,18 +704,18 @@ func (p *Status) deprecatedPrune() {
 	p.tallyIPTracker()
 }
 
-// BestFinalized groups all peers by their last known finalized epoch
-// and selects the epoch of the largest group as best.
-// Any peer with a finalized epoch < ourFinalized is excluded from consideration.
-// In the event of a tie in largest group size, the higher epoch is the tie breaker.
-// The selected epoch is returned, along with a list of peers with a finalized epoch >= the selected epoch.
-func (p *Status) BestFinalized(ourFinalized primitives.Epoch) (primitives.Epoch, []peer.ID) {
+// BestFinalized groups all peers by their last known finalized round
+// and selects the round of the largest group as best.
+// Any peer with a finalized round < ourFinalized is excluded from consideration.
+// In the event of a tie in largest group size, the higher round is the tie breaker.
+// The selected round is returned, along with a list of peers with a finalized round >= the selected round.
+func (p *Status) BestFinalized(ourFinalized primitives.Round) (primitives.Round, []peer.ID) {
 	connected := p.Connected()
 	pids := make([]peer.ID, 0, len(connected))
 	views := make(map[peer.ID]*pb.StatusV2, len(connected))
 
-	votes := make(map[primitives.Epoch]uint64)
-	winner := primitives.Epoch(0)
+	votes := make(map[primitives.Round]uint64)
+	winner := primitives.Round(0)
 	for _, pid := range connected {
 		view, err := p.ChainState(pid)
 		if err != nil || view == nil || view.FinalizedEpoch < ourFinalized {
@@ -735,7 +735,7 @@ func (p *Status) BestFinalized(ourFinalized primitives.Epoch) (primitives.Epoch,
 		}
 	}
 
-	// Descending sort by (finalized, head).
+	// Descending sort by (finalized round, head).
 	sort.Slice(pids, func(i, j int) bool {
 		iv, jv := views[pids[i]], views[pids[j]]
 		if iv.FinalizedEpoch == jv.FinalizedEpoch {
@@ -745,7 +745,7 @@ func (p *Status) BestFinalized(ourFinalized primitives.Epoch) (primitives.Epoch,
 		return iv.FinalizedEpoch > jv.FinalizedEpoch
 	})
 
-	// Find the first peer with finalized epoch < winner, trim and all following (lower) peers.
+	// Find the first peer with finalized round < winner, trim and all following (lower) peers.
 	trim := sort.Search(len(pids), func(i int) bool {
 		return views[pids[i]].FinalizedEpoch < winner
 	})

@@ -6,11 +6,11 @@ import (
 
 	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
-	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/encoding/ssz/detect"
 	"github.com/OffchainLabs/prysm/v7/proto/dbval"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -100,14 +100,12 @@ func (s *Store) SaveOrigin(ctx context.Context, serState, serBlock []byte) error
 	}
 
 	// rebuild the checkpoint from the block
-	// use it to mark the block as justified and finalized
-	slotEpoch, err := wblk.Block().Slot().SafeDivSlot(params.BeaconConfig().SlotsPerEpoch)
-	if err != nil {
-		return err
-	}
-
+	// use it to mark the block as justified and finalized.
+	// Checkpoints carry ROUNDS, so the origin checkpoint is the block's round --
+	// dividing by SLOTS_PER_EPOCH here would start every checkpoint-synced node
+	// on the wrong round.
 	chkpt := &ethpb.Checkpoint{
-		Epoch: primitives.Epoch(slotEpoch),
+		Epoch: slots.RoundAt(wblk.Block().Slot()),
 		Root:  blockRoot[:],
 	}
 

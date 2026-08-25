@@ -928,13 +928,13 @@ type ChainHead struct {
 	HeadEpoch                  github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch `protobuf:"varint,2,opt,name=head_epoch,json=headEpoch,proto3" json:"head_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"`
 	HeadBlockRoot              []byte                                                            `protobuf:"bytes,3,opt,name=head_block_root,json=headBlockRoot,proto3" json:"head_block_root,omitempty" ssz-size:"32"`
 	FinalizedSlot              github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Slot  `protobuf:"varint,4,opt,name=finalized_slot,json=finalizedSlot,proto3" json:"finalized_slot,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"`
-	FinalizedEpoch             github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch `protobuf:"varint,5,opt,name=finalized_epoch,json=finalizedEpoch,proto3" json:"finalized_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"`
+	FinalizedEpoch             github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round `protobuf:"varint,5,opt,name=finalized_epoch,json=finalizedEpoch,proto3" json:"finalized_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"`
 	FinalizedBlockRoot         []byte                                                            `protobuf:"bytes,6,opt,name=finalized_block_root,json=finalizedBlockRoot,proto3" json:"finalized_block_root,omitempty" ssz-size:"32"`
 	JustifiedSlot              github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Slot  `protobuf:"varint,7,opt,name=justified_slot,json=justifiedSlot,proto3" json:"justified_slot,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"`
-	JustifiedEpoch             github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch `protobuf:"varint,8,opt,name=justified_epoch,json=justifiedEpoch,proto3" json:"justified_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"`
+	JustifiedEpoch             github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round `protobuf:"varint,8,opt,name=justified_epoch,json=justifiedEpoch,proto3" json:"justified_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"`
 	JustifiedBlockRoot         []byte                                                            `protobuf:"bytes,9,opt,name=justified_block_root,json=justifiedBlockRoot,proto3" json:"justified_block_root,omitempty" ssz-size:"32"`
 	PreviousJustifiedSlot      github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Slot  `protobuf:"varint,10,opt,name=previous_justified_slot,json=previousJustifiedSlot,proto3" json:"previous_justified_slot,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"`
-	PreviousJustifiedEpoch     github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch `protobuf:"varint,11,opt,name=previous_justified_epoch,json=previousJustifiedEpoch,proto3" json:"previous_justified_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"`
+	PreviousJustifiedEpoch     github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round `protobuf:"varint,11,opt,name=previous_justified_epoch,json=previousJustifiedEpoch,proto3" json:"previous_justified_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"`
 	PreviousJustifiedBlockRoot []byte                                                            `protobuf:"bytes,12,opt,name=previous_justified_block_root,json=previousJustifiedBlockRoot,proto3" json:"previous_justified_block_root,omitempty" ssz-size:"32"`
 	OptimisticStatus           bool                                                              `protobuf:"varint,13,opt,name=optimistic_status,json=optimisticStatus,proto3" json:"optimistic_status,omitempty"`
 	unknownFields              protoimpl.UnknownFields
@@ -999,11 +999,11 @@ func (x *ChainHead) GetFinalizedSlot() github_com_OffchainLabs_prysm_v7_consensu
 	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Slot(0)
 }
 
-func (x *ChainHead) GetFinalizedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch {
+func (x *ChainHead) GetFinalizedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round {
 	if x != nil {
 		return x.FinalizedEpoch
 	}
-	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch(0)
+	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round(0)
 }
 
 func (x *ChainHead) GetFinalizedBlockRoot() []byte {
@@ -1020,11 +1020,11 @@ func (x *ChainHead) GetJustifiedSlot() github_com_OffchainLabs_prysm_v7_consensu
 	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Slot(0)
 }
 
-func (x *ChainHead) GetJustifiedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch {
+func (x *ChainHead) GetJustifiedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round {
 	if x != nil {
 		return x.JustifiedEpoch
 	}
-	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch(0)
+	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round(0)
 }
 
 func (x *ChainHead) GetJustifiedBlockRoot() []byte {
@@ -1041,11 +1041,11 @@ func (x *ChainHead) GetPreviousJustifiedSlot() github_com_OffchainLabs_prysm_v7_
 	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Slot(0)
 }
 
-func (x *ChainHead) GetPreviousJustifiedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch {
+func (x *ChainHead) GetPreviousJustifiedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round {
 	if x != nil {
 		return x.PreviousJustifiedEpoch
 	}
-	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch(0)
+	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round(0)
 }
 
 func (x *ChainHead) GetPreviousJustifiedBlockRoot() []byte {
@@ -3530,8 +3530,8 @@ var file_proto_prysm_v1alpha1_beacon_chain_proto_rawDesc = []byte{
 	0xb5, 0x18, 0x41, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4f, 0x66,
 	0x66, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x4c, 0x61, 0x62, 0x73, 0x2f, 0x70, 0x72, 0x79, 0x73, 0x6d,
 	0x2f, 0x76, 0x37, 0x2f, 0x63, 0x6f, 0x6e, 0x73, 0x65, 0x6e, 0x73, 0x75, 0x73, 0x2d, 0x74, 0x79,
-	0x70, 0x65, 0x73, 0x2f, 0x70, 0x72, 0x69, 0x6d, 0x69, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x45,
-	0x70, 0x6f, 0x63, 0x68, 0x52, 0x0e, 0x66, 0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x64, 0x45,
+	0x70, 0x65, 0x73, 0x2f, 0x70, 0x72, 0x69, 0x6d, 0x69, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x52,
+	0x6f, 0x75, 0x6e, 0x64, 0x52, 0x0e, 0x66, 0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x64, 0x45,
 	0x70, 0x6f, 0x63, 0x68, 0x12, 0x38, 0x0a, 0x14, 0x66, 0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65,
 	0x64, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x72, 0x6f, 0x6f, 0x74, 0x18, 0x06, 0x20, 0x01,
 	0x28, 0x0c, 0x42, 0x06, 0x8a, 0xb5, 0x18, 0x02, 0x33, 0x32, 0x52, 0x12, 0x66, 0x69, 0x6e, 0x61,
@@ -3548,7 +3548,7 @@ var file_proto_prysm_v1alpha1_beacon_chain_proto_rawDesc = []byte{
 	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4f, 0x66, 0x66, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x4c, 0x61, 0x62,
 	0x73, 0x2f, 0x70, 0x72, 0x79, 0x73, 0x6d, 0x2f, 0x76, 0x37, 0x2f, 0x63, 0x6f, 0x6e, 0x73, 0x65,
 	0x6e, 0x73, 0x75, 0x73, 0x2d, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2f, 0x70, 0x72, 0x69, 0x6d, 0x69,
-	0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x52, 0x0e, 0x6a, 0x75, 0x73,
+	0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x52, 0x6f, 0x75, 0x6e, 0x64, 0x52, 0x0e, 0x6a, 0x75, 0x73,
 	0x74, 0x69, 0x66, 0x69, 0x65, 0x64, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x12, 0x38, 0x0a, 0x14, 0x6a,
 	0x75, 0x73, 0x74, 0x69, 0x66, 0x69, 0x65, 0x64, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x5f, 0x72,
 	0x6f, 0x6f, 0x74, 0x18, 0x09, 0x20, 0x01, 0x28, 0x0c, 0x42, 0x06, 0x8a, 0xb5, 0x18, 0x02, 0x33,
@@ -3567,7 +3567,7 @@ var file_proto_prysm_v1alpha1_beacon_chain_proto_rawDesc = []byte{
 	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4f, 0x66, 0x66, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x4c, 0x61,
 	0x62, 0x73, 0x2f, 0x70, 0x72, 0x79, 0x73, 0x6d, 0x2f, 0x76, 0x37, 0x2f, 0x63, 0x6f, 0x6e, 0x73,
 	0x65, 0x6e, 0x73, 0x75, 0x73, 0x2d, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2f, 0x70, 0x72, 0x69, 0x6d,
-	0x69, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x52, 0x16, 0x70, 0x72,
+	0x69, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x52, 0x6f, 0x75, 0x6e, 0x64, 0x52, 0x16, 0x70, 0x72,
 	0x65, 0x76, 0x69, 0x6f, 0x75, 0x73, 0x4a, 0x75, 0x73, 0x74, 0x69, 0x66, 0x69, 0x65, 0x64, 0x45,
 	0x70, 0x6f, 0x63, 0x68, 0x12, 0x49, 0x0a, 0x1d, 0x70, 0x72, 0x65, 0x76, 0x69, 0x6f, 0x75, 0x73,
 	0x5f, 0x6a, 0x75, 0x73, 0x74, 0x69, 0x66, 0x69, 0x65, 0x64, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b,

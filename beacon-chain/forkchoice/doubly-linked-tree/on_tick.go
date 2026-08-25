@@ -40,8 +40,9 @@ func (f *ForkChoice) NewSlot(ctx context.Context, slot primitives.Slot) error {
 		f.store.goldfishNewSlot(slot)
 	}
 
-	// Return if it's not a new epoch.
-	if !slots.IsEpochStart(slot) {
+	// Return if it's not a new round: unrealized checkpoints and pruning are
+	// round-keyed now that checkpoints carry rounds.
+	if !slots.IsRoundStart(slot) {
 		return nil
 	}
 

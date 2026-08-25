@@ -15,9 +15,11 @@ option php_namespace = "Ethereum\\Eth\\v1alpha1";
 message Status {
   bytes fork_digest = 1 [ (ethereum.eth.ext.ssz_size) = "4" ];
   bytes finalized_root = 2 [ (ethereum.eth.ext.ssz_size) = "32" ];
+  // The field keeps its `epoch` name and uint64 wire shape; its VALUE and Go
+  // type are a Simplex round (plan-finality-round.md).
   uint64 finalized_epoch = 3 [
     (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"
+        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"
   ];
   bytes head_root = 4 [ (ethereum.eth.ext.ssz_size) = "32" ];
   uint64 head_slot = 5 [
@@ -29,9 +31,11 @@ message Status {
 message StatusV2 {
   bytes fork_digest = 1 [ (ethereum.eth.ext.ssz_size) = "4" ];
   bytes finalized_root = 2 [ (ethereum.eth.ext.ssz_size) = "32" ];
+  // The field keeps its `epoch` name and uint64 wire shape; its VALUE and Go
+  // type are a Simplex round (plan-finality-round.md).
   uint64 finalized_epoch = 3 [
     (ethereum.eth.ext.cast_type) =
-        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"
+        "github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"
   ];
   bytes head_root = 4 [ (ethereum.eth.ext.ssz_size) = "32" ];
   uint64 head_slot = 5 [

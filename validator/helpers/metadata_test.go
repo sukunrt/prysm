@@ -91,13 +91,13 @@ func (db *ValidatorDBMock) EIPImportBlacklistedPublicKeys(ctx context.Context) (
 func (db *ValidatorDBMock) SaveEIPImportBlacklistedPublicKeys(ctx context.Context, publicKeys [][fieldparams.BLSPubkeyLength]byte) error {
 	panic("not implemented")
 }
-func (db *ValidatorDBMock) SigningRootAtTargetEpoch(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte, target primitives.Epoch) ([]byte, error) {
+func (db *ValidatorDBMock) SigningRootAtTargetRound(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte, target primitives.Round) ([]byte, error) {
 	panic("not implemented")
 }
-func (db *ValidatorDBMock) LowestSignedTargetEpoch(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Epoch, bool, error) {
+func (db *ValidatorDBMock) LowestSignedTargetRound(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Round, bool, error) {
 	panic("not implemented")
 }
-func (db *ValidatorDBMock) LowestSignedSourceEpoch(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Epoch, bool, error) {
+func (db *ValidatorDBMock) LowestSignedSourceRound(ctx context.Context, publicKey [fieldparams.BLSPubkeyLength]byte) (primitives.Round, bool, error) {
 	panic("not implemented")
 }
 func (db *ValidatorDBMock) AttestedPublicKeys(ctx context.Context) ([][fieldparams.BLSPubkeyLength]byte, error) {

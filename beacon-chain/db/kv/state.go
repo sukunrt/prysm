@@ -1038,7 +1038,7 @@ func (s *Store) CleanUpDirtyStates(ctx context.Context, slotsPerArchivedPoint pr
 	if err != nil {
 		return err
 	}
-	finalizedSlot, err := slots.EpochStart(f.Epoch)
+	finalizedSlot, err := slots.RoundStart(f.Epoch)
 	if err != nil {
 		return err
 	}

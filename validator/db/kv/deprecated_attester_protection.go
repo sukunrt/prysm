@@ -2,6 +2,7 @@ package kv
 
 import (
 	"fmt"
+	"math"
 
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
@@ -18,12 +19,16 @@ const (
 	signingRootSize        = 32
 	historySize            = targetSize + sourceSize + signingRootSize
 	minimalSize            = latestEpochWrittenSize
+
+	// farFutureRound is the legacy history's "no source recorded" sentinel. It
+	// mirrors FAR_FUTURE_EPOCH's value in the round unit the records now carry.
+	farFutureRound = primitives.Round(math.MaxUint64)
 )
 
 // deprecatedHistoryData stores the needed data to confirm if an attestation is slashable
 // or repeated.
 type deprecatedHistoryData struct {
-	Source      primitives.Epoch
+	Source      primitives.Round
 	SigningRoot []byte
 }
 
@@ -44,27 +49,27 @@ func (dhd *deprecatedHistoryData) isEmpty() bool {
 	if dhd == (*deprecatedHistoryData)(nil) {
 		return true
 	}
-	if dhd.Source == params.BeaconConfig().FarFutureEpoch {
+	if dhd.Source == farFutureRound {
 		return true
 	}
 	return false
 }
 
 func emptyHistoryData() *deprecatedHistoryData {
-	h := &deprecatedHistoryData{Source: params.BeaconConfig().FarFutureEpoch, SigningRoot: bytesutil.PadTo([]byte{}, 32)}
+	h := &deprecatedHistoryData{Source: farFutureRound, SigningRoot: bytesutil.PadTo([]byte{}, 32)}
 	return h
 }
 
 // newDeprecatedAttestingHistory creates a new encapsulated attestation history byte array
 // sized by the latest epoch written.
-func newDeprecatedAttestingHistory(target primitives.Epoch) deprecatedEncodedAttestingHistory {
-	relativeTarget := target % params.BeaconConfig().WeakSubjectivityPeriod
+func newDeprecatedAttestingHistory(target primitives.Round) deprecatedEncodedAttestingHistory {
+	relativeTarget := target.Mod(uint64(params.BeaconConfig().WeakSubjectivityPeriod))
 	historyDataSize := (relativeTarget + 1) * historySize
 	arraySize := latestEpochWrittenSize + historyDataSize
 	en := make(deprecatedEncodedAttestingHistory, arraySize)
 	enc := en
 	var err error
-	for i := primitives.Epoch(0); i <= target%params.BeaconConfig().WeakSubjectivityPeriod; i++ {
+	for i := primitives.Round(0); i <= target.Mod(uint64(params.BeaconConfig().WeakSubjectivityPeriod)); i++ {
 		enc, err = enc.setTargetData(i, emptyHistoryData())
 		if err != nil {
 			log.WithError(err).Error("Failed to set empty target data")
@@ -73,52 +78,52 @@ func newDeprecatedAttestingHistory(target primitives.Epoch) deprecatedEncodedAtt
 	return enc
 }
 
-func (dh deprecatedEncodedAttestingHistory) getLatestEpochWritten() (primitives.Epoch, error) {
+func (dh deprecatedEncodedAttestingHistory) getLatestEpochWritten() (primitives.Round, error) {
 	if err := dh.assertSize(); err != nil {
 		return 0, err
 	}
-	return primitives.Epoch(bytesutil.FromBytes8(dh[:latestEpochWrittenSize])), nil
+	return primitives.Round(bytesutil.FromBytes8(dh[:latestEpochWrittenSize])), nil
 }
 
-func (dh deprecatedEncodedAttestingHistory) setLatestEpochWritten(latestEpochWritten primitives.Epoch) (deprecatedEncodedAttestingHistory, error) {
+func (dh deprecatedEncodedAttestingHistory) setLatestEpochWritten(latestEpochWritten primitives.Round) (deprecatedEncodedAttestingHistory, error) {
 	if err := dh.assertSize(); err != nil {
 		return nil, err
 	}
-	copy(dh[:latestEpochWrittenSize], bytesutil.EpochToBytesLittleEndian(latestEpochWritten))
+	copy(dh[:latestEpochWrittenSize], bytesutil.RoundToBytesLittleEndian(latestEpochWritten))
 	return dh, nil
 }
 
-func (dh deprecatedEncodedAttestingHistory) getTargetData(target primitives.Epoch) (*deprecatedHistoryData, error) {
+func (dh deprecatedEncodedAttestingHistory) getTargetData(target primitives.Round) (*deprecatedHistoryData, error) {
 	if err := dh.assertSize(); err != nil {
 		return nil, err
 	}
 	// Cursor for the location to read target epoch from.
 	// Modulus of target epoch X weak subjectivity period in order to have maximum size to the encapsulated data array.
-	cursor := (target%params.BeaconConfig().WeakSubjectivityPeriod)*historySize + latestEpochWrittenSize
+	cursor := (target.Mod(uint64(params.BeaconConfig().WeakSubjectivityPeriod)))*historySize + latestEpochWrittenSize
 	if uint64(len(dh)) < uint64(cursor+historySize) {
 		return nil, nil
 	}
 	history := &deprecatedHistoryData{}
-	history.Source = primitives.Epoch(bytesutil.FromBytes8(dh[cursor : cursor+sourceSize]))
+	history.Source = primitives.Round(bytesutil.FromBytes8(dh[cursor : cursor+sourceSize]))
 	sr := make([]byte, fieldparams.RootLength)
 	copy(sr, dh[cursor+sourceSize:cursor+historySize])
 	history.SigningRoot = sr
 	return history, nil
 }
 
-func (dh deprecatedEncodedAttestingHistory) setTargetData(target primitives.Epoch, historyData *deprecatedHistoryData) (deprecatedEncodedAttestingHistory, error) {
+func (dh deprecatedEncodedAttestingHistory) setTargetData(target primitives.Round, historyData *deprecatedHistoryData) (deprecatedEncodedAttestingHistory, error) {
 	if err := dh.assertSize(); err != nil {
 		return nil, err
 	}
 	// Cursor for the location to write target epoch to.
 	// Modulus of target epoch  X weak subjectivity period in order to have maximum size to the encapsulated data array.
-	cursor := latestEpochWrittenSize + (target%params.BeaconConfig().WeakSubjectivityPeriod)*historySize
+	cursor := latestEpochWrittenSize + (target.Mod(uint64(params.BeaconConfig().WeakSubjectivityPeriod)))*historySize
 
 	if uint64(len(dh)) < uint64(cursor+historySize) {
 		ext := make([]byte, uint64(cursor+historySize)-uint64(len(dh)))
 		dh = append(dh, ext...)
 	}
-	copy(dh[cursor:cursor+sourceSize], bytesutil.EpochToBytesLittleEndian(historyData.Source))
+	copy(dh[cursor:cursor+sourceSize], bytesutil.RoundToBytesLittleEndian(historyData.Source))
 	copy(dh[cursor+sourceSize:cursor+sourceSize+signingRootSize], historyData.SigningRoot)
 
 	return dh, nil

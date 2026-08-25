@@ -22,7 +22,7 @@ type ProposalHistoryForPubkey struct {
 // for manipulation by database methods.
 type AttestationRecord struct {
 	PubKey      [fieldparams.BLSPubkeyLength]byte
-	Source      primitives.Epoch
-	Target      primitives.Epoch
+	Source      primitives.Round
+	Target      primitives.Round
 	SigningRoot []byte
 }

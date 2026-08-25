@@ -69,10 +69,10 @@ type NodeV2 struct {
 	Slot                            primitives.Slot
 	Weight                          uint64
 	Balance                         uint64
-	JustifiedEpoch                  primitives.Epoch
-	FinalizedEpoch                  primitives.Epoch
-	UnrealizedJustifiedEpoch        primitives.Epoch
-	UnrealizedFinalizedEpoch        primitives.Epoch
+	JustifiedEpoch                  primitives.Round
+	FinalizedEpoch                  primitives.Round
+	UnrealizedJustifiedEpoch        primitives.Round
+	UnrealizedFinalizedEpoch        primitives.Round
 	PayloadAttesterCount            uint64
 	PayloadAvailabilityYesCount     uint64
 	PayloadDataAvailabilityYesCount uint64
@@ -97,10 +97,10 @@ type Node struct {
 	Validity                 NodeValidity
 	ExecutionOptimistic      bool
 	Slot                     primitives.Slot
-	JustifiedEpoch           primitives.Epoch
-	FinalizedEpoch           primitives.Epoch
-	UnrealizedJustifiedEpoch primitives.Epoch
-	UnrealizedFinalizedEpoch primitives.Epoch
+	JustifiedEpoch           primitives.Round
+	FinalizedEpoch           primitives.Round
+	UnrealizedJustifiedEpoch primitives.Round
+	UnrealizedFinalizedEpoch primitives.Round
 	Balance                  uint64
 	Weight                   uint64
 	Timestamp                time.Time

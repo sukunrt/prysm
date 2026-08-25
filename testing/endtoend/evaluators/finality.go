@@ -8,6 +8,7 @@ import (
 	eth "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/endtoend/policies"
 	"github.com/OffchainLabs/prysm/v7/testing/endtoend/types"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -30,31 +31,34 @@ func finalizationOccurs(_ *types.EvaluationContext, conns ...*grpc.ClientConn) e
 	if err != nil {
 		return errors.Wrap(err, "failed to get chain head")
 	}
-	currentEpoch := chainHead.HeadEpoch
-	finalizedEpoch := chainHead.FinalizedEpoch
+	// The chain head's checkpoint fields carry ROUNDS, so the wall-clock side is the
+	// head slot's round. Under the shipped configs (SLOTS_PER_ROUND == SLOTS_PER_EPOCH)
+	// this is numerically what the evaluator always asserted.
+	currentRound := slots.RoundAt(chainHead.HeadSlot)
+	finalizedRound := chainHead.FinalizedEpoch
 
-	expectedFinalizedEpoch := currentEpoch - 2
-	if expectedFinalizedEpoch != finalizedEpoch {
+	expectedFinalizedRound := currentRound - 2
+	if expectedFinalizedRound != finalizedRound {
 		return fmt.Errorf(
-			"expected finalized epoch to be %d, received: %d",
-			expectedFinalizedEpoch,
-			finalizedEpoch,
+			"expected finalized round to be %d, received: %d",
+			expectedFinalizedRound,
+			finalizedRound,
 		)
 	}
-	previousJustifiedEpoch := chainHead.PreviousJustifiedEpoch
-	currentJustifiedEpoch := chainHead.JustifiedEpoch
-	if previousJustifiedEpoch+1 != currentJustifiedEpoch {
+	previousJustifiedRound := chainHead.PreviousJustifiedEpoch
+	currentJustifiedRound := chainHead.JustifiedEpoch
+	if previousJustifiedRound+1 != currentJustifiedRound {
 		return fmt.Errorf(
-			"there should be no gaps between current and previous justified epochs, received current %d and previous %d",
-			currentJustifiedEpoch,
-			previousJustifiedEpoch,
+			"there should be no gaps between current and previous justified rounds, received current %d and previous %d",
+			currentJustifiedRound,
+			previousJustifiedRound,
 		)
 	}
-	if currentJustifiedEpoch+1 != currentEpoch {
+	if currentJustifiedRound+1 != currentRound {
 		return fmt.Errorf(
-			"there should be no gaps between current epoch and current justified epoch, received current %d and justified %d",
-			currentEpoch,
-			currentJustifiedEpoch,
+			"there should be no gaps between current round and current justified round, received current %d and justified %d",
+			currentRound,
+			currentJustifiedRound,
 		)
 	}
 	return nil

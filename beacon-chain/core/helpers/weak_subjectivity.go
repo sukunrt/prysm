@@ -158,11 +158,15 @@ func LatestWeakSubjectivityEpoch(ctx context.Context, st state.ReadOnlyBeaconSta
 		return 0, err
 	}
 
-	finalizedEpoch := st.FinalizedCheckpointEpoch()
+	finalizedEpoch, err := CheckpointEpoch(st.FinalizedCheckpointRound())
+	if err != nil {
+		return 0, err
+	}
 	return finalizedEpoch - (finalizedEpoch % wsPeriod), nil
 }
 
-// ParseWeakSubjectivityInputString parses "blocks_root:epoch_number" string into a checkpoint.
+// ParseWeakSubjectivityInputString parses "blocks_root:round_number" string into a checkpoint.
+// The numeric half is a ROUND: checkpoints carry rounds after plan-finality-round.
 func ParseWeakSubjectivityInputString(wsCheckpointString string) (*v1alpha1.Checkpoint, error) {
 	if wsCheckpointString == "" {
 		return nil, nil
@@ -179,7 +183,7 @@ func ParseWeakSubjectivityInputString(wsCheckpointString string) (*v1alpha1.Chec
 	// Get the hexadecimal block root from input string.
 	s := strings.Split(wsCheckpointString, ":")
 	if len(s) != 2 {
-		return nil, errors.New("weak subjectivity checkpoint input should be in `block_root:epoch_number` format")
+		return nil, errors.New("weak subjectivity checkpoint input should be in `block_root:round_number` format")
 	}
 
 	bRoot, err := hex.DecodeString(s[0])
@@ -190,14 +194,14 @@ func ParseWeakSubjectivityInputString(wsCheckpointString string) (*v1alpha1.Chec
 		return nil, errors.New("block root is not length of 32")
 	}
 
-	// Get the epoch number from input string.
-	epoch, err := strconv.ParseUint(s[1], 10, 64)
+	// Get the round number from input string.
+	round, err := strconv.ParseUint(s[1], 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
 	return &v1alpha1.Checkpoint{
-		Epoch: primitives.Epoch(epoch),
+		Epoch: primitives.Round(round),
 		Root:  bRoot,
 	}, nil
 }

@@ -53,7 +53,7 @@ func (s *Store) LastEpochWrittenForValidators(
 				continue
 			}
 
-			var epoch primitives.Epoch
+			var epoch primitives.Round
 			if err := epoch.UnmarshalSSZ(epochBytes); err != nil {
 				return err
 			}
@@ -75,7 +75,7 @@ func (s *Store) LastEpochWrittenForValidators(
 // SaveLastEpochWrittenForValidators saves the latest epoch
 // that each validator has attested to in the provided map.
 func (s *Store) SaveLastEpochWrittenForValidators(
-	ctx context.Context, epochByValIndex map[primitives.ValidatorIndex]primitives.Epoch,
+	ctx context.Context, epochByValIndex map[primitives.ValidatorIndex]primitives.Round,
 ) error {
 	ctx, span := trace.StartSpan(ctx, "BeaconDB.SaveLastEpochWrittenForValidators")
 	defer span.End()
@@ -231,7 +231,7 @@ func (s *Store) CheckAttesterDoubleVotes(
 // AttestationRecordForValidator given a validator index and a target epoch,
 // retrieves an existing attestation record we have stored in the database.
 func (s *Store) AttestationRecordForValidator(
-	ctx context.Context, validatorIdx primitives.ValidatorIndex, targetEpoch primitives.Epoch,
+	ctx context.Context, validatorIdx primitives.ValidatorIndex, targetEpoch primitives.Round,
 ) (*slashertypes.IndexedAttestationWrapper, error) {
 	_, span := trace.StartSpan(ctx, "BeaconDB.AttestationRecordForValidator")
 	defer span.End()
@@ -795,7 +795,7 @@ func decodeProposalRecord(encoded []byte) (*slashertypes.SignedBlockHeaderWrappe
 }
 
 // Encodes an epoch into big-endian bytes.
-func encodeTargetEpoch(epoch primitives.Epoch) []byte {
+func encodeTargetEpoch(epoch primitives.Round) []byte {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(epoch))
 	return buf

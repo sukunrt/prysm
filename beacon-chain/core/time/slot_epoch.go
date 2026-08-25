@@ -48,6 +48,27 @@ func NextEpoch(state state.ReadOnlyBeaconState) primitives.Epoch {
 	return slots.ToEpoch(state.Slot()) + 1
 }
 
+// CurrentRound returns the current round number calculated from
+// the slot number stored in beacon state.
+//
+// Spec pseudocode definition:
+//
+//	def get_current_round(state: BeaconState) -> Round:
+//	  return compute_round_at_slot(state.slot)
+func CurrentRound(state state.ReadOnlyBeaconState) primitives.Round {
+	return slots.RoundAt(state.Slot())
+}
+
+// PrevRound returns the previous round number calculated from the slot number
+// stored in beacon state, floored at round 0.
+func PrevRound(state state.ReadOnlyBeaconState) primitives.Round {
+	currentRound := CurrentRound(state)
+	if currentRound == 0 {
+		return 0
+	}
+	return currentRound - 1
+}
+
 // HigherEqualThanAltairVersionAndEpoch returns if the input state `s` has a higher version number than Altair state and input epoch `e` is higher equal than fork epoch.
 func HigherEqualThanAltairVersionAndEpoch(s state.BeaconState, e primitives.Epoch) bool {
 	return s.Version() >= version.Altair && e >= params.BeaconConfig().AltairForkEpoch

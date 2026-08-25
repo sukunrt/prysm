@@ -29,7 +29,7 @@ type Status struct {
 	state          protoimpl.MessageState                                            `protogen:"open.v1"`
 	ForkDigest     []byte                                                            `protobuf:"bytes,1,opt,name=fork_digest,json=forkDigest,proto3" json:"fork_digest,omitempty" ssz-size:"4"`
 	FinalizedRoot  []byte                                                            `protobuf:"bytes,2,opt,name=finalized_root,json=finalizedRoot,proto3" json:"finalized_root,omitempty" ssz-size:"32"`
-	FinalizedEpoch github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch `protobuf:"varint,3,opt,name=finalized_epoch,json=finalizedEpoch,proto3" json:"finalized_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"`
+	FinalizedEpoch github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round `protobuf:"varint,3,opt,name=finalized_epoch,json=finalizedEpoch,proto3" json:"finalized_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"`
 	HeadRoot       []byte                                                            `protobuf:"bytes,4,opt,name=head_root,json=headRoot,proto3" json:"head_root,omitempty" ssz-size:"32"`
 	HeadSlot       github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Slot  `protobuf:"varint,5,opt,name=head_slot,json=headSlot,proto3" json:"head_slot,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"`
 	unknownFields  protoimpl.UnknownFields
@@ -80,11 +80,11 @@ func (x *Status) GetFinalizedRoot() []byte {
 	return nil
 }
 
-func (x *Status) GetFinalizedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch {
+func (x *Status) GetFinalizedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round {
 	if x != nil {
 		return x.FinalizedEpoch
 	}
-	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch(0)
+	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round(0)
 }
 
 func (x *Status) GetHeadRoot() []byte {
@@ -105,7 +105,7 @@ type StatusV2 struct {
 	state                 protoimpl.MessageState                                            `protogen:"open.v1"`
 	ForkDigest            []byte                                                            `protobuf:"bytes,1,opt,name=fork_digest,json=forkDigest,proto3" json:"fork_digest,omitempty" ssz-size:"4"`
 	FinalizedRoot         []byte                                                            `protobuf:"bytes,2,opt,name=finalized_root,json=finalizedRoot,proto3" json:"finalized_root,omitempty" ssz-size:"32"`
-	FinalizedEpoch        github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch `protobuf:"varint,3,opt,name=finalized_epoch,json=finalizedEpoch,proto3" json:"finalized_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch"`
+	FinalizedEpoch        github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round `protobuf:"varint,3,opt,name=finalized_epoch,json=finalizedEpoch,proto3" json:"finalized_epoch,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Round"`
 	HeadRoot              []byte                                                            `protobuf:"bytes,4,opt,name=head_root,json=headRoot,proto3" json:"head_root,omitempty" ssz-size:"32"`
 	HeadSlot              github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Slot  `protobuf:"varint,5,opt,name=head_slot,json=headSlot,proto3" json:"head_slot,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"`
 	EarliestAvailableSlot github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Slot  `protobuf:"varint,6,opt,name=earliest_available_slot,json=earliestAvailableSlot,proto3" json:"earliest_available_slot,omitempty" cast-type:"github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Slot"`
@@ -157,11 +157,11 @@ func (x *StatusV2) GetFinalizedRoot() []byte {
 	return nil
 }
 
-func (x *StatusV2) GetFinalizedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch {
+func (x *StatusV2) GetFinalizedEpoch() github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round {
 	if x != nil {
 		return x.FinalizedEpoch
 	}
-	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Epoch(0)
+	return github_com_OffchainLabs_prysm_v7_consensus_types_primitives.Round(0)
 }
 
 func (x *StatusV2) GetHeadRoot() []byte {
@@ -671,8 +671,8 @@ var file_proto_prysm_v1alpha1_p2p_messages_proto_rawDesc = []byte{
 	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4f, 0x66, 0x66, 0x63, 0x68,
 	0x61, 0x69, 0x6e, 0x4c, 0x61, 0x62, 0x73, 0x2f, 0x70, 0x72, 0x79, 0x73, 0x6d, 0x2f, 0x76, 0x37,
 	0x2f, 0x63, 0x6f, 0x6e, 0x73, 0x65, 0x6e, 0x73, 0x75, 0x73, 0x2d, 0x74, 0x79, 0x70, 0x65, 0x73,
-	0x2f, 0x70, 0x72, 0x69, 0x6d, 0x69, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x45, 0x70, 0x6f, 0x63,
-	0x68, 0x52, 0x0e, 0x66, 0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x64, 0x45, 0x70, 0x6f, 0x63,
+	0x2f, 0x70, 0x72, 0x69, 0x6d, 0x69, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x52, 0x6f, 0x75, 0x6e,
+	0x64, 0x52, 0x0e, 0x66, 0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x64, 0x45, 0x70, 0x6f, 0x63,
 	0x68, 0x12, 0x23, 0x0a, 0x09, 0x68, 0x65, 0x61, 0x64, 0x5f, 0x72, 0x6f, 0x6f, 0x74, 0x18, 0x04,
 	0x20, 0x01, 0x28, 0x0c, 0x42, 0x06, 0x8a, 0xb5, 0x18, 0x02, 0x33, 0x32, 0x52, 0x08, 0x68, 0x65,
 	0x61, 0x64, 0x52, 0x6f, 0x6f, 0x74, 0x12, 0x61, 0x0a, 0x09, 0x68, 0x65, 0x61, 0x64, 0x5f, 0x73,
@@ -693,7 +693,7 @@ var file_proto_prysm_v1alpha1_p2p_messages_proto_rawDesc = []byte{
 	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4f, 0x66, 0x66, 0x63, 0x68, 0x61, 0x69, 0x6e, 0x4c,
 	0x61, 0x62, 0x73, 0x2f, 0x70, 0x72, 0x79, 0x73, 0x6d, 0x2f, 0x76, 0x37, 0x2f, 0x63, 0x6f, 0x6e,
 	0x73, 0x65, 0x6e, 0x73, 0x75, 0x73, 0x2d, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2f, 0x70, 0x72, 0x69,
-	0x6d, 0x69, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x52, 0x0e, 0x66,
+	0x6d, 0x69, 0x74, 0x69, 0x76, 0x65, 0x73, 0x2e, 0x52, 0x6f, 0x75, 0x6e, 0x64, 0x52, 0x0e, 0x66,
 	0x69, 0x6e, 0x61, 0x6c, 0x69, 0x7a, 0x65, 0x64, 0x45, 0x70, 0x6f, 0x63, 0x68, 0x12, 0x23, 0x0a,
 	0x09, 0x68, 0x65, 0x61, 0x64, 0x5f, 0x72, 0x6f, 0x6f, 0x74, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0c,
 	0x42, 0x06, 0x8a, 0xb5, 0x18, 0x02, 0x33, 0x32, 0x52, 0x08, 0x68, 0x65, 0x61, 0x64, 0x52, 0x6f,

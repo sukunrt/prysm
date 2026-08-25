@@ -533,8 +533,8 @@ func (s *Service) GetAttestationData(
 	if err != nil {
 		return nil, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not get head root")}
 	}
-	targetEpoch := slots.ToEpoch(req.Slot)
-	targetRoot, err := s.HeadFetcher.TargetRootForEpoch(bytesutil.ToBytes32(headRoot), targetEpoch)
+	targetRound := slots.RoundAt(req.Slot)
+	targetRoot, err := s.HeadFetcher.TargetRootForRound(bytesutil.ToBytes32(headRoot), targetRound)
 	if err != nil {
 		return nil, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not get target root")}
 	}
@@ -543,7 +543,9 @@ func (s *Service) GetAttestationData(
 	if err != nil {
 		return nil, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not get head state")}
 	}
-	if coreTime.CurrentEpoch(headState) < slots.ToEpoch(req.Slot) { // Ensure justified checkpoint safety by processing head state across the boundary.
+	// Ensure justified checkpoint safety by processing head state across the ROUND boundary:
+	// the source a validator signs would otherwise go a round stale at every round boundary.
+	if coreTime.CurrentRound(headState) < targetRound {
 		headState, err = transition.ProcessSlotsUsingNextSlotCache(ctx, headState, headRoot, req.Slot)
 		if err != nil {
 			return nil, &RpcError{Reason: Internal, Err: errors.Errorf("could not process slots up to %d: %v", req.Slot, err)}
@@ -568,7 +570,7 @@ func (s *Service) GetAttestationData(
 		HeadFull:      currentHeadFull,
 		IsPayloadFull: isPayloadFull,
 		Target: forkchoicetypes.Checkpoint{
-			Epoch: targetEpoch,
+			Epoch: targetRound,
 			Root:  targetRoot,
 		},
 		Source: forkchoicetypes.Checkpoint{
@@ -588,7 +590,7 @@ func (s *Service) GetAttestationData(
 			Root:  justifiedCheckpoint.Root,
 		},
 		Target: &ethpb.Checkpoint{
-			Epoch: targetEpoch,
+			Epoch: targetRound,
 			Root:  targetRoot[:],
 		},
 	}, nil
@@ -829,9 +831,13 @@ func (s *Service) ValidatorParticipation(
 	}
 
 	cp := s.FinalizedFetcher.FinalizedCheckpt()
+	finalizedEpoch, err := helpers.CheckpointEpoch(cp.Epoch)
+	if err != nil {
+		return nil, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not convert finalized round")}
+	}
 	p := &ethpb.ValidatorParticipationResponse{
 		Epoch:     requestedEpoch,
-		Finalized: requestedEpoch <= cp.Epoch,
+		Finalized: requestedEpoch <= finalizedEpoch,
 		Participation: &ethpb.ValidatorParticipation{
 			// TODO(7130): Remove these three deprecated fields.
 			GlobalParticipationRate:          float32(b.PrevEpochTargetAttested) / float32(b.ActivePrevEpoch),

@@ -34,6 +34,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
 	prysmTime "github.com/OffchainLabs/prysm/v7/time"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/ethereum/go-ethereum/p2p/enr"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	pubsubpb "github.com/libp2p/go-libp2p-pubsub/pb"
@@ -320,8 +321,8 @@ func TestProcessPendingAtts_HasBlockSaveUnAggregatedAttElectra_VerifyAlreadySeen
 		Data: &ethpb.AttestationData{
 			Slot:            clock.CurrentSlot(),
 			BeaconBlockRoot: root[:],
-			Source:          &ethpb.Checkpoint{Epoch: clock.CurrentEpoch() - 1, Root: make([]byte, fieldparams.RootLength)},
-			Target:          &ethpb.Checkpoint{Epoch: clock.CurrentEpoch(), Root: root[:]},
+			Source:          &ethpb.Checkpoint{Epoch: slots.RoundAt(clock.CurrentSlot()) - 1, Root: make([]byte, fieldparams.RootLength)},
+			Target:          &ethpb.Checkpoint{Epoch: slots.RoundAt(clock.CurrentSlot()), Root: root[:]},
 			CommitteeIndex:  0,
 		},
 	}
@@ -347,7 +348,7 @@ func TestProcessPendingAtts_HasBlockSaveUnAggregatedAttElectra_VerifyAlreadySeen
 		State:   beaconState,
 		FinalizedCheckPoint: &ethpb.Checkpoint{
 			Root:  att.Data.BeaconBlockRoot,
-			Epoch: clock.CurrentEpoch() - 2,
+			Epoch: slots.RoundAt(clock.CurrentSlot()) - 2,
 		},
 	}
 

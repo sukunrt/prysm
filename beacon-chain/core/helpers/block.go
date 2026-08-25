@@ -81,29 +81,41 @@ func StateRootAtSlot(state state.ReadOnlyBeaconState, slot primitives.Slot) ([]b
 	return state.StateRootAtIndex(uint64(slot % params.BeaconConfig().SlotsPerHistoricalRoot))
 }
 
-// FFGTargetRoot returns the FFG target root for an epoch: the block root at
-// the last slot before the epoch starts.
+// FFGTargetRoot returns the FFG target root for a round: the block root at
+// FFG_TARGET_OFFSET_SLOTS slots before the round starts.
 //
 // This is the decoupled fork's replacement for the spec's get_block_root,
-// which names the block at the epoch's first slot. A validator casting its
-// finality vote at the start of that first slot has not seen that block yet,
-// so the target is shifted one slot back and every voter in the epoch names a
-// block that already exists.
+// which names the block at the epoch's first slot. At the default offset of 1
+// a validator casting its finality vote at the start of the round's first slot
+// has not seen that slot's block yet, so the target is shifted one slot back
+// and every voter in the round names a block that already exists. Offset 0
+// restores the spec shape, targeting the round's own first slot.
 //
-//	def get_ffg_target_root(state: BeaconState, epoch: Epoch) -> Root:
-//	  if epoch == GENESIS_EPOCH:
+//	def get_ffg_target_root(state: BeaconState, round: Round) -> Root:
+//	  slot = compute_start_slot_at_round(round)
+//	  if slot < FFG_TARGET_OFFSET_SLOTS:
 //	    return get_block_root_at_slot(state, GENESIS_SLOT)
-//	  return get_block_root_at_slot(state, compute_start_slot_at_epoch(epoch) - 1)
+//	  return get_block_root_at_slot(state, slot - FFG_TARGET_OFFSET_SLOTS)
 //
-// Epoch 0 has no earlier slot, so it names the anchor (genesis) block, which
+// Round 0 has no earlier slot, so it names the anchor (genesis) block, which
 // is what the unshifted rule returns there anyway.
-func FFGTargetRoot(state state.ReadOnlyBeaconState, epoch primitives.Epoch) ([]byte, error) {
-	s, err := slots.EpochStart(epoch)
+func FFGTargetRoot(state state.ReadOnlyBeaconState, round primitives.Round) ([]byte, error) {
+	s, err := slots.FFGTargetSlot(round)
 	if err != nil {
 		return nil, err
 	}
-	if s > 0 {
-		s--
-	}
 	return BlockRootAtSlot(state, s)
+}
+
+// CheckpointEpoch converts a round-valued checkpoint index into the epoch that
+// contains the round's first slot.
+//
+// It is one of only two sanctioned round<->epoch conversions (the other being
+// the slots.RoundAt family); every other cross-unit cast is a bug.
+func CheckpointEpoch(round primitives.Round) (primitives.Epoch, error) {
+	s, err := slots.RoundStart(round)
+	if err != nil {
+		return 0, err
+	}
+	return slots.ToEpoch(s), nil
 }

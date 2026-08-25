@@ -686,9 +686,9 @@ func TestSubmitAttestationsV2(t *testing.T) {
 			assert.Equal(t, primitives.CommitteeIndex(0), broadcaster.BroadcastAttestations[0].GetData().CommitteeIndex)
 			assert.Equal(t, "0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884560367e8208d920f2", hexutil.Encode(broadcaster.BroadcastAttestations[0].GetData().BeaconBlockRoot))
 			assert.Equal(t, "0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884560367e8208d920f2", hexutil.Encode(broadcaster.BroadcastAttestations[0].GetData().Source.Root))
-			assert.Equal(t, primitives.Epoch(0), broadcaster.BroadcastAttestations[0].GetData().Source.Epoch)
+			assert.Equal(t, primitives.Round(0), broadcaster.BroadcastAttestations[0].GetData().Source.Epoch)
 			assert.Equal(t, "0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884560367e8208d920f2", hexutil.Encode(broadcaster.BroadcastAttestations[0].GetData().Target.Root))
-			assert.Equal(t, primitives.Epoch(0), broadcaster.BroadcastAttestations[0].GetData().Target.Epoch)
+			assert.Equal(t, primitives.Round(0), broadcaster.BroadcastAttestations[0].GetData().Target.Epoch)
 			require.Eventually(t, func() bool {
 				return s.AttestationsPool.UnaggregatedAttestationCount() == 1
 			}, time.Second, 10*time.Millisecond, "Expected 1 attestation in pool")
@@ -834,9 +834,9 @@ func TestSubmitAttestationsV2(t *testing.T) {
 			assert.Equal(t, primitives.CommitteeIndex(0), broadcaster.BroadcastAttestations[0].GetData().CommitteeIndex)
 			assert.Equal(t, "0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884560367e8208d920f2", hexutil.Encode(broadcaster.BroadcastAttestations[0].GetData().BeaconBlockRoot))
 			assert.Equal(t, "0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884560367e8208d920f2", hexutil.Encode(broadcaster.BroadcastAttestations[0].GetData().Source.Root))
-			assert.Equal(t, primitives.Epoch(0), broadcaster.BroadcastAttestations[0].GetData().Source.Epoch)
+			assert.Equal(t, primitives.Round(0), broadcaster.BroadcastAttestations[0].GetData().Source.Epoch)
 			assert.Equal(t, "0xcf8e0d4e9587369b2301d0790347320302cc0943d5a1884560367e8208d920f2", hexutil.Encode(broadcaster.BroadcastAttestations[0].GetData().Target.Root))
-			assert.Equal(t, primitives.Epoch(0), broadcaster.BroadcastAttestations[0].GetData().Target.Epoch)
+			assert.Equal(t, primitives.Round(0), broadcaster.BroadcastAttestations[0].GetData().Target.Epoch)
 			require.Eventually(t, func() bool {
 				return s.AttestationsPool.UnaggregatedAttestationCount() == 1
 			}, time.Second, 10*time.Millisecond, "Expected 1 attestation in pool")
@@ -1073,7 +1073,7 @@ func TestSubmitAttestationsV2(t *testing.T) {
 
 // signedSingleAttElectra builds a SingleAttestation with a valid BLS signature over data for the given state's fork.
 func signedSingleAttElectra(t *testing.T, fork *ethpbv1alpha1.Fork, genesisRoot []byte, key bls.SecretKey, attesterIndex primitives.ValidatorIndex, data *ethpbv1alpha1.AttestationData) *structs.SingleAttestation {
-	domain, err := signing.Domain(fork, data.Target.Epoch, params.BeaconConfig().DomainBeaconAttester, genesisRoot)
+	domain, err := signing.Domain(fork, slots.ToEpoch(data.Slot), params.BeaconConfig().DomainBeaconAttester, genesisRoot)
 	require.NoError(t, err)
 	root, err := signing.ComputeSigningRoot(data, domain)
 	require.NoError(t, err)
@@ -2261,7 +2261,7 @@ func TestSubmitAttesterSlashingsV2(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, att := range []*ethpbv1alpha1.IndexedAttestationElectra{electraSlashing.Attestation_1, electraSlashing.Attestation_2} {
-			sb, err := signing.ComputeDomainAndSign(ebs, att.Data.Target.Epoch, att.Data, params.BeaconConfig().DomainBeaconAttester, keys[0])
+			sb, err := signing.ComputeDomainAndSign(ebs, slots.ToEpoch(att.Data.Slot), att.Data, params.BeaconConfig().DomainBeaconAttester, keys[0])
 			require.NoError(t, err)
 			sig, err := bls.SignatureFromBytes(sb)
 			require.NoError(t, err)
@@ -2325,7 +2325,7 @@ func TestSubmitAttesterSlashingsV2(t *testing.T) {
 		require.NoError(t, err)
 
 		for _, att := range []*ethpbv1alpha1.IndexedAttestationElectra{slashing.Attestation_1, slashing.Attestation_2} {
-			sb, err := signing.ComputeDomainAndSign(newBs, att.Data.Target.Epoch, att.Data, params.BeaconConfig().DomainBeaconAttester, keys[0])
+			sb, err := signing.ComputeDomainAndSign(newBs, slots.ToEpoch(att.Data.Slot), att.Data, params.BeaconConfig().DomainBeaconAttester, keys[0])
 			require.NoError(t, err)
 			sig, err := bls.SignatureFromBytes(sb)
 			require.NoError(t, err)

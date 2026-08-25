@@ -144,7 +144,7 @@ func TestService_filterAttestations(t *testing.T) {
 	tests := []struct {
 		name           string
 		input          []*slashertypes.IndexedAttestationWrapper
-		inputEpoch     primitives.Epoch
+		inputEpoch     primitives.Round
 		wantedValid    []*slashertypes.IndexedAttestationWrapper
 		wantedDeferred []*slashertypes.IndexedAttestationWrapper
 		wantedDropped  int

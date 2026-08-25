@@ -6,7 +6,24 @@ import (
 	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 )
+
+// checkpointEpoch converts a round-valued checkpoint index into the epoch that
+// contains the round's first slot.
+//
+// It is the state-internal twin of helpers.CheckpointEpoch: this package sits
+// below beacon-chain/core/helpers in the import graph and cannot call it.
+func checkpointEpoch(c *ethpb.Checkpoint) (primitives.Epoch, error) {
+	if c == nil {
+		return 0, nil
+	}
+	s, err := slots.RoundStart(c.Epoch)
+	if err != nil {
+		return 0, err
+	}
+	return slots.ToEpoch(s), nil
+}
 
 // JustificationBits marking which epochs have been justified in the beacon chain.
 func (b *BeaconState) JustificationBits() bitfield.Bitvector4 {
@@ -112,8 +129,8 @@ func (b *BeaconState) finalizedCheckpointVal() *ethpb.Checkpoint {
 	return b.finalizedCheckpoint.Copy()
 }
 
-// FinalizedCheckpointEpoch returns the epoch value of the finalized checkpoint.
-func (b *BeaconState) FinalizedCheckpointEpoch() primitives.Epoch {
+// FinalizedCheckpointRound returns the round value of the finalized checkpoint.
+func (b *BeaconState) FinalizedCheckpointRound() primitives.Round {
 	if b.finalizedCheckpoint == nil {
 		return 0
 	}

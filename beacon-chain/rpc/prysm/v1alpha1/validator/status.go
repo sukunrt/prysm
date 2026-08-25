@@ -137,12 +137,12 @@ func (vs *Server) CheckDoppelGanger(ctx context.Context, req *ethpb.DoppelGanger
 	}
 
 	headSlot := headState.Slot()
-	currEpoch := slots.ToEpoch(headSlot)
+	currRound := slots.RoundAt(headSlot)
 
 	// If all provided keys are recent we skip this check
 	// as we are unable to effectively determine if a doppelganger
 	// is active.
-	isRecent, resp := checkValidatorsAreRecent(currEpoch, req)
+	isRecent, resp := checkValidatorsAreRecent(currRound, req)
 	if isRecent {
 		return resp, nil
 	}
@@ -180,11 +180,11 @@ func (vs *Server) CheckDoppelGanger(ctx context.Context, req *ethpb.DoppelGanger
 		Responses: []*ethpb.DoppelGangerResponse_ValidatorResponse{},
 	}
 	for _, v := range req.ValidatorRequests {
-		// If the validator's last recorded epoch was less than 1 epoch
+		// If the validator's last recorded round was less than 1 round
 		// ago, the current doppelganger check will not be able to
 		// identify dopplelgangers since an attestation can take up to
-		// 31 slots to be included.
-		if v.Epoch+2 >= currEpoch {
+		// a round to be included.
+		if v.Epoch+2 >= currRound {
 			resp.Responses = append(resp.Responses,
 				&ethpb.DoppelGangerResponse_ValidatorResponse{
 					PublicKey:       v.PublicKey,
@@ -356,7 +356,7 @@ func (vs *Server) validatorStatus(
 	}
 }
 
-func checkValidatorsAreRecent(headEpoch primitives.Epoch, req *ethpb.DoppelGangerRequest) (bool, *ethpb.DoppelGangerResponse) {
+func checkValidatorsAreRecent(headRound primitives.Round, req *ethpb.DoppelGangerRequest) (bool, *ethpb.DoppelGangerResponse) {
 	validatorsAreRecent := true
 	resp := &ethpb.DoppelGangerResponse{
 		Responses: []*ethpb.DoppelGangerResponse_ValidatorResponse{},
@@ -365,8 +365,9 @@ func checkValidatorsAreRecent(headEpoch primitives.Epoch, req *ethpb.DoppelGange
 		// Due to how balances are reflected for individual
 		// validators, we can only effectively determine if a
 		// validator voted or not if we are able to look
-		// back more than 2 epoch into the past.
-		if v.Epoch+2 < headEpoch {
+		// back more than 2 rounds into the past. The request field carries an
+		// attestation target, which is a ROUND.
+		if v.Epoch+2 < headRound {
 			validatorsAreRecent = false
 			// Zero out response if we encounter non-recent validators to
 			// guard against potential misuse.

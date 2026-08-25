@@ -267,7 +267,7 @@ func repositionFutureEpochs(cfg *params.BeaconChainConfig) {
 }
 
 func defaultMockChain(t *testing.T, current primitives.Epoch) *mock.ChainService {
-	fe := current - 2
+	fe := primitives.Round(current) - 2
 	df, err := params.Fork(current)
 	require.NoError(t, err)
 	chain := &mock.ChainService{

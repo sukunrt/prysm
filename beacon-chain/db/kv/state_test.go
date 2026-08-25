@@ -727,7 +727,7 @@ func TestStore_CleanUpDirtyStates_AboveThreshold(t *testing.T) {
 
 	require.NoError(t, db.SaveFinalizedCheckpoint(t.Context(), &ethpb.Checkpoint{
 		Root:  bRoots[len(bRoots)-1][:],
-		Epoch: primitives.Epoch(slotsPerArchivedPoint / params.BeaconConfig().SlotsPerEpoch),
+		Epoch: primitives.Round(slotsPerArchivedPoint / params.BeaconConfig().SlotsPerEpoch),
 	}))
 	require.NoError(t, db.CleanUpDirtyStates(t.Context(), slotsPerArchivedPoint))
 
@@ -1319,7 +1319,7 @@ func TestStore_CleanUpDirtyStates_NoOriginRoot(t *testing.T) {
 	}
 	require.NoError(t, db.SaveFinalizedCheckpoint(t.Context(), &ethpb.Checkpoint{
 		Root:  bRoots[len(bRoots)-1][:],
-		Epoch: primitives.Epoch(slotsPerArchivedPoint / params.BeaconConfig().SlotsPerEpoch),
+		Epoch: primitives.Round(slotsPerArchivedPoint / params.BeaconConfig().SlotsPerEpoch),
 	}))
 	// This should not fail even though origin block root is not set
 	err = db.CleanUpDirtyStates(t.Context(), slotsPerArchivedPoint)

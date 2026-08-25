@@ -73,7 +73,7 @@ func (s *Service) setupForkchoiceTree(st state.BeaconState) error {
 		log.WithError(err).WithField("headRoot", fmt.Sprintf("%#x", headRoot)).Error("Head block is nil, starting with finalized block as head")
 		return nil
 	}
-	if slots.ToEpoch(blk.Block().Slot()) < cp.Epoch {
+	if slots.RoundAt(blk.Block().Slot()) < cp.Epoch {
 		log.WithField("headRoot", fmt.Sprintf("%#x", headRoot)).Error("Head block is older than finalized block, starting with finalized block as head")
 		return nil
 	}
@@ -118,7 +118,7 @@ func (s *Service) buildForkchoiceChain(ctx context.Context, head interfaces.Read
 		if err != nil {
 			return nil, errors.Wrap(err, "could not get block")
 		}
-		if slots.ToEpoch(head.Block().Slot()) < cp.Epoch {
+		if slots.RoundAt(head.Block().Slot()) < cp.Epoch {
 			return nil, errors.New("head block is not a descendant of the finalized checkpoint")
 		}
 	}

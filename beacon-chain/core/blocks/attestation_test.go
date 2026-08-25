@@ -22,6 +22,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 )
 
 func TestProcessAggregatedAttestation_OverlappingBits(t *testing.T) {
@@ -92,7 +93,7 @@ func TestVerifyAttestationNoVerifySignature_IncorrectSlotTargetEpoch(t *testing.
 			Target: &ethpb.Checkpoint{Root: make([]byte, 32)},
 		},
 	})
-	wanted := "slot 32 does not match target epoch 0"
+	wanted := "slot 32 does not match target round 0"
 	err := blocks.VerifyAttestationNoVerifySignature(context.TODO(), beaconState, att)
 	assert.ErrorContains(t, wanted, err)
 }
@@ -507,7 +508,7 @@ func TestVerifyIndexedAttestation_OK(t *testing.T) {
 	for _, tt := range tests {
 		var sig []bls.Signature
 		for _, idx := range tt.attestation.AttestingIndices {
-			sb, err := signing.ComputeDomainAndSign(state, tt.attestation.Data.Target.Epoch, tt.attestation.Data, params.BeaconConfig().DomainBeaconAttester, keys[idx])
+			sb, err := signing.ComputeDomainAndSign(state, slots.ToEpoch(tt.attestation.Data.Slot), tt.attestation.Data, params.BeaconConfig().DomainBeaconAttester, keys[idx])
 			require.NoError(t, err)
 			validatorSig, err := bls.SignatureFromBytes(sb)
 			require.NoError(t, err)
@@ -532,7 +533,7 @@ func TestValidateIndexedAttestation_AboveMaxLength(t *testing.T) {
 		indexedAtt1.AttestingIndices[i] = i
 		indexedAtt1.Data = &ethpb.AttestationData{
 			Target: &ethpb.Checkpoint{
-				Epoch: primitives.Epoch(i),
+				Epoch: primitives.Round(i),
 			},
 			Source: &ethpb.Checkpoint{},
 		}

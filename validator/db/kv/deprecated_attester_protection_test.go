@@ -13,11 +13,11 @@ import (
 func TestNewAttestationHistoryArray(t *testing.T) {
 	ba := newDeprecatedAttestingHistory(0)
 	assert.Equal(t, latestEpochWrittenSize+historySize, len(ba))
-	ba = newDeprecatedAttestingHistory(params.BeaconConfig().WeakSubjectivityPeriod - 1)
-	assert.Equal(t, latestEpochWrittenSize+historySize*params.BeaconConfig().WeakSubjectivityPeriod, primitives.Epoch(len(ba)))
-	ba = newDeprecatedAttestingHistory(params.BeaconConfig().WeakSubjectivityPeriod)
+	ba = newDeprecatedAttestingHistory(primitives.Round(params.BeaconConfig().WeakSubjectivityPeriod) - 1)
+	assert.Equal(t, latestEpochWrittenSize+historySize*primitives.Round(params.BeaconConfig().WeakSubjectivityPeriod), primitives.Round(len(ba)))
+	ba = newDeprecatedAttestingHistory(primitives.Round(params.BeaconConfig().WeakSubjectivityPeriod))
 	assert.Equal(t, latestEpochWrittenSize+historySize, len(ba))
-	ba = newDeprecatedAttestingHistory(params.BeaconConfig().WeakSubjectivityPeriod + 1)
+	ba = newDeprecatedAttestingHistory(primitives.Round(params.BeaconConfig().WeakSubjectivityPeriod) + 1)
 	assert.Equal(t, latestEpochWrittenSize+historySize+historySize, len(ba))
 
 }
@@ -28,8 +28,8 @@ func TestSizeChecks(t *testing.T) {
 	require.ErrorContains(t, "is not a multiple of entry size", deprecatedEncodedAttestingHistory{0, 1, 2, 3, 4, 5, 6, 7, 8}.assertSize())
 	require.NoError(t, newDeprecatedAttestingHistory(0).assertSize())
 	require.NoError(t, newDeprecatedAttestingHistory(1).assertSize())
-	require.NoError(t, newDeprecatedAttestingHistory(params.BeaconConfig().WeakSubjectivityPeriod).assertSize())
-	require.NoError(t, newDeprecatedAttestingHistory(params.BeaconConfig().WeakSubjectivityPeriod-1).assertSize())
+	require.NoError(t, newDeprecatedAttestingHistory(primitives.Round(params.BeaconConfig().WeakSubjectivityPeriod)).assertSize())
+	require.NoError(t, newDeprecatedAttestingHistory(primitives.Round(params.BeaconConfig().WeakSubjectivityPeriod)-1).assertSize())
 }
 
 func TestGetLatestEpochWritten(t *testing.T) {
@@ -37,7 +37,7 @@ func TestGetLatestEpochWritten(t *testing.T) {
 	ha[0] = 28
 	lew, err := ha.getLatestEpochWritten()
 	require.NoError(t, err)
-	assert.Equal(t, primitives.Epoch(28), lew)
+	assert.Equal(t, primitives.Round(28), lew)
 }
 
 func TestSetLatestEpochWritten(t *testing.T) {
@@ -63,8 +63,8 @@ func TestSetTargetData(t *testing.T) {
 	type testStruct struct {
 		name        string
 		enc         deprecatedEncodedAttestingHistory
-		target      primitives.Epoch
-		source      primitives.Epoch
+		target      primitives.Round
+		source      primitives.Round
 		signingRoot []byte
 		expected    deprecatedEncodedAttestingHistory
 		error       string

@@ -162,7 +162,9 @@ func TestProcessRewardsAndPenaltiesPrecompute_SlashedInactivePenalty(t *testing.
 	rewards, penalties, err := AttestationsDelta(beaconState, bp, vp)
 	require.NoError(t, err)
 
-	finalityDelay := time.PrevEpoch(beaconState) - beaconState.FinalizedCheckpointEpoch()
+	finalizedEpoch, err := helpers.CheckpointEpoch(beaconState.FinalizedCheckpointRound())
+	require.NoError(t, err)
+	finalityDelay := time.PrevEpoch(beaconState) - finalizedEpoch
 	for _, i := range slashedAttestedIndices {
 		base, err := baseReward(t.Context(), beaconState, i)
 		require.NoError(t, err, "Could not get base reward")
