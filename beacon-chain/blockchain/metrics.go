@@ -5,6 +5,7 @@ import (
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/altair"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/epoch/precompute"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
@@ -12,6 +13,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -31,9 +33,17 @@ var (
 		Help: "The current slot based on the genesis time and current clock",
 	})
 
+	// The FFG checkpoints carry ROUNDS. The four *_epoch gauges keep their names
+	// and emit the EPOCH the checkpoint's round starts in, so existing dashboards
+	// and scrape tooling stay meaningful; the four *_round gauges next to them
+	// carry the raw round, which is what actually advances per round.
 	headFinalizedEpoch = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "head_finalized_epoch",
-		Help: "Last finalized epoch of the head state",
+		Help: "Epoch containing the first slot of the head state's last finalized round",
+	})
+	headFinalizedRound = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "head_finalized_round",
+		Help: "Last finalized round of the head state",
 	})
 	headFinalizedRoot = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "head_finalized_root",
@@ -41,7 +51,11 @@ var (
 	})
 	beaconFinalizedEpoch = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "beacon_finalized_epoch",
-		Help: "Last finalized epoch of the processed state",
+		Help: "Epoch containing the first slot of the processed state's last finalized round",
+	})
+	beaconFinalizedRound = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "beacon_finalized_round",
+		Help: "Last finalized round of the processed state",
 	})
 	beaconFinalizedRoot = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "beacon_finalized_root",
@@ -49,7 +63,11 @@ var (
 	})
 	beaconCurrentJustifiedEpoch = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "beacon_current_justified_epoch",
-		Help: "Current justified epoch of the processed state",
+		Help: "Epoch containing the first slot of the processed state's current justified round",
+	})
+	beaconCurrentJustifiedRound = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "beacon_current_justified_round",
+		Help: "Current justified round of the processed state",
 	})
 	beaconCurrentJustifiedRoot = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "beacon_current_justified_root",
@@ -57,11 +75,27 @@ var (
 	})
 	beaconPrevJustifiedEpoch = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "beacon_previous_justified_epoch",
-		Help: "Previous justified epoch of the processed state",
+		Help: "Epoch containing the first slot of the processed state's previous justified round",
+	})
+	beaconPrevJustifiedRound = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "beacon_previous_justified_round",
+		Help: "Previous justified round of the processed state",
 	})
 	beaconPrevJustifiedRoot = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "beacon_previous_justified_root",
 		Help: "Previous justified root of the processed state",
+	})
+	finalityLatencySlots = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "finality_latency_slots",
+		Help: "Slots between the current slot and the first slot of the last finalized round",
+	})
+	justifiedRoundAdvanceTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "justified_round_advance_total",
+		Help: "Count of the times the justified checkpoint's round increased",
+	})
+	finalizedRoundAdvanceTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "finalized_round_advance_total",
+		Help: "Count of the times the finalized checkpoint's round increased",
 	})
 	activeValidatorCount = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "beacon_current_active_validators",
@@ -91,21 +125,24 @@ var (
 		Name: "field_references",
 		Help: "The number of states a particular field is shared with.",
 	}, []string{"state"})
-	prevEpochActiveBalances = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "beacon_prev_epoch_active_gwei",
-		Help: "The total amount of ether, in gwei, that was active for voting of previous epoch",
+	// The participation arrays rotate once per ROUND, so these four measure the
+	// previous round's votes, not the previous epoch's. They are renamed rather
+	// than kept for continuity: the number changed meaning, so the name must too.
+	prevRoundActiveBalances = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "beacon_prev_round_active_gwei",
+		Help: "The total amount of ether, in gwei, that was active for voting of previous round",
 	})
-	prevEpochSourceBalances = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "beacon_prev_epoch_source_gwei",
-		Help: "The total amount of ether, in gwei, that has been used in voting attestation source of previous epoch",
+	prevRoundSourceBalances = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "beacon_prev_round_source_gwei",
+		Help: "The total amount of ether, in gwei, used in voting attestation source of previous round",
 	})
-	prevEpochTargetBalances = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "beacon_prev_epoch_target_gwei",
-		Help: "The total amount of ether, in gwei, that has been used in voting attestation target of previous epoch",
+	prevRoundTargetBalances = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "beacon_prev_round_target_gwei",
+		Help: "The total amount of ether, in gwei, used in voting attestation target of previous round",
 	})
-	prevEpochHeadBalances = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "beacon_prev_epoch_head_gwei",
-		Help: "The total amount of ether, in gwei, that has been used in voting attestation head of previous epoch",
+	prevRoundHeadBalances = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "beacon_prev_round_head_gwei",
+		Help: "The total amount of ether, in gwei, used in voting attestation head of previous round",
 	})
 	reorgCount = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "beacon_reorgs_total",
@@ -263,20 +300,47 @@ var (
 	}, []string{"kind"})
 )
 
+// reportCheckpointRound sets the pair of gauges describing one round-valued FFG
+// checkpoint: the raw round, and the epoch its first slot falls in.
+func reportCheckpointRound(round primitives.Round, epochGauge, roundGauge prometheus.Gauge) {
+	roundGauge.Set(float64(round))
+	epoch, err := helpers.CheckpointEpoch(round)
+	if err != nil {
+		log.WithError(err).Error("Could not compute the checkpoint round's epoch")
+		return
+	}
+	epochGauge.Set(float64(epoch))
+}
+
 // reportSlotMetrics reports slot related metrics.
 func reportSlotMetrics(stateSlot, headSlot, clockSlot primitives.Slot, finalizedCheckpoint *ethpb.Checkpoint) {
 	clockTimeSlot.Set(float64(clockSlot))
 	beaconSlot.Set(float64(stateSlot))
 	beaconHeadSlot.Set(float64(headSlot))
-	if finalizedCheckpoint != nil {
-		headFinalizedEpoch.Set(float64(finalizedCheckpoint.Epoch))
-		headFinalizedRoot.Set(float64(bytesutil.ToLowInt64(finalizedCheckpoint.Root)))
+	if finalizedCheckpoint == nil {
+		return
+	}
+	reportCheckpointRound(finalizedCheckpoint.Epoch, headFinalizedEpoch, headFinalizedRound)
+	headFinalizedRoot.Set(float64(bytesutil.ToLowInt64(finalizedCheckpoint.Root)))
+	// Finality latency is measured against the wall clock, not against the head:
+	// a chain that stops finalizing must make this gauge grow, and at the moment
+	// finality does advance the two readings agree.
+	start, err := slots.RoundStart(finalizedCheckpoint.Epoch)
+	if err != nil {
+		log.WithError(err).Error("Could not compute the finalized round's start slot")
+		return
+	}
+	if clockSlot >= start {
+		finalityLatencySlots.Set(float64(clockSlot - start))
 	}
 }
 
-// reportEpochMetrics reports epoch related metrics.
-func reportEpochMetrics(ctx context.Context, postState, headState state.BeaconState) error {
-	currentEpoch := primitives.Epoch(postState.Slot() / params.BeaconConfig().SlotsPerEpoch)
+// reportRoundMetrics reports the whole-state metrics, once per round. It runs at
+// round cadence because the FFG checkpoints and the participation arrays it reads
+// now move once per round; the validator census it also reports is an epoch-shaped
+// quantity that simply gets sampled more often.
+func reportRoundMetrics(ctx context.Context, postState, headState state.BeaconState) error {
+	currentEpoch := slots.ToEpoch(postState.Slot())
 
 	// Validator instances
 	pendingInstances := 0
@@ -353,16 +417,19 @@ func reportEpochMetrics(ctx context.Context, postState, headState state.BeaconSt
 	validatorsEffectiveBalance.WithLabelValues("Exiting").Set(float64(exitingEffectiveBalance))
 	validatorsEffectiveBalance.WithLabelValues("Slashing").Set(float64(slashingEffectiveBalance))
 
-	// Last justified slot
-	beaconCurrentJustifiedEpoch.Set(float64(postState.CurrentJustifiedCheckpoint().Epoch))
+	// Last justified round
+	reportCheckpointRound(postState.CurrentJustifiedCheckpoint().Epoch,
+		beaconCurrentJustifiedEpoch, beaconCurrentJustifiedRound)
 	beaconCurrentJustifiedRoot.Set(float64(bytesutil.ToLowInt64(postState.CurrentJustifiedCheckpoint().Root)))
 
-	// Last previous justified slot
-	beaconPrevJustifiedEpoch.Set(float64(postState.PreviousJustifiedCheckpoint().Epoch))
+	// Last previous justified round
+	reportCheckpointRound(postState.PreviousJustifiedCheckpoint().Epoch,
+		beaconPrevJustifiedEpoch, beaconPrevJustifiedRound)
 	beaconPrevJustifiedRoot.Set(float64(bytesutil.ToLowInt64(postState.PreviousJustifiedCheckpoint().Root)))
 
-	// Last finalized slot
-	beaconFinalizedEpoch.Set(float64(postState.FinalizedCheckpointRound()))
+	// Last finalized round
+	reportCheckpointRound(postState.FinalizedCheckpointRound(),
+		beaconFinalizedEpoch, beaconFinalizedRound)
 	beaconFinalizedRoot.Set(float64(bytesutil.ToLowInt64(postState.FinalizedCheckpoint().Root)))
 	currentEth1DataDepositCount.Set(float64(postState.Eth1Data().DepositCount))
 	processedDepositsCount.Set(float64(postState.Eth1DepositIndex() + 1))
@@ -393,10 +460,10 @@ func reportEpochMetrics(ctx context.Context, postState, headState state.BeaconSt
 		return errors.Errorf("invalid state type provided: %T", headState.ToProtoUnsafe())
 	}
 
-	prevEpochActiveBalances.Set(float64(b.ActivePrevEpoch))
-	prevEpochSourceBalances.Set(float64(b.PrevEpochAttested))
-	prevEpochTargetBalances.Set(float64(b.PrevEpochTargetAttested))
-	prevEpochHeadBalances.Set(float64(b.PrevEpochHeadAttested))
+	prevRoundActiveBalances.Set(float64(b.ActivePrevEpoch))
+	prevRoundSourceBalances.Set(float64(b.PrevEpochAttested))
+	prevRoundTargetBalances.Set(float64(b.PrevEpochTargetAttested))
+	prevRoundHeadBalances.Set(float64(b.PrevEpochHeadAttested))
 
 	refMap := postState.FieldReferencesCount()
 	for name, val := range refMap {

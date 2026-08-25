@@ -164,17 +164,16 @@ func (s *Service) ReceiveBlock(ctx context.Context, block interfaces.ReadOnlySig
 }
 
 type ffgCheckpoints struct {
-	// j and f carry ROUNDS (the checkpoints' unit); c is the state's current EPOCH,
-	// used only to detect an epoch transition for metrics reporting.
-	j, f primitives.Round
-	c    primitives.Epoch
+	// j and f carry ROUNDS (the checkpoints' unit); r is the state's current
+	// ROUND, used only to detect a round transition for metrics reporting.
+	j, f, r primitives.Round
 }
 
 func (s *Service) saveCurrentCheckpoints(state state.BeaconState) (cp ffgCheckpoints) {
 	// Save current justified and finalized rounds for future use.
 	cp.j = s.CurrentJustifiedCheckpt().Epoch
 	cp.f = s.FinalizedCheckpt().Epoch
-	cp.c = coreTime.CurrentEpoch(state)
+	cp.r = coreTime.CurrentRound(state)
 	return
 }
 
@@ -184,7 +183,7 @@ func (s *Service) updateCheckpoints(
 	preState, postState state.BeaconState,
 	blockRoot [32]byte,
 ) error {
-	s.reportEpochMetrics(postState, cp.c, blockRoot)
+	s.reportRoundMetrics(postState, cp.r, blockRoot)
 
 	if err := s.updateJustificationOnBlock(ctx, preState, postState, cp.j); err != nil {
 		return errors.Wrap(err, "could not update justified checkpoint")
@@ -202,20 +201,30 @@ func (s *Service) updateCheckpoints(
 	return nil
 }
 
-func (s *Service) reportEpochMetrics(postState state.BeaconState, prevEpoch primitives.Epoch, blockRoot [32]byte) {
-	if coreTime.CurrentEpoch(postState) <= prevEpoch || !s.cfg.ForkChoiceStore.IsCanonical(blockRoot) {
+// reportRoundMetrics fires once per round transition on the canonical chain. It
+// was epoch-keyed before the FFG checkpoints became round-valued; the gauges it
+// sets now move once per round, so the trigger has to as well.
+func (s *Service) reportRoundMetrics(
+	postState state.BeaconState,
+	prevRound primitives.Round,
+	blockRoot [32]byte,
+) {
+	if coreTime.CurrentRound(postState) <= prevRound {
+		return
+	}
+	if !s.cfg.ForkChoiceStore.IsCanonical(blockRoot) {
 		return
 	}
 
 	go func() {
 		headSt, err := s.HeadState(s.ctx)
 		if err != nil {
-			log.WithError(err).Error("Could not get head state for epoch metrics")
+			log.WithError(err).Error("Could not get head state for round metrics")
 			return
 		}
 
-		if err := reportEpochMetrics(s.ctx, postState, headSt); err != nil {
-			log.WithError(err).Error("Could not report epoch metrics")
+		if err := reportRoundMetrics(s.ctx, postState, headSt); err != nil {
+			log.WithError(err).Error("Could not report round metrics")
 		}
 	}()
 }
@@ -591,6 +600,9 @@ func (s *Service) updateJustificationOnBlock(ctx context.Context, preState, post
 	justified := s.cfg.ForkChoiceStore.JustifiedCheckpoint()
 	preStateJustifiedEpoch := preState.CurrentJustifiedCheckpoint().Epoch
 	postStateJustifiedEpoch := postState.CurrentJustifiedCheckpoint().Epoch
+	if justified.Epoch > preJustifiedRound {
+		justifiedRoundAdvanceTotal.Inc()
+	}
 	if justified.Epoch > preJustifiedRound || (justified.Epoch == postStateJustifiedEpoch && justified.Epoch > preStateJustifiedEpoch) {
 		if err := s.cfg.BeaconDB.SaveJustifiedCheckpoint(ctx, &ethpb.Checkpoint{
 			Epoch: justified.Epoch, Root: justified.Root[:],
@@ -607,6 +619,9 @@ func (s *Service) updateFinalizationOnBlock(ctx context.Context, preState, postS
 	preStateFinalizedEpoch := preState.FinalizedCheckpoint().Epoch
 	postStateFinalizedEpoch := postState.FinalizedCheckpoint().Epoch
 	finalized := s.cfg.ForkChoiceStore.FinalizedCheckpoint()
+	if finalized.Epoch > preFinalizedRound {
+		finalizedRoundAdvanceTotal.Inc()
+	}
 	if finalized.Epoch > preFinalizedRound || (finalized.Epoch == postStateFinalizedEpoch && finalized.Epoch > preStateFinalizedEpoch) {
 		if err := s.updateFinalized(ctx, &ethpb.Checkpoint{Epoch: finalized.Epoch, Root: finalized.Root[:]}); err != nil {
 			return true, err
