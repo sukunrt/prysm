@@ -64,12 +64,22 @@ func (s *Server) GetWeakSubjectivity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	stateRoot := cb.Block().StateRoot()
-	log.Printf("Weak subjectivity checkpoint reported as epoch=%d, block root=%#x, state root=%#x", wsEpoch, cbr, stateRoot)
+	// The weak subjectivity period is epoch-derived, but the checkpoint that comes
+	// out of it is a checkpoint like any other, so its numeric half is a ROUND: it
+	// is read back by helpers.ParseWeakSubjectivityInputString, which resolves the
+	// block through slots.RoundStart. Name the round that actually holds the block
+	// -- BlockRootForSlot walks back to the highest block at or before wsSlot, which
+	// may sit in an earlier round than the one wsSlot starts.
+	wsRound := slots.RoundAt(cb.Block().Slot())
+	log.Printf(
+		"Weak subjectivity checkpoint reported as round=%d (epoch=%d), block root=%#x, state root=%#x",
+		wsRound, wsEpoch, cbr, stateRoot,
+	)
 
 	resp := &structs.GetWeakSubjectivityResponse{
 		Data: &structs.WeakSubjectivityData{
 			WsCheckpoint: &structs.Checkpoint{
-				Epoch: strconv.FormatUint(uint64(wsEpoch), 10),
+				Epoch: strconv.FormatUint(uint64(wsRound), 10),
 				Root:  hexutil.Encode(cbr[:]),
 			},
 			StateRoot: hexutil.Encode(stateRoot[:]),

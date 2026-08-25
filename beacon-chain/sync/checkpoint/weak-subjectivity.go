@@ -27,7 +27,7 @@ func ComputeWeakSubjectivityCheckpoint(ctx context.Context, client *beacon.Clien
 		// fall back to vanilla Beacon Node API method
 		return computeBackwardsCompatible(ctx, client)
 	}
-	log.Printf("server weak subjectivity checkpoint response - epoch=%d, block_root=%#x, state_root=%#x", ws.Epoch, ws.BlockRoot, ws.StateRoot)
+	log.Printf("server weak subjectivity checkpoint response - round=%d, block_root=%#x, state_root=%#x", ws.Round, ws.BlockRoot, ws.StateRoot)
 	return ws, nil
 }
 
@@ -94,8 +94,12 @@ func computeBackwardsCompatible(ctx context.Context, client *beacon.Client) (*be
 		return nil, errors.Wrap(err, "error computing hash_tree_root for block obtained via root")
 	}
 
+	// The checkpoint's numeric half is a ROUND -- see WeakSubjectivityData. The
+	// period is epoch-derived, but the block that anchors it is named by the round
+	// that holds it, which is what the --weak-subjectivity-checkpoint consumer
+	// resolves through slots.RoundStart.
 	return &beacon.WeakSubjectivityData{
-		Epoch:     epoch,
+		Round:     slots.RoundAt(b.Block().Slot()),
 		BlockRoot: br,
 		StateRoot: sr,
 	}, nil

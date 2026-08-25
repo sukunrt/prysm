@@ -226,20 +226,24 @@ func (c *Client) GetState(ctx context.Context, stateId StateOrBlockId) ([]byte, 
 	return b, nil
 }
 
-// WeakSubjectivityData represents the state root, block root and epoch of the BeaconState + ReadOnlySignedBeaconBlock
+// WeakSubjectivityData represents the state root, block root and round of the BeaconState + ReadOnlySignedBeaconBlock
 // that falls at the beginning of the current weak subjectivity period. These values can be used to construct
 // a weak subjectivity checkpoint beacon node flag to be used for validation.
+//
+// The weak subjectivity period itself is epoch-derived, but the checkpoint that
+// comes out of it is a checkpoint like any other, so its numeric half is a ROUND --
+// that is what helpers.ParseWeakSubjectivityInputString reads back on the other end.
 type WeakSubjectivityData struct {
 	BlockRoot [32]byte
 	StateRoot [32]byte
-	Epoch     primitives.Epoch
+	Round     primitives.Round
 }
 
 // CheckpointString returns the standard string representation of a Checkpoint.
-// The format is a hex-encoded block root, followed by the epoch of the block, separated by a colon. For example:
+// The format is a hex-encoded block root, followed by the round of the block, separated by a colon. For example:
 // "0x1c35540cac127315fabb6bf29181f2ae0de1a3fc909d2e76ba771e61312cc49a:74888"
 func (wsd *WeakSubjectivityData) CheckpointString() string {
-	return fmt.Sprintf("%#x:%d", wsd.BlockRoot, wsd.Epoch)
+	return fmt.Sprintf("%#x:%d", wsd.BlockRoot, wsd.Round)
 }
 
 // GetWeakSubjectivity calls a proposed API endpoint that is unique to prysm
@@ -257,7 +261,7 @@ func (c *Client) GetWeakSubjectivity(ctx context.Context) (*WeakSubjectivityData
 	if err != nil {
 		return nil, err
 	}
-	epoch, err := strconv.ParseUint(v.Data.WsCheckpoint.Epoch, 10, 64)
+	round, err := strconv.ParseUint(v.Data.WsCheckpoint.Epoch, 10, 64)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +274,7 @@ func (c *Client) GetWeakSubjectivity(ctx context.Context) (*WeakSubjectivityData
 		return nil, err
 	}
 	return &WeakSubjectivityData{
-		Epoch:     primitives.Epoch(epoch),
+		Round:     primitives.Round(round),
 		BlockRoot: bytesutil.ToBytes32(blockRoot),
 		StateRoot: bytesutil.ToBytes32(stateRoot),
 	}, nil

@@ -120,7 +120,7 @@ func TestDownloadWeakSubjectivityCheckpoint(t *testing.T) {
 	expectedWSD := beacon.WeakSubjectivityData{
 		BlockRoot: bRoot,
 		StateRoot: wRoot,
-		Epoch:     epoch,
+		Round:     slots.RoundAt(wSlot),
 	}
 
 	trans := &testRT{rt: func(req *http.Request) (*http.Response, error) {
@@ -132,7 +132,7 @@ func TestDownloadWeakSubjectivityCheckpoint(t *testing.T) {
 				Epoch string `json:"epoch"`
 				Root  string `json:"root"`
 			}{
-				Epoch: fmt.Sprintf("%d", slots.ToEpoch(b.Block().Slot())),
+				Epoch: fmt.Sprintf("%d", slots.RoundAt(b.Block().Slot())),
 				Root:  fmt.Sprintf("%#x", bRoot),
 			}
 			wsr := struct {
@@ -161,7 +161,7 @@ func TestDownloadWeakSubjectivityCheckpoint(t *testing.T) {
 
 	wsd, err := ComputeWeakSubjectivityCheckpoint(ctx, c)
 	require.NoError(t, err)
-	require.Equal(t, expectedWSD.Epoch, wsd.Epoch)
+	require.Equal(t, expectedWSD.Round, wsd.Round)
 	require.Equal(t, expectedWSD.StateRoot, wsd.StateRoot)
 	require.Equal(t, expectedWSD.BlockRoot, wsd.BlockRoot)
 }

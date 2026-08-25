@@ -3,8 +3,11 @@ package blockchain
 import (
 	"testing"
 
+	"github.com/OffchainLabs/prysm/v7/api/client/beacon"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	forkchoicetypes "github.com/OffchainLabs/prysm/v7/beacon-chain/forkchoice/types"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
@@ -109,4 +112,41 @@ func TestService_VerifyWeakSubjectivityRoot(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestWeakSubjectivityCheckpointRoundTrip pins the producer/consumer contract for
+// --weak-subjectivity-checkpoint: what prysmctl prints must be what the beacon
+// node reads back. The numeric half is a ROUND, so the verifier's search window
+// -- RoundStart(round) through RoundStart(round)+SlotsPerRound-1 -- has to contain
+// the block the producer named. At 8 slots per round inside a 32-slot epoch an
+// epoch-valued producer misses that window entirely and the node exits with
+// errWSBlockNotFoundInEpoch.
+func TestWeakSubjectivityCheckpointRoundTrip(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	// The weak subjectivity block sits at slot 100: round 12, epoch 3.
+	const blockSlot = primitives.Slot(100)
+	blockRoot := [32]byte{0xab}
+
+	// Producer side: what the GetWeakSubjectivity handler and prysmctl emit.
+	wsd := &beacon.WeakSubjectivityData{
+		BlockRoot: blockRoot,
+		Round:     slots.RoundAt(blockSlot),
+	}
+
+	// Consumer side: the beacon node's flag parser and verifier.
+	cp, err := helpers.ParseWeakSubjectivityInputString(wsd.CheckpointString())
+	require.NoError(t, err)
+	v, err := NewWeakSubjectivityVerifier(cp, nil)
+	require.NoError(t, err)
+
+	endSlot := v.slot + params.BeaconConfig().SlotsPerRound - 1
+	require.Equal(t, true, v.slot <= blockSlot && blockSlot <= endSlot,
+		"verifier window [%d,%d] must contain the weak subjectivity block at slot %d",
+		v.slot, endSlot, blockSlot)
+	require.Equal(t, blockRoot, v.root)
 }
