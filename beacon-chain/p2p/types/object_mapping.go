@@ -265,4 +265,30 @@ func InitializeDataMaps() {
 			return &ethpb.DataColumnSidecarGloas{}, nil
 		},
 	}
+
+	aliasHezeEntries()
+}
+
+// aliasHezeEntries maps the Heze fork version to the object types of the last
+// fork scheduled before it. Heze is a consensus-only fork: it rotates the
+// gossip digest but changes no wire containers, so Heze-versioned objects are
+// the pre-Heze types (Gloas when Gloas is scheduled, Fulu otherwise).
+func aliasHezeEntries() {
+	cfg := params.BeaconConfig()
+	heze := bytesutil.ToBytes4(cfg.HezeForkVersion)
+	shape := cfg.HezeShape().ForkVersion
+	aliasEntry(BlockMap, heze, shape)
+	aliasEntry(MetaDataMap, heze, shape)
+	aliasEntry(AttestationMap, heze, shape)
+	aliasEntry(AggregateAttestationMap, heze, shape)
+	aliasEntry(AttesterSlashingMap, heze, shape)
+	aliasEntry(LightClientOptimisticUpdateMap, heze, shape)
+	aliasEntry(LightClientFinalityUpdateMap, heze, shape)
+	aliasEntry(DataColumnSidecarMap, heze, shape)
+}
+
+func aliasEntry[V any](m map[[4]byte]V, dst, src [4]byte) {
+	if v, ok := m[src]; ok {
+		m[dst] = v
+	}
 }

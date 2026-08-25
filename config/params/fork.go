@@ -49,6 +49,19 @@ func ForkFromConfig(cfg *BeaconChainConfig, epoch primitives.Epoch) *ethpb.Fork 
 	}
 }
 
+// HezeShape returns the schedule entry whose object shapes Heze reuses: the
+// last fork scheduled before it. Heze is a consensus-only fork -- it rotates
+// signing domains and gossip digests but changes no state or block
+// containers -- so Heze-versioned objects are decoded and stored with their
+// pre-Heze shape (Gloas when Gloas is scheduled, Fulu otherwise).
+func (b *BeaconChainConfig) HezeShape() NetworkScheduleEntry {
+	if b.HezeForkEpoch == 0 {
+		// Heze at genesis has no predecessor and is not a supported setup.
+		return b.networkSchedule.forEpoch(0)
+	}
+	return b.networkSchedule.forEpoch(b.HezeForkEpoch - 1)
+}
+
 // ForkDataFromDigest performs the inverse, where it tries to determine the fork version
 // and epoch from a provided digest by looping through our current fork schedule.
 func ForkDataFromDigest(digest [4]byte) ([fieldparams.VersionLength]byte, primitives.Epoch, error) {

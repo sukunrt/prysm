@@ -218,7 +218,7 @@ go_test(
     ],
     eth_network = "decoupled",
     flaky = True,
-    shard_count = 1,
+    shard_count = 2,
     tags = [
         "e2e",
         "exclusive",

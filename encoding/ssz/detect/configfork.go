@@ -90,6 +90,10 @@ func FromForkVersion(cv [fieldparams.VersionLength]byte) (*VersionedUnmarshaler,
 		fork = version.Fulu
 	case bytesutil.ToBytes4(cfg.GloasForkVersion):
 		fork = version.Gloas
+	case bytesutil.ToBytes4(cfg.HezeForkVersion):
+		// Heze is a consensus-only fork: states keep their pre-Heze shape,
+		// so unmarshal them as the last fork scheduled before Heze.
+		fork = cfg.HezeShape().VersionEnum
 	default:
 		return nil, errors.Wrapf(ErrForkNotFound, "version=%#x", cv)
 	}
