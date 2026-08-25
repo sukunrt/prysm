@@ -68,7 +68,47 @@ fi
     | jq '[.[] | {pubkey, withdrawal_credentials, signature,
                   deposit_data_root, amount: .value}]' > "$deposits"
 
-state_json=$(mktemp)
+# Builder registry entries. prysmctl splits 0xB0-credential deposits out of the
+# same file before ProcessPreGenesisDeposits, so a builder is one extra deposit
+# entry, not an extra validator: NUMBER_OF_VALIDATORS stays the validator count.
+# The default index is NUMBER_OF_VALIDATORS, which is what a buildoor instance
+# derives (builder_key_start_index + 0) when the package's builder_count is 0.
+#
+# 6.0.2's eth2-val-tools spells the builder credential type 0x03 and emits
+# 0300... credentials; the prefix is inside the deposit signature, so a wrong
+# one cannot be fixed after the fact. 6.2.0 emits 0xb0. Validator entries stay
+# on the 6.0.2 binary.
+if [ "${BUILDER_COUNT:-0}" -gt 0 ]; then
+    builder_index=${BUILDER_KEY_INDEX:-$NUMBER_OF_VALIDATORS}
+    # NOT $WITHDRAWAL_ADDRESS: the entrypoint rewrites it to the string "null"
+    # whenever WITHDRAWAL_TYPE is 0x00, and eth2-val-tools rejects that.
+    builder_addr=${BUILDER_EXEC_ADDR:-}
+    case "$builder_addr" in
+        ""|null) echo "prysm-genesis-state: BUILDER_EXEC_ADDR is unset" >&2; exit 1 ;;
+    esac
+    builder_deposits=$(mktemp)
+    /usr/local/bin/eth2-val-tools-620 deposit-data \
+        --as-json-list \
+        --source-min "$builder_index" \
+        --source-max "$((builder_index + BUILDER_COUNT))" \
+        --fork-version "$GENESIS_FORK_VERSION" \
+        --withdrawal-credentials-type 0xb0 \
+        --withdrawal-address "$builder_addr" \
+        --amount "${BUILDER_DEPOSIT_GWEI:-1000000000000}" \
+        --validators-mnemonic "$EL_AND_CL_MNEMONIC" \
+        | jq '[.[] | {pubkey, withdrawal_credentials, signature,
+                      deposit_data_root, amount: .value}]' > "$builder_deposits"
+    echo "prysm-genesis-state: minted $(jq length "$builder_deposits") builder deposit(s) at index $builder_index"
+    jq -r '.[] | "prysm-genesis-state: builder pubkey \(.pubkey) creds \(.withdrawal_credentials)"' \
+        "$builder_deposits"
+    jq -s 'add' "$deposits" "$builder_deposits" > "$deposits.tmp"
+    mv "$deposits.tmp" "$deposits"
+fi
+
+# Kept next to the SSZ instead of a mktemp, so the registry is inspectable from
+# outside the container: it lands in /data/metadata and rides the
+# el_cl_genesis_data artifact.
+state_json="${ssz%.ssz}-state.json"
 /usr/local/bin/prysmctl testnet generate-genesis \
     --fork "$fork" \
     --num-validators "$NUMBER_OF_VALIDATORS" \
@@ -79,6 +119,16 @@ state_json=$(mktemp)
     --genesis-time-delay "${GENESIS_DELAY:-0}" \
     --output-ssz "$ssz" \
     --output-json "$state_json"
+
+# A wrong credential prefix produces NUMBER_OF_VALIDATORS+BUILDER_COUNT
+# validators and an empty builder registry with no error anywhere, so this is a
+# build-stopper rather than a log line. .builders is omitempty, so a baseline
+# state reads 0 == 0 and passes.
+n=$(jq '.builders | length' "$state_json")
+[ "$n" = "${BUILDER_COUNT:-0}" ] || {
+    echo "prysm-genesis-state: genesis builders=$n want ${BUILDER_COUNT:-0}" >&2; exit 1
+}
+echo "prysm-genesis-state: genesis builders=$n"
 
 [ -n "$json_out" ] || exit 0
 
