@@ -46,6 +46,7 @@ func MinimalSpecConfig() *BeaconChainConfig {
 	minimalConfig.MinAttestationInclusionDelay = 1
 	minimalConfig.SlotsPerEpoch = 8
 	minimalConfig.SlotsPerRound = 8
+	minimalConfig.FFGTargetOffsetSlots = 1
 	minimalConfig.SqrRootSlotsPerEpoch = 2
 	minimalConfig.MinSeedLookahead = 1
 	minimalConfig.MaxSeedLookahead = 4

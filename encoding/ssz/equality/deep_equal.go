@@ -224,6 +224,8 @@ func deepValueBaseTypeEqual(v1, v2 reflect.Value) bool {
 		switch v1.Type().Name() {
 		case "Epoch":
 			return v1.Interface().(primitives.Epoch) == v2.Interface().(primitives.Epoch)
+		case "Round":
+			return v1.Interface().(primitives.Round) == v2.Interface().(primitives.Round)
 		case "Slot":
 			return v1.Interface().(primitives.Slot) == v2.Interface().(primitives.Slot)
 		case "ValidatorIndex":

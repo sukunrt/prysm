@@ -1,8 +1,15 @@
 package primitives
 
 import (
+	"fmt"
+
+	"github.com/OffchainLabs/methodical-ssz/ssz"
 	"github.com/OffchainLabs/prysm/v7/math"
 )
+
+var _ ssz.HashRoot = (Round)(0)
+var _ ssz.Marshaler = (*Round)(nil)
+var _ ssz.Unmarshaler = (*Round)(nil)
 
 // Round represents a single Simplex round. A round is a whole number of slots
 // and divides an epoch; committees are reshuffled once per round.
@@ -94,4 +101,44 @@ func (r Round) Mod(x uint64) Round {
 func (r Round) SafeMod(x uint64) (Round, error) {
 	res, err := math.Mod64(uint64(r), x)
 	return Round(res), err
+}
+
+// HashTreeRoot --
+func (r Round) HashTreeRoot() ([32]byte, error) {
+	return ssz.HashWithDefaultHasher(r)
+}
+
+// HashTreeRootWith --
+func (r Round) HashTreeRootWith(hh *ssz.Hasher) error {
+	hh.PutUint64(uint64(r))
+	return nil
+}
+
+// UnmarshalSSZ --
+func (r *Round) UnmarshalSSZ(buf []byte) error {
+	if len(buf) != r.SizeSSZ() {
+		return fmt.Errorf("expected buffer of length %d received %d", r.SizeSSZ(), len(buf))
+	}
+	*r = Round(UnmarshalUint64(buf))
+	return nil
+}
+
+// MarshalSSZTo --
+func (r *Round) MarshalSSZTo(dst []byte) ([]byte, error) {
+	marshalled, err := r.MarshalSSZ()
+	if err != nil {
+		return nil, err
+	}
+	return append(dst, marshalled...), nil
+}
+
+// MarshalSSZ --
+func (r *Round) MarshalSSZ() ([]byte, error) {
+	marshalled := MarshalUint64([]byte{}, uint64(*r))
+	return marshalled, nil
+}
+
+// SizeSSZ --
+func (r *Round) SizeSSZ() int {
+	return 8
 }

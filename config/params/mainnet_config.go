@@ -109,6 +109,7 @@ var mainnetBeaconConfig = &BeaconChainConfig{
 	SlotDurationMilliseconds:         12000,
 	SlotsPerEpoch:                    32,
 	SlotsPerRound:                    32,
+	FFGTargetOffsetSlots:             1,
 	SqrRootSlotsPerEpoch:             5,
 	MinSeedLookahead:                 1,
 	MaxSeedLookahead:                 4,

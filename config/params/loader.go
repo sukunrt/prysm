@@ -189,6 +189,7 @@ func ConfigToYaml(cfg *BeaconChainConfig) []byte {
 		fmt.Sprintf("SLOT_DURATION_MS: %d", cfg.SlotDurationMilliseconds),
 		fmt.Sprintf("SLOTS_PER_EPOCH: %d", cfg.SlotsPerEpoch),
 		fmt.Sprintf("SLOTS_PER_ROUND: %d", cfg.SlotsPerRound),
+		fmt.Sprintf("FFG_TARGET_OFFSET_SLOTS: %d", cfg.FFGTargetOffsetSlots),
 		fmt.Sprintf("SECONDS_PER_ETH1_BLOCK: %d", cfg.SecondsPerETH1Block),
 		fmt.Sprintf("ETH1_FOLLOW_DISTANCE: %d", cfg.Eth1FollowDistance),
 		fmt.Sprintf("EPOCHS_PER_ETH1_VOTING_PERIOD: %d", cfg.EpochsPerEth1VotingPeriod),

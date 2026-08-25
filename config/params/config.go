@@ -71,6 +71,7 @@ type BeaconChainConfig struct {
 	SlotDurationMilliseconds         uint64           `yaml:"SLOT_DURATION_MS" spec:"true"`                // SlotDurationMilliseconds is the slot time expressed in milliseconds.
 	SlotsPerEpoch                    primitives.Slot  `yaml:"SLOTS_PER_EPOCH" spec:"true"`                 // SlotsPerEpoch is the number of slots in an epoch.
 	SlotsPerRound                    primitives.Slot  `yaml:"SLOTS_PER_ROUND" spec:"true"`                 // SlotsPerRound is the number of slots in a Simplex round. Committees are reshuffled once per round.
+	FFGTargetOffsetSlots             primitives.Slot  `yaml:"FFG_TARGET_OFFSET_SLOTS" spec:"true"`         // FFGTargetOffsetSlots is how many slots before a round's start the round's FFG target block sits. 1 targets the last block before the round, 0 the round's own first slot.
 	SqrRootSlotsPerEpoch             primitives.Slot  // SqrRootSlotsPerEpoch is a hard coded value where we take the square root of `SlotsPerEpoch` and round down.
 	MinSeedLookahead                 primitives.Epoch `yaml:"MIN_SEED_LOOKAHEAD" spec:"true"`                  // MinSeedLookahead is the duration of randao look ahead seed.
 	MaxSeedLookahead                 primitives.Epoch `yaml:"MAX_SEED_LOOKAHEAD" spec:"true"`                  // MaxSeedLookahead is the duration a validator has to wait for entry and exit in epoch.

@@ -121,6 +121,7 @@ func assertEqualConfigs(t *testing.T, name string, fields []string, expected, ac
 	assert.Equal(t, expected.MinAttestationInclusionDelay, actual.MinAttestationInclusionDelay, "%s: MinAttestationInclusionDelay", name)
 	assert.Equal(t, expected.SlotsPerEpoch, actual.SlotsPerEpoch, "%s: SlotsPerEpoch", name)
 	assert.Equal(t, expected.SlotsPerRound, actual.SlotsPerRound, "%s: SlotsPerRound", name)
+	assert.Equal(t, expected.FFGTargetOffsetSlots, actual.FFGTargetOffsetSlots, "%s: FFGTargetOffsetSlots", name)
 	assert.Equal(t, expected.MinSeedLookahead, actual.MinSeedLookahead, "%s: MinSeedLookahead", name)
 	assert.Equal(t, expected.MaxSeedLookahead, actual.MaxSeedLookahead, "%s: MaxSeedLookahead", name)
 	assert.Equal(t, expected.EpochsPerEth1VotingPeriod, actual.EpochsPerEth1VotingPeriod, "%s: EpochsPerEth1VotingPeriod", name)

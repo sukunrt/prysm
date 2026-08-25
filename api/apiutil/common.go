@@ -9,7 +9,7 @@ import (
 )
 
 // Uint64ToString is a util function that will convert uints to string
-func Uint64ToString[T uint64 | primitives.Slot | primitives.ValidatorIndex | primitives.CommitteeIndex | primitives.Epoch](val T) string {
+func Uint64ToString[T uint64 | primitives.Slot | primitives.ValidatorIndex | primitives.CommitteeIndex | primitives.Epoch | primitives.Round](val T) string {
 	return strconv.FormatUint(uint64(val), 10)
 }
 

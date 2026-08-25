@@ -20,6 +20,21 @@ func BytesToEpochBigEndian(b []byte) primitives.Epoch {
 	return primitives.Epoch(BytesToUint64BigEndian(b))
 }
 
+// RoundToBytesLittleEndian conversion.
+func RoundToBytesLittleEndian(i primitives.Round) []byte {
+	return Uint64ToBytesLittleEndian(uint64(i))
+}
+
+// RoundToBytesBigEndian conversion.
+func RoundToBytesBigEndian(i primitives.Round) []byte {
+	return Uint64ToBytesBigEndian(uint64(i))
+}
+
+// BytesToRoundBigEndian conversion.
+func BytesToRoundBigEndian(b []byte) primitives.Round {
+	return primitives.Round(BytesToUint64BigEndian(b))
+}
+
 // SlotToBytesBigEndian conversion.
 func SlotToBytesBigEndian(i primitives.Slot) []byte {
 	return Uint64ToBytesBigEndian(uint64(i))

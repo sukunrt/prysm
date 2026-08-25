@@ -38,6 +38,12 @@ func EpochsSinceGenesis(genesis time.Time) primitives.Epoch {
 	return primitives.Epoch(CurrentSlot(genesis) / params.BeaconConfig().SlotsPerEpoch)
 }
 
+// RoundsSinceGenesis returns the number of rounds since
+// the provided genesis time.
+func RoundsSinceGenesis(genesis time.Time) primitives.Round {
+	return primitives.Round(CurrentSlot(genesis) / params.BeaconConfig().SlotsPerRound)
+}
+
 // DivideSlotBy divides the SECONDS_PER_SLOT configuration
 // parameter by a specified number. It returns a value of time.Duration
 // in milliseconds, useful for dividing values such as 1 second into
@@ -168,6 +174,35 @@ func RoundStart(round primitives.Round) (primitives.Slot, error) {
 		return slot, errors.Wrap(errOverflow, "round start")
 	}
 	return slot, nil
+}
+
+// RoundEnd returns the last slot number of the given round.
+func RoundEnd(round primitives.Round) (primitives.Slot, error) {
+	if round == math.MaxUint64 {
+		return 0, errors.Wrap(errOverflow, "round end")
+	}
+	slot, err := RoundStart(round + 1)
+	if err != nil {
+		return 0, err
+	}
+	return slot - 1, nil
+}
+
+// FFGTargetSlot returns the slot whose block the given round's FFG votes target:
+// FFG_TARGET_OFFSET_SLOTS slots before the round's first slot, clamped at the anchor.
+//
+// The state side (helpers.FFGTargetRoot) and the forkchoice side (the node.target insert
+// rule) both read this, so the two can never disagree.
+func FFGTargetSlot(round primitives.Round) (primitives.Slot, error) {
+	s, err := RoundStart(round)
+	if err != nil {
+		return 0, err
+	}
+	offset := params.BeaconConfig().FFGTargetOffsetSlots
+	if s < offset {
+		return 0, nil
+	}
+	return s - offset, nil
 }
 
 // IsRoundStart returns true if the given slot number is a round starting slot
