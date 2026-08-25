@@ -1047,6 +1047,19 @@ func Test_getStateVersionAndPayload(t *testing.T) {
 				BlockNumber: 1,
 			},
 		},
+		{
+			// A Heze state carries a payload bid rather than a payload header,
+			// so asking it for the header wraps a nil object. Initial sync runs
+			// this for every block of a batch, so a Heze arm is required.
+			name: "heze state",
+			st: func() state.BeaconState {
+				s, err := util.NewBeaconStateHeze()
+				require.NoError(t, err)
+				return s
+			}(),
+			version: version.Heze,
+			header:  (*enginev1.ExecutionPayloadHeader)(nil),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
