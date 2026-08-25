@@ -180,7 +180,10 @@ EIP-3076 protection db — their test failures join the recorded baseline,
 never investigated); rewards/penalties/inactivity fidelity; every
 pre-Heze fork path; doppelganger detection correctness;
 weak-subjectivity input/output agreement; REST-API fidelity (the e2e
-speaks gRPC). Known defects in these zones are STATED in the detailed
+speaks gRPC); interoperability with non-Prysm validator clients (user,
+2026-08-22: only Prysm-on-Prysm matters — e.g. the eth duties API
+enumerating only an epoch's first round is a known, stated, unfixed
+defect). Known defects in these zones are STATED in the detailed
 plan with their symptom so an executor recognizes them on sight — and
 marked record-only: one line in the notes, no diagnosis, no fix, no
 test.
