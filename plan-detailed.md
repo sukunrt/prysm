@@ -314,6 +314,10 @@ In `time/slots/slottime.go`, beside `ToEpoch:69`, `EpochStart:106`,
 - [ ] Full suite green with **no expectation edits**, because every shipped
       config has `SlotsPerRound == SlotsPerEpoch`.
 - [ ] Spectests green — they run the mainnet and minimal configs.
+      **<added by executor, 2026-08-19>** User decision: do NOT run spectests
+      as routine step verification — too slow. Unit tests plus
+      `bazelisk build //...` suffice per step; spectests get one dedicated
+      fix-up pass at the end. When that pass runs, use the Bazel path below.
       **<added by executor agent>** Run them with **`bazelisk test
       //testing/spectest/...`**, not `make test mainnet-spectest`. The two
       paths read different copies of the spec data:
