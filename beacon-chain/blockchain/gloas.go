@@ -130,12 +130,19 @@ func (s *Service) computePayloadWithdrawals(ctx context.Context, st state.Beacon
 	if !headFull {
 		return st.PayloadExpectedWithdrawals()
 	}
-	// TODO: replace DB lookup with a single-entry cache (blockroot → envelope).
-	envelope, err := s.cfg.BeaconDB.ExecutionPayloadEnvelope(ctx, parentRoot)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not get parent execution payload envelope")
+	// The genesis block has no envelope: its payload is the execution genesis block and its
+	// bid commits to the empty requests root, so genesis reveals no requests. This mirrors
+	// parentExecutionRequests on the proposer side.
+	requests := &enginev1.ExecutionRequestsGloas{}
+	if header := st.LatestBlockHeader(); header == nil || header.Slot > 0 {
+		// TODO: replace DB lookup with a single-entry cache (blockroot → envelope).
+		envelope, err := s.cfg.BeaconDB.ExecutionPayloadEnvelope(ctx, parentRoot)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not get parent execution payload envelope")
+		}
+		requests = envelope.Message.ExecutionRequests
 	}
-	if err := coregloas.ApplyParentExecutionPayload(ctx, st, envelope.Message.ExecutionRequests); err != nil {
+	if err := coregloas.ApplyParentExecutionPayload(ctx, st, requests); err != nil {
 		return nil, errors.Wrap(err, "could not apply parent execution payload")
 	}
 	result, err := st.ExpectedWithdrawalsGloas()

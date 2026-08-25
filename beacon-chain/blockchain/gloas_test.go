@@ -990,3 +990,21 @@ func TestLateBlockTasks_GloasForkBoundary_PreforkBidUsesHeadRoot(t *testing.T) {
 	service.lateBlockTasks(tr.ctx)
 	require.LogsDoNotContain(t, logHook, "could not perform late block tasks")
 }
+
+// Genesis has no payload envelope in the DB. Reading one anyway drops the payload attributes for
+// the slot-1 proposal with "execution payload envelope not found".
+func TestComputePayloadWithdrawals_GenesisParentHasNoEnvelope(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.GloasForkEpoch = 0
+	params.OverrideBeaconConfig(cfg)
+
+	s, _ := setupGloasService(t, &mockExecution.EngineClient{})
+	st, err := util.NewBeaconStateGloas()
+	require.NoError(t, err)
+
+	genesisRoot := bytesutil.ToBytes32([]byte("genesis"))
+	withdrawals, err := s.computePayloadWithdrawals(t.Context(), st, genesisRoot, true)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(withdrawals))
+}
