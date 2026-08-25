@@ -248,6 +248,22 @@ var (
 			"vote. Only read when --decoupled-ffg-vote-at-slot-start is set.",
 		Value: 200 * time.Millisecond,
 	}
+	// DecoupledFFGHeadSource picks which slot's head answer the FFG attestation
+	// names: the one the node returns at vote time, or the one it returned at the
+	// start of the round.
+	DecoupledFFGHeadSource = &cli.StringFlag{
+		Name: "decoupled-ffg-head-source",
+		Usage: "(Decoupled research): Which head the FFG attestation names. " +
+			HeadAtVoteTime + " asks the beacon node at vote time; " + HeadAtRoundStart +
+			" reuses the answer from the round's first vote.",
+		Value: HeadAtVoteTime,
+	}
+)
+
+// Accepted values of --decoupled-ffg-head-source.
+const (
+	HeadAtVoteTime   = "head-at-vote-time"
+	HeadAtRoundStart = "head-at-round-start"
 )
 
 // devModeFlags holds list of flags that are set when development mode is on.
@@ -272,6 +288,7 @@ var ValidatorFlags = append(deprecatedFlags, []cli.Flag{
 	EnableWebFlag,
 	DecoupledFFGVoteAtSlotStart,
 	decoupledFFGVoteJitter,
+	DecoupledFFGHeadSource,
 }...)
 
 // E2EValidatorFlags contains a list of the validator feature flags to be tested in E2E.

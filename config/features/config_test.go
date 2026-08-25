@@ -164,3 +164,24 @@ func Test_parseBlacklistedRoots(t *testing.T) {
 		require.Equal(t, true, BlacklistedBlock(root))
 	}
 }
+
+func TestConfigureValidator_DecoupledFFGHeadSource(t *testing.T) {
+	defer Init(&Flags{})
+	app := cli.App{}
+
+	newCtx := func(value string) *cli.Context {
+		set := flag.NewFlagSet("test", 0)
+		set.String(DecoupledFFGHeadSource.Name, HeadAtVoteTime, "test")
+		require.NoError(t, set.Set(DecoupledFFGHeadSource.Name, value))
+		return cli.NewContext(&app, set, nil)
+	}
+
+	require.NoError(t, ConfigureValidator(newCtx(HeadAtVoteTime)))
+	assert.Equal(t, false, Get().DecoupledFFGHeadAtRoundStart)
+
+	require.NoError(t, ConfigureValidator(newCtx(HeadAtRoundStart)))
+	assert.Equal(t, true, Get().DecoupledFFGHeadAtRoundStart)
+
+	err := ConfigureValidator(newCtx("head-at-lunchtime"))
+	require.ErrorContains(t, "unknown --decoupled-ffg-head-source value", err)
+}

@@ -292,6 +292,10 @@ func (v *ValidatorNode) Start(ctx context.Context) error {
 	if v.config.UseSlotStartFFGVote {
 		args = append(args, fmt.Sprintf("--%s", features.DecoupledFFGVoteAtSlotStart.Name))
 	}
+	if v.config.UseFFGHeadAtRoundStart {
+		args = append(args, fmt.Sprintf("--%s=%s",
+			features.DecoupledFFGHeadSource.Name, features.HeadAtRoundStart))
+	}
 	args = append(args, config.ValidatorFlags...)
 
 	if v.config.UsePrysmShValidator {

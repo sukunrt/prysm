@@ -74,6 +74,14 @@ func WithSlotStartFFGVote() E2EConfigOpt {
 	}
 }
 
+// WithFFGHeadAtRoundStart freezes the FFG vote's head at the round's first vote
+// instead of asking the beacon node again at every vote.
+func WithFFGHeadAtRoundStart() E2EConfigOpt {
+	return func(cfg *E2EConfig) {
+		cfg.UseFFGHeadAtRoundStart = true
+	}
+}
+
 func WithLargeBlobs() E2EConfigOpt {
 	return func(cfg *E2EConfig) {
 		cfg.UseLargeBlobs = true
@@ -119,20 +127,25 @@ type E2EConfig struct {
 	UseValidatorCrossClient bool
 	UseBeaconRestApi        bool
 	UseBuilder              bool
-	// UseSlotStartFFGVote flips the validator client's decoupled slot-start FFG
-	// vote knob on for the run.
-	UseSlotStartFFGVote bool
-	UseLargeBlobs       bool // Use large blob transactions (6 blobs per tx) for BPO testing
-	EpochsToRun         uint64
-	ExitEpoch           primitives.Epoch // Custom epoch for voluntary exit submission (0 means use default)
-	Seed                int64
-	TracingSinkEndpoint string
-	Evaluators          []Evaluator
-	EvalInterceptor     func(*EvaluationContext, uint64, []*grpc.ClientConn) bool
-	BeaconFlags         []string
-	ValidatorFlags      []string
-	PeerIDs             []string
-	ExtraEpochs         uint64
+	UseLargeBlobs           bool // Use large blob transactions (6 blobs per tx) for BPO testing
+	EpochsToRun             uint64
+	ExitEpoch               primitives.Epoch // Custom epoch for voluntary exit submission (0 means use default)
+	Seed                    int64
+	TracingSinkEndpoint     string
+	Evaluators              []Evaluator
+	EvalInterceptor         func(*EvaluationContext, uint64, []*grpc.ClientConn) bool
+	BeaconFlags             []string
+	ValidatorFlags          []string
+	PeerIDs                 []string
+	ExtraEpochs             uint64
+
+	// Decoupled-consensus timing knobs, off by default.
+	//
+	// UseSlotStartFFGVote casts the FFG attestation at the start of the slot.
+	// UseFFGHeadAtRoundStart makes every FFG vote of a round name the head the
+	// beacon node returned for the round's first vote.
+	UseSlotStartFFGVote    bool
+	UseFFGHeadAtRoundStart bool
 }
 
 func GenesisFork() int {

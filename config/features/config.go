@@ -87,8 +87,12 @@ type Flags struct {
 	// DecoupledFFGVoteAtSlotStart casts the FFG attestation at the start of the slot
 	// rather than at the attestation due time, delayed only by a random jitter bounded
 	// by DecoupledFFGVoteJitter.
-	DecoupledFFGVoteAtSlotStart bool
-	DecoupledFFGVoteJitter      time.Duration
+	//
+	// DecoupledFFGHeadAtRoundStart makes every FFG vote of a round name the head the
+	// beacon node returned for the round's first vote, instead of asking again.
+	DecoupledFFGVoteAtSlotStart  bool
+	DecoupledFFGVoteJitter       time.Duration
+	DecoupledFFGHeadAtRoundStart bool
 
 	SaveInvalidBlock bool // SaveInvalidBlock saves invalid block to temp.
 	SaveInvalidBlob  bool // SaveInvalidBlob saves invalid blob to temp.
@@ -395,6 +399,14 @@ func ConfigureValidator(ctx *cli.Context) error {
 		cfg.DecoupledFFGVoteAtSlotStart = true
 	}
 	cfg.DecoupledFFGVoteJitter = ctx.Duration(decoupledFFGVoteJitter.Name)
+	switch source := ctx.String(DecoupledFFGHeadSource.Name); source {
+	case "", HeadAtVoteTime:
+	case HeadAtRoundStart:
+		logEnabled(DecoupledFFGHeadSource)
+		cfg.DecoupledFFGHeadAtRoundStart = true
+	default:
+		return fmt.Errorf("unknown --%s value %q", DecoupledFFGHeadSource.Name, source)
+	}
 
 	cfg.KeystoreImportDebounceInterval = ctx.Duration(dynamicKeyReloadDebounceInterval.Name)
 	Init(cfg)

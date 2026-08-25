@@ -128,6 +128,10 @@ type validator struct {
 
 	cachedAvailableAttestationDataLock sync.RWMutex
 	cachedAvailableAttestationData     *ethpb.AvailableAttestationData
+
+	// roundHead freezes the round's first FFG head answer; read only under
+	// --decoupled-ffg-head-source=head-at-round-start.
+	roundHead roundHeadCache
 }
 
 type validatorStatus struct {
@@ -777,6 +781,14 @@ func (v *validator) getAttestationData(ctx context.Context, slot primitives.Slot
 		})
 	}
 
+	// head-at-round-start: reuse the head the node named for this round's first FFG
+	// vote, so a round's votes agree on the block they name.
+	if features.Get().DecoupledFFGHeadAtRoundStart {
+		if frozen := v.roundHead.frozen(slot); frozen != nil {
+			return frozen, nil
+		}
+	}
+
 	// Post Electra: committee index is always 0 or consistent payload status, safe to cache
 	v.cachedAttestationDataLock.RLock()
 	if v.cachedAttestationData != nil && v.cachedAttestationData.Slot == slot {
@@ -804,6 +816,9 @@ func (v *validator) getAttestationData(ctx context.Context, slot primitives.Slot
 	}
 
 	v.cachedAttestationData = data
+	if features.Get().DecoupledFFGHeadAtRoundStart {
+		v.roundHead.freeze(slot, data)
+	}
 
 	return data, nil
 }
