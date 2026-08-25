@@ -62,7 +62,18 @@ wire stays *real* — real signatures, real gossip, real timing — but its
 SHAPE changes, so the data19/run-02 "availability costs 2.8× the FFG load"
 comparison needs a re-baseline run. That is the one genuine cost.
 
-## S2 — RECOMMEND: mock proposer selection (completes S1)
+## S2 — rejected (2026-08-22): the real rotating proposer stays
+
+**User decision: no mock proposer — RANDAO-shuffled proposer selection is
+kept.** Consequence, stated plainly: the proposer shuffle remains an
+epoch-shuffle consumer on the hot path, so `dependentRootForEpoch`, the
+2-epoch prune horizon (detailed 1.3/1.3a), and `getRecentPreState`'s
+shuffle-compat branch all STAY. S1's deletion payoff narrows to the
+committee/duty/domain/aggregation mass; the fork-choice lifetime machinery
+survives and its plan sections remain binding. The original recommendation
+is kept below for the record.
+
+## S2 (original recommendation, superseded) — mock proposer selection
 
 S1 alone does not free fork choice: `dependentRootForEpoch` — the committee
 anchor — is also consumed by the proposer-shuffle checks (`Store.insert`'s
