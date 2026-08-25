@@ -41,8 +41,6 @@ var placeholderFields = []string{
 	"EPOCHS_PER_SHUFFLING_PHASE",
 	"FIELD_ELEMENTS_PER_CELL",     // Configured as a constant in config/fieldparams/mainnet.go
 	"FIELD_ELEMENTS_PER_EXT_BLOB", // Configured in proto/ssz_proto_library.bzl
-	"HEZE_FORK_EPOCH",
-	"HEZE_FORK_VERSION",
 	"INCLUSION_LIST_COMMITTEE_SIZE",
 	"INCLUSION_LIST_DUE_BPS",
 	"INCLUSION_LIST_SUBMISSION_DEADLINE",

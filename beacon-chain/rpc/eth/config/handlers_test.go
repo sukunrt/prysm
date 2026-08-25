@@ -87,6 +87,8 @@ func TestGetSpec(t *testing.T) {
 	config.FuluForkEpoch = 109
 	config.GloasForkVersion = []byte("GloasForkVersion")
 	config.GloasForkEpoch = 110
+	config.HezeForkVersion = []byte("HezeForkVersion")
+	config.HezeForkEpoch = 115
 	config.MinBuilderWithdrawabilityDelay = 111
 	config.MaxBuildersPerWithdrawalsSweep = 112
 	config.MaxBuilderDepositRequestsPerPayload = 113
@@ -149,6 +151,7 @@ func TestGetSpec(t *testing.T) {
 	config.ContributionDueBPSGloas = primitives.BP(129)
 	config.PayloadAttestationDueBPS = primitives.BP(130)
 	config.PayloadDueBPS = primitives.BP(131)
+	config.AvailableAttestationDueBPSHeze = primitives.BP(132)
 	config.TerminalBlockHash = common.HexToHash("TerminalBlockHash")
 	config.TerminalBlockHashActivationEpoch = 72
 	config.TerminalTotalDifficulty = "73"
@@ -244,7 +247,7 @@ func TestGetSpec(t *testing.T) {
 	require.NoError(t, json.Unmarshal(writer.Body.Bytes(), &resp))
 	data, ok := resp.Data.(map[string]any)
 	require.Equal(t, true, ok)
-	assert.Equal(t, 211, len(data))
+	assert.Equal(t, 214, len(data))
 	for k, v := range data {
 		t.Run(k, func(t *testing.T) {
 			switch k {
@@ -328,6 +331,10 @@ func TestGetSpec(t *testing.T) {
 				assert.Equal(t, "0x"+hex.EncodeToString([]byte("GloasForkVersion")), v)
 			case "GLOAS_FORK_EPOCH":
 				assert.Equal(t, "110", v)
+			case "HEZE_FORK_VERSION":
+				assert.Equal(t, "0x"+hex.EncodeToString([]byte("HezeForkVersion")), v)
+			case "HEZE_FORK_EPOCH":
+				assert.Equal(t, "115", v)
 			case "MIN_BUILDER_WITHDRAWABILITY_DELAY":
 				assert.Equal(t, "111", v)
 			case "MAX_BUILDERS_PER_WITHDRAWALS_SWEEP":
@@ -540,6 +547,8 @@ func TestGetSpec(t *testing.T) {
 				assert.Equal(t, "130", v)
 			case "PAYLOAD_DUE_BPS":
 				assert.Equal(t, "131", v)
+			case "AVAILABLE_ATTESTATION_DUE_BPS_HEZE":
+				assert.Equal(t, "132", v)
 			case "MAX_PER_EPOCH_ACTIVATION_CHURN_LIMIT":
 				assert.Equal(t, "8", v)
 			case "MAX_REQUEST_LIGHT_CLIENT_UPDATES":
