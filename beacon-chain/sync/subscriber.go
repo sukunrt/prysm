@@ -438,19 +438,22 @@ func (s *Service) subscribe(topic string, validator wrappedVal, handle subHandle
 //
 // Gossipsub hands a message to a subscription with a non-blocking send and
 // drops it when the buffer is full, reporting nothing but a RawTracer event.
-// The default buffer is 32 messages, and the Goldfish head vote topic delivers
-// a whole slot's votes in one burst: every validator publishes as soon as the
-// block reaches its own node, so the burst is one message per seat holder
-// within a few milliseconds. A vote is gossiped once, during its own slot, so
-// one dropped here is simply missing from that slot's head vote - it is not
-// late, it never arrives. Hold several slots of the topic's whole traffic.
+// The default buffer is 32 messages, and both vote topics deliver a whole
+// slot's votes in one burst: every validator publishes as soon as the block
+// reaches its own node, so the burst is one message per seat holder within a
+// few milliseconds. A vote is gossiped once, during its own slot, so one
+// dropped here is simply missing from that slot's vote - it is not late, it
+// never arrives. Hold several slots of the topic's whole traffic.
 func subscriptionOpts(topic string) []pubsub.SubOpt {
-	if !strings.Contains(topic, p2p.GossipAvailableAttestationMessage) {
-		return nil
+	if strings.Contains(topic, p2p.GossipAvailableAttestationMessage) {
+		return []pubsub.SubOpt{
+			pubsub.WithBufferSize(4 * decoupled.AvailableAttestationCommitteeSize),
+		}
 	}
-	return []pubsub.SubOpt{
-		pubsub.WithBufferSize(4 * decoupled.AvailableAttestationCommitteeSize),
+	if strings.Contains(topic, p2p.GossipAttestationMessage) {
+		return []pubsub.SubOpt{pubsub.WithBufferSize(5000)}
 	}
+	return nil
 }
 
 func (s *Service) subscribeWithBase(topic string, validator wrappedVal, handle subHandler) *pubsub.Subscription {
