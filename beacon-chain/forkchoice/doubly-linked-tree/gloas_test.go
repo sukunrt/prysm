@@ -2353,3 +2353,22 @@ func TestGenesisParentHash_EmptyGenesisStillNamesExecutionGenesis(t *testing.T) 
 	require.NoError(t, err)
 	require.Equal(t, uint64(30000000), gasLimit)
 }
+
+// The two walks meet at genesis, reached as its full node from the child and as its empty node
+// from the genesis input. Comparing payload nodes there never matches, so the slot-2 reorg back to
+// genesis reports "unknown common ancestor" and a zero common-ancestor root.
+func TestCommonAncestor_ChildOfFullGenesis(t *testing.T) {
+	ctx := t.Context()
+	f, genesisRoot, genesisHash := setupGloasGenesis(t)
+
+	childRoot := indexToHash(2)
+	st, child, err := prepareGloasForkchoiceState(ctx, 2, childRoot, genesisRoot, indexToHash(101),
+		genesisHash, 0, 0)
+	require.NoError(t, err)
+	require.NoError(t, f.InsertNode(ctx, st, child))
+
+	root, slot, err := f.CommonAncestor(ctx, childRoot, genesisRoot)
+	require.NoError(t, err)
+	require.Equal(t, genesisRoot, root)
+	require.Equal(t, primitives.Slot(0), slot)
+}

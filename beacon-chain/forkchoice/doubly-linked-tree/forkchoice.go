@@ -568,7 +568,11 @@ func (f *ForkChoice) CommonAncestor(ctx context.Context, r1 [32]byte, r2 [32]byt
 				return [32]byte{}, 0, forkchoice.ErrUnknownCommonAncestor
 			}
 		}
-		if en1 == en2 {
+		// Compare the consensus nodes, not the payload nodes: both walks start from empty
+		// nodes but climb through whichever payload node each child hangs off, so a shared
+		// ancestor is reached as its full node on one side and as its empty node on the
+		// other. Genesis is the first case, since every block builds on its full node.
+		if en1.node == en2.node {
 			return en1.node.root, en1.node.slot, nil
 		}
 	}
