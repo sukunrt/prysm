@@ -258,6 +258,21 @@ var (
 			" reuses the answer from the round's first vote.",
 		Value: HeadAtVoteTime,
 	}
+	// DecoupledLateBlockPublishBPS holds block publication back to the given
+	// fraction of the slot, so that gate-caused head retreats actually occur in a
+	// measurement run. Zero, the default, publishes as soon as the block is built.
+	DecoupledLateBlockPublishBPS = &cli.Uint64Flag{
+		Name: "decoupled-late-block-publish-bps",
+		Usage: "(Decoupled research): Delays block publication until this many basis " +
+			"points into the slot. 0 publishes as soon as the block is built.",
+	}
+	// DecoupledLateBlockPublishEveryNth picks the proposers that publish late.
+	DecoupledLateBlockPublishEveryNth = &cli.Uint64Flag{
+		Name: "decoupled-late-block-publish-every-nth",
+		Usage: "(Decoupled research): Only proposers whose validator index is a multiple " +
+			"of this number publish late. Only read when the late publish delay is set.",
+		Value: 1,
+	}
 )
 
 // Accepted values of --decoupled-ffg-head-source.
@@ -289,6 +304,8 @@ var ValidatorFlags = append(deprecatedFlags, []cli.Flag{
 	DecoupledFFGVoteAtSlotStart,
 	decoupledFFGVoteJitter,
 	DecoupledFFGHeadSource,
+	DecoupledLateBlockPublishBPS,
+	DecoupledLateBlockPublishEveryNth,
 }...)
 
 // E2EValidatorFlags contains a list of the validator feature flags to be tested in E2E.

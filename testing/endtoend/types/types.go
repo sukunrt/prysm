@@ -59,9 +59,6 @@ func WithBuilder() E2EConfigOpt {
 	}
 }
 
-// WithLargeBlobs configures the transaction generator to use large blob
-// transactions (6 blobs per tx) for testing BPO limits. Without this option,
-// small blob transactions (1 blob per tx) are used by default.
 // WithSlotStartFFGVote casts the FFG attestation at the start of the slot plus a
 // bounded jitter instead of at the attestation due time.
 //
@@ -82,6 +79,18 @@ func WithFFGHeadAtRoundStart() E2EConfigOpt {
 	}
 }
 
+// WithLatePublishers delays block publication to bps basis points into the slot
+// for every everyNth proposer index, so that gate-caused head retreats occur.
+func WithLatePublishers(bps, everyNth uint64) E2EConfigOpt {
+	return func(cfg *E2EConfig) {
+		cfg.LateBlockPublishBPS = bps
+		cfg.LateBlockPublishEveryNth = everyNth
+	}
+}
+
+// WithLargeBlobs configures the transaction generator to use large blob
+// transactions (6 blobs per tx) for testing BPO limits. Without this option,
+// small blob transactions (1 blob per tx) are used by default.
 func WithLargeBlobs() E2EConfigOpt {
 	return func(cfg *E2EConfig) {
 		cfg.UseLargeBlobs = true
@@ -128,24 +137,25 @@ type E2EConfig struct {
 	UseBeaconRestApi        bool
 	UseBuilder              bool
 	UseLargeBlobs           bool // Use large blob transactions (6 blobs per tx) for BPO testing
-	EpochsToRun             uint64
-	ExitEpoch               primitives.Epoch // Custom epoch for voluntary exit submission (0 means use default)
-	Seed                    int64
-	TracingSinkEndpoint     string
-	Evaluators              []Evaluator
-	EvalInterceptor         func(*EvaluationContext, uint64, []*grpc.ClientConn) bool
-	BeaconFlags             []string
-	ValidatorFlags          []string
-	PeerIDs                 []string
-	ExtraEpochs             uint64
-
-	// Decoupled-consensus timing knobs, off by default.
-	//
-	// UseSlotStartFFGVote casts the FFG attestation at the start of the slot.
-	// UseFFGHeadAtRoundStart makes every FFG vote of a round name the head the
-	// beacon node returned for the round's first vote.
+	// Decoupled-consensus timing knobs, off by default. UseSlotStartFFGVote casts
+	// the FFG attestation at the start of the slot; UseFFGHeadAtRoundStart makes
+	// every FFG vote of a round name the head the node returned for its first vote.
 	UseSlotStartFFGVote    bool
 	UseFFGHeadAtRoundStart bool
+	// LateBlockPublishBPS holds block publication back to that fraction of the
+	// slot, for the proposers picked by LateBlockPublishEveryNth.
+	LateBlockPublishBPS      uint64
+	LateBlockPublishEveryNth uint64
+	EpochsToRun              uint64
+	ExitEpoch                primitives.Epoch // Custom epoch for voluntary exit submission (0 means use default)
+	Seed                     int64
+	TracingSinkEndpoint      string
+	Evaluators               []Evaluator
+	EvalInterceptor          func(*EvaluationContext, uint64, []*grpc.ClientConn) bool
+	BeaconFlags              []string
+	ValidatorFlags           []string
+	PeerIDs                  []string
+	ExtraEpochs              uint64
 }
 
 func GenesisFork() int {

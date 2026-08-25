@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/OffchainLabs/prysm/v7/config/features"
+	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
@@ -143,4 +145,79 @@ func TestWaitSlotStartJitterCancelled(t *testing.T) {
 	start := time.Now()
 	v.waitSlotStartJitter(ctx, 1)
 	assert.Equal(t, true, time.Since(start) < time.Second, "cancellation ignored")
+}
+
+func TestLatePublishDelay(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 12000
+	params.OverrideBeaconConfig(cfg)
+
+	tests := []struct {
+		name     string
+		idx      primitives.ValidatorIndex
+		bps      uint64
+		everyNth uint64
+		want     time.Duration
+	}{
+		{name: "knob off", idx: 3, bps: 0, everyNth: 1, want: 0},
+		{name: "every proposer", idx: 3, bps: 5000, everyNth: 1, want: 6 * time.Second},
+		{name: "zero nth reads as every proposer", idx: 7, bps: 2500, everyNth: 0,
+			want: 3 * time.Second},
+		{name: "selected proposer", idx: 6, bps: 5000, everyNth: 3, want: 6 * time.Second},
+		{name: "unselected proposer", idx: 7, bps: 5000, everyNth: 3, want: 0},
+		{name: "index zero is selected", idx: 0, bps: 5000, everyNth: 4, want: 6 * time.Second},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, latePublishDelay(tt.idx, tt.bps, tt.everyNth))
+		})
+	}
+}
+
+func TestWaitLatePublish(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 400
+	params.OverrideBeaconConfig(cfg)
+
+	pubKey := [fieldparams.BLSPubkeyLength]byte{1}
+	newValidator := func(idx primitives.ValidatorIndex, genesis time.Time) *validator {
+		v := &validator{genesisTime: genesis, duties: &dutyStore{}}
+		v.duties.write(dutyStoreData{
+			initialized: true,
+			currentDuties: map[pubkey]*ethpb.ValidatorDuty{
+				pubKey: {ValidatorIndex: idx, PublicKey: pubKey[:]},
+			},
+		})
+		return v
+	}
+
+	// Knob off: no wait at all.
+	reset := features.InitWithReset(&features.Flags{})
+	v := newValidator(0, time.Now())
+	start := time.Now()
+	v.waitLatePublish(t.Context(), 1, pubKey)
+	reset()
+	assert.Equal(t, true, time.Since(start) < 100*time.Millisecond, "waited with the knob off")
+
+	// Knob on, proposer selected: waits into the slot.
+	reset = features.InitWithReset(&features.Flags{
+		DecoupledLateBlockPublishBPS:      5000,
+		DecoupledLateBlockPublishEveryNth: 2,
+	})
+	defer reset()
+	genesis := time.Now()
+	v = newValidator(4, genesis)
+	start = time.Now()
+	v.waitLatePublish(t.Context(), 1, pubKey)
+	waited := time.Since(start)
+	slotDuration := params.BeaconConfig().SlotDuration()
+	assert.Equal(t, true, waited >= slotDuration, "published before the delay elapsed")
+
+	// Knob on, proposer not selected: no wait.
+	v = newValidator(5, time.Now())
+	start = time.Now()
+	v.waitLatePublish(t.Context(), 1, pubKey)
+	assert.Equal(t, true, time.Since(start) < 100*time.Millisecond, "delayed an unselected proposer")
 }

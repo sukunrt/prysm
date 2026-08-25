@@ -296,6 +296,13 @@ func (v *ValidatorNode) Start(ctx context.Context) error {
 		args = append(args, fmt.Sprintf("--%s=%s",
 			features.DecoupledFFGHeadSource.Name, features.HeadAtRoundStart))
 	}
+	if v.config.LateBlockPublishBPS > 0 {
+		args = append(args,
+			fmt.Sprintf("--%s=%d",
+				features.DecoupledLateBlockPublishBPS.Name, v.config.LateBlockPublishBPS),
+			fmt.Sprintf("--%s=%d",
+				features.DecoupledLateBlockPublishEveryNth.Name, v.config.LateBlockPublishEveryNth))
+	}
 	args = append(args, config.ValidatorFlags...)
 
 	if v.config.UsePrysmShValidator {

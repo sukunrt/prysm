@@ -2,6 +2,7 @@ package features
 
 import (
 	"flag"
+	"strconv"
 	"testing"
 
 	validatorflags "github.com/OffchainLabs/prysm/v7/cmd/validator/flags"
@@ -184,4 +185,22 @@ func TestConfigureValidator_DecoupledFFGHeadSource(t *testing.T) {
 
 	err := ConfigureValidator(newCtx("head-at-lunchtime"))
 	require.ErrorContains(t, "unknown --decoupled-ffg-head-source value", err)
+}
+
+func TestConfigureValidator_DecoupledLateBlockPublishBPS(t *testing.T) {
+	defer Init(&Flags{})
+	app := cli.App{}
+
+	newCtx := func(bps uint64) *cli.Context {
+		set := flag.NewFlagSet("test", 0)
+		set.Uint64(DecoupledLateBlockPublishBPS.Name, 0, "test")
+		require.NoError(t, set.Set(DecoupledLateBlockPublishBPS.Name, strconv.FormatUint(bps, 10)))
+		return cli.NewContext(&app, set, nil)
+	}
+
+	require.NoError(t, ConfigureValidator(newCtx(2500)))
+	assert.Equal(t, uint64(2500), Get().DecoupledLateBlockPublishBPS)
+
+	err := ConfigureValidator(newCtx(10000))
+	require.ErrorContains(t, "--decoupled-late-block-publish-bps must be below", err)
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/OffchainLabs/prysm/v7/config/features"
+	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/rand"
@@ -13,6 +14,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	prysmTime "github.com/OffchainLabs/prysm/v7/time"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
+	"github.com/sirupsen/logrus"
 )
 
 // sinceSlotStartTime returns the elapsed time between the start of the provided slot and now.
@@ -83,6 +85,75 @@ func (v *validator) waitSlotStartJitter(ctx context.Context, slot primitives.Slo
 		return
 	}
 	wait := prysmTime.Until(startTime.Add(ffgVoteJitter(features.Get().DecoupledFFGVoteJitter)))
+	if wait <= 0 {
+		return
+	}
+	t := time.NewTimer(wait)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		tracing.AnnotateError(span, ctx.Err())
+	case <-t.C:
+	}
+}
+
+// latePublishDelay returns how far into the slot the given proposer holds its block
+// back. A zero bps disables the knob; everyNth selects the subset of proposer
+// indices that publish late, 1 (the default) meaning every proposer.
+func latePublishDelay(idx primitives.ValidatorIndex, bps, everyNth uint64) time.Duration {
+	if bps == 0 {
+		return 0
+	}
+	if everyNth == 0 {
+		everyNth = 1
+	}
+	if uint64(idx)%everyNth != 0 {
+		return 0
+	}
+
+	return params.BeaconConfig().SlotComponentDuration(primitives.BP(bps))
+}
+
+// waitLatePublish holds a block back until the configured fraction of the slot has
+// passed, for the configured subset of proposers, and logs the fact so that a
+// measurement run can tell which slots were published late. It is a no-op unless
+// --decoupled-late-block-publish-bps is set.
+func (v *validator) waitLatePublish(
+	ctx context.Context,
+	slot primitives.Slot,
+	pubKey [fieldparams.BLSPubkeyLength]byte,
+) {
+	cfg := features.Get()
+	if cfg.DecoupledLateBlockPublishBPS == 0 {
+		return
+	}
+	ctx, span := trace.StartSpan(ctx, "validator.waitLatePublish")
+	defer span.End()
+
+	duty, err := v.duty(pubKey)
+	if err != nil {
+		log.WithError(err).WithField("slot", slot).
+			Debug("No duty for the proposer, publishing the block on time")
+		return
+	}
+	delay := latePublishDelay(
+		duty.ValidatorIndex, cfg.DecoupledLateBlockPublishBPS, cfg.DecoupledLateBlockPublishEveryNth)
+	if delay == 0 {
+		return
+	}
+	startTime, err := slots.StartTime(v.genesisTime, slot)
+	if err != nil {
+		log.WithError(err).WithField("slot", slot).
+			Error("Slot overflows, publishing the block on time")
+		return
+	}
+	wait := prysmTime.Until(startTime.Add(delay))
+	log.WithFields(logrus.Fields{
+		"slot":          slot,
+		"proposerIndex": duty.ValidatorIndex,
+		"delay":         delay,
+		"remainingWait": wait,
+	}).Warn("Publishing block late")
 	if wait <= 0 {
 		return
 	}

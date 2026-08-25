@@ -82,16 +82,14 @@ type Flags struct {
 	// BlobSaveFsync requires blob saving to block on fsync to ensure blobs are durably persisted before passing DA.
 	BlobSaveFsync bool
 
-	// Decoupled-consensus research knobs (validator client only).
+	// Decoupled-consensus research knobs, validator client only. The value knobs
+	// that go with them sit with the other durations below.
 	//
 	// DecoupledFFGVoteAtSlotStart casts the FFG attestation at the start of the slot
-	// rather than at the attestation due time, delayed only by a random jitter bounded
-	// by DecoupledFFGVoteJitter.
-	//
+	// rather than at the attestation due time, delayed only by a random jitter.
 	// DecoupledFFGHeadAtRoundStart makes every FFG vote of a round name the head the
 	// beacon node returned for the round's first vote, instead of asking again.
 	DecoupledFFGVoteAtSlotStart  bool
-	DecoupledFFGVoteJitter       time.Duration
 	DecoupledFFGHeadAtRoundStart bool
 
 	SaveInvalidBlock bool // SaveInvalidBlock saves invalid block to temp.
@@ -102,6 +100,13 @@ type Flags struct {
 	// KeystoreImportDebounceInterval specifies the time duration the validator waits to reload new keys if they have
 	// changed on disk. This feature is for advanced use cases only.
 	KeystoreImportDebounceInterval time.Duration
+
+	// DecoupledFFGVoteJitter bounds the random delay added to a slot-start FFG vote.
+	// DecoupledLateBlockPublishBPS holds block publication back to that fraction of
+	// the slot for the proposers picked by DecoupledLateBlockPublishEveryNth.
+	DecoupledFFGVoteJitter            time.Duration
+	DecoupledLateBlockPublishBPS      uint64
+	DecoupledLateBlockPublishEveryNth uint64
 
 	// AggregateIntervals specifies the time durations at which we aggregate attestations preparing for forkchoice.
 	AggregateIntervals [3]time.Duration
@@ -406,6 +411,12 @@ func ConfigureValidator(ctx *cli.Context) error {
 		cfg.DecoupledFFGHeadAtRoundStart = true
 	default:
 		return fmt.Errorf("unknown --%s value %q", DecoupledFFGHeadSource.Name, source)
+	}
+
+	cfg.DecoupledLateBlockPublishBPS = ctx.Uint64(DecoupledLateBlockPublishBPS.Name)
+	cfg.DecoupledLateBlockPublishEveryNth = ctx.Uint64(DecoupledLateBlockPublishEveryNth.Name)
+	if cfg.DecoupledLateBlockPublishBPS >= uint64(params.BasisPoints) {
+		return fmt.Errorf("--%s must be below %d", DecoupledLateBlockPublishBPS.Name, params.BasisPoints)
 	}
 
 	cfg.KeystoreImportDebounceInterval = ctx.Duration(dynamicKeyReloadDebounceInterval.Name)
