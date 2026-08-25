@@ -306,15 +306,30 @@ func (vs *Server) applyParentExecutionPayloadToHead(ctx context.Context, head st
 	if slots.ToEpoch(parentSlot) < params.BeaconConfig().GloasForkEpoch {
 		return nil
 	}
-	// TODO: replace DB lookup with a single-entry cache (blockroot → envelope).
-	envelope, err := vs.BeaconDB.ExecutionPayloadEnvelope(ctx, parentRoot)
+	reqs, err := vs.parentExecutionRequests(ctx, parentRoot, parentSlot)
 	if err != nil {
-		return errors.Wrap(err, "could not get parent execution payload envelope")
+		return err
 	}
-	if err := coregloas.ApplyParentExecutionPayload(ctx, head, envelope.Message.ExecutionRequests); err != nil {
+	if err := coregloas.ApplyParentExecutionPayload(ctx, head, reqs); err != nil {
 		return errors.Wrap(err, "could not apply parent execution payload")
 	}
 	return nil
+}
+
+// parentExecutionRequests returns the execution requests that the parent block's payload
+// revealed. The genesis block has no envelope: its payload is the execution genesis block and
+// its bid commits to the empty requests root, so genesis reveals no requests.
+func (vs *Server) parentExecutionRequests(ctx context.Context, parentRoot [32]byte,
+	parentSlot primitives.Slot) (*enginev1.ExecutionRequestsGloas, error) {
+	if parentSlot == 0 {
+		return &enginev1.ExecutionRequestsGloas{}, nil
+	}
+	// TODO: replace DB lookup with a single-entry cache (blockroot → envelope).
+	envelope, err := vs.BeaconDB.ExecutionPayloadEnvelope(ctx, parentRoot)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get parent execution payload envelope")
+	}
+	return envelope.Message.ExecutionRequests, nil
 }
 
 // getParentBlockHash retrieves the parent block hash of the block at the given slot.

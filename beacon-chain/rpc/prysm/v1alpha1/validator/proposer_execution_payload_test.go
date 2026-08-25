@@ -279,6 +279,29 @@ func TestServer_applyParentExecutionPayloadToHead_PreGloas(t *testing.T) {
 	require.NoError(t, vs.applyParentExecutionPayloadToHead(context.Background(), st, [32]byte{}))
 }
 
+// The genesis block reveals its payload with the genesis state itself, so no envelope for it is
+// ever stored. Block production at slot 1 must still treat the parent as full.
+func TestServer_applyParentExecutionPayloadToHead_GenesisParent(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.GloasForkEpoch = 0
+	params.OverrideBeaconConfig(cfg)
+
+	st, err := util.NewBeaconStateGloas()
+	require.NoError(t, err)
+
+	chain := &chainMock.ChainService{BlockSlot: 0}
+	vs := &Server{ForkchoiceFetcher: chain, BeaconDB: dbTest.SetupDB(t)}
+	require.NoError(t, vs.applyParentExecutionPayloadToHead(context.Background(), st, [32]byte{}))
+
+	sBlk, err := blocks.NewSignedBeaconBlock(util.HydrateSignedBeaconBlockGloas(&ethpb.SignedBeaconBlockGloas{}))
+	require.NoError(t, err)
+	require.NoError(t, vs.setParentExecutionRequests(context.Background(), sBlk, st, true))
+	reqs, err := sBlk.Block().Body().ParentExecutionRequests()
+	require.NoError(t, err)
+	require.Equal(t, 0, len(reqs.Deposits)+len(reqs.Withdrawals)+len(reqs.Consolidations))
+}
+
 func TestServer_getExecutionPayloadContextTimeout(t *testing.T) {
 	beaconDB := dbTest.SetupDB(t)
 	nonTransitionSt, _ := util.DeterministicGenesisStateBellatrix(t, 1)

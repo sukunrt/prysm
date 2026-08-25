@@ -284,10 +284,9 @@ func (vs *Server) setParentExecutionRequests(ctx context.Context, sBlk interface
 		return sBlk.SetParentExecutionRequests(&enginev1.ExecutionRequestsGloas{})
 	}
 
-	// TODO: replace DB lookup with a single-entry cache (blockroot → envelope).
-	signedEnvelope, err := vs.BeaconDB.ExecutionPayloadEnvelope(ctx, parentRoot)
+	reqs, err := vs.parentExecutionRequests(ctx, parentRoot, parentSlot)
 	if err != nil {
-		return errors.Wrap(err, "could not get parent execution payload envelope")
+		return err
 	}
-	return sBlk.SetParentExecutionRequests(signedEnvelope.Message.ExecutionRequests)
+	return sBlk.SetParentExecutionRequests(reqs)
 }
