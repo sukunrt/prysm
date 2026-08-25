@@ -278,13 +278,21 @@ def main():
                                    for m in GOLDFISH) + " |")
     print("|---" * (len(GOLDFISH) + 1) + "|")
     seat_all = []
+    short = {}
     for name, ((_, sc0, _), (_, sc1, _)) in windows.items():
         cells = []
         for m in GOLDFISH:
             if m == "goldfish_seat_fraction":
-                vals = [sc.get(m) for _, sc, _ in per_node[name]
-                        if sc.get(m) is not None]
-                vals = [v for v in vals if v > 0]
+                # Window only, like every other number here: the gauge reads a
+                # fraction of a committee at genesis, while the validator
+                # clients are still loading their duties, and a warm-up sample
+                # in the min/mean says nothing about the steady state.
+                vals = [(int(sc.get("beacon_clock_time_slot", 0)), sc[m])
+                        for _, sc, _ in per_node[name]
+                        if sc.get(m) is not None and sc[m] > 0
+                        and sc.get("beacon_clock_time_slot", 0) >= skip]
+                short[name] = [(s, v) for s, v in vals if v < 1.0]
+                vals = [v for _, v in vals]
                 seat_all += vals
                 if vals:
                     cells.append(f"{min(vals):.2f}/{sum(vals) / len(vals):.2f}"
@@ -295,10 +303,17 @@ def main():
                 cells.append(f"{sc1.get(m, 0) - sc0.get(m, 0):.0f}")
         print(f"| {name} | " + " | ".join(cells) + " |")
     if seat_all:
-        print(f"\nseat_fraction over all nodes and samples: "
+        below = sum(len(v) for v in short.values())
+        print(f"\nseat_fraction over all nodes and window samples: "
               f"min {min(seat_all):.2f}, mean "
               f"{sum(seat_all) / len(seat_all):.3f}, max {max(seat_all):.2f}, "
-              f"samples {len(seat_all)}")
+              f"samples {len(seat_all)}, below 1.0 {below}")
+    # Every slot that heard from less than the whole committee, so a shortfall
+    # can be read as warm-up, as a few bad slots, or as a steady drip.
+    print("\n### Slots below a full seat fraction\n")
+    for name, hits in short.items():
+        cells = " ".join(f"{s}:{v:.3f}" for s, v in hits) or "-"
+        print(f"- {name}: {cells}")
 
     print("\n## Slots at which a counter moved (from the 1-per-slot samples)\n")
     print("| node | gate_retreat at slots | reorgs at slots | gate_stop at"
