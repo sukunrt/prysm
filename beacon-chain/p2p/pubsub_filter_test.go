@@ -62,6 +62,14 @@ func TestService_CanSubscribe(t *testing.T) {
 			want:  false,
 		},
 		{
+			// The filter iterates the static gossipTopicMappings map; the
+			// available attestation topic must be in it or every subscribe
+			// AND publish on the topic fails once Heze activates.
+			name:  "available attestation topic on current fork",
+			topic: fmt.Sprintf(AvailableAttestationTopicFormat, digest) + validProtocolSuffix,
+			want:  true,
+		},
+		{
 			name:  "bad prefix",
 			topic: fmt.Sprintf("/eth3/%x/foobar", digest) + validProtocolSuffix,
 			want:  false,
