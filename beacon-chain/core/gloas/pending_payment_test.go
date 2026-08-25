@@ -28,9 +28,52 @@ func TestBuilderQuorumThreshold(t *testing.T) {
 	require.NoError(t, err)
 
 	total := uint64(len(validators)) * cfg.MaxEffectiveBalance
-	perSlot := total / uint64(cfg.SlotsPerEpoch)
+	perSlot := total / uint64(cfg.SlotsPerRound)
 	want := (perSlot * cfg.BuilderPaymentThresholdNumerator) / cfg.BuilderPaymentThresholdDenominator
 	require.Equal(t, primitives.Gwei(want), got)
+
+	// Identity config: the round is the epoch, so the epoch divisor gives the same answer.
+	require.Equal(t, cfg.SlotsPerEpoch, cfg.SlotsPerRound)
+}
+
+// Under a round shorter than an epoch the threshold must follow the round: a slot's
+// committees hold activeBalance/SlotsPerRound, so an epoch divisor would put the
+// threshold out of reach and no builder payment would ever settle.
+func TestBuilderQuorumThreshold_ShortRound(t *testing.T) {
+	helpers.ClearCache()
+
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	// 256 validators, one round of 8 slots, so 32 validators attest per slot.
+	validators := make([]*ethpb.Validator, 256)
+	for i := range validators {
+		validators[i] = &ethpb.Validator{
+			EffectiveBalance: cfg.MaxEffectiveBalance,
+			ActivationEpoch:  0,
+			ExitEpoch:        1,
+		}
+	}
+	st, err := state_native.InitializeFromProtoUnsafeGloas(&ethpb.BeaconStateGloas{Validators: validators})
+	require.NoError(t, err)
+
+	got, err := builderQuorumThreshold(t.Context(), st)
+	require.NoError(t, err)
+
+	total := uint64(len(validators)) * cfg.MaxEffectiveBalance
+	oneSlotShare := total / uint64(cfg.SlotsPerRound)
+	want := (oneSlotShare * cfg.BuilderPaymentThresholdNumerator) / cfg.BuilderPaymentThresholdDenominator
+	require.Equal(t, primitives.Gwei(want), got)
+
+	// The threshold is reachable: a slot's whole attesting balance clears it.
+	require.Equal(t, true, got <= primitives.Gwei(oneSlotShare))
+
+	// The epoch divisor would have asked for four times a slot's share.
+	epochDivisor := total / uint64(cfg.SlotsPerEpoch)
+	require.Equal(t, oneSlotShare, epochDivisor*4)
 }
 
 func TestProcessBuilderPendingPayments(t *testing.T) {

@@ -70,6 +70,12 @@ func ProcessBuilderPendingPayments(ctx context.Context, state state.BeaconState)
 //	    quorum = per_slot_balance * BUILDER_PAYMENT_THRESHOLD_NUMERATOR
 //	    return Uint64(quorum // BUILDER_PAYMENT_THRESHOLD_DENOMINATOR)
 //	</spec>
+//
+// Deviation from the pseudocode above: the divisor is SLOTS_PER_ROUND, not SLOTS_PER_EPOCH.
+// It stands for the balance a single slot's committees hold, and it is a round's slots --
+// not an epoch's -- that partition the active set. The two values are equal on every shipped
+// config, so this only differs under a round shorter than an epoch, where the epoch divisor
+// would make the threshold unreachable and no builder payment would ever settle.
 func builderQuorumThreshold(ctx context.Context, state state.ReadOnlyBeaconState) (primitives.Gwei, error) {
 	activeBalance, err := helpers.TotalActiveBalance(ctx, state)
 	if err != nil {
@@ -77,11 +83,11 @@ func builderQuorumThreshold(ctx context.Context, state state.ReadOnlyBeaconState
 	}
 
 	cfg := params.BeaconConfig()
-	slotsPerEpoch := uint64(cfg.SlotsPerEpoch)
+	slotsPerRound := uint64(cfg.SlotsPerRound)
 	numerator := cfg.BuilderPaymentThresholdNumerator
 	denominator := cfg.BuilderPaymentThresholdDenominator
 
-	activeBalancePerSlot := activeBalance / slotsPerEpoch
+	activeBalancePerSlot := activeBalance / slotsPerRound
 	quorum := (activeBalancePerSlot * numerator) / denominator
 	return primitives.Gwei(quorum), nil
 }
