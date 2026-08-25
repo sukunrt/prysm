@@ -56,16 +56,10 @@ func (s *Service) processPendingAttsForBlock(ctx context.Context, bRoot [32]byte
 	// be deleted from the queue if invalid (i.e. getting stalled from falling too many slots behind).
 	s.validatePendingAtts(ctx, s.cfg.clock.CurrentSlot())
 
-	s.pendingAttsLock.RLock()
-	attestations := s.blkRootToPendingAtts[bRoot]
-	s.pendingAttsLock.RUnlock()
-
-	s.processAttestations(ctx, attestations)
+	s.drainPendingAttsForBlock(ctx, bRoot)
 
 	randGen := rand.NewGenerator()
-	// Delete the missing block root key from pending attestation queue so a node will not request for the block again.
 	s.pendingAttsLock.Lock()
-	delete(s.blkRootToPendingAtts, bRoot)
 	pendingRoots := make([][32]byte, 0, len(s.blkRootToPendingAtts))
 	s.pendingQueueLock.RLock()
 	for r := range s.blkRootToPendingAtts {
@@ -78,6 +72,29 @@ func (s *Service) processPendingAttsForBlock(ctx context.Context, bRoot [32]byte
 
 	//  Request the blocks for the pending attestations that could not be processed.
 	return s.sendBatchRootRequest(ctx, pendingRoots, randGen)
+}
+
+// drainPendingAttsForBlock processes every attestation queued against the block
+// root and removes the queue, repeating until nothing is left.
+//
+// Taking the batch and dropping the key in the same critical section is the
+// point: processing an item verifies a signature and hands it to forkchoice, so
+// a batch takes long enough that more votes for the same block arrive while it
+// runs. Deleting the key afterwards, as this used to, threw those away
+// unprocessed. An available attestation is gossiped once, during its own slot,
+// so a vote dropped here never comes back and is simply missing from the
+// Goldfish seat count for that slot.
+func (s *Service) drainPendingAttsForBlock(ctx context.Context, bRoot [32]byte) {
+	for {
+		s.pendingAttsLock.Lock()
+		attestations := s.blkRootToPendingAtts[bRoot]
+		delete(s.blkRootToPendingAtts, bRoot)
+		s.pendingAttsLock.Unlock()
+		if len(attestations) == 0 {
+			return
+		}
+		s.processAttestations(ctx, attestations)
+	}
 }
 
 // processAttestations processes a list of attestations.

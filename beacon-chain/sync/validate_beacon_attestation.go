@@ -592,6 +592,12 @@ func (s *Service) validateAvailableAttestation(
 		// block is imported, and ignore it for now so gossip does not penalize the
 		// peer that forwarded a vote we simply cannot check yet.
 		s.savePendingAvailableAtt(att)
+		// The block can be imported, and its queue drained, between the check
+		// above and the insert. Nothing would wake the vote after that, so take a
+		// second look: whichever of the two sees the block last drains the queue.
+		if s.hasBlockAndState(ctx, blockRoot) {
+			go s.drainPendingAttsForBlock(s.ctx, blockRoot)
+		}
 		return pubsub.ValidationIgnore, nil
 	}
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -1132,6 +1133,80 @@ func TestProcessPendingAtts_AvailableAttestationReplayed(t *testing.T) {
 	// The block arrived: every queued vote reaches forkchoice and the key is gone.
 	require.NoError(t, r.processPendingAttsForBlock(ctx, root))
 	require.Equal(t, 2, len(chain.AvailableAttestations))
+	require.Equal(t, 0, len(r.blkRootToPendingAtts[root]))
+}
+
+// A vote queued while the block's batch is being processed must still reach
+// forkchoice. The drain takes the batch and drops the key in one critical
+// section and then loops; the old code deleted the key only after processing,
+// so every vote that arrived while it worked was thrown away unprocessed.
+func TestProcessPendingAtts_AvailableAttestationQueuedDuringDrain(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.MinGenesisActiveValidatorCount = 64
+	params.OverrideBeaconConfig(cfg)
+
+	db := dbtest.SetupDB(t)
+	p1 := p2ptest.NewTestP2P(t)
+	ctx := t.Context()
+
+	slot := primitives.Slot(2)
+	blk := util.NewBeaconBlock()
+	blk.Block.Slot = slot
+	util.SaveBlock(t, ctx, db, blk)
+	root, err := blk.Block.HashTreeRoot()
+	require.NoError(t, err)
+
+	st, keys := util.DeterministicGenesisState(t, decoupled.CommitteeValidatorCount())
+	require.NoError(t, st.SetSlot(slot))
+	require.NoError(t, db.SaveState(ctx, st, root))
+
+	genesisOffset := time.Duration(uint64(slot)*params.BeaconConfig().SecondsPerSlot) * time.Second
+	chain := &mock.ChainService{
+		Genesis:         time.Now().Add(-genesisOffset),
+		State:           st,
+		TargetRoot:      root,
+		ForkchoiceRoots: map[[32]byte]bool{root: true},
+		DB:              db,
+	}
+	r := &Service{
+		ctx: ctx,
+		cfg: &config{
+			p2p:      p1,
+			beaconDB: db,
+			chain:    chain,
+			clock:    startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
+		},
+		blkRootToPendingAtts: make(map[[32]byte][]any),
+		signatureChan:        make(chan *signatureVerifier, verifierLimit),
+	}
+	go r.verifierRoutine()
+
+	// A batch big enough to still be running when the late vote lands.
+	const batch = 32
+	for i := range batch {
+		r.savePendingAvailableAtt(
+			availableVote(t, slot, primitives.ValidatorIndex(i), keys[i], root[:]))
+	}
+	late := availableVote(t, slot, batch, keys[batch], root[:])
+
+	// The writer queues the late vote as soon as the drain has started work on
+	// the batch, which is what gossip does all through a slot: it keeps handing
+	// votes over while the block's queue is being replayed.
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for !p1.BroadcastCalled.Load() {
+			runtime.Gosched()
+		}
+		r.savePendingAvailableAtt(late)
+	}()
+
+	r.drainPendingAttsForBlock(ctx, root)
+	wg.Wait()
+
+	require.Equal(t, batch+1, len(chain.AvailableAttestations))
 	require.Equal(t, 0, len(r.blkRootToPendingAtts[root]))
 }
 
