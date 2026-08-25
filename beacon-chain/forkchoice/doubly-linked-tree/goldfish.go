@@ -236,6 +236,20 @@ type goldfishScores struct {
 	// threshold is half the seats that voted, equivocators included. A child is
 	// viable when its score is strictly greater.
 	threshold uint64
+	// noVotes reports that the scored slot recorded no vote at all, so the gate
+	// has no electorate to divide and must not veto anything. This is a
+	// deviation from the spec, which compares score > threshold unconditionally
+	// and so refuses every child of an empty store.
+	//
+	// The spec is written for a node at the tip, where the previous slot always
+	// has voters. A node importing history has none and never will: available
+	// attestations live in gossip for one slot and are not carried by blocks,
+	// so no vote for slot N ever arrives after slot N+3. Vetoing on an empty
+	// store pins such a node's head at the justified root forever - it imports
+	// the whole chain and still reports the checkpoint as its head, which stalls
+	// initial sync, because the sync state machine reads HeadSlot to decide what
+	// it still needs.
+	noVotes bool
 }
 
 func (sc *goldfishScores) nodeScore(n *Node) uint64 {
@@ -266,6 +280,7 @@ func (s *Store) goldfishScoresForSlot(voteSlot primitives.Slot, justified *Node)
 		s.creditGoldfishVote(sc, voteSlot, v, justified)
 	}
 	sc.threshold = seats / 2
+	sc.noVotes = seats == 0
 	return sc
 }
 
@@ -314,6 +329,9 @@ func goldfishNodeViable(n *Node, sc *goldfishScores, current primitives.Slot) bo
 		// start proposal is the exception, it has to earn its votes.
 		return !slots.IsRoundStart(n.slot)
 	}
+	if sc.noVotes {
+		return true
+	}
 	return sc.nodeScore(n) > sc.threshold
 }
 
@@ -323,6 +341,9 @@ func goldfishPayloadViable(p *PayloadNode, sc *goldfishScores, current primitive
 	if p.node.slot+1 == current {
 		// is_ptc_decision_node: the previous slot's payload decision passes
 		// through and is settled by the tiebreaker instead.
+		return true
+	}
+	if sc.noVotes {
 		return true
 	}
 	return sc.payloadScore(p) > sc.threshold
@@ -473,8 +494,12 @@ func (s *Store) goldfishHead() ([32]byte, error) {
 	}
 	current := s.currentSlot()
 	// The walk reads the previous slot's votes. At genesis there is no previous
-	// slot, so nothing is viable and only the passthrough moves the head.
-	sc := &goldfishScores{pending: map[*Node]uint64{}, payload: map[*PayloadNode]uint64{}}
+	// slot, so there is no electorate and the gate does not veto.
+	sc := &goldfishScores{
+		pending: map[*Node]uint64{},
+		payload: map[*PayloadNode]uint64{},
+		noVotes: true,
+	}
 	if current > 0 {
 		sc = s.goldfishScoresForSlot(current-1, justified)
 	}

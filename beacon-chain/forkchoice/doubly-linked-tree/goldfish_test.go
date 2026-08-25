@@ -393,9 +393,11 @@ func TestGoldfishWalk_ColdStarts(t *testing.T) {
 		driftGenesisTime(f, 5, 0)
 		insertGoldfishBlock(t, f, 1, rootA, zero, true)
 		insertGoldfishBlock(t, f, 2, rootB, rootA, false)
+		// An empty store is no electorate, so the gate does not veto and the
+		// head follows the tree that was restored from disk.
 		head, err := f.Head(t.Context())
 		require.NoError(t, err)
-		require.Equal(t, zero, head) // the justified root, one slot of retreat
+		require.Equal(t, rootB, head)
 	})
 
 	t.Run("checkpoint sync with a justified root past genesis", func(t *testing.T) {
@@ -405,32 +407,57 @@ func TestGoldfishWalk_ColdStarts(t *testing.T) {
 		f.store.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: rootA}
 		insertGoldfishBlock(t, f, 33, rootB, rootA, false)
 
-		// No votes: the walk stops at the justified root rather than panicking
-		// or returning a zero head.
+		// No votes: the walk follows the imported chain rather than stopping at
+		// the justified root, panicking or returning a zero head.
 		head, err := f.Head(t.Context())
 		require.NoError(t, err)
-		require.Equal(t, rootA, head)
+		require.Equal(t, rootB, head)
 
-		// One slot later the store is populated and the head recovers.
+		// The votes agree once the store is populated.
 		f.InsertAvailableAttestation(33, 1, 4, rootB, false)
 		head, err = f.Head(t.Context())
 		require.NoError(t, err)
 		require.Equal(t, rootB, head)
+	})
+
+	// The regression the e2e sync stage found: a node importing history has no
+	// vote for any of the slots it imports, and none will ever arrive. Vetoing
+	// on the empty store pinned its head at the checkpoint forever.
+	t.Run("initial sync of history far behind the wall clock", func(t *testing.T) {
+		f := setupGoldfish(t, 0, 0)
+		driftGenesisTime(f, 40, 0)
+		parent := zero
+		for slot := primitives.Slot(1); slot <= 20; slot++ {
+			root := indexToHash(uint64(slot))
+			insertGoldfishBlock(t, f, slot, root, parent, slot == 1)
+			parent = root
+		}
+		head, err := f.Head(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, indexToHash(20), head)
 	})
 }
 
 func TestGoldfishWalk_GateStopCounted(t *testing.T) {
 	f := setupGoldfish(t, 0, 0)
 	zero := params.BeaconConfig().ZeroHash
-	rootA, rootB := indexToHash(1), indexToHash(2)
+	rootA, rootB, rootC := indexToHash(1), indexToHash(2), indexToHash(3)
 
 	driftGenesisTime(f, 4, 0)
 	insertGoldfishBlock(t, f, 1, rootA, zero, true)
 	insertGoldfishBlock(t, f, 2, rootB, rootA, false)
+	insertGoldfishBlock(t, f, 2, rootC, rootA, false)
+
+	// An even split of the previous slot's four seats: neither slot 2 child
+	// clears the gate, so the walk stops on their parent and counts the stop.
+	f.InsertAvailableAttestation(3, 1, 1, rootB, false)
+	f.InsertAvailableAttestation(3, 2, 1, rootB, false)
+	f.InsertAvailableAttestation(3, 3, 1, rootC, false)
+	f.InsertAvailableAttestation(3, 4, 1, rootC, false)
 	before := goldfishGateStops(t)
 	head, err := f.Head(t.Context())
 	require.NoError(t, err)
-	require.Equal(t, zero, head)
+	require.Equal(t, rootA, head)
 	require.Equal(t, true, goldfishGateStops(t) > before)
 }
 
