@@ -150,17 +150,20 @@ Decisions:
    and memory grows; keep runs short. If the gadget stalls, pruning stops;
    watch for it.
 8. The Goldfish gate must be live at the fork, or all head weights are zero.
-9. Decided 2026-08-15: duty assignment moves to the beacon node. A new
-   submessage `DecoupledDuty` goes on `AttesterDuty` and on
-   `ValidatorDuty`. It holds the available-attester slots and the
-   finality-vote assignment. The attester response carries it, so the
-   fetch, the missing-next mask, the dependent root, and promotion all
-   come free. After Heze the node still returns one `AttesterDuty` entry
-   per validator, with the attester fields empty and `DecoupledDuty`
-   set. `buildNextDuties` copies the submessage into `ValidatorDuty`.
-   `RolesAt` only reads the snapshot; the client-side Heze check and
-   seat computation go away; the `decoupled` package stays node-only;
-   the node stops setting `AttesterSlot` after Heze (kills the
-   TODO(goldfish) wipe). Data RPCs return the unsigned vote with seat
-   bits set, so the client only signs. gRPC only: the REST client
+9. Decided 2026-08-15: duty assignment moves to the beacon node, inside
+   the attester duty. The committee fields are reused: before Heze they
+   describe the FFG attestation, after Heze the finality vote. The
+   duty's epoch is the switch; one proto comment states it. After Heze
+   `AttesterSlot` stays empty (kills the TODO(goldfish) wipe); the vote
+   slots come from the round math. One new repeated field on
+   `AttesterDuty` and `ValidatorDuty`:
+   `AvailableAttestationDuty { slot, []seats }`, one entry per slot
+   with seats. The attester response carries everything, so the fetch,
+   the missing-next mask, the dependent root, and promotion all come
+   free; after Heze the node still returns one entry per validator.
+   `buildNextDuties` copies the new field across. `RolesAt` only reads
+   the snapshot; the `decoupled` package stays node-only. The seats
+   come from the duty, so the data RPC turns per-slot and
+   validator-agnostic: it returns head root and payload_present; the
+   client sets its seat bits and signs. gRPC only: the REST client
    methods panic, as with the available attestation.
