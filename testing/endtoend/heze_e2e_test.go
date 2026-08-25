@@ -1,0 +1,87 @@
+package endtoend
+
+import (
+	"testing"
+
+	"github.com/OffchainLabs/prysm/v7/config/params"
+	"github.com/OffchainLabs/prysm/v7/runtime/version"
+	ev "github.com/OffchainLabs/prysm/v7/testing/endtoend/evaluators"
+	"github.com/OffchainLabs/prysm/v7/testing/endtoend/types"
+)
+
+// TestEndToEnd_HezeGenesis runs the e2e suite on a chain whose genesis state is
+// already a Heze state. There is no fork transition anywhere in the run: the
+// mainnet-preset e2e config schedules every fork, Gloas and Heze included, at
+// epoch 0.
+//
+// SLOTS_PER_EPOCH stays at the mainnet 32 while SLOTS_PER_ROUND is 8, so an
+// epoch holds four rounds and every validator attests four times per epoch. At
+// the e2e config's 6-second slots an epoch takes 3.2 minutes.
+//
+// The run is five epochs rather than four. Justification is skipped for the
+// first two epochs (the spec returns early while the current epoch is at most
+// GENESIS_EPOCH + 1), so the first finalized checkpoint only appears during
+// epoch 4, and the evaluator loop stops at epoch EpochsToRun-1.
+//
+// Evaluators dropped relative to the stock minimal run:
+//   - VerifyBlockGraffiti, FeeRecipientIsPresent, ValidatorsVoteWithTheMajority,
+//     ProcessesDepositsInBlocks: all read blocks over ListBeaconBlocks, and
+//     BeaconBlockContainer has no arm for a Gloas-shaped block.
+//   - ValidatorSyncParticipation: reads blocks the same way, and the mainnet
+//     SyncCommitteeSize (512) exceeds the 256 genesis validators anyway.
+//   - ActivatesDepositedValidators: mainnet EpochsPerEth1VotingPeriod (64) puts
+//     the eth1 voting period far beyond the run; post-genesis deposits arrive as
+//     execution requests instead.
+//
+// Two evaluators are added: AvailableAttestationsFlow, which proves the Heze
+// available attestation topic carries traffic on every node, and
+// AttestationsInEveryRound, which proves committee attestations happen in all
+// four rounds of an epoch rather than only the first.
+func TestEndToEnd_HezeGenesis(t *testing.T) {
+	cfg := params.E2EMainnetTestConfig()
+	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
+	// Four rounds to the 32-slot epoch. SLOTS_PER_EPOCH is untouched, so every
+	// SSZ array keeps its mainnet length and no preset change is needed.
+	cfg.SlotsPerRound = 8
+
+	r := e2eMinimal(t, cfg,
+		types.WithEpochs(5),
+		withoutEvaluators(
+			ev.VerifyBlockGraffiti.Name,
+			ev.FeeRecipientIsPresent.Name,
+			ev.ValidatorsVoteWithTheMajority.Name,
+			ev.ProcessesDepositsInBlocks.Name,
+			ev.ValidatorSyncParticipation.Name,
+			ev.ActivatesDepositedValidators.Name,
+		),
+		withEvaluators(
+			ev.AvailableAttestationsFlow,
+			ev.AttestationsInEveryRound,
+		),
+	)
+	r.run()
+}
+
+// withoutEvaluators drops the named evaluators from the run.
+func withoutEvaluators(names ...string) types.E2EConfigOpt {
+	return func(c *types.E2EConfig) {
+		drop := make(map[string]bool, len(names))
+		for _, n := range names {
+			drop[n] = true
+		}
+		kept := c.Evaluators[:0]
+		for _, e := range c.Evaluators {
+			if !drop[e.Name] {
+				kept = append(kept, e)
+			}
+		}
+		c.Evaluators = kept
+	}
+}
+
+// withEvaluators adds evaluators to the run.
+func withEvaluators(evals ...types.Evaluator) types.E2EConfigOpt {
+	return func(c *types.E2EConfig) {
+		c.Evaluators = append(c.Evaluators, evals...)
+	}
+}

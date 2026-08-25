@@ -15,6 +15,7 @@ go_library(
         "node.go",
         "operations.go",
         "peers.go",
+        "rounds.go",
         "slashing.go",
         "slashing_helper.go",
         "validator.go",
