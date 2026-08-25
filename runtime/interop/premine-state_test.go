@@ -5,8 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/OffchainLabs/prysm/v7/config/params"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/encoding/ssz/detect"
+	enginev1 "github.com/OffchainLabs/prysm/v7/proto/engine/v1"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -22,4 +27,88 @@ func TestPremineGenesis_Electra(t *testing.T) {
 	})
 	_, err := NewPreminedGenesis(t.Context(), time.Unix(int64(genesis.Time()), 0), 10, 10, version.Electra, genesis)
 	require.NoError(t, err)
+}
+
+// TestPremineGenesis_Heze is the step-4 acceptance check: genesis is built
+// directly as a Heze state, it survives an SSZ round trip through the fork
+// detector, and the genesis bid describes the geth genesis block.
+func TestPremineGenesis_Heze(t *testing.T) {
+	one := uint64(1)
+	gb := types.NewBlockWithHeader(&types.Header{
+		Time:          uint64(time.Now().Unix()),
+		Extra:         make([]byte, 32),
+		BaseFee:       big.NewInt(1),
+		ExcessBlobGas: &one,
+		BlobGasUsed:   &one,
+		GasLimit:      30000000,
+	})
+	st, err := NewPreminedGenesis(t.Context(), time.Unix(int64(gb.Time()), 0), 256, 0, version.Heze, gb)
+	require.NoError(t, err)
+	require.Equal(t, version.Heze, st.Version())
+	require.DeepEqual(t, params.BeaconConfig().HezeForkVersion, st.Fork().CurrentVersion)
+	require.DeepEqual(t, params.BeaconConfig().HezeForkVersion, st.Fork().PreviousVersion)
+
+	// process_withdrawals returns early unless these two agree, and the first
+	// block's bid must name the genesis block hash as its parent.
+	bid, err := st.LatestExecutionPayloadBid()
+	require.NoError(t, err)
+	require.Equal(t, gb.Hash(), common.Hash(bid.BlockHash()))
+	require.Equal(t, gb.ParentHash(), common.Hash(bid.ParentBlockHash()))
+	require.Equal(t, gb.GasLimit(), bid.GasLimit())
+	lbh, err := st.LatestBlockHash()
+	require.NoError(t, err)
+	require.Equal(t, gb.Hash(), common.Hash(lbh))
+	matches, err := st.LatestBlockHashMatchesBidBlockHash()
+	require.NoError(t, err)
+	require.Equal(t, true, matches)
+
+	// The first block's empty parent_execution_requests must hash to the bid's
+	// execution requests root.
+	emptyRequestsRoot, err := enginev1.EmptyExecutionRequestsHashTreeRoot()
+	require.NoError(t, err)
+	require.Equal(t, emptyRequestsRoot, bid.ExecutionRequestsRoot())
+
+	// Slot 0 carries a payload; every later slot does not.
+	avail, err := st.ExecutionPayloadAvailability(0)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), avail)
+	avail, err = st.ExecutionPayloadAvailability(1)
+	require.NoError(t, err)
+	require.Equal(t, uint64(0), avail)
+
+	// The derived Gloas fields are populated.
+	window, err := st.PTCWindow()
+	require.NoError(t, err)
+	require.Equal(t, int(params.BeaconConfig().SlotsPerEpoch)*(2+int(params.BeaconConfig().MinSeedLookahead)), len(window))
+	payments, err := st.BuilderPendingPayments()
+	require.NoError(t, err)
+	require.Equal(t, int(params.BeaconConfig().SlotsPerEpoch)*2, len(payments))
+	lookahead, err := st.ProposerLookahead()
+	require.NoError(t, err)
+	require.Equal(t, int(params.BeaconConfig().SlotsPerEpoch)*2, len(lookahead))
+	require.Equal(t, false, isAllZero(lookahead))
+
+	// SSZ round trip through the fork detector.
+	enc, err := st.MarshalSSZ()
+	require.NoError(t, err)
+	cf, err := detect.FromState(enc)
+	require.NoError(t, err)
+	require.Equal(t, version.Heze, cf.Fork)
+	got, err := cf.UnmarshalBeaconState(enc)
+	require.NoError(t, err)
+	require.Equal(t, version.Heze, got.Version())
+	wantRoot, err := st.HashTreeRoot(t.Context())
+	require.NoError(t, err)
+	gotRoot, err := got.HashTreeRoot(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, wantRoot, gotRoot)
+}
+
+func isAllZero(indices []primitives.ValidatorIndex) bool {
+	for _, i := range indices {
+		if i != 0 {
+			return false
+		}
+	}
+	return true
 }

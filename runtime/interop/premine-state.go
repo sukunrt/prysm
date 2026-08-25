@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/altair"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/gloas"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	state_native "github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native"
@@ -66,7 +67,8 @@ func NewPreminedGenesis(ctx context.Context, genesis time.Time, nvals, pCreds ui
 
 func (s *PremineGenesisConfig) prepare(ctx context.Context) (state.BeaconState, error) {
 	switch s.Version {
-	case version.Phase0, version.Altair, version.Bellatrix, version.Capella, version.Deneb, version.Electra, version.Fulu:
+	case version.Phase0, version.Altair, version.Bellatrix, version.Capella, version.Deneb, version.Electra, version.Fulu,
+		version.Heze:
 	default:
 		return nil, errors.Wrapf(errUnsupportedVersion, "version=%s", version.String(s.Version))
 	}
@@ -165,6 +167,18 @@ func (s *PremineGenesisConfig) empty() (state.BeaconState, error) {
 	case version.Fulu:
 		e, err = state_native.InitializeFromProtoUnsafeFulu(&ethpb.BeaconStateFulu{
 			DepositRequestsStartIndex: params.BeaconConfig().UnsetDepositRequestsStartIndex,
+		})
+		if err != nil {
+			return nil, err
+		}
+	case version.Heze:
+		e, err = state_native.InitializeFromProtoUnsafeHeze(&ethpb.BeaconStateHeze{
+			DepositRequestsStartIndex:    params.BeaconConfig().UnsetDepositRequestsStartIndex,
+			Builders:                     []*ethpb.Builder{},
+			BuilderPendingPayments:       emptyBuilderPendingPayments(),
+			BuilderPendingWithdrawals:    []*ethpb.BuilderPendingWithdrawal{},
+			PayloadExpectedWithdrawals:   []*enginev1.Withdrawal{},
+			ExecutionPayloadAvailability: genesisPayloadAvailability(),
 		})
 		if err != nil {
 			return nil, err
@@ -323,10 +337,46 @@ func (s *PremineGenesisConfig) populate(g state.BeaconState) error {
 	if err := s.setExecutionPayload(g); err != nil {
 		return err
 	}
+	if err := s.setProposerLookahead(g); err != nil {
+		return err
+	}
+	if err := s.setPTCWindowAndBuilders(g); err != nil {
+		return err
+	}
 
 	// For pre-mined genesis, we want to keep the deposit root set to the root of an empty trie.
 	// This needs to be set again because the methods used by processDeposits mutate the state's eth1data.
 	return s.setEth1Data(g)
+}
+
+// setProposerLookahead fills the Fulu proposer lookahead. Without it every entry
+// is zero and validator 0 proposes every slot of the first two epochs.
+func (s *PremineGenesisConfig) setProposerLookahead(g state.BeaconState) error {
+	if s.Version < version.Fulu {
+		return nil
+	}
+	lookahead, err := helpers.InitializeProposerLookahead(context.Background(), g, 0)
+	if err != nil {
+		return errors.Wrap(err, "could not initialize the proposer lookahead")
+	}
+	return g.SetProposerLookahead(lookahead)
+}
+
+// setPTCWindowAndBuilders fills the two Gloas state fields that are derived rather
+// than constant. It runs the same helpers as the Gloas fork upgrade; genesis is
+// Heze, so the upgrade itself is never called.
+func (s *PremineGenesisConfig) setPTCWindowAndBuilders(g state.BeaconState) error {
+	if s.Version < version.Gloas {
+		return nil
+	}
+	window, err := gloas.InitializePTCWindow(context.Background(), g)
+	if err != nil {
+		return errors.Wrap(err, "could not initialize the ptc window")
+	}
+	if err := g.SetPTCWindow(window); err != nil {
+		return err
+	}
+	return g.OnboardBuildersFromPendingDeposits()
 }
 
 func (s *PremineGenesisConfig) setGenesisValidatorsRoot(g state.BeaconState) error {
@@ -355,6 +405,9 @@ func (s *PremineGenesisConfig) setFork(g state.BeaconState) error {
 		pv, cv = params.BeaconConfig().DenebForkVersion, params.BeaconConfig().ElectraForkVersion
 	case version.Fulu:
 		pv, cv = params.BeaconConfig().ElectraForkVersion, params.BeaconConfig().FuluForkVersion
+	case version.Heze:
+		// Genesis is Heze: there is no predecessor fork to point at.
+		pv, cv = params.BeaconConfig().HezeForkVersion, params.BeaconConfig().HezeForkVersion
 	default:
 		return errUnsupportedVersion
 	}
@@ -609,6 +662,34 @@ func (s *PremineGenesisConfig) setLatestBlockHeader(g state.BeaconState) error {
 				Consolidations: make([]*enginev1.ConsolidationRequest, 0),
 			},
 		}
+	case version.Heze:
+		// Blocks keep the Gloas shape at Heze, so the genesis header commits to a
+		// zero-valued Gloas body.
+		body = &ethpb.BeaconBlockBodyGloas{
+			RandaoReveal: make([]byte, fieldparams.BLSSignatureLength),
+			Eth1Data: &ethpb.Eth1Data{
+				DepositRoot: make([]byte, fieldparams.RootLength),
+				BlockHash:   make([]byte, fieldparams.RootLength),
+			},
+			Graffiti: make([]byte, fieldparams.RootLength),
+			SyncAggregate: &ethpb.SyncAggregate{
+				SyncCommitteeBits:      make([]byte, fieldparams.SyncCommitteeLength/8),
+				SyncCommitteeSignature: make([]byte, fieldparams.BLSSignatureLength),
+			},
+			BlsToExecutionChanges: make([]*ethpb.SignedBLSToExecutionChange, 0),
+			SignedExecutionPayloadBid: &ethpb.SignedExecutionPayloadBid{
+				Message:   emptyExecutionPayloadBid(),
+				Signature: make([]byte, fieldparams.BLSSignatureLength),
+			},
+			PayloadAttestations: make([]*ethpb.PayloadAttestation, 0),
+			ParentExecutionRequests: &enginev1.ExecutionRequestsGloas{
+				Deposits:        make([]*enginev1.DepositRequest, 0),
+				Withdrawals:     make([]*enginev1.WithdrawalRequest, 0),
+				Consolidations:  make([]*enginev1.ConsolidationRequest, 0),
+				BuilderDeposits: make([]*enginev1.BuilderDepositRequest, 0),
+				BuilderExits:    make([]*enginev1.BuilderExitRequest, 0),
+			},
+		}
 	default:
 		return errUnsupportedVersion
 	}
@@ -630,6 +711,28 @@ func (s *PremineGenesisConfig) setExecutionPayload(g state.BeaconState) error {
 	extraData := gb.Extra()
 	if len(extraData) > 32 {
 		extraData = extraData[:32]
+	}
+
+	// Gloas and later replace latest_execution_payload_header with the pair
+	// (latest_block_hash, latest_execution_payload_bid). The genesis bid describes
+	// the geth genesis block, so the first beacon block's bid can point its
+	// parent_block_hash at it and its empty parent_execution_requests hash to the
+	// bid's execution_requests_root.
+	if s.Version >= version.Gloas {
+		bid := emptyExecutionPayloadBid()
+		bid.ParentBlockHash = gb.ParentHash().Bytes()
+		bid.BlockHash = gb.Hash().Bytes()
+		bid.FeeRecipient = gb.Coinbase().Bytes()
+		bid.GasLimit = gb.GasLimit()
+
+		robid, err := blocks.WrappedROExecutionPayloadBid(bid)
+		if err != nil {
+			return err
+		}
+		if err := g.SetExecutionPayloadBid(robid); err != nil {
+			return err
+		}
+		return g.SetLatestBlockHash(gb.Hash())
 	}
 
 	if s.Version >= version.Deneb {
@@ -748,6 +851,50 @@ func (s *PremineGenesisConfig) setExecutionPayload(g state.BeaconState) error {
 	}
 
 	return errUnsupportedVersion
+}
+
+// emptyExecutionPayloadBid returns a zero-valued bid with every fixed-size field
+// allocated and execution_requests_root set to the root of empty execution
+// requests, which is what an empty parent payload hashes to.
+func emptyExecutionPayloadBid() *ethpb.ExecutionPayloadBid {
+	requestsRoot, err := enginev1.EmptyExecutionRequestsHashTreeRoot()
+	if err != nil {
+		// Merkleizing a zero-valued container cannot fail.
+		panic(err) // lint:nopanic
+	}
+	return &ethpb.ExecutionPayloadBid{
+		ParentBlockHash:       make([]byte, fieldparams.RootLength),
+		ParentBlockRoot:       make([]byte, fieldparams.RootLength),
+		BlockHash:             make([]byte, fieldparams.RootLength),
+		PrevRandao:            params.BeaconConfig().ZeroHash[:],
+		FeeRecipient:          make([]byte, fieldparams.FeeRecipientLength),
+		BlobKzgCommitments:    make([][]byte, 0),
+		ExecutionRequestsRoot: requestsRoot[:],
+	}
+}
+
+// emptyBuilderPendingPayments allocates the fixed 2 * SLOTS_PER_EPOCH vector of
+// zero-valued payments. A nil slice fails the SSZ round trip.
+func emptyBuilderPendingPayments() []*ethpb.BuilderPendingPayment {
+	payments := make([]*ethpb.BuilderPendingPayment, params.BeaconConfig().SlotsPerEpoch*2)
+	for i := range payments {
+		payments[i] = &ethpb.BuilderPendingPayment{
+			Withdrawal: &ethpb.BuilderPendingWithdrawal{
+				FeeRecipient: make([]byte, fieldparams.FeeRecipientLength),
+			},
+		}
+	}
+	return payments
+}
+
+// genesisPayloadAvailability returns the availability bitvector with only slot 0
+// marked available: genesis carries a payload, and process_withdrawals requires
+// latest_block_hash == latest_execution_payload_bid.block_hash, which only holds
+// at genesis if slot 0 counts as available.
+func genesisPayloadAvailability() []byte {
+	availability := make([]byte, (params.BeaconConfig().SlotsPerHistoricalRoot+7)/8)
+	availability[0] = 1
+	return availability
 }
 
 func unwrapUint64Ptr(u *uint64) uint64 {

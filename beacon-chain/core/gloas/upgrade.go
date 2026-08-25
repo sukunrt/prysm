@@ -116,7 +116,7 @@ func UpgradeToGloas(beaconState state.BeaconState) (state.BeaconState, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "could not convert to gloas")
 	}
-	ptcWindow, err := initializePTCWindow(context.Background(), s)
+	ptcWindow, err := InitializePTCWindow(context.Background(), s)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to initialize ptc window")
 	}
@@ -129,7 +129,7 @@ func UpgradeToGloas(beaconState state.BeaconState) (state.BeaconState, error) {
 	return s, nil
 }
 
-// initializePTCWindow builds the initial PTC window for the Gloas fork upgrade.
+// InitializePTCWindow builds the initial PTC window, at genesis and at the Gloas fork upgrade.
 //
 //	<spec fn="initialize_ptc_window" fork="gloas" hash="3764b7f5">
 //	def initialize_ptc_window(
@@ -153,7 +153,7 @@ func UpgradeToGloas(beaconState state.BeaconState) (state.BeaconState, error) {
 //
 //	    return empty_previous_epoch + ptcs
 //	</spec>
-func initializePTCWindow(ctx context.Context, st state.ReadOnlyBeaconState) ([]*ethpb.PTCs, error) {
+func InitializePTCWindow(ctx context.Context, st state.ReadOnlyBeaconState) ([]*ethpb.PTCs, error) {
 	currentEpoch := slots.ToEpoch(st.Slot())
 	slotsPerEpoch := params.BeaconConfig().SlotsPerEpoch
 	windowSize := slotsPerEpoch.Mul(uint64(2 + params.BeaconConfig().MinSeedLookahead))
