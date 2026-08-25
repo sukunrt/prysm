@@ -872,3 +872,28 @@ func Test_hashForGenesisRoot_Gloas(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedHash, [32]byte(genHash))
 }
+
+// TestDependentRoot_HeadAndBlockSidesAgree pins the invariant that the
+// head-side DependentRoot and the block-side DependentRootForEpoch answer
+// the same root for the same epoch on the same chain. The payload
+// attestation duty (hasCanonicalShuffling) compares exactly these two and
+// skips the duty whenever they disagree; before the genesis-era fallback
+// was mirrored on the head side, they disagreed for every slot of epochs
+// 0 and 1 and no payload attestation was ever submitted there.
+func TestDependentRoot_HeadAndBlockSidesAgree(t *testing.T) {
+	service, tr := minimalTestService(t)
+	ctx, fcs := tr.ctx, tr.fcs
+
+	gs, _ := util.DeterministicGenesisState(t, 32)
+	require.NoError(t, service.saveGenesisData(ctx, gs))
+	headRoot, err := fcs.Head(ctx)
+	require.NoError(t, err)
+
+	for _, epoch := range []primitives.Epoch{0, 1} {
+		hdr, err := service.DependentRoot(epoch)
+		require.NoError(t, err)
+		rdr, err := service.DependentRootForEpoch(headRoot, epoch)
+		require.NoError(t, err)
+		require.Equal(t, rdr, hdr, "dependent roots disagree at epoch %d", epoch)
+	}
+}

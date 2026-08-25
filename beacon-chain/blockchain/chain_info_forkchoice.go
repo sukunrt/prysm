@@ -206,9 +206,21 @@ func (s *Service) CanonicalNodeAtSlot(slot primitives.Slot) ([32]byte, bool) {
 	return s.cfg.ForkChoiceStore.CanonicalNodeAtSlot(slot)
 }
 
-// DependentRoot wraps the corresponding method in forkchoice
+// DependentRoot wraps the corresponding method in forkchoice. The
+// genesis-era fallbacks mirror DependentRootForEpoch exactly: the payload
+// attestation duty compares the two answers and must see them agree.
 func (s *Service) DependentRoot(epoch primitives.Epoch) ([32]byte, error) {
+	if epoch == 0 {
+		return s.originBlockRoot, nil
+	}
 	s.cfg.ForkChoiceStore.RLock()
 	defer s.cfg.ForkChoiceStore.RUnlock()
-	return s.cfg.ForkChoiceStore.DependentRoot(epoch)
+	depRoot, err := s.cfg.ForkChoiceStore.DependentRoot(epoch)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	if depRoot == [32]byte{} {
+		return s.originBlockRoot, nil
+	}
+	return depRoot, nil
 }
