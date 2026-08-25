@@ -264,6 +264,15 @@ In `time/slots/slottime.go`, beside `ToEpoch:69`, `EpochStart:106`,
       `211` becomes `212`. `prepareConfigSpec` (`handlers.go:163-183`)
       reflects over fields tagged `spec:"true"`, so the handler itself needs
       no edit.
+      **<added by executor agent>** The baseline is not 211. Heze had already
+      added three `spec:"true"` fields (`HEZE_FORK_VERSION`,
+      `HEZE_FORK_EPOCH`, `AVAILABLE_ATTESTATION_DUE_BPS_HEZE`) without
+      updating this test, so it was failing at 214. Fixed in `config: test
+      the Heze fork fields instead of skipping them`. **The number to change
+      is 214 → 215.** The same change also dropped `HEZE_FORK_EPOCH` and
+      `HEZE_FORK_VERSION` from `loader_test.go`'s `placeholderFields`; add
+      `SLOTS_PER_ROUND` to the assert list as this step already says, and do
+      not re-add anything to `placeholderFields`.
 
 ## 2.4 Validation
 
@@ -305,6 +314,20 @@ In `time/slots/slottime.go`, beside `ToEpoch:69`, `EpochStart:106`,
 - [ ] Full suite green with **no expectation edits**, because every shipped
       config has `SlotsPerRound == SlotsPerEpoch`.
 - [ ] Spectests green — they run the mainnet and minimal configs.
+      **<added by executor agent>** Run them with **`bazelisk test
+      //testing/spectest/...`**, not `make test mainnet-spectest`. The two
+      paths read different copies of the spec data:
+
+      | path | source | state on 2026-08-19 |
+      |---|---|---|
+      | Bazel | its own external repo, fetched from the `WORKSPACE` pin | correct (`v1.7.0-alpha.13`) |
+      | `go test` | `third_party/testdata`, marker-cached | drifted from the pin |
+
+      The `go test` corpora are ~1.26 GB behind (`consensus_spec_tests_mainnet`
+      and `_minimal`). The user decided on 2026-08-19 not to refresh them, so
+      the Bazel path is the one that gives a trustworthy answer here. The
+      2 MB `consensus_spec` archive (spec *configs*, not vectors) was
+      refreshed, which is what `TestLoadConfigFile` reads.
 - [ ] New unit tests with `SlotsPerRound = 8` and `SlotsPerEpoch = 32` show
       the round's 8 slots partition the whole active set: no validator in two
       slots of one round, none missing, and the union equals the active set.
