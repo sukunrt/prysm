@@ -520,9 +520,9 @@ func (vs *Server) filterPreviousRoundAttestationByTarget(att ethpb.Att, cp *ethp
 
 // filterAttestationBySignature filters attestations based on specific conditions and performs batch signature verification.
 // The conditions checked are:
-// 1. The attestation matches the current target view defined in `filterCurrentEpochAttestationByTarget`.
-// 2. The attestation matches the previous target view defined in `filterPreviousEpochAttestationByTarget`.
-// 3. The attestation matches certain fork choice conditions defined in `filterCurrentEpochAttestationByForkchoice`.
+// 1. The attestation matches the current target view defined in `filterCurrentRoundAttestationByTarget`.
+// 2. The attestation matches the previous target view defined in `filterPreviousRoundAttestationByTarget`.
+// 3. The attestation matches certain fork choice conditions defined in `filterCurrentRoundAttestationByForkchoice`.
 // The remaining attestations are sent for batch signature verification. If the batch verification fails, each signature is verified individually.
 func (vs *Server) filterAttestationBySignature(ctx context.Context, atts proposerAtts, st state.BeaconState) (proposerAtts, error) {
 	headSlot := vs.HeadFetcher.HeadSlot()
