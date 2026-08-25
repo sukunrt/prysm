@@ -1,7 +1,11 @@
 package validator
 
 import (
+	"cmp"
 	"context"
+	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/cache"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
@@ -9,10 +13,12 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -94,12 +100,80 @@ func (vs *Server) SubmitAggregateSelectionProofElectra(
 	}
 
 	best := bestAggregate(atts, req.CommitteeIndex, indexInCommittee)
+	logFFGAggregateGroups(atts, best, req.Slot, req.CommitteeIndex, validatorIndex)
 	attAndProof := &ethpb.AggregateAttestationAndProofElectra{
 		Aggregate:       best,
 		SelectionProof:  req.SlotSignature,
 		AggregatorIndex: validatorIndex,
 	}
 	return &ethpb.AggregateSelectionElectraResponse{AggregateAndProof: attAndProof}, nil
+}
+
+// ffgVoteGroup holds the seats one attestation data drew among an aggregation
+// duty's candidates. Seats are kept as bit indices, not a running total,
+// because the candidates for one data root overlap: the pool hands back both a
+// merged aggregate and the singles it was merged from.
+type ffgVoteGroup struct {
+	dataRoot  string
+	blockRoot string
+	seats     map[uint64]struct{}
+}
+
+// logFFGAggregateGroups writes one line per aggregation duty naming how the
+// duty's candidates split by attestation data. FFG votes aggregate only within
+// one data root, so a committee that disagreed about the head reaches the
+// aggregator as several groups and only one of them is published; every other
+// group's seats are dropped here without a trace.
+//
+// Off unless --goldfish-vote-ledger is set.
+func logFFGAggregateGroups[T ethpb.Att](
+	atts []T,
+	best T,
+	slot primitives.Slot,
+	committeeIndex primitives.CommitteeIndex,
+	aggregatorIndex primitives.ValidatorIndex,
+) {
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
+	byData := make(map[string]*ffgVoteGroup, len(atts))
+	groups := make([]*ffgVoteGroup, 0, len(atts))
+	for _, att := range atts {
+		root := decoupled.VoteLedgerDataRoot(att)
+		group, ok := byData[root]
+		if !ok {
+			blockRoot := bytesutil.ToBytes32(att.GetData().GetBeaconBlockRoot())
+			group = &ffgVoteGroup{
+				dataRoot:  decoupled.VoteLedgerRootPrefix(root),
+				blockRoot: decoupled.VoteLedgerRootPrefix(fmt.Sprintf("%#x", blockRoot)),
+				seats:     make(map[uint64]struct{}),
+			}
+			byData[root] = group
+			groups = append(groups, group)
+		}
+		for _, seat := range att.GetAggregationBits().BitIndices() {
+			group.seats[uint64(seat)] = struct{}{}
+		}
+	}
+	slices.SortFunc(groups, func(a, b *ffgVoteGroup) int {
+		if c := cmp.Compare(len(b.seats), len(a.seats)); c != 0 {
+			return c
+		}
+		return strings.Compare(a.dataRoot, b.dataRoot)
+	})
+	rendered := make([]string, len(groups))
+	for i, group := range groups {
+		rendered[i] = fmt.Sprintf("%s:%s:%d", group.dataRoot, group.blockRoot, len(group.seats))
+	}
+	log.WithFields(logrus.Fields{
+		"attSlot":         slot,
+		"committeeIndex":  committeeIndex,
+		"aggregatorIndex": aggregatorIndex,
+		"groups":          len(groups),
+		"groupSeats":      strings.Join(rendered, ","),
+		"chosenData":      decoupled.VoteLedgerRootPrefix(decoupled.VoteLedgerDataRoot(best)),
+		"chosenSeats":     best.GetAggregationBits().Count(),
+	}).Info("FFG aggregate groups")
 }
 
 func (vs *Server) processAggregateSelection(ctx context.Context, req *ethpb.AggregateSelectionRequest) (uint64, primitives.ValidatorIndex, error) {

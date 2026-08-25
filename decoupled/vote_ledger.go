@@ -34,3 +34,14 @@ func VoteLedgerDataRoot(att ethpb.Att) string {
 	}
 	return fmt.Sprintf("%#x", id)
 }
+
+// VoteLedgerRootPrefix shortens a rendered root to its first 8 hex characters,
+// without the 0x. Ledger fields that name several roots on one line use it; the
+// full roots stay on the per-vote lines, so nothing is lost by shortening here.
+func VoteLedgerRootPrefix(root string) string {
+	root = strings.TrimPrefix(root, "0x")
+	if len(root) > 8 {
+		return root[:8]
+	}
+	return root
+}

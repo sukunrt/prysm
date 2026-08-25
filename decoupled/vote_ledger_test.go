@@ -42,3 +42,9 @@ func TestVoteLedgerDataRoot(t *testing.T) {
 	require.NotEqual(t, VoteLedgerDataRoot(att(0, 0xaa)), VoteLedgerDataRoot(att(0, 0xbb)))
 	require.Equal(t, "", VoteLedgerDataRoot(&ethpb.AttestationElectra{}))
 }
+
+func TestVoteLedgerRootPrefix(t *testing.T) {
+	require.Equal(t, "0123abcd", VoteLedgerRootPrefix("0x0123abcdef"))
+	require.Equal(t, "0123", VoteLedgerRootPrefix("0x0123"))
+	require.Equal(t, "", VoteLedgerRootPrefix(""))
+}

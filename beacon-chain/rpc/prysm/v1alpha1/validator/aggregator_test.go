@@ -18,9 +18,12 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	state_native "github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native"
 	mockSync "github.com/OffchainLabs/prysm/v7/beacon-chain/sync/initial-sync/testing"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
@@ -28,6 +31,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
+	logTest "github.com/sirupsen/logrus/hooks/test"
 )
 
 func TestSubmitAggregateAndProof_Syncing(t *testing.T) {
@@ -621,4 +625,50 @@ func Test_bestAggregate(t *testing.T) {
 	for _, tc := range testCases {
 		assert.Equal(t, tc.best, bestAggregate(tc.atts, 0, 0), tc.name)
 	}
+}
+
+func ffgGroupAtt(blockRoot byte, bits bitfield.Bitlist) *ethpb.AttestationElectra {
+	cb := primitives.NewAttestationCommitteeBits()
+	cb.SetBitAt(2, true)
+	return &ethpb.AttestationElectra{
+		AggregationBits: bits,
+		CommitteeBits:   cb,
+		Data: &ethpb.AttestationData{
+			Slot:            9,
+			BeaconBlockRoot: bytesutil.PadTo([]byte{blockRoot}, 32),
+			Source:          &ethpb.Checkpoint{Root: make([]byte, 32)},
+			Target:          &ethpb.Checkpoint{Root: make([]byte, 32)},
+		},
+	}
+}
+
+func TestLogFFGAggregateGroups_QuietUnlessTheLedgerIsOn(t *testing.T) {
+	hook := logTest.NewGlobal()
+	// A committee that split over the head: three seats behind one block root,
+	// one behind another. The two candidates of the larger group overlap on a
+	// seat, so its seat count only comes out right if the union is taken.
+	atts := []*ethpb.AttestationElectra{
+		ffgGroupAtt(0xaa, bitfield.Bitlist{0b00001011}),
+		ffgGroupAtt(0xaa, bitfield.Bitlist{0b00001110}),
+		ffgGroupAtt(0xbb, bitfield.Bitlist{0b00001100}),
+	}
+
+	logFFGAggregateGroups(atts, atts[0], 9, 2, 7)
+	require.Equal(t, 0, len(hook.AllEntries()))
+
+	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
+	defer reset()
+	logFFGAggregateGroups(atts, atts[0], 9, 2, 7)
+	require.Equal(t, 1, len(hook.AllEntries()))
+	entry := hook.LastEntry()
+	chosen := decoupled.VoteLedgerRootPrefix(decoupled.VoteLedgerDataRoot(atts[0]))
+	other := decoupled.VoteLedgerRootPrefix(decoupled.VoteLedgerDataRoot(atts[2]))
+	require.Equal(t, "FFG aggregate groups", entry.Message)
+	require.Equal(t, primitives.Slot(9), entry.Data["attSlot"])
+	require.Equal(t, primitives.CommitteeIndex(2), entry.Data["committeeIndex"])
+	require.Equal(t, primitives.ValidatorIndex(7), entry.Data["aggregatorIndex"])
+	require.Equal(t, 2, entry.Data["groups"])
+	require.Equal(t, chosen+":aa000000:3,"+other+":bb000000:1", entry.Data["groupSeats"])
+	require.Equal(t, chosen, entry.Data["chosenData"])
+	require.Equal(t, uint64(2), entry.Data["chosenSeats"])
 }
