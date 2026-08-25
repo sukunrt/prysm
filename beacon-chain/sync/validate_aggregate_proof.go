@@ -92,7 +92,8 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 	}
 
 	// Verify this is the first aggregate received from the aggregator with index and slot.
-	if s.hasSeenAggregatorIndexEpoch(data.Target.Epoch, m.AggregateAttestationAndProof().GetAggregatorIndex()) {
+	aggregatorIdx := m.AggregateAttestationAndProof().GetAggregatorIndex()
+	if s.hasSeenAggregatorIndexRound(slots.RoundAt(data.Slot), aggregatorIdx) {
 		return pubsub.ValidationIgnore, nil
 	}
 	// Check that the block being voted on isn't invalid.
@@ -137,7 +138,7 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 		return validationRes, err
 	}
 
-	if first := s.setAggregatorIndexEpochSeen(data.Target.Epoch, m.AggregateAttestationAndProof().GetAggregatorIndex()); !first {
+	if first := s.setAggregatorIndexRoundSeen(slots.RoundAt(data.Slot), aggregatorIdx); !first {
 		return pubsub.ValidationIgnore, nil
 	}
 
@@ -255,9 +256,16 @@ func (s *Service) validateBlockInAttestation(ctx context.Context, satt ethpb.Sig
 	return true
 }
 
-// Returns true if the node has received aggregate for the aggregator with index and target epoch.
-func (s *Service) hasSeenAggregatorIndexEpoch(epoch primitives.Epoch, aggregatorIndex primitives.ValidatorIndex) bool {
-	b := append(bytesutil.Bytes32(uint64(epoch)), bytesutil.Bytes32(uint64(aggregatorIndex))...)
+// Returns true if the node has received an aggregate for the aggregator with index in the round.
+//
+// The key is the round rather than the epoch: an epoch holds several rounds, committees are
+// reshuffled every round, so the same validator legitimately aggregates once per round and the
+// later aggregates must not be dropped as duplicates.
+func (s *Service) hasSeenAggregatorIndexRound(
+	round primitives.Round,
+	aggregatorIndex primitives.ValidatorIndex,
+) bool {
+	b := append(bytesutil.Bytes32(uint64(round)), bytesutil.Bytes32(uint64(aggregatorIndex))...)
 
 	s.seenAggregatedAttestationLock.RLock()
 	defer s.seenAggregatedAttestationLock.RUnlock()
@@ -266,10 +274,13 @@ func (s *Service) hasSeenAggregatorIndexEpoch(epoch primitives.Epoch, aggregator
 	return seen
 }
 
-// Set aggregate's aggregator index target epoch as seen.
-// Returns true if this is the first time seeing this aggregator index and epoch.
-func (s *Service) setAggregatorIndexEpochSeen(epoch primitives.Epoch, aggregatorIndex primitives.ValidatorIndex) bool {
-	b := append(bytesutil.Bytes32(uint64(epoch)), bytesutil.Bytes32(uint64(aggregatorIndex))...)
+// Set aggregate's aggregator index and round as seen.
+// Returns true if this is the first time seeing this aggregator index and round.
+func (s *Service) setAggregatorIndexRoundSeen(
+	round primitives.Round,
+	aggregatorIndex primitives.ValidatorIndex,
+) bool {
+	b := append(bytesutil.Bytes32(uint64(round)), bytesutil.Bytes32(uint64(aggregatorIndex))...)
 
 	s.seenAggregatedAttestationLock.Lock()
 	defer s.seenAggregatedAttestationLock.Unlock()

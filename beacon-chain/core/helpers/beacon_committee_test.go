@@ -817,6 +817,7 @@ func TestBeaconCommitteesFromState(t *testing.T) {
 	c := params.BeaconConfig().Copy()
 	c.MinGenesisActiveValidatorCount = 128
 	c.SlotsPerEpoch = 4
+	c.SlotsPerRound = 4
 	c.TargetCommitteeSize = 16
 	params.OverrideBeaconConfig(c)
 
@@ -842,6 +843,7 @@ func TestBeaconCommitteesFromCache(t *testing.T) {
 	c := params.BeaconConfig().Copy()
 	c.MinGenesisActiveValidatorCount = 128
 	c.SlotsPerEpoch = 4
+	c.SlotsPerRound = 4
 	c.TargetCommitteeSize = 16
 	params.OverrideBeaconConfig(c)
 
@@ -903,6 +905,98 @@ func TestInitializeProposerLookahead_RegressionTest(t *testing.T) {
 		for i, expected := range expectedProposers {
 			require.Equal(t, expected, actualProposers[i],
 				"Proposer index mismatch at slot %d in epoch %d", i, targetEpoch)
+		}
+	}
+}
+
+// A round's slots must partition the whole active validator set: every active validator
+// attests exactly once per round, and nobody attests twice.
+func TestBeaconCommittees_RoundPartitionsActiveSet(t *testing.T) {
+	ctx := t.Context()
+
+	params.SetupTestConfigCleanup(t)
+	c := params.BeaconConfig().Copy()
+	c.MinGenesisActiveValidatorCount = 128
+	c.SlotsPerEpoch = 32
+	c.SlotsPerRound = 8
+	c.TargetCommitteeSize = 16
+	params.OverrideBeaconConfig(c)
+	helpers.ClearCache()
+
+	state, _ := util.DeterministicGenesisState(t, 256)
+	activeIndices, err := helpers.ActiveValidatorIndices(ctx, state, 0)
+	require.NoError(t, err)
+	require.Equal(t, 256, len(activeIndices))
+
+	// Two committees of 16 in each of the round's 8 slots covers all 256 validators.
+	require.Equal(t, uint64(2), helpers.SlotCommitteeCount(uint64(len(activeIndices))))
+
+	roundsPerEpoch := uint64(c.SlotsPerEpoch / c.SlotsPerRound)
+	require.Equal(t, uint64(4), roundsPerEpoch)
+
+	for round := range roundsPerEpoch {
+		start := primitives.Slot(round) * c.SlotsPerRound
+		require.Equal(t, primitives.Round(round), slots.RoundAt(start))
+
+		seenAt := make(map[primitives.ValidatorIndex]primitives.Slot, len(activeIndices))
+		for slot := start; slot < start+c.SlotsPerRound; slot++ {
+			committees, err := helpers.BeaconCommittees(ctx, state, slot)
+			require.NoError(t, err)
+			require.Equal(t, 2, len(committees))
+			for _, committee := range committees {
+				require.Equal(t, 16, len(committee))
+				for _, vIdx := range committee {
+					prev, dup := seenAt[vIdx]
+					require.Equal(t, false, dup,
+						fmt.Sprintf("validator %d in slots %d and %d of round %d", vIdx, prev, slot, round))
+					seenAt[vIdx] = slot
+				}
+			}
+		}
+
+		// No validator missing: the union is exactly the active set.
+		require.Equal(t, len(activeIndices), len(seenAt))
+		for _, vIdx := range activeIndices {
+			_, ok := seenAt[vIdx]
+			require.Equal(t, true, ok, fmt.Sprintf("validator %d missing from round %d", vIdx, round))
+		}
+	}
+}
+
+// The committee cache splits the epoch's shuffled list into a round's worth of committees,
+// so it must return the same committees the round formula does. ComputeCommittee is the
+// reference here because it never reads the cache, unlike BeaconCommittees.
+func TestBeaconCommittees_CacheAgreesWithRoundMath(t *testing.T) {
+	ctx := t.Context()
+
+	params.SetupTestConfigCleanup(t)
+	c := params.BeaconConfig().Copy()
+	c.MinGenesisActiveValidatorCount = 128
+	c.SlotsPerEpoch = 32
+	c.SlotsPerRound = 8
+	c.TargetCommitteeSize = 16
+	params.OverrideBeaconConfig(c)
+	helpers.ClearCache()
+
+	state, _ := util.DeterministicGenesisState(t, 256)
+	activeIndices, err := helpers.ActiveValidatorIndices(ctx, state, 0)
+	require.NoError(t, err)
+	seed, err := helpers.Seed(state, 0, params.BeaconConfig().DomainBeaconAttester)
+	require.NoError(t, err)
+
+	committeesPerSlot := helpers.SlotCommitteeCount(uint64(len(activeIndices)))
+	count := committeesPerSlot * uint64(c.SlotsPerRound)
+	require.NoError(t, helpers.UpdateCommitteeCache(ctx, state, 0))
+
+	// Two rounds, to show the cache reads the slot's offset within its own round.
+	for slot := primitives.Slot(0); slot < 2*c.SlotsPerRound; slot++ {
+		for idx := range committeesPerSlot {
+			offset := idx + uint64(slot%c.SlotsPerRound)*committeesPerSlot
+			want, err := helpers.ComputeCommittee(activeIndices, seed, offset, count)
+			require.NoError(t, err)
+			got, err := helpers.BeaconCommitteeFromCache(ctx, state, slot, primitives.CommitteeIndex(idx))
+			require.NoError(t, err)
+			assert.DeepEqual(t, want, got, "slot %d committee %d", slot, idx)
 		}
 	}
 }

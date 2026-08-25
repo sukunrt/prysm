@@ -365,7 +365,8 @@ func (s *Service) processAggregate(ctx context.Context, aggregate ethpb.SignedAg
 		return errors.Wrap(err, "save attestation")
 	}
 
-	_ = s.setAggregatorIndexEpochSeen(att.GetData().Target.Epoch, aggregate.AggregateAttestationAndProof().GetAggregatorIndex())
+	aggregatorIdx := aggregate.AggregateAttestationAndProof().GetAggregatorIndex()
+	_ = s.setAggregatorIndexRoundSeen(slots.RoundAt(att.GetData().Slot), aggregatorIdx)
 
 	if err := s.cfg.p2p.Broadcast(ctx, aggregate); err != nil {
 		log.WithError(err).Debug("Could not broadcast aggregated attestation")

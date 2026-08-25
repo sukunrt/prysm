@@ -799,7 +799,7 @@ func TestValidateAggregateAndProof_RejectWhenAttEpochDoesntEqualTargetEpoch(t *t
 	assert.Equal(t, pubsub.ValidationReject, res)
 }
 
-func Test_SetAggregatorIndexEpochSeen(t *testing.T) {
+func Test_SetAggregatorIndexRoundSeen(t *testing.T) {
 	db := dbtest.SetupDB(t)
 	p := p2ptest.NewTestP2P(t)
 
@@ -812,13 +812,17 @@ func Test_SetAggregatorIndexEpochSeen(t *testing.T) {
 	}
 
 	aggIndex := primitives.ValidatorIndex(42)
-	epoch := primitives.Epoch(7)
+	round := primitives.Round(7)
 
-	require.Equal(t, false, r.hasSeenAggregatorIndexEpoch(epoch, aggIndex))
-	first := r.setAggregatorIndexEpochSeen(epoch, aggIndex)
+	require.Equal(t, false, r.hasSeenAggregatorIndexRound(round, aggIndex))
+	first := r.setAggregatorIndexRoundSeen(round, aggIndex)
 	require.Equal(t, true, first)
-	require.Equal(t, true, r.hasSeenAggregatorIndexEpoch(epoch, aggIndex))
+	require.Equal(t, true, r.hasSeenAggregatorIndexRound(round, aggIndex))
 
-	second := r.setAggregatorIndexEpochSeen(epoch, aggIndex)
+	second := r.setAggregatorIndexRoundSeen(round, aggIndex)
 	require.Equal(t, false, second)
+
+	// A different round of the same epoch is not a duplicate.
+	require.Equal(t, false, r.hasSeenAggregatorIndexRound(round+1, aggIndex))
+	require.Equal(t, true, r.setAggregatorIndexRoundSeen(round+1, aggIndex))
 }

@@ -123,12 +123,16 @@ func (c *CommitteeCache) Committee(ctx context.Context, slot primitives.Slot, se
 		return nil, ErrNotCommittee
 	}
 
+	// CommitteeCount is a round's worth of committees, so a slot's offset into
+	// the shuffled list counts from the start of its round, not its epoch.
+	slotsPerRound := params.BeaconConfig().SlotsPerRound
 	committeeCountPerSlot := uint64(1)
-	if item.CommitteeCount/uint64(params.BeaconConfig().SlotsPerEpoch) > 1 {
-		committeeCountPerSlot = item.CommitteeCount / uint64(params.BeaconConfig().SlotsPerEpoch)
+	if item.CommitteeCount/uint64(slotsPerRound) > 1 {
+		committeeCountPerSlot = item.CommitteeCount / uint64(slotsPerRound)
 	}
 
-	indexOffSet, err := mathutil.Add64(uint64(index), uint64(slot.ModSlot(params.BeaconConfig().SlotsPerEpoch).Mul(committeeCountPerSlot)))
+	slotInRound := slot.ModSlot(slotsPerRound)
+	indexOffSet, err := mathutil.Add64(uint64(index), uint64(slotInRound.Mul(committeeCountPerSlot)))
 	if err != nil {
 		return nil, err
 	}
