@@ -4,16 +4,25 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"golang.org/x/sync/errgroup"
 )
 
 // The length of total subscribeDuties can be large,
 // so need to limit the number of workers to avoid too many goroutines being created.
 const subnetSubscriptionAggregatorWorkers = 16
+
+// dutyAtSlot pairs a duty with one of the slots it attests at. The aggregator
+// selection proof is over the slot, so each repeat slot is decided on its own.
+type dutyAtSlot struct {
+	duty *ethpb.ValidatorDuty
+	slot primitives.Slot
+}
 
 // subscribeToSubnets iterates through each validator duty, signs each slot, and asks beacon node
 // to eagerly subscribe to subnets so that the aggregator has attestations to aggregate.
@@ -22,7 +31,9 @@ func (v *validator) subscribeToSubnets(ctx context.Context, duties *ethpb.Valida
 	defer span.End()
 
 	total := len(duties.CurrentEpochDuties) + len(duties.NextEpochDuties)
-	subscribeDuties := make([]*ethpb.ValidatorDuty, 0, total)
+	// A duty is subscribed to once per attesting slot, and a duty attests once per round.
+	total *= int(params.BeaconConfig().SlotsPerEpoch / params.BeaconConfig().SlotsPerRound)
+	subscribeDuties := make([]dutyAtSlot, 0, total)
 	req := &ethpb.CommitteeSubnetsSubscribeRequest{
 		Slots:            make([]primitives.Slot, 0, total),
 		CommitteeIds:     make([]primitives.CommitteeIndex, 0, total),
@@ -39,11 +50,15 @@ func (v *validator) subscribeToSubnets(ctx context.Context, duties *ethpb.Valida
 			if duty.Status != ethpb.ValidatorStatus_ACTIVE && duty.Status != ethpb.ValidatorStatus_EXITING {
 				continue
 			}
-			subscribeDuties = append(subscribeDuties, duty)
-			req.Slots = append(req.Slots, duty.AttesterSlot)
-			req.CommitteeIds = append(req.CommitteeIds, duty.CommitteeIndex)
-			req.ValidatorIndices = append(req.ValidatorIndices, duty.ValidatorIndex)
-			req.CommitteesAtSlot = append(req.CommitteesAtSlot, duty.CommitteesAtSlot)
+			// The subnet cache on the node is keyed by slot, so every slot the duty
+			// attests at needs its own subscription.
+			for _, slot := range slots.RoundRepeats(duty.AttesterSlot) {
+				subscribeDuties = append(subscribeDuties, dutyAtSlot{duty: duty, slot: slot})
+				req.Slots = append(req.Slots, slot)
+				req.CommitteeIds = append(req.CommitteeIds, duty.CommitteeIndex)
+				req.ValidatorIndices = append(req.ValidatorIndices, duty.ValidatorIndex)
+				req.CommitteesAtSlot = append(req.CommitteesAtSlot, duty.CommitteesAtSlot)
+			}
 		}
 	}
 
@@ -52,9 +67,9 @@ func (v *validator) subscribeToSubnets(ctx context.Context, duties *ethpb.Valida
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(subnetSubscriptionAggregatorWorkers)
 	req.IsAggregator = make([]bool, len(subscribeDuties))
-	for i, duty := range subscribeDuties {
+	for i, d := range subscribeDuties {
 		g.Go(func() error {
-			agg, err := v.isAggregator(gctx, duty.CommitteeLength, duty.AttesterSlot, bytesutil.ToBytes48(duty.PublicKey))
+			agg, err := v.isAggregator(gctx, d.duty.CommitteeLength, d.slot, bytesutil.ToBytes48(d.duty.PublicKey))
 			if err != nil {
 				return fmt.Errorf("could not check if validator is an aggregator: %w", err)
 			}

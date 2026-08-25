@@ -804,8 +804,14 @@ func (v *validator) logDuties(slot primitives.Slot) {
 		if attesterSlotInEpoch >= params.BeaconConfig().SlotsPerEpoch {
 			log.WithField("duty", duty).Warn("Invalid attester slot")
 		} else {
-			attesterKeys[attesterSlotInEpoch] = append(attesterKeys[attesterSlotInEpoch], truncatedPubkey)
-			totalAttestingKeys++
+			// The duty names its first-round slot; the validator attests again at the
+			// same offset in every later round of the epoch. Under the shipped configs
+			// that is the duty's own slot alone.
+			for _, attesterSlot := range slots.RoundRepeats(duty.AttesterSlot) {
+				inEpoch := attesterSlot - epochStartSlot
+				attesterKeys[inEpoch] = append(attesterKeys[inEpoch], truncatedPubkey)
+				totalAttestingKeys++
+			}
 			if v.emitAccountMetrics {
 				ValidatorNextAttestationSlotGaugeVec.WithLabelValues(pk).Set(float64(duty.AttesterSlot))
 			}

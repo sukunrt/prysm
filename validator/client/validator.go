@@ -581,7 +581,12 @@ func (v *validator) RolesAt(ctx context.Context, slot primitives.Slot) (map[[fie
 		}
 
 		// TODO(goldfish): wipe these when fork is Heze
-		if duty.AttesterSlot == slot {
+		//
+		// The duty names one slot, the one the node found in the epoch's first round.
+		// Committees repeat at that offset in every later round of the epoch, so the
+		// validator attests at each repeat slot too. Under the shipped configs an epoch
+		// is one round and only the duty's own slot matches.
+		if slots.IsRoundRepeat(slot, duty.AttesterSlot) {
 			roles = append(roles, iface.RoleAttester)
 
 			aggregator, err := v.isAggregator(ctx, duty.CommitteeLength, slot, pk)

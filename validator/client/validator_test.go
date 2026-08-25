@@ -431,6 +431,88 @@ func TestRolesAt_OK(t *testing.T) {
 	}
 }
 
+// A round shorter than an epoch repeats the committee at the same slot offset in every
+// round, so one attester duty means one attestation per round: four per epoch at
+// SLOTS_PER_ROUND = 8 against SLOTS_PER_EPOCH = 32.
+func TestRolesAt_AttesterRepeatsEveryRound(t *testing.T) {
+	v, m, validatorKey, finish := setup(t, false)
+	defer finish()
+
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	committeeLength := uint64(64)
+	sigAgg, _ := pickDistinguishingProofs(t, committeeLength/params.BeaconConfig().TargetAggregatorsPerCommittee)
+	pk := bytesutil.ToBytes48(validatorKey.PublicKey().Marshal())
+	v.aggSelector = &stubAggregatorSelector{
+		proofs: map[[fieldparams.BLSPubkeyLength]byte][]byte{pk: sigAgg},
+	}
+
+	v.duties = testDutyStore(&ethpb.ValidatorDuty{
+		CommitteeIndex:  1,
+		CommitteeLength: committeeLength,
+		AttesterSlot:    1,
+		PublicKey:       validatorKey.PublicKey().Marshal(),
+	})
+
+	m.validatorClient.EXPECT().DomainData(
+		gomock.Any(), // ctx
+		gomock.Any(), // epoch
+	).AnyTimes().Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil /*err*/)
+
+	attesting := make([]primitives.Slot, 0, 4)
+	aggregating := make([]primitives.Slot, 0, 4)
+	for slot := range primitives.Slot(64) {
+		roleMap, err := v.RolesAt(t.Context(), slot)
+		require.NoError(t, err)
+		if slices.Contains(roleMap[pk], iface.RoleAttester) {
+			attesting = append(attesting, slot)
+		}
+		if slices.Contains(roleMap[pk], iface.RoleAggregator) {
+			aggregating = append(aggregating, slot)
+		}
+	}
+
+	// The duty is for epoch 0 only, so the second epoch's slots produce nothing.
+	assert.DeepEqual(t, []primitives.Slot{1, 9, 17, 25}, attesting)
+	// Aggregation is decided per slot, so it repeats with the attestation.
+	assert.DeepEqual(t, []primitives.Slot{1, 9, 17, 25}, aggregating)
+}
+
+// Every shipped config has SLOTS_PER_ROUND equal to SLOTS_PER_EPOCH, so an attester duty
+// still means exactly one attestation, at the duty's own slot.
+func TestRolesAt_AttesterOnceAnEpochUnderIdentityConfig(t *testing.T) {
+	v, m, validatorKey, finish := setup(t, false)
+	defer finish()
+
+	require.Equal(t, params.BeaconConfig().SlotsPerEpoch, params.BeaconConfig().SlotsPerRound)
+
+	v.duties = testDutyStore(&ethpb.ValidatorDuty{
+		CommitteeIndex: 1,
+		AttesterSlot:   1,
+		PublicKey:      validatorKey.PublicKey().Marshal(),
+	})
+
+	m.validatorClient.EXPECT().DomainData(
+		gomock.Any(), // ctx
+		gomock.Any(), // epoch
+	).AnyTimes().Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil /*err*/)
+
+	pk := bytesutil.ToBytes48(validatorKey.PublicKey().Marshal())
+	attesting := make([]primitives.Slot, 0, 1)
+	for slot := range primitives.Slot(64) {
+		roleMap, err := v.RolesAt(t.Context(), slot)
+		require.NoError(t, err)
+		if slices.Contains(roleMap[pk], iface.RoleAttester) {
+			attesting = append(attesting, slot)
+		}
+	}
+	assert.DeepEqual(t, []primitives.Slot{1}, attesting)
+}
+
 func TestRolesAt_DoesNotAssignProposer_Slot0(t *testing.T) {
 	for _, isSlashingProtectionMinimal := range [...]bool{false, true} {
 		t.Run(fmt.Sprintf("SlashingProtectionMinimal:%v", isSlashingProtectionMinimal), func(t *testing.T) {

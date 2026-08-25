@@ -116,6 +116,90 @@ func TestSubscribeToSubnets_AggregatorEvaluatedPerValidator(t *testing.T) {
 	require.DeepEqual(t, []primitives.ValidatorIndex{2, 1}, captured.ValidatorIndices)
 }
 
+// The node's subnet cache is keyed by slot, so a duty must be subscribed to at each slot
+// it attests at: once per round of the epoch, not once per epoch.
+func TestSubscribeToSubnets_OneSubscriptionPerRound(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	pk := [fieldparams.BLSPubkeyLength]byte{0xaa}
+	sig, _ := pickDistinguishingProofs(t, 64/params.BeaconConfig().TargetAggregatorsPerCommittee)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	client := validatormock.NewMockValidatorClient(ctrl)
+	v := &validator{
+		validatorClient: client,
+		aggSelector: &stubAggregatorSelector{
+			proofs: map[[fieldparams.BLSPubkeyLength]byte][]byte{pk: sig},
+		},
+	}
+
+	// Slot 3 sits in the first round of epoch 0; slot 40 opens the second round of epoch 1.
+	duties := &ethpb.ValidatorDutiesContainer{
+		CurrentEpochDuties: []*ethpb.ValidatorDuty{
+			{AttesterSlot: 3, CommitteeIndex: 1, CommitteeLength: 64, PublicKey: pk[:], Status: ethpb.ValidatorStatus_ACTIVE, ValidatorIndex: 1},
+		},
+		NextEpochDuties: []*ethpb.ValidatorDuty{
+			{AttesterSlot: 40, CommitteeIndex: 2, CommitteeLength: 64, PublicKey: pk[:], Status: ethpb.ValidatorStatus_ACTIVE, ValidatorIndex: 1},
+		},
+	}
+
+	var captured *ethpb.CommitteeSubnetsSubscribeRequest
+	client.EXPECT().SubscribeCommitteeSubnets(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, req *ethpb.CommitteeSubnetsSubscribeRequest) (*emptypb.Empty, error) {
+			captured = req
+			return &emptypb.Empty{}, nil
+		})
+
+	require.NoError(t, v.subscribeToSubnets(t.Context(), duties))
+	require.NotNil(t, captured)
+	require.DeepEqual(t, []primitives.Slot{3, 11, 19, 27, 32, 40, 48, 56}, captured.Slots)
+	require.Equal(t, 8, len(captured.CommitteeIds))
+	require.Equal(t, 8, len(captured.IsAggregator))
+	for i, want := range []primitives.CommitteeIndex{1, 1, 1, 1, 2, 2, 2, 2} {
+		assert.Equal(t, want, captured.CommitteeIds[i], "committee id %d", i)
+	}
+}
+
+// Under every shipped config an epoch holds one round, so a duty is subscribed to once.
+func TestSubscribeToSubnets_OneSubscriptionPerEpochUnderIdentityConfig(t *testing.T) {
+	require.Equal(t, params.BeaconConfig().SlotsPerEpoch, params.BeaconConfig().SlotsPerRound)
+
+	pk := [fieldparams.BLSPubkeyLength]byte{0xaa}
+	sig, _ := pickDistinguishingProofs(t, 64/params.BeaconConfig().TargetAggregatorsPerCommittee)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	client := validatormock.NewMockValidatorClient(ctrl)
+	v := &validator{
+		validatorClient: client,
+		aggSelector: &stubAggregatorSelector{
+			proofs: map[[fieldparams.BLSPubkeyLength]byte][]byte{pk: sig},
+		},
+	}
+
+	duties := &ethpb.ValidatorDutiesContainer{
+		CurrentEpochDuties: []*ethpb.ValidatorDuty{
+			{AttesterSlot: 3, CommitteeIndex: 1, CommitteeLength: 64, PublicKey: pk[:], Status: ethpb.ValidatorStatus_ACTIVE, ValidatorIndex: 1},
+		},
+	}
+
+	var captured *ethpb.CommitteeSubnetsSubscribeRequest
+	client.EXPECT().SubscribeCommitteeSubnets(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, req *ethpb.CommitteeSubnetsSubscribeRequest) (*emptypb.Empty, error) {
+			captured = req
+			return &emptypb.Empty{}, nil
+		})
+
+	require.NoError(t, v.subscribeToSubnets(t.Context(), duties))
+	require.NotNil(t, captured)
+	require.DeepEqual(t, []primitives.Slot{3}, captured.Slots)
+}
+
 type blockingAggregatorSelector struct {
 	stubAggregatorSelector
 	blockPubKey [fieldparams.BLSPubkeyLength]byte

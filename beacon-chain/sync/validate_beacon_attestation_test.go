@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -456,6 +457,125 @@ func TestService_validateCommitteeIndexBeaconAttestationElectra(t *testing.T) {
 			if tt.want && m.ValidatorData == nil {
 				t.Error("Expected validator data to be set")
 			}
+		})
+	}
+}
+
+// A round shorter than an epoch repeats the committees at the same slot offset in every
+// round of the epoch. The gossip validator resolves the committee from the attestation's
+// own slot, so an attestation from a later round must validate exactly like the first
+// round's, with the same committee and the same attester.
+func TestService_validateCommitteeIndexBeaconAttestation_RepeatSlotsOfARound(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotsPerRound = 8
+	cfg.ElectraForkEpoch = 1
+	params.OverrideBeaconConfig(cfg)
+	params.BeaconConfig().InitializeForkSchedule()
+
+	epochStart, err := slots.EpochStart(params.BeaconConfig().ElectraForkEpoch)
+	require.NoError(t, err)
+	// The last of the four repeats is the current slot, so all four are inside
+	// ATTESTATION_PROPAGATION_SLOT_RANGE.
+	repeats := slots.RoundRepeats(epochStart + 1)
+	require.DeepEqual(t, []primitives.Slot{
+		epochStart + 1, epochStart + 9, epochStart + 17, epochStart + 25,
+	}, repeats)
+	currentSlot := repeats[len(repeats)-1]
+
+	p := p2ptest.NewTestP2P(t)
+	db := dbtest.SetupDB(t)
+	genesisOffset := time.Duration(currentSlot) * time.Duration(params.BeaconConfig().SecondsPerSlot) * time.Second
+	chain := &mockChain.ChainService{
+		Genesis:          time.Now().Add(-1 * genesisOffset),
+		ValidatorsRoot:   params.BeaconConfig().GenesisValidatorsRoot,
+		ValidAttestation: true,
+		DB:               db,
+		Optimistic:       true,
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	s := &Service{
+		ctx: ctx,
+		cfg: &config{
+			initialSync:         &mockSync.Sync{IsSyncing: false},
+			p2p:                 p,
+			beaconDB:            db,
+			chain:               chain,
+			clock:               startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
+			attestationNotifier: (&mockChain.ChainService{}).OperationNotifier(),
+		},
+		blkRootToPendingAtts:             make(map[[32]byte][]any),
+		seenUnAggregatedAttestationCache: lruwrpr.New(10),
+		signatureChan:                    make(chan *signatureVerifier, verifierLimit),
+	}
+	require.Equal(t, currentSlot, s.cfg.clock.CurrentSlot())
+	s.initCaches()
+	go s.verifierRoutine()
+
+	digest := s.currentForkDigest()
+
+	blk := util.NewBeaconBlock()
+	blk.Block.Slot = currentSlot
+	util.SaveBlock(t, ctx, db, blk)
+	validBlockRoot, err := blk.Block.HashTreeRoot()
+	require.NoError(t, err)
+	chain.FinalizedCheckPoint = &ethpb.Checkpoint{Root: validBlockRoot[:], Epoch: 0}
+
+	savedState, keys := util.DeterministicGenesisState(t, 64)
+	require.NoError(t, savedState.SetSlot(currentSlot))
+	require.NoError(t, db.SaveState(t.Context(), savedState, validBlockRoot))
+	chain.State = savedState
+
+	// 64 validators over a round of 8 slots is one committee of 8 per slot.
+	require.Equal(t, uint64(1), helpers.SlotCommitteeCount(64))
+
+	// The four repeat slots carry the same committee; the slot next to them does not.
+	firstCommittee, err := helpers.BeaconCommitteeFromState(ctx, savedState, repeats[0], 0)
+	require.NoError(t, err)
+	require.Equal(t, 8, len(firstCommittee))
+	for _, slot := range repeats[1:] {
+		committee, err := helpers.BeaconCommitteeFromState(ctx, savedState, slot, 0)
+		require.NoError(t, err)
+		require.DeepEqual(t, firstCommittee, committee, "committee at slot %d", slot)
+	}
+	neighbour, err := helpers.BeaconCommitteeFromState(ctx, savedState, repeats[0]+1, 0)
+	require.NoError(t, err)
+	require.Equal(t, false, reflect.DeepEqual(firstCommittee, neighbour))
+
+	attester := firstCommittee[0]
+	for _, slot := range repeats {
+		t.Run(fmt.Sprintf("slot %d", slot), func(t *testing.T) {
+			att := &ethpb.SingleAttestation{
+				Data: &ethpb.AttestationData{
+					BeaconBlockRoot: validBlockRoot[:],
+					CommitteeIndex:  0,
+					Slot:            slot,
+					Target:          &ethpb.Checkpoint{Epoch: slots.ToEpoch(slot), Root: validBlockRoot[:]},
+					Source:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+				},
+				AttesterIndex: attester,
+			}
+			domain, err := signing.Domain(savedState.Fork(), att.Data.Target.Epoch, params.BeaconConfig().DomainBeaconAttester, savedState.GenesisValidatorsRoot())
+			require.NoError(t, err)
+			attRoot, err := signing.ComputeSigningRoot(att.Data, domain)
+			require.NoError(t, err)
+			att.SetSignature(keys[attester].Sign(attRoot[:]).Marshal())
+
+			buf := new(bytes.Buffer)
+			_, err = p.Encoding().EncodeGossip(buf, att)
+			require.NoError(t, err)
+			// The subnet follows the slot's offset in the epoch, so each repeat rides a
+			// different subnet.
+			subnet := helpers.ComputeSubnetForAttestation(64, att)
+			topic := fmt.Sprintf(p2p.AttestationSubnetTopicFormat, digest, subnet) + p.Encoding().ProtocolSuffix()
+			m := &pubsub.Message{Message: &pubsubpb.Message{Data: buf.Bytes(), Topic: &topic}}
+
+			res, err := s.validateCommitteeIndexBeaconAttestation(ctx, "", m)
+			require.NoError(t, err)
+			require.Equal(t, pubsub.ValidationAccept, res)
+			require.NotNil(t, m.ValidatorData)
 		})
 	}
 }

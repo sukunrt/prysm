@@ -257,15 +257,19 @@ func (p *distributedSelector) fetchSelectionProofs(ctx context.Context) (map[att
 		if duty.Status != ethpb.ValidatorStatus_ACTIVE && duty.Status != ethpb.ValidatorStatus_EXITING {
 			continue
 		}
-		slotSig, err := p.v.signSlotWithSelectionProof(ctx, pk, duty.AttesterSlot)
-		if err != nil {
-			return nil, errors.Wrap(err, "sign selection proof")
+		// The selection proof is over the slot, so each slot the duty attests at is
+		// decided on its own. Under the shipped configs that is the duty's own slot.
+		for _, slot := range slots.RoundRepeats(duty.AttesterSlot) {
+			slotSig, err := p.v.signSlotWithSelectionProof(ctx, pk, slot)
+			if err != nil {
+				return nil, errors.Wrap(err, "sign selection proof")
+			}
+			req = append(req, iface.BeaconCommitteeSelection{
+				SelectionProof: slotSig,
+				Slot:           slot,
+				ValidatorIndex: duty.ValidatorIndex,
+			})
 		}
-		req = append(req, iface.BeaconCommitteeSelection{
-			SelectionProof: slotSig,
-			Slot:           duty.AttesterSlot,
-			ValidatorIndex: duty.ValidatorIndex,
-		})
 	}
 
 	resp, err := p.v.validatorClient.AggregatedSelections(ctx, req)

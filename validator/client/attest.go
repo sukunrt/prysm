@@ -118,14 +118,22 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 		return
 	}
 
-	// Send the attestation to the beacon node.
-	if err := v.db.SlashableAttestationCheck(ctx, indexedAtt, pubKey, signingRoot, v.emitAccountMetrics, ValidatorAttestFailVec); err != nil {
-		log.WithError(err).Error("Failed attestation slashing protection check")
-		log.WithFields(
-			attestationLogFields(pubKey, indexedAtt),
-		).Debug("Attempted slashable attestation details")
-		tracing.AnnotateError(span, err)
-		return
+	// Local slashing protection is EIP-3076, which records one source/target epoch pair
+	// per validator. A round shorter than an epoch has the validator attest once per
+	// round, and every attestation of the epoch carries the same target, so every
+	// attestation after the epoch's first round would read as a double vote. Only the
+	// first round's attestation is checked and recorded. With SLOTS_PER_ROUND equal to
+	// SLOTS_PER_EPOCH the epoch is one round and every attestation is still checked.
+	if slots.SinceEpochStarts(slot) < params.BeaconConfig().SlotsPerRound {
+		// Send the attestation to the beacon node.
+		if err := v.db.SlashableAttestationCheck(ctx, indexedAtt, pubKey, signingRoot, v.emitAccountMetrics, ValidatorAttestFailVec); err != nil {
+			log.WithError(err).Error("Failed attestation slashing protection check")
+			log.WithFields(
+				attestationLogFields(pubKey, indexedAtt),
+			).Debug("Attempted slashable attestation details")
+			tracing.AnnotateError(span, err)
+			return
+		}
 	}
 
 	var aggregationBitfield bitfield.Bitlist

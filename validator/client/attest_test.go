@@ -23,6 +23,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 	"go.uber.org/mock/gomock"
 	"gopkg.in/d4l3k/messagediff.v1"
@@ -431,6 +432,73 @@ func TestAttestToBlockHead_BlocksDoubleAtt(t *testing.T) {
 			validator.SubmitAttestation(t.Context(), 30, pubKey)
 			validator.SubmitAttestation(t.Context(), 30, pubKey)
 			require.LogsContain(t, hook, "Failed attestation slashing protection")
+		})
+	}
+}
+
+// With a round shorter than an epoch a validator attests once per round, so all four
+// attestations of one epoch share a target. EIP-3076 local protection records one
+// target epoch per validator, so it only covers the first round's attestation; the
+// repeats must still go out.
+func TestSubmitAttestation_RepeatSlotsAreNotBlockedAsDoubleVotes(t *testing.T) {
+	for _, isSlashingProtectionMinimal := range [...]bool{false, true} {
+		t.Run(fmt.Sprintf("SlashingProtectionMinimal:%v", isSlashingProtectionMinimal), func(t *testing.T) {
+			params.SetupTestConfigCleanup(t)
+			cfg := params.BeaconConfig().Copy()
+			cfg.SlotsPerEpoch = 32
+			cfg.SlotsPerRound = 8
+			params.OverrideBeaconConfig(cfg)
+
+			hook := logTest.NewGlobal()
+			validator, m, validatorKey, finish := setup(t, isSlashingProtectionMinimal)
+			defer finish()
+			validatorIndex := primitives.ValidatorIndex(7)
+			committee := []primitives.ValidatorIndex{0, 3, 4, 2, validatorIndex, 6, 8, 9, 10}
+			var pubKey [fieldparams.BLSPubkeyLength]byte
+			copy(pubKey[:], validatorKey.PublicKey().Marshal())
+			validator.duties = testDutyStore(&ethpb.ValidatorDuty{
+				PublicKey:       validatorKey.PublicKey().Marshal(),
+				CommitteeIndex:  5,
+				CommitteeLength: uint64(len(committee)),
+				AttesterSlot:    1,
+				ValidatorIndex:  validatorIndex,
+			})
+
+			targetRoot := bytesutil.ToBytes32([]byte("B"))
+			sourceRoot := bytesutil.ToBytes32([]byte("C"))
+			// Each round votes for a different head, so the attestations differ only in
+			// their head vote: exactly the shape a double-vote check rejects.
+			m.validatorClient.EXPECT().AttestationData(
+				gomock.Any(), // ctx
+				gomock.AssignableToTypeOf(&ethpb.AttestationDataRequest{}),
+			).Times(4).DoAndReturn(func(_ context.Context, req *ethpb.AttestationDataRequest) (*ethpb.AttestationData, error) {
+				head := bytesutil.ToBytes32([]byte{byte(req.Slot)})
+				return &ethpb.AttestationData{
+					BeaconBlockRoot: head[:],
+					Target:          &ethpb.Checkpoint{Root: targetRoot[:], Epoch: 0},
+					Source:          &ethpb.Checkpoint{Root: sourceRoot[:], Epoch: 0},
+				}, nil
+			})
+			m.validatorClient.EXPECT().DomainData(
+				gomock.Any(), // ctx
+				gomock.Any(), // epoch
+			).AnyTimes().Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil /*err*/)
+
+			var submitted []primitives.Slot
+			m.validatorClient.EXPECT().ProposeAttestation(
+				gomock.Any(), // ctx
+				gomock.AssignableToTypeOf(&ethpb.Attestation{}),
+			).Times(4).DoAndReturn(func(_ context.Context, att *ethpb.Attestation) (*ethpb.AttestResponse, error) {
+				submitted = append(submitted, att.Data.Slot)
+				return &ethpb.AttestResponse{AttestationDataRoot: make([]byte, 32)}, nil
+			})
+
+			for _, slot := range slots.RoundRepeats(1) {
+				validator.SubmitAttestation(t.Context(), slot, pubKey)
+			}
+
+			require.Equal(t, 4, len(submitted))
+			require.LogsDoNotContain(t, hook, "Failed attestation slashing protection")
 		})
 	}
 }
