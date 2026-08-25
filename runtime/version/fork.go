@@ -15,6 +15,7 @@ const (
 	Electra
 	Fulu
 	Gloas
+	Hegota
 )
 
 var versionToString = map[int]string{
@@ -26,6 +27,7 @@ var versionToString = map[int]string{
 	Electra:   "electra",
 	Fulu:      "fulu",
 	Gloas:     "gloas",
+	Hegota:    "hegota",
 }
 
 // stringToVersion and allVersions are populated in init()
@@ -36,7 +38,8 @@ var supportedVersions []int
 // unsupportedVersions contains fork versions that exist in the enums but are not yet
 // enabled on any supported network. These versions are removed from All().
 var unsupportedVersions = map[int]struct{}{
-	Gloas: {},
+	Gloas:  {},
+	Hegota: {},
 }
 
 // ErrUnrecognizedVersionName means a string does not match the list of canonical version names.
