@@ -599,6 +599,33 @@ func NewBeaconStateGloas(options ...func(state *ethpb.BeaconStateGloas) error) (
 	return st, nil
 }
 
+// NewBeaconStateHeze creates a Heze beacon state with minimum marshalable
+// fields. BeaconStateHeze is a field-for-field copy of BeaconStateGloas, so
+// the seed is built as Gloas and re-decoded as Heze.
+func NewBeaconStateHeze(options ...func(state *ethpb.BeaconStateHeze) error) (state.BeaconState, error) {
+	gloasState, err := NewBeaconStateGloas()
+	if err != nil {
+		return nil, err
+	}
+	enc, err := gloasState.MarshalSSZ()
+	if err != nil {
+		return nil, err
+	}
+
+	seed := &ethpb.BeaconStateHeze{}
+	if err := seed.UnmarshalSSZ(enc); err != nil {
+		return nil, err
+	}
+
+	for _, opt := range options {
+		if err := opt(seed); err != nil {
+			return nil, err
+		}
+	}
+
+	return state_native.InitializeFromProtoUnsafeHeze(seed)
+}
+
 // SSZ will fill 2D byte slices with their respective values, so we must fill these in too for round
 // trip testing.
 func filledByteSlice2D(length, innerLen uint64) [][]byte {

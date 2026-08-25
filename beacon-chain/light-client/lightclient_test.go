@@ -33,8 +33,8 @@ func TestLightClient_NewLightClientOptimisticUpdateFromBeaconState(t *testing.T)
 	params.OverrideBeaconConfig(cfg)
 
 	for _, testVersion := range version.All()[1:] {
-		if testVersion == version.Gloas {
-			// TODO(16027): Unskip light client tests for Gloas
+		if testVersion >= version.Gloas {
+			// TODO(16027): Unskip light client tests for Gloas and later
 			continue
 		}
 		t.Run(version.String(testVersion), func(t *testing.T) {

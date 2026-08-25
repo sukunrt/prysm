@@ -65,6 +65,9 @@ var (
 	fuluBlindKey               = []byte("blind-fulu")
 	gloasKey                   = []byte("gloas")
 	// No gloasBlindKey needed - Gloas blocks are never blinded (no execution payload in block body).
+	// hezeKey tags Heze states only: Heze blocks keep the Gloas wire shape and
+	// are stored under gloasKey.
+	hezeKey = []byte("heze")
 
 	// block root included in the beacon state used by weak subjectivity initial sync
 	originCheckpointBlockRootKey = []byte("origin-checkpoint-block-root")

@@ -198,6 +198,13 @@ func NewGenesisBlockForState(ctx context.Context, st state.BeaconState) (interfa
 			Block:     gloasGenesisBlock(root, gs.LatestExecutionPayloadBid),
 			Signature: params.BeaconConfig().EmptySignature[:],
 		})
+	case *ethpb.BeaconStateHeze:
+		// Heze owns the state container; blocks keep the Gloas wire shape.
+		hs := ps.(*ethpb.BeaconStateHeze)
+		return blocks.NewSignedBeaconBlock(&ethpb.SignedBeaconBlockGloas{
+			Block:     gloasGenesisBlock(root, hs.LatestExecutionPayloadBid),
+			Signature: params.BeaconConfig().EmptySignature[:],
+		})
 	default:
 		return nil, ErrUnrecognizedState
 	}

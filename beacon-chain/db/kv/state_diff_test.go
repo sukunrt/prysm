@@ -699,7 +699,10 @@ func TestStateDiff_SaveAndReadDiff_MultipleLevels(t *testing.T) {
 func TestStateDiff_SaveAndReadDiffForkTransition(t *testing.T) {
 	setDefaultStateDiffExponents()
 
-	for v := range version.All()[:len(version.All())-1] {
+	// Stops at Fulu. The Fulu -> Gloas transition has its own test below because
+	// it needs a populated validator set, and there is no upgrade to Heze at
+	// all: a Heze chain starts at Heze.
+	for v := range version.Fulu {
 		t.Run(version.String(v), func(t *testing.T) {
 			db := setupDB(t)
 
@@ -730,8 +733,9 @@ func TestStateDiff_SaveAndReadDiffForkTransition(t *testing.T) {
 	}
 }
 
-// TestStateDiff_SaveAndReadDiffForkTransitionGloas tests the Fulu→Gloas fork transition
-// explicitly since Gloas is not yet in version.All().
+// TestStateDiff_SaveAndReadDiffForkTransitionGloas tests the Fulu→Gloas fork
+// transition explicitly: the upgrade needs a populated validator set, which
+// createState does not build.
 func TestStateDiff_SaveAndReadDiffForkTransitionGloas(t *testing.T) {
 	setDefaultStateDiffExponents()
 
@@ -1069,6 +1073,15 @@ func createState(t *testing.T, slot primitives.Slot, v int) (state.ReadOnlyBeaco
 			PreviousVersion: p.FuluForkVersion,
 			CurrentVersion:  p.GloasForkVersion,
 			Epoch:           p.GloasForkEpoch,
+		})
+		require.NoError(t, err)
+	case version.Heze:
+		st, err = util.NewBeaconStateHeze()
+		require.NoError(t, err)
+		err = st.SetFork(&ethpb.Fork{
+			PreviousVersion: p.GloasForkVersion,
+			CurrentVersion:  p.HezeForkVersion,
+			Epoch:           p.HezeForkEpoch,
 		})
 		require.NoError(t, err)
 	default:

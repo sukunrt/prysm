@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
+	state_native "github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
@@ -833,4 +834,61 @@ func TestUnmarshalStateStandalone(t *testing.T) {
 		_, err := UnmarshalState(invalidData)
 		require.ErrorContains(t, "failed to detect version from state", err)
 	})
+}
+
+// TestHezeSplitsStateAndBlockShapes proves the shape split at the Heze fork:
+// the Heze fork version resolves to a Heze state container and, because blocks
+// keep the Gloas wire shape, to a Gloas block container.
+func TestHezeSplitsStateAndBlockShapes(t *testing.T) {
+	ctx := t.Context()
+	params.SetupTestConfigCleanup(t)
+	cfg := params.MainnetConfig().Copy()
+	cfg.GloasForkEpoch = 2
+	cfg.HezeForkEpoch = 4
+	params.OverrideBeaconConfig(cfg)
+
+	hezeSlot, err := slots.EpochStart(cfg.HezeForkEpoch)
+	require.NoError(t, err)
+
+	gloasState, err := util.NewBeaconStateGloas()
+	require.NoError(t, err)
+	gs, ok := gloasState.ToProtoUnsafe().(*ethpb.BeaconStateGloas)
+	require.Equal(t, true, ok)
+	enc, err := gs.MarshalSSZ()
+	require.NoError(t, err)
+	hs := &ethpb.BeaconStateHeze{}
+	require.NoError(t, hs.UnmarshalSSZ(enc))
+
+	st, err := state_native.InitializeFromProtoUnsafeHeze(hs)
+	require.NoError(t, err)
+	require.NoError(t, st.SetFork(&ethpb.Fork{
+		PreviousVersion: cfg.GloasForkVersion,
+		CurrentVersion:  cfg.HezeForkVersion,
+		Epoch:           cfg.HezeForkEpoch,
+	}))
+	require.NoError(t, st.SetSlot(hezeSlot))
+	marshaled, err := st.MarshalSSZ()
+	require.NoError(t, err)
+
+	cf, err := FromState(marshaled)
+	require.NoError(t, err)
+	require.Equal(t, version.Heze, cf.Fork)
+
+	got, err := cf.UnmarshalBeaconState(marshaled)
+	require.NoError(t, err)
+	require.Equal(t, version.Heze, got.Version())
+	expectedRoot, err := st.HashTreeRoot(ctx)
+	require.NoError(t, err)
+	actualRoot, err := got.HashTreeRoot(ctx)
+	require.NoError(t, err)
+	require.DeepEqual(t, expectedRoot, actualRoot)
+
+	blk := util.NewBeaconBlockGloas()
+	blk.Block.Slot = hezeSlot
+	blkBytes, err := blk.MarshalSSZ()
+	require.NoError(t, err)
+
+	gotBlk, err := cf.UnmarshalBeaconBlock(blkBytes)
+	require.NoError(t, err)
+	require.Equal(t, version.Gloas, gotBlk.Version())
 }

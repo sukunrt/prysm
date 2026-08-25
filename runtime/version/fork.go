@@ -27,7 +27,7 @@ var versionToString = map[int]string{
 	Electra:   "electra",
 	Fulu:      "fulu",
 	Gloas:     "gloas",
-	Heze:    "heze",
+	Heze:      "heze",
 }
 
 // stringToVersion and allVersions are populated in init()
@@ -37,10 +37,11 @@ var supportedVersions []int
 
 // unsupportedVersions contains fork versions that exist in the enums but are not yet
 // enabled on any supported network. These versions are removed from All().
-var unsupportedVersions = map[int]struct{}{
-	Gloas:  {},
-	Heze: {},
-}
+//
+// Gloas and Heze are both absent: genesis starts at Heze, which needs Gloas
+// selectable too, and cmd/prysmctl/testnet/generate_genesis.go builds its
+// --fork-name list from All().
+var unsupportedVersions = map[int]struct{}{}
 
 // ErrUnrecognizedVersionName means a string does not match the list of canonical version names.
 var ErrUnrecognizedVersionName = errors.New("version name doesn't map to a known value in the enum")

@@ -107,6 +107,10 @@ func TestValidateLightClientOptimisticUpdate(t *testing.T) {
 			if v == version.Phase0 {
 				continue
 			}
+			if v >= version.Gloas {
+				// TODO(16027): Unskip light client tests for Gloas and later
+				continue
+			}
 			t.Run(test.name+"_"+version.String(v), func(t *testing.T) {
 				ctx := t.Context()
 				p := p2ptest.NewTestP2P(t)
@@ -235,6 +239,10 @@ func TestValidateLightClientFinalityUpdate(t *testing.T) {
 	for _, test := range tests {
 		for v := range version.All() {
 			if v == version.Phase0 {
+				continue
+			}
+			if v >= version.Gloas {
+				// TODO(16027): Unskip light client tests for Gloas and later
 				continue
 			}
 			t.Run(test.name+"_"+version.String(v), func(t *testing.T) {

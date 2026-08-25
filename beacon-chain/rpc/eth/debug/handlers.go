@@ -114,7 +114,9 @@ func (s *Server) getBeaconStateV2(ctx context.Context, w http.ResponseWriter, id
 			httputil.HandleError(w, errMsgStateFromConsensus+": "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-	case version.Gloas:
+	case version.Gloas, version.Heze:
+		// Heze reuses the Gloas JSON shape: the state container is a
+		// field-for-field copy.
 		if strings.ToLower(string(id)) == "head" {
 			st, err = s.Stater.State(ctx, []byte(strconv.FormatUint(uint64(s.HeadFetcher.HeadSlot()), 10)))
 			if err != nil {

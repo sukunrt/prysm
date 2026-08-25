@@ -320,13 +320,14 @@ func TestGetBeaconBlock_Phase0Valid(t *testing.T) {
 	assert.DeepEqual(t, expectedBeaconBlock, beaconBlock)
 }
 
+// TestSSZCodecs_OrderAndCoverage checks that the cascade is strictly
+// descending and covers every fork from Phase0 up to the newest fork with an
+// SSZ block codec. Gloas and later have no codec yet; processBlockSSZResponse
+// falls through to the newest entry for them.
 func TestSSZCodecs_OrderAndCoverage(t *testing.T) {
-	versions := version.All()
-	require.NotEmpty(t, versions)
-
-	expected := make([]int, 0, len(versions))
-	for i := len(versions) - 1; i >= 0; i-- {
-		expected = append(expected, versions[i])
+	expected := make([]int, 0, version.Fulu+1)
+	for v := version.Fulu; v >= version.Phase0; v-- {
+		expected = append(expected, v)
 	}
 
 	require.Equal(t, len(expected), len(sszCodecs))

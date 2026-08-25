@@ -91,9 +91,7 @@ func FromForkVersion(cv [fieldparams.VersionLength]byte) (*VersionedUnmarshaler,
 	case bytesutil.ToBytes4(cfg.GloasForkVersion):
 		fork = version.Gloas
 	case bytesutil.ToBytes4(cfg.HezeForkVersion):
-		// Heze is a consensus-only fork: states keep their pre-Heze shape,
-		// so unmarshal them as the last fork scheduled before Heze.
-		fork = cfg.HezeShape().VersionEnum
+		fork = version.Heze
 	default:
 		return nil, errors.Wrapf(ErrForkNotFound, "version=%#x", cv)
 	}
@@ -191,6 +189,18 @@ func (cf *VersionedUnmarshaler) UnmarshalBeaconState(marshaled []byte) (s state.
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", forkName)
 		}
+	case version.Heze:
+		st := &ethpb.BeaconStateHeze{}
+
+		err = st.UnmarshalSSZ(marshaled)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to unmarshal state, detected fork=%s", forkName)
+		}
+
+		s, err = state_native.InitializeFromProtoUnsafeHeze(st)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to init state trie from state, detected fork=%s", forkName)
+		}
 	default:
 		return nil, fmt.Errorf("unable to initialize BeaconState for fork version=%s", forkName)
 	}
@@ -243,7 +253,8 @@ func (cf *VersionedUnmarshaler) UnmarshalBeaconBlock(marshaled []byte) (interfac
 		blk = &ethpb.SignedBeaconBlockElectra{}
 	case version.Fulu:
 		blk = &ethpb.SignedBeaconBlockFulu{}
-	case version.Gloas:
+	case version.Gloas, version.Heze:
+		// Heze owns the state container only; blocks keep the Gloas wire shape.
 		blk = &ethpb.SignedBeaconBlockGloas{}
 	default:
 		forkName := version.String(cf.Fork)
@@ -284,7 +295,8 @@ func (cf *VersionedUnmarshaler) UnmarshalBlindedBeaconBlock(marshaled []byte) (i
 		blk = &ethpb.SignedBlindedBeaconBlockElectra{}
 	case version.Fulu:
 		blk = &ethpb.SignedBlindedBeaconBlockFulu{}
-	case version.Gloas:
+	case version.Gloas, version.Heze:
+		// Heze owns the state container only; blocks keep the Gloas wire shape.
 		blk = &ethpb.SignedBeaconBlockGloas{}
 	default:
 		forkName := version.String(cf.Fork)
