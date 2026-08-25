@@ -167,7 +167,9 @@ func TestStore_OnBlockBatch(t *testing.T) {
 	require.NoError(t, err)
 	jcp := service.CurrentJustifiedCheckpt()
 	jroot := bytesutil.ToBytes32(jcp.Root)
-	require.Equal(t, blks[63].Root(), jroot)
+	// blks[i] is the block at slot i+1, and epoch 2's FFG target is the block at
+	// slot 63.
+	require.Equal(t, blks[62].Root(), jroot)
 	require.Equal(t, primitives.Epoch(2), service.cfg.ForkChoiceStore.JustifiedCheckpoint().Epoch)
 }
 

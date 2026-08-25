@@ -132,15 +132,19 @@ func (s *Store) insert(ctx context.Context,
 		payloadDataAvailabilityVote: bitfield.NewBitvector512(),
 		payloadAttesters:            bitfield.NewBitvector512(),
 	}
-	// Set the node's target checkpoint
-	if slot%params.BeaconConfig().SlotsPerEpoch == 0 {
+	// Set the node's target checkpoint. The decoupled fork's FFG target for
+	// epoch E is the block at slot StartSlot(E)-1, so it is the deepest
+	// ancestor in an earlier epoch. The state side computes the same root in
+	// helpers.FFGTargetRoot; the two must agree or VerifyLmdFfgConsistency
+	// rejects every vote.
+	if parent == nil {
+		// The anchor: epoch 0 underflows, and a checkpoint sync anchor has no
+		// ancestor left. Both fall back to the anchor root itself.
 		n.target = n
-	} else if parent != nil {
-		if slots.ToEpoch(slot) == slots.ToEpoch(parent.node.slot) {
-			n.target = parent.node.target
-		} else {
-			n.target = parent.node
-		}
+	} else if slots.ToEpoch(slot) == slots.ToEpoch(parent.node.slot) {
+		n.target = parent.node.target
+	} else {
+		n.target = parent.node
 	}
 	var ret *PayloadNode
 	optimistic := true
@@ -263,9 +267,10 @@ func (s *Store) pruneFinalizedNodeByRootMap(ctx context.Context, node, finalized
 		return ctx.Err()
 	}
 	if node == finalizedNode {
-		if node.target != node {
-			node.target = nil
-		}
+		// The finalized node becomes the anchor: whatever its FFG target was,
+		// that block is being pruned away, so the anchor becomes its own
+		// target the way a genesis or checkpoint sync anchor is.
+		node.target = node
 		return nil
 	}
 	for _, child := range s.allConsensusChildren(node) {
@@ -317,18 +322,21 @@ func (s *Store) prune(ctx context.Context) error {
 	s.treeRootNode = fn
 
 	prunedCount.Inc()
-	// Prune all children of the finalized checkpoint block that are incompatible with it
-	checkpointMaxSlot, err := slots.EpochStart(finalizedEpoch)
+	// Prune all children of the finalized checkpoint block that are incompatible
+	// with it. A chain's FFG target for the finalized epoch is its deepest block
+	// before the epoch starts, so a child of the finalized node is compatible
+	// exactly when it is at or after the epoch's first slot.
+	checkpointStartSlot, err := slots.EpochStart(finalizedEpoch)
 	if err != nil {
 		return errors.Wrap(err, "could not compute epoch start")
 	}
-	if fn.slot == checkpointMaxSlot {
+	if fn.slot+1 >= checkpointStartSlot {
 		return nil
 	}
 
 	remaining := fen.children[:0]
 	for _, child := range fen.children {
-		if child != nil && child.slot <= checkpointMaxSlot {
+		if child != nil && child.slot < checkpointStartSlot {
 			if err := s.pruneFinalizedNodeByRootMap(ctx, child, fn); err != nil {
 				return errors.Wrap(err, "could not prune incompatible finalized child")
 			}
@@ -343,7 +351,7 @@ func (s *Store) prune(ctx context.Context) error {
 	}
 	remaining = ffn.children[:0]
 	for _, child := range ffn.children {
-		if child != nil && child.slot <= checkpointMaxSlot {
+		if child != nil && child.slot < checkpointStartSlot {
 			if err := s.pruneFinalizedNodeByRootMap(ctx, child, fn); err != nil {
 				return errors.Wrap(err, "could not prune incompatible finalized child")
 			}

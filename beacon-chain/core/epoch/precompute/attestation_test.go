@@ -162,7 +162,8 @@ func TestAttestedCurrentEpoch(t *testing.T) {
 	r := [32]byte{'A'}
 
 	br := beaconState.BlockRoots()
-	br[params.BeaconConfig().SlotsPerEpoch] = r[:]
+	// Epoch 1's FFG target is the block at the last slot of epoch 0.
+	br[params.BeaconConfig().SlotsPerEpoch-1] = r[:]
 	require.NoError(t, beaconState.SetBlockRoots(br))
 	att.Data.Target.Root = r[:]
 	att.Data.BeaconBlockRoot = r[:]

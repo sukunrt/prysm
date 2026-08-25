@@ -452,9 +452,11 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	state, blk, err := prepareForkchoiceState(ctx, params.BeaconConfig().SlotsPerEpoch, [32]byte{'a'}, params.BeaconConfig().ZeroHash, params.BeaconConfig().ZeroHash, 1, 1)
 	require.NoError(t, err)
 	require.NoError(t, f.InsertNode(ctx, state, blk))
+	// The FFG target for epoch 1 is the block at slot 31, which here is the
+	// genesis block the store was set up with.
 	target, err := f.TargetRootForEpoch(blk.Root(), 1)
 	require.NoError(t, err)
-	require.Equal(t, target, blk.Root())
+	require.Equal(t, params.BeaconConfig().ZeroHash, target)
 	dependent, err := f.DependentRoot(1)
 	require.NoError(t, err)
 	require.Equal(t, dependent, [32]byte{})
@@ -468,7 +470,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	require.Equal(t, headRoot, blk1.Root())
 	target, err = f.TargetRootForEpoch(blk1.Root(), 1)
 	require.NoError(t, err)
-	require.Equal(t, target, blk.Root())
+	require.Equal(t, params.BeaconConfig().ZeroHash, target)
 	dependent, err = f.DependentRoot(1)
 	require.NoError(t, err)
 	require.Equal(t, dependent, [32]byte{})
@@ -513,12 +515,14 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	s.finalizedCheckpoint.Root = blk1.Root()
 	s.justifiedCheckpoint.Root = blk1.Root()
 	require.NoError(t, s.prune(ctx))
+	// The block at slot 31 is pruned away, so the new tree root is its own
+	// target and the dependent root falls back to the saved one.
 	target, err = f.TargetRootForEpoch(blk1.Root(), 1)
 	require.NoError(t, err)
-	require.Equal(t, [32]byte{}, target)
+	require.Equal(t, blk1.Root(), target)
 	dependent, err = f.DependentRoot(1)
 	require.NoError(t, err)
-	require.Equal(t, [32]byte{}, dependent)
+	require.Equal(t, blk.Root(), dependent)
 	dependent, err = f.DependentRoot(2)
 	require.NoError(t, err)
 	require.Equal(t, blk1.Root(), dependent)
@@ -530,9 +534,10 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	headRoot, err = f.Head(ctx)
 	require.NoError(t, err)
 	require.Equal(t, headRoot, blk4.Root())
+	// Slot 95 was missed, so epoch 3's target is the block at slot 33.
 	target, err = f.TargetRootForEpoch(blk4.Root(), 3)
 	require.NoError(t, err)
-	require.Equal(t, target, blk4.Root())
+	require.Equal(t, blk1.Root(), target)
 	dependent, err = f.DependentRoot(3)
 	require.NoError(t, err)
 	require.Equal(t, dependent, blk1.Root())
@@ -549,7 +554,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	require.Equal(t, headRoot, blk5.Root())
 	target, err = f.TargetRootForEpoch(blk5.Root(), 3)
 	require.NoError(t, err)
-	require.Equal(t, target, blk4.Root())
+	require.Equal(t, blk1.Root(), target)
 	dependent, err = f.DependentRoot(3)
 	require.NoError(t, err)
 	require.Equal(t, dependent, blk1.Root())
@@ -585,7 +590,7 @@ func TestStore_TargetRootForEpoch(t *testing.T) {
 	require.Equal(t, dependent, blk1.Root())
 	dependent, err = f.DependentRoot(1)
 	require.NoError(t, err)
-	require.Equal(t, dependent, [32]byte{})
+	require.Equal(t, blk.Root(), dependent)
 	target, err = f.TargetRootForEpoch(blk6.Root(), 2)
 	require.NoError(t, err)
 	require.Equal(t, target, blk1.Root())
@@ -699,4 +704,86 @@ func TestStore_CleanupInserting(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, f.InsertNode(ctx, st, blk))
 	require.Equal(t, false, f.HasNode(blk.Root()))
+}
+
+// TestStore_FFGTargetShift pins the decoupled fork's FFG target rule: the
+// target for epoch E is the block at slot StartSlot(E)-1, and epoch 0 falls
+// back to the anchor. The state side computes the same root in
+// helpers.FFGTargetRoot; if the two disagree, VerifyLmdFfgConsistency rejects
+// every vote.
+func TestStore_FFGTargetShift(t *testing.T) {
+	ctx := t.Context()
+	f := setup(0, 0)
+	genesis := params.BeaconConfig().ZeroHash
+	spe := params.BeaconConfig().SlotsPerEpoch
+
+	insert := func(slot primitives.Slot, root, parent [32]byte) {
+		t.Helper()
+		st, blk, err := prepareForkchoiceState(ctx, slot, root, parent, genesis, 0, 0)
+		require.NoError(t, err)
+		require.NoError(t, f.InsertNode(ctx, st, blk))
+	}
+	target := func(root [32]byte, epoch primitives.Epoch) [32]byte {
+		t.Helper()
+		tr, err := f.TargetRootForEpoch(root, epoch)
+		require.NoError(t, err)
+		return tr
+	}
+
+	// One block in epoch 0, then the last slot of epoch 0 and the first two
+	// slots of epoch 1.
+	first, last0, first1, second1 := [32]byte{1}, [32]byte{2}, [32]byte{3}, [32]byte{4}
+	insert(1, first, genesis)
+	insert(spe-1, last0, first)
+	insert(spe, first1, last0)
+	insert(spe+1, second1, first1)
+
+	// Epoch 0 underflows: every block of epoch 0 targets the anchor.
+	require.Equal(t, genesis, target(first, 0))
+	require.Equal(t, genesis, target(last0, 0))
+	// Epoch 1 targets the block at the last slot of epoch 0, not the block at
+	// the first slot of epoch 1.
+	require.Equal(t, last0, target(first1, 1))
+	require.Equal(t, last0, target(second1, 1))
+
+	// With slot 63 missed, epoch 2's target is the newest block before it.
+	skipped, afterSkip := [32]byte{5}, [32]byte{6}
+	insert(2*spe-2, skipped, second1)
+	insert(2*spe, afterSkip, skipped)
+	require.Equal(t, skipped, target(afterSkip, 2))
+	// And the older epoch is still reachable from the newer block.
+	require.Equal(t, last0, target(afterSkip, 1))
+}
+
+// TestStore_PruneKeepsTheEpochStartChild checks the pruning rule that follows
+// from the shifted FFG target: the finalized checkpoint block sits before the
+// epoch's first slot, so its child at that first slot is on the finalized
+// chain and only earlier children compete with it.
+func TestStore_PruneKeepsTheEpochStartChild(t *testing.T) {
+	ctx := t.Context()
+	f := setup(0, 0)
+	genesis := params.BeaconConfig().ZeroHash
+	spe := params.BeaconConfig().SlotsPerEpoch
+
+	insert := func(slot primitives.Slot, root, parent [32]byte) {
+		t.Helper()
+		st, blk, err := prepareForkchoiceState(ctx, slot, root, parent, genesis, 0, 0)
+		require.NoError(t, err)
+		require.NoError(t, f.InsertNode(ctx, st, blk))
+	}
+	checkpoint, competing, canonical := [32]byte{1}, [32]byte{2}, [32]byte{3}
+	insert(spe-2, checkpoint, genesis)
+	insert(spe-1, competing, checkpoint)
+	insert(spe, canonical, checkpoint)
+
+	s := f.store
+	s.finalizedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: checkpoint}
+	s.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: checkpoint}
+	require.NoError(t, s.prune(ctx))
+
+	require.Equal(t, true, f.HasNode(canonical))
+	require.Equal(t, false, f.HasNode(competing))
+	target, err := f.TargetRootForEpoch(canonical, 1)
+	require.NoError(t, err)
+	require.Equal(t, checkpoint, target)
 }

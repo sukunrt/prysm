@@ -285,7 +285,8 @@ func RewardProposer(ctx context.Context, beaconState state.BeaconState, proposer
 //
 //	# Matching roots
 //	is_matching_source = data.source == justified_checkpoint
-//	is_matching_target = is_matching_source and data.target.root == get_block_root(state, data.target.epoch)
+//	is_matching_target = (is_matching_source
+//	    and data.target.root == get_ffg_target_root(state, data.target.epoch))
 //	is_matching_head = is_matching_target and data.beacon_block_root == get_block_root_at_slot(state, data.slot)
 //	assert is_matching_source
 //
@@ -355,12 +356,13 @@ func AttestationParticipationFlagIndices(beaconState state.ReadOnlyBeaconState, 
 // Spec code:
 //
 //	is_matching_source = data.source == justified_checkpoint
-//	is_matching_target = is_matching_source and data.target.root == get_block_root(state, data.target.epoch)
+//	is_matching_target = (is_matching_source
+//	    and data.target.root == get_ffg_target_root(state, data.target.epoch))
 //	is_matching_head = is_matching_target and data.beacon_block_root == get_block_root_at_slot(state, data.slot)
 func MatchingStatus(beaconState state.ReadOnlyBeaconState, data *ethpb.AttestationData, cp *ethpb.Checkpoint) (matchedSrc, matchedTgt, matchedHead bool, err error) {
 	matchedSrc = attestation.CheckPointIsEqual(data.Source, cp)
 
-	r, err := helpers.BlockRoot(beaconState, data.Target.Epoch)
+	r, err := helpers.FFGTargetRoot(beaconState, data.Target.Epoch)
 	if err != nil {
 		return false, false, false, err
 	}

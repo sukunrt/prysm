@@ -207,7 +207,7 @@ func GenerateAttestations(bState state.BeaconState, privs []bls.SecretKey, numTo
 		if err != nil {
 			return nil, err
 		}
-		targetRoot, err = helpers.BlockRoot(headState, currentEpoch)
+		targetRoot, err = helpers.FFGTargetRoot(headState, currentEpoch)
 		if err != nil {
 			return nil, err
 		}

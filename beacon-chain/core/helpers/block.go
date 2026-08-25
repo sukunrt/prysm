@@ -81,19 +81,29 @@ func StateRootAtSlot(state state.ReadOnlyBeaconState, slot primitives.Slot) ([]b
 	return state.StateRootAtIndex(uint64(slot % params.BeaconConfig().SlotsPerHistoricalRoot))
 }
 
-// BlockRoot returns the block root stored in the BeaconState for epoch start slot.
+// FFGTargetRoot returns the FFG target root for an epoch: the block root at
+// the last slot before the epoch starts.
 //
-// Spec pseudocode definition:
+// This is the decoupled fork's replacement for the spec's get_block_root,
+// which names the block at the epoch's first slot. A validator casting its
+// finality vote at the start of that first slot has not seen that block yet,
+// so the target is shifted one slot back and every voter in the epoch names a
+// block that already exists.
 //
-//	def get_block_root(state: BeaconState, epoch: Epoch) -> Root:
-//	  """
-//	  Return the block root at the start of a recent ``epoch``.
-//	  """
-//	  return get_block_root_at_slot(state, compute_start_slot_at_epoch(epoch))
-func BlockRoot(state state.ReadOnlyBeaconState, epoch primitives.Epoch) ([]byte, error) {
+//	def get_ffg_target_root(state: BeaconState, epoch: Epoch) -> Root:
+//	  if epoch == GENESIS_EPOCH:
+//	    return get_block_root_at_slot(state, GENESIS_SLOT)
+//	  return get_block_root_at_slot(state, compute_start_slot_at_epoch(epoch) - 1)
+//
+// Epoch 0 has no earlier slot, so it names the anchor (genesis) block, which
+// is what the unshifted rule returns there anyway.
+func FFGTargetRoot(state state.ReadOnlyBeaconState, epoch primitives.Epoch) ([]byte, error) {
 	s, err := slots.EpochStart(epoch)
 	if err != nil {
 		return nil, err
+	}
+	if s > 0 {
+		s--
 	}
 	return BlockRootAtSlot(state, s)
 }

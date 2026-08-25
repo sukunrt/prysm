@@ -293,9 +293,10 @@ func (f *ForkChoice) IsViableForCheckpoint(cp *forkchoicetypes.Checkpoint) (bool
 			return true, nil
 		}
 	}
-	// If some child is after the start of the epoch, the checkpoint is viable.
+	// If some child is at or after the start of the epoch, the checkpoint is
+	// viable: that child's FFG target for the epoch is this node.
 	for _, child := range children {
-		if child.slot > epochStart {
+		if child.slot >= epochStart {
 			return true, nil
 		}
 	}

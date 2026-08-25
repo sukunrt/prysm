@@ -215,3 +215,50 @@ func TestProposerDependentRootOrGenesis(t *testing.T) {
 		assert.DeepEqual(t, expected, got)
 	})
 }
+
+func TestFFGTargetRoot_ShiftedOneSlotBack(t *testing.T) {
+	var blockRoots [][]byte
+	for i := uint64(0); i < uint64(params.BeaconConfig().SlotsPerHistoricalRoot); i++ {
+		blockRoots = append(blockRoots, []byte{byte(i)})
+	}
+	helpers.ClearCache()
+	st, err := state_native.InitializeFromProtoPhase0(&ethpb.BeaconState{
+		BlockRoots: blockRoots,
+		Slot:       200,
+	})
+	require.NoError(t, err)
+
+	// Epoch 0 has no slot before it, so it names the anchor block.
+	r, err := helpers.FFGTargetRoot(st, 0)
+	require.NoError(t, err)
+	anchor := [32]byte{0}
+	assert.DeepEqual(t, anchor[:], r)
+
+	// Every later epoch names the last slot of the previous epoch.
+	slotsPerEpoch := uint64(params.BeaconConfig().SlotsPerEpoch)
+	for _, epoch := range []primitives.Epoch{1, 2, 5} {
+		r, err := helpers.FFGTargetRoot(st, epoch)
+		require.NoError(t, err)
+		want := [32]byte{byte(uint64(epoch)*slotsPerEpoch - 1)}
+		assert.DeepEqual(t, want[:], r, "epoch %d", epoch)
+	}
+}
+
+func TestFFGTargetRoot_EpochZeroAtTheFirstSlot(t *testing.T) {
+	var blockRoots [][]byte
+	for i := uint64(0); i < uint64(params.BeaconConfig().SlotsPerHistoricalRoot); i++ {
+		blockRoots = append(blockRoots, []byte{byte(i)})
+	}
+	helpers.ClearCache()
+	// A state that has only ever processed slot 0: the epoch 0 target must
+	// still resolve, it is on the critical path of the first slot of a run.
+	st, err := state_native.InitializeFromProtoPhase0(&ethpb.BeaconState{
+		BlockRoots: blockRoots,
+		Slot:       1,
+	})
+	require.NoError(t, err)
+	r, err := helpers.FFGTargetRoot(st, 0)
+	require.NoError(t, err)
+	anchor := [32]byte{0}
+	assert.DeepEqual(t, anchor[:], r)
+}
