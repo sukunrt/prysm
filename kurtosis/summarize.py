@@ -279,8 +279,9 @@ def main():
 
     print("\n## Supernode health\n")
     print("| node | column subnets subscribed | column msgs/slot |"
-          " columns written | columns on disk | col-by-range served | cpu |")
-    print("|---|---|---|---|---|---|---|")
+          " columns written | columns on disk | col-by-range served |"
+          " built | gossip-verified | recovered from EL | cpu |")
+    print("|---|---|---|---|---|---|---|---|---|---|")
     for name, ((t0, sc0, fa0), (t1, sc1, fa1)) in windows.items():
         wall = max(1.0, t1 - t0)
         served = (sc1.get("rpc_data_columns_by_range_response_latency_"
@@ -291,9 +292,21 @@ def main():
                 - fa0[("data_column_sidecar_*", "deliver")]) / span
         cpu = (sc1.get("process_cpu_seconds_total", 0)
                - sc0.get("process_cpu_seconds_total", 0)) / wall
+
+        def delta(metric):
+            return sc1.get(metric, 0) - sc0.get(metric, 0)
+
+        # Sidecars this node built for its own proposals, sidecars it verified
+        # off gossip, and sidecars it rebuilt from the execution layer's blobs.
+        built = delta("beacon_data_column_sidecar_computation_"
+                      "milliseconds_count")
+        verified = delta("beacon_data_column_sidecar_gossip_verification_"
+                         "milliseconds_count")
+        recovered = delta("data_columns_recovered_from_el_total")
         print(f"| {name} | {fa1[('data_column_sidecar_*', 'subscribed')]:.0f}"
               f" | {cols:.1f} | {sc1.get('data_column_written', 0):.0f} | "
               f"{sc1.get('data_column_disk_count', 0):.0f} | {served:.0f} | "
+              f"{built:.0f} | {verified:.0f} | {recovered:.0f} | "
               f"{cpu:.2f} |")
 
 

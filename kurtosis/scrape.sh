@@ -21,7 +21,12 @@ keep+='|p2p_pubsub_topic_active|p2p_peer_count|p2p_message_received_total'
 keep+='|p2p_message_failed_validation_total|goldfish_|beacon_reorgs_total'
 keep+='|beacon_head_slot|beacon_clock_time_slot|beacon_finalized_epoch'
 keep+='|beacon_current_justified_epoch|data_column_|rpc_data_columns'
-keep+='|forkchoice_|process_cpu_seconds_total|process_resident_memory_bytes)'
+keep+='|forkchoice_|process_cpu_seconds_total|process_resident_memory_bytes'
+# The blob/column families: a run with blob traffic has to show the columns
+# were built, gossip-verified, stored and served, not just that the subnets
+# were subscribed.
+keep+='|beacon_data_column|beacon_data_availability|beacon_engine_getBlobs'
+keep+='|data_columns_recovered|blob_disk_count|blob_recovered_from_el_total)'
 
 mkdir -p "$outdir"
 

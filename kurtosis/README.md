@@ -41,12 +41,32 @@ kurtosis service logs decoupled cl-1-prysm-geth --follow
 `participants[0].count` and lower `num_validator_keys_per_node` to keep the
 total near 128.
 
+## Drive the execution layer
+
+```sh
+go run ./kurtosis/blobsend -rpc http://127.0.0.1:<el-rpc> -interval 6s
+```
+
+A run on empty payloads has no data columns to carry, so the supernodes have
+nothing to custody or serve. `blobsend` sends one blob transaction and one
+value transfer per slot from two of the package's prefunded dev accounts
+(separate accounts because geth pins a sender to one txpool subpool), waits
+for each receipt and logs the block, gas and blob gas. Sidecars carry cell
+proofs, which is what a Fulu txpool accepts.
+
+Every transaction carries a 500k gas limit. Amsterdam reprices state access --
+a bare transfer costs ~207k on first touch, not 21000 -- and a tool that
+hardcodes the pre-Amsterdam cost has its funding transfers die out-of-gas.
+That is what left run 02 with no blob transactions and therefore no columns
+at all.
+
 ## Measure
 
 ```sh
 kurtosis/scrape.sh <enclave> <outdir> 6      # one metrics sample per slot
 kurtosis/summarize.py <outdir> --slot-seconds 6 --skip-slots 32
 kurtosis/vclogs.py <outdir>                  # needs docker logs vc-* > vc-*.log
+kurtosis/elscan.py <el-rpc-url>              # blob gas per execution block
 ```
 
 `scrape.sh` polls every beacon node's `/metrics` and keeps only the families
@@ -56,7 +76,9 @@ and prints the same per-slot-per-node tables the ethshadow baseline
 metrics, the slots at which `goldfish_gate_retreat` and `beacon_reorgs_total`
 moved, and the supernode's column-subnet state. `vclogs.py` reads the
 validator clients' logs for attesters per slot, per-round-offset flatness and
-the late-published slots.
+the late-published slots; `elscan.py` walks the execution chain and reports
+the blob gas in every block, which is how a run proves its payloads were not
+empty.
 
 Prysm exports no received-bytes counter (`p2p_pubsub_rpc_recv_pub_bytes_total`
 is declared but never incremented), so received bytes are derived from the
