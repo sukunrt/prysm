@@ -1045,7 +1045,7 @@ func (s *Service) buildPayloadAttestationData(ctx context.Context, slot primitiv
 func (s *Service) GetAvailableAttestationData(
 	ctx context.Context, req *ethpb.AvailableAttestationDataRequest,
 ) (*ethpb.AvailableAttestationData, *RpcError) {
-	ctx, span := trace.StartSpan(ctx, "coreService.GetAvailableAttestationData")
+	_, span := trace.StartSpan(ctx, "coreService.GetAvailableAttestationData")
 	defer span.End()
 	if slots.ToEpoch(req.Slot) < params.BeaconConfig().HezeForkEpoch {
 		return nil, &RpcError{

@@ -125,6 +125,7 @@ func (c *beaconApiValidatorClient) AttestationData(ctx context.Context, in *ethp
 }
 
 func (c *beaconApiValidatorClient) AvailableAttestationData(ctx context.Context, in *ethpb.AvailableAttestationDataRequest) (*ethpb.AvailableAttestationData, error) {
+	// lint:nopanic -- simulation stub; only the gRPC path is implemented.
 	panic("unimplemented: use grpc")
 }
 
@@ -192,6 +193,7 @@ func (c *beaconApiValidatorClient) ProposeAttestation(ctx context.Context, in *e
 }
 
 func (c *beaconApiValidatorClient) ProposeAvailableAttestation(ctx context.Context, in *ethpb.AvailableAttestation) (*ethpb.AttestResponse, error) {
+	// lint:nopanic -- simulation stub; only the gRPC path is implemented.
 	panic("unimplemented: use the grpc path")
 }
 
