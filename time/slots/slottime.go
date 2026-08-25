@@ -176,6 +176,37 @@ func IsRoundStart(slot primitives.Slot) bool {
 	return slot%params.BeaconConfig().SlotsPerRound == 0
 }
 
+// SinceRoundStarts returns the number of slots since the start of the slot's round.
+func SinceRoundStarts(slot primitives.Slot) primitives.Slot {
+	return slot.ModSlot(params.BeaconConfig().SlotsPerRound)
+}
+
+// RoundRepeats returns every slot of the given slot's epoch that sits at the same
+// offset within its round, in ascending order, including the slot itself.
+//
+// The beacon committee shuffle is per epoch and keyed on the slot's offset within its
+// round, so those slots all carry the same committees. A validator assigned to one of
+// them is therefore assigned to all of them.
+//
+// With SLOTS_PER_ROUND equal to SLOTS_PER_EPOCH -- every shipped config -- the epoch
+// holds a single round and the result is just the input slot.
+func RoundRepeats(slot primitives.Slot) []primitives.Slot {
+	cfg := params.BeaconConfig()
+	epochStart := slot - slot.ModSlot(cfg.SlotsPerEpoch)
+	repeats := make([]primitives.Slot, 0, cfg.SlotsPerEpoch/cfg.SlotsPerRound)
+	for s := epochStart + SinceRoundStarts(slot); s < epochStart+cfg.SlotsPerEpoch; s += cfg.SlotsPerRound {
+		repeats = append(repeats, s)
+	}
+	return repeats
+}
+
+// IsRoundRepeat reports whether the two slots fall in the same epoch at the same offset
+// within their rounds, so that they share committees. It is the predicate form of
+// RoundRepeats and is reflexive: a slot always repeats itself.
+func IsRoundRepeat(a, b primitives.Slot) bool {
+	return ToEpoch(a) == ToEpoch(b) && SinceRoundStarts(a) == SinceRoundStarts(b)
+}
+
 // IsEpochEnd returns true if the given slot number is an epoch ending slot
 // number.
 func IsEpochEnd(slot primitives.Slot) bool {

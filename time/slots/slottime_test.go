@@ -3,6 +3,7 @@ package slots
 import (
 	"context"
 	"math"
+	"slices"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -829,6 +830,81 @@ func TestRoundStart_RoundTripsWithRoundAt(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, slot-slot%8, start, "RoundStart(RoundAt(%d))", slot)
 	}
+}
+
+func TestRoundRepeats(t *testing.T) {
+	t.Run("identity: one round per epoch, so a slot repeats only itself", func(t *testing.T) {
+		require.Equal(t, params.BeaconConfig().SlotsPerRound, params.BeaconConfig().SlotsPerEpoch)
+		for _, slot := range []primitives.Slot{0, 1, 31, 32, 100} {
+			assert.DeepEqual(t, []primitives.Slot{slot}, RoundRepeats(slot))
+		}
+	})
+
+	t.Run("8-slot rounds inside a 32-slot epoch", func(t *testing.T) {
+		setSlotsPerRound(t, 8)
+		require.Equal(t, primitives.Slot(32), params.BeaconConfig().SlotsPerEpoch)
+
+		tests := []struct {
+			slot primitives.Slot
+			want []primitives.Slot
+		}{
+			{slot: 0, want: []primitives.Slot{0, 8, 16, 24}},
+			{slot: 8, want: []primitives.Slot{0, 8, 16, 24}},
+			{slot: 24, want: []primitives.Slot{0, 8, 16, 24}},
+			{slot: 3, want: []primitives.Slot{3, 11, 19, 27}},
+			{slot: 27, want: []primitives.Slot{3, 11, 19, 27}},
+			{slot: 32, want: []primitives.Slot{32, 40, 48, 56}},
+			{slot: 63, want: []primitives.Slot{39, 47, 55, 63}},
+		}
+		for _, tt := range tests {
+			assert.DeepEqual(t, tt.want, RoundRepeats(tt.slot), "RoundRepeats(%d)", tt.slot)
+		}
+	})
+
+	t.Run("the repeats of one epoch's slots partition the epoch", func(t *testing.T) {
+		setSlotsPerRound(t, 8)
+		seen := make(map[primitives.Slot]int)
+		for slot := range primitives.Slot(32) {
+			repeats := RoundRepeats(slot)
+			require.Equal(t, 4, len(repeats))
+			for _, r := range repeats {
+				require.Equal(t, ToEpoch(slot), ToEpoch(r))
+				seen[r]++
+			}
+		}
+		// Each slot of the epoch is named once by each of the four slots sharing its offset.
+		require.Equal(t, 32, len(seen))
+		for slot, count := range seen {
+			require.Equal(t, 4, count, "slot %d", slot)
+		}
+	})
+}
+
+func TestIsRoundRepeat(t *testing.T) {
+	t.Run("identity: only a slot repeats itself", func(t *testing.T) {
+		require.Equal(t, params.BeaconConfig().SlotsPerRound, params.BeaconConfig().SlotsPerEpoch)
+		assert.Equal(t, true, IsRoundRepeat(9, 9))
+		assert.Equal(t, false, IsRoundRepeat(9, 17))
+	})
+
+	t.Run("8-slot rounds inside a 32-slot epoch", func(t *testing.T) {
+		setSlotsPerRound(t, 8)
+		assert.Equal(t, true, IsRoundRepeat(1, 25))
+		assert.Equal(t, true, IsRoundRepeat(25, 1))
+		assert.Equal(t, false, IsRoundRepeat(1, 26))
+		// Same offset, different epoch: committees are reshuffled, so not a repeat.
+		assert.Equal(t, false, IsRoundRepeat(1, 33))
+	})
+
+	t.Run("agrees with RoundRepeats", func(t *testing.T) {
+		setSlotsPerRound(t, 8)
+		for a := range primitives.Slot(64) {
+			for b := range primitives.Slot(64) {
+				want := slices.Contains(RoundRepeats(a), b)
+				assert.Equal(t, want, IsRoundRepeat(a, b), "IsRoundRepeat(%d, %d)", a, b)
+			}
+		}
+	})
 }
 
 func TestIsRoundStart(t *testing.T) {
