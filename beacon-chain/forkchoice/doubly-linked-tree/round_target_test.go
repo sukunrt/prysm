@@ -166,32 +166,51 @@ func TestIsViableForCheckpoint_OffsetBoundAt8Over32(t *testing.T) {
 	})
 }
 
-// TestStore_PruneKeepsTheRoundStartChild is the rounds twin of
-// TestStore_PruneKeepsTheEpochStartChild.
-func TestStore_PruneKeepsTheRoundStartChild(t *testing.T) {
-	setupRoundsConfig(t, 1)
-	ctx := t.Context()
-	f := setup(0, 0)
-	zero := params.BeaconConfig().ZeroHash
-	spr := params.BeaconConfig().SlotsPerRound
+// TestStore_PruneBoundIsOffsetAware is the rounds twin of
+// TestStore_PruneKeepsTheEpochStartChild. The bound prune uses must be the same
+// offset-aware one the insert rule and IsViableForCheckpoint read: a child of the
+// finalized node survives only when it sits strictly after the round's FFG target
+// slot. At offset 1 that keeps a child exactly on the round's first slot; at
+// offset 0 that child is its own target and contradicts the finalized checkpoint,
+// so it must go.
+func TestStore_PruneBoundIsOffsetAware(t *testing.T) {
+	for _, tt := range []struct {
+		offset            primitives.Slot
+		keepsRoundStarter bool
+	}{
+		{offset: 1, keepsRoundStarter: true},
+		{offset: 0, keepsRoundStarter: false},
+	} {
+		t.Run("offset "+string(rune('0'+tt.offset)), func(t *testing.T) {
+			setupRoundsConfig(t, tt.offset)
+			ctx := t.Context()
+			f := setup(0, 0)
+			zero := params.BeaconConfig().ZeroHash
+			spr := params.BeaconConfig().SlotsPerRound
 
-	checkpoint, competing, canonical := [32]byte{1}, [32]byte{2}, [32]byte{3}
-	insertChain(t, ctx, f, []chainBlock{
-		{spr - 2, checkpoint, zero},
-		{spr - 1, competing, checkpoint},
-		{spr, canonical, checkpoint},
-	})
+			checkpoint, competing, roundStarter := [32]byte{1}, [32]byte{2}, [32]byte{3}
+			insertChain(t, ctx, f, []chainBlock{
+				{spr - 2, checkpoint, zero},
+				{spr - 1, competing, checkpoint},
+				{spr, roundStarter, checkpoint},
+			})
 
-	s := f.store
-	s.finalizedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: checkpoint}
-	s.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: checkpoint}
-	require.NoError(t, s.prune(ctx))
+			s := f.store
+			s.finalizedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: checkpoint}
+			s.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 1, Root: checkpoint}
+			require.NoError(t, s.prune(ctx))
 
-	require.Equal(t, true, f.HasNode(canonical))
-	require.Equal(t, false, f.HasNode(competing))
-	target, err := f.TargetRootForRound(canonical, 1)
-	require.NoError(t, err)
-	require.Equal(t, checkpoint, target)
+			// The competing block sits before the round starts on either offset.
+			require.Equal(t, false, f.HasNode(competing))
+			require.Equal(t, tt.keepsRoundStarter, f.HasNode(roundStarter))
+			if !tt.keepsRoundStarter {
+				return
+			}
+			target, err := f.TargetRootForRound(roundStarter, 1)
+			require.NoError(t, err)
+			require.Equal(t, checkpoint, target)
+		})
+	}
 }
 
 // TestDependentRootForEpoch_UnchangedByRoundTargets checks step 1.3: shuffling

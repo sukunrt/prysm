@@ -338,20 +338,24 @@ func (s *Store) prune(ctx context.Context) error {
 
 	prunedCount.Inc()
 	// Prune all children of the finalized checkpoint block that are incompatible
-	// with it. A chain's FFG target for the finalized round is its deepest block
-	// before the round starts, so a child of the finalized node is compatible
-	// exactly when it is at or after the round's first slot.
-	checkpointStartSlot, err := slots.RoundStart(finalizedRound)
+	// with it. A chain's FFG target for the finalized round is its deepest block at
+	// or before slots.FFGTargetSlot(round), so a child of the finalized node is
+	// compatible exactly when it sits strictly after that slot: a child at or before
+	// it would be the round's target on its own chain, not the finalized root. Both
+	// offsets fall out of this one expression -- at offset 1 the bound is the round's
+	// first slot, at offset 0 it is one slot later.
+	targetSlot, err := slots.FFGTargetSlot(finalizedRound)
 	if err != nil {
-		return errors.Wrap(err, "could not compute round start")
+		return errors.Wrap(err, "could not compute ffg target slot")
 	}
-	if fn.slot+1 >= checkpointStartSlot {
+	firstCompatibleSlot := targetSlot + 1
+	if fn.slot+1 >= firstCompatibleSlot {
 		return nil
 	}
 
 	remaining := fen.children[:0]
 	for _, child := range fen.children {
-		if child != nil && child.slot < checkpointStartSlot {
+		if child != nil && child.slot < firstCompatibleSlot {
 			if err := s.pruneFinalizedNodeByRootMap(ctx, child, fn); err != nil {
 				return errors.Wrap(err, "could not prune incompatible finalized child")
 			}
@@ -366,7 +370,7 @@ func (s *Store) prune(ctx context.Context) error {
 	}
 	remaining = ffn.children[:0]
 	for _, child := range ffn.children {
-		if child != nil && child.slot < checkpointStartSlot {
+		if child != nil && child.slot < firstCompatibleSlot {
 			if err := s.pruneFinalizedNodeByRootMap(ctx, child, fn); err != nil {
 				return errors.Wrap(err, "could not prune incompatible finalized child")
 			}
