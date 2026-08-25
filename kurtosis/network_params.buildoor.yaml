@@ -1,0 +1,196 @@
+# network_params.yaml plus a genesis-seeded buildoor. Run-scoped: the baseline
+# file stays byte-identical so the two runs are comparable.
+#
+#   IMAGE_TAG=buildoor-final ./kurtosis/build-images.sh
+#   kurtosis run --enclave buildoor ~/dev/ethereum-package \
+#       --args-file kurtosis/network_params.buildoor.yaml
+#
+# The images carry a run-scoped tag, not :local, so building here cannot
+# replace the images a live enclave's containers were started from.
+#
+# 5 nodes x 50 keys = 250 validators, 12s slots: the chain config and client
+# flags of the Shadow goldfish sims on a plain meshed devnet. Node count and
+# keys per node are free; see kurtosis/README.md, Parameters.
+#
+# Only defaults that matter are spelled out; everything else comes from the
+# package's own network_params.yaml.
+
+participants:
+  - el_type: geth
+    # Pinned, not :latest. This is commit 366048ea (2026-08-10), byte for
+    # byte the geth the ethshadow baseline ran, which is the point of having
+    # two harnesses. It also has to be pinned: geth master from 2026-08-19
+    # rejects every forkchoiceUpdatedV4 with "failed to process builder
+    # deposit queue: empty system contract: no code at
+    # 0x0000bFF46984e3725691FA540a8C7589300D8282" -- newer geth wants the
+    # ePBS builder-deposit system contract in the EL genesis, and
+    # ethereum-genesis-generator 6.0.2 does not deploy it (it knows only
+    # 4788, 2935, 7002, 7251 and the deposit contract). Moving to a newer
+    # geth means teaching the generator that contract first.
+    el_image: ethpandaops/geth:glamsterdam-devnet-8
+    cl_type: prysm
+    # Built by kurtosis/build-images.sh from this tree. Also tagged with the
+    # jj change id; :local is what a run uses so the file does not churn.
+    cl_image: prysm-beacon-chain:buildoor-final
+    vc_type: prysm
+    vc_image: prysm-validator:buildoor-final
+    # The Prysm VC must talk gRPC: its REST client has no Gloas/Heze SSZ
+    # block codec. The package passes --beacon-rest-api-provider
+    # unconditionally and Prysm enables the REST client on the flag's mere
+    # presence, which no vc_extra_params value can undo -- the image's
+    # entrypoint shim drops the flag instead. See validator-entrypoint.sh.
+    vc_extra_params:
+      # Cast the FFG attestation at slot start (plus <=200 ms jitter) instead
+      # of on block arrival, so publish time does not depend on block
+      # propagation. VC-only flag. Do not set --decoupled-ffg-vote-jitter;
+      # its default is already 200 ms.
+      - --decoupled-ffg-vote-at-slot-start
+    use_separate_vc: true
+    # Fulu is at epoch 0, and the package refuses to start a PeerDAS network
+    # unless a node is a supernode, a node holds 128+ validators, or
+    # perfect_peerdas_enabled is on with 16 participants
+    # (src/package_io/input_parser.star:474). Full custody on every node is
+    # the honest choice here: these runs measure attestation traffic, and
+    # sampling-driven column fetches would only add noise.
+    supernode: true
+    # 3 of 5 keep a meshed EL; the other two are the isolated-EL arm below.
+    count: 3
+    cl_extra_params: &cl_flags
+      # One log line per availability head vote and per drop, which is what
+      # the seat reconciliation reads.
+      - --goldfish-vote-ledger
+      # Default is 6, and a 5-node enclave offers each node only 4 peers, so
+      # the subnet-peer search would never settle. See README, Parameters.
+      - --minimum-peers-per-subnet=4
+      # Parity with the Shadow runs. At 5 nodes it never binds.
+      - --p2p-max-peers=99
+    cl_extra_env_vars: &cl_env
+      GOMEMLIMIT: 1700MiB
+
+  # round(0.3 x 5) = 2 nodes whose EL takes no peers: their transactions
+  # reach a block only through their own proposer. Same CL config as above.
+  - el_type: geth
+    el_image: ethpandaops/geth:glamsterdam-devnet-8
+    el_extra_params:
+      - --maxpeers=0
+    cl_type: prysm
+    cl_image: prysm-beacon-chain:buildoor-final
+    vc_type: prysm
+    vc_image: prysm-validator:buildoor-final
+    vc_extra_params:
+      - --decoupled-ffg-vote-at-slot-start
+    use_separate_vc: true
+    supernode: true
+    count: 2
+    cl_extra_params: *cl_flags
+    cl_extra_env_vars: *cl_env
+
+network_params:
+  network: kurtosis
+  network_id: "3151908"
+  preset: mainnet
+  seconds_per_slot: 12
+  slot_duration_ms: 12000
+  # 5 x 50 = 250 validators: 250 / SLOTS_PER_ROUND = 31 attesters per slot.
+  num_validator_keys_per_node: 50
+  # As the Shadow genesis carries it.
+  genesis_gaslimit: 9000000
+  # Enough for five nodes' images, keys and genesis before slot 0.
+  genesis_delay: 180
+
+  # Genesis is Heze. Nothing upgrades into Heze at runtime -- prysmctl builds
+  # the Heze state directly (see Dockerfile.genesis-gen) -- so every fork is
+  # at epoch 0. Gloas must be 0 too: prysm gates on GloasForkEpoch in ~86
+  # non-test sites, and Gloas at 0 is what puts amsterdamTime on the EL
+  # genesis, which forkchoiceUpdatedV4 requires.
+  deneb_fork_epoch: 0
+  electra_fork_epoch: 0
+  fulu_fork_epoch: 0
+  gloas_fork_epoch: 0
+  heze_fork_epoch: 0
+
+  # An explicit single-entry BLOB_SCHEDULE. The generator builds the CL
+  # BLOB_SCHEDULE out of the BPO_* vars, so exactly one non-default BPO gives
+  # exactly one entry; bpo_2..5 stay at FAR_FUTURE.
+  bpo_1_epoch: 0
+  bpo_1_max_blobs: 6
+  bpo_1_target_blobs: 3
+  bpo_2_epoch: 18446744073709551615
+
+ethereum_genesis_generator_params:
+  # Patched generator: Heze stripped from the CL->EL fork mapping (Heze is
+  # CL-only), the fork's own keys added to the CL config template, and the CL
+  # genesis state built by prysmctl instead of eth-genesis-state-generator.
+  image: prysm-genesis-gen:buildoor-final
+  extra_env:
+    # Four rounds to the 32-slot epoch: the attestation-traffic multiplier
+    # the measurements are about.
+    SLOTS_PER_ROUND: 8
+    # How far into the slot an availability attestation is due, in basis
+    # points of the slot.
+    AVAILABLE_ATTESTATION_DUE_BPS_HEZE: 2500
+    # One committee per slot, holding the whole V/SLOTS_PER_ROUND pool.
+    TARGET_COMMITTEE_SIZE: 3000
+    # Subnet count == committees per slot, so every node sees every raw vote.
+    ATTESTATION_SUBNET_COUNT: 1
+    # As the Shadow sims run it. With one subnet both draws land on subnet 0.
+    SUBNETS_PER_NODE: 2
+    # The package's constant is 0x90000038; the sims run 0x90000000, and the
+    # fork digest is the only thing that reads it. ExtraEnvVars are rendered
+    # after the fork versions in values.env.tmpl, so this wins.
+    HEZE_FORK_VERSION: "0x90000000"
+    # Mint one 0xB0 builder deposit at key index NUMBER_OF_VALIDATORS (250),
+    # which is exactly the index a buildoor instance derives while the
+    # package's own builder_count is 0. prysmctl splits it out of the deposit
+    # file before ProcessPreGenesisDeposits, so the validator set is untouched.
+    BUILDER_COUNT: 1
+    # No SLOT_DURATION_IN_SECONDS here: the generator's default is 12 and so
+    # is this run's slot. Set it whenever seconds_per_slot is not 12 -- the
+    # package exports SLOT_DURATION_MS only, and the CL template reads
+    # SECONDS_PER_SLOT from that variable.
+
+# No traffic arms. The Shadow rung recipe drives eoatx (8 tx/slot, 16 KiB
+# calldata) and blob arms (2 tx x 3 sidecars, one private arm pinned to each
+# isolated EL) through spamoor, and premines spamoor's child wallets into the
+# EL genesis alloc. The premine is not optional here: the package gives
+# spamoor one fixed --privkey (prefunded_addresses[13]) and no seam for the
+# derived child addresses, so spamoor funds its children on chain -- and its
+# funding transaction does not fit a 9.0 M block:
+#
+#   could not send funding txs: ... failed to submit after 3 attempts:
+#   exceeds block gas limit                      (spamoor v1.1.17, stock arm)
+#
+# Every arm then dies the same way, and the wallet with no balance panics
+# spamoor outright (walletpool.go:636, nil big.Int in Cmp). Carrying the arms
+# over needs the premine, i.e. a way to put spamoor's derived children in
+# network_params.prefunded_accounts. Until then: no additional services.
+additional_services:
+  - buildoor
+
+# Attached through the instances schema, not mev_type: buildoor, which is
+# deprecated in the pin and drags relay enrichment across every participant.
+buildoor_params:
+  # Patched upstream: Heze->Amsterdam engine version, plus the two
+  # finalization gates that keep a genesis-seeded builder out of the bid path.
+  # See kurtosis/Dockerfile.buildoor.
+  image: prysm-buildoor:buildoor-final
+  # Route B (the builder API) stays off for parity with run 13; the
+  # bid/reveal path under test is the p2p one.
+  builder_api: false
+  epbs_builder: true
+  # The builder is seeded into the genesis registry, so there is nothing to
+  # deposit or onboard and no EIP-8282 contracts to read.
+  lifecycle: false
+  instances:
+    # 1-based over the post-count-expansion node list: the first meshed-EL
+    # node, so the builder's payloads carry the shared mempool.
+    - participant: 1
+  extra_args:
+    # Off by default, and off fails RequireBidGasLimitCompatible: the bid's
+    # gas limit must equal min(max(target, parent-d), parent+d) exactly. This
+    # makes buildoor adjust the built payload to that value.
+    - --build-enforce-bid-gas-limit
+    - --log-level=debug
+
+wait_for_finalization: false
+global_log_level: info
