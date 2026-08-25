@@ -25,6 +25,12 @@ func VoteLedgerValidators(indices []uint64) string {
 // it a run cannot tell a committee that agreed on one vote from a committee that
 // split across several, because both look like the same count of arrivals.
 //
+// The pool's key starts with the attestation version, so the same vote renders
+// differently once it is folded into an aggregate. The version byte is dropped
+// here: a run has to join a seat's arrival line to the aggregate that carried
+// it, and the remaining 31 bytes are the same for both. Dropping the byte rather
+// than zeroing it also keeps all 8 characters of VoteLedgerRootPrefix meaningful.
+//
 // Returns the empty string when the key cannot be built, which keeps the ledger
 // line rather than dropping it.
 func VoteLedgerDataRoot(att ethpb.Att) string {
@@ -32,7 +38,7 @@ func VoteLedgerDataRoot(att ethpb.Att) string {
 	if err != nil {
 		return ""
 	}
-	return fmt.Sprintf("%#x", id)
+	return fmt.Sprintf("%#x", id[1:])
 }
 
 // VoteLedgerRootPrefix shortens a rendered root to its first 8 hex characters,

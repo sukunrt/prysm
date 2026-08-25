@@ -7,13 +7,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/OffchainLabs/go-bitfield"
 	mockChain "github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain/testing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/cache"
 	p2pmock "github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/testing"
 	mockstategen "github.com/OffchainLabs/prysm/v7/beacon-chain/state/stategen/mock"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/validator"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
@@ -21,6 +24,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/util"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	logTest "github.com/sirupsen/logrus/hooks/test"
 )
 
 func TestRegisterSyncSubnetProto(t *testing.T) {
@@ -583,4 +587,46 @@ func TestValidatorActiveSetChanges(t *testing.T) {
 		assert.DeepEqual(t, []primitives.ValidatorIndex{7}, res.EjectedIndices)
 		assert.DeepEqual(t, [][]byte{pubKey(7)}, res.EjectedPublicKeys)
 	})
+}
+
+// TestLogLocalFFGAggregate_NamesTheVoteItCarries pins the local aggregate line to
+// the same dataRoot and blockRoot the gossip line carries. A run joins the two on
+// those fields, so a missing one silently drops every locally published aggregate
+// out of the ledger's reconciliation.
+func TestLogLocalFFGAggregate_NamesTheVoteItCarries(t *testing.T) {
+	hook := logTest.NewGlobal()
+	bits := bitfield.NewBitlist(4)
+	bits.SetBitAt(1, true)
+	att := &ethpb.AttestationElectra{
+		AggregationBits: bits,
+		CommitteeBits:   primitives.NewAttestationCommitteeBits(),
+		Data: &ethpb.AttestationData{
+			Slot:            9,
+			BeaconBlockRoot: bytesutil.PadTo([]byte{0xaa}, 32),
+			Source:          &ethpb.Checkpoint{Root: make([]byte, 32)},
+			Target:          &ethpb.Checkpoint{Epoch: 1, Root: make([]byte, 32)},
+		},
+		Signature: make([]byte, 96),
+	}
+	att.CommitteeBits.SetBitAt(2, true)
+	signed := &ethpb.SignedAggregateAttestationAndProofElectra{
+		Message: &ethpb.AggregateAttestationAndProofElectra{AggregatorIndex: 5, Aggregate: att},
+	}
+	s := &Service{
+		GenesisTimeFetcher: &mockChain.ChainService{Genesis: time.Now()},
+		HeadFetcher:        &mockChain.ChainService{HeadStateErr: errors.New("no state")},
+	}
+
+	s.logLocalFFGAggregate(t.Context(), signed)
+	require.Equal(t, 0, len(hook.AllEntries()))
+
+	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
+	defer reset()
+	s.logLocalFFGAggregate(t.Context(), signed)
+	entry := hook.LastEntry()
+	require.Equal(t, "FFG aggregate", entry.Message)
+	require.Equal(t, "local", entry.Data["outcome"])
+	require.Equal(t, decoupled.VoteLedgerDataRoot(att), entry.Data["dataRoot"])
+	require.Equal(t, "0xaa00000000000000000000000000000000000000000000000000000000000000",
+		entry.Data["blockRoot"])
 }

@@ -454,6 +454,8 @@ func (s *Service) logLocalFFGAggregate(ctx context.Context, agg ethpb.SignedAggr
 		"aggregatorIndex": aggregateAndProof.GetAggregatorIndex(),
 		"seats":           att.GetAggregationBits().Count(),
 		"arrivedMs":       time.Since(start).Milliseconds(),
+		"blockRoot":       fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
+		"dataRoot":        decoupled.VoteLedgerDataRoot(att),
 		"validators":      decoupled.VoteLedgerValidators(indices),
 	}).Info("FFG aggregate")
 }

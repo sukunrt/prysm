@@ -41,6 +41,19 @@ func TestVoteLedgerDataRoot(t *testing.T) {
 	// A different head is a different attestation data, and never aggregates in.
 	require.NotEqual(t, VoteLedgerDataRoot(att(0, 0xaa)), VoteLedgerDataRoot(att(0, 0xbb)))
 	require.Equal(t, "", VoteLedgerDataRoot(&ethpb.AttestationElectra{}))
+
+	// A vote and the aggregate that carried it are different attestation
+	// versions, and a run joins the two lines on this value.
+	electra := att(0, 0xaa)
+	single := &ethpb.SingleAttestation{Data: electra.Data, Signature: make([]byte, 96)}
+	gloas := &ethpb.AttestationGloas{
+		AggregationBits: electra.AggregationBits,
+		Data:            electra.Data,
+		Signature:       electra.Signature,
+		CommitteeBits:   electra.CommitteeBits,
+	}
+	require.Equal(t, VoteLedgerDataRoot(electra), VoteLedgerDataRoot(single))
+	require.Equal(t, VoteLedgerDataRoot(electra), VoteLedgerDataRoot(gloas))
 }
 
 func TestVoteLedgerRootPrefix(t *testing.T) {
