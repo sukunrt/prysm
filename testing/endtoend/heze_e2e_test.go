@@ -55,6 +55,12 @@ import (
 // available attestation topic carries traffic on every node, and
 // AttestationsInEveryRound, which proves committee attestations happen in all
 // four rounds of an epoch rather than only the first.
+//
+// The stock FinalizationOccurs is swapped for FinalizationOccursInRounds and
+// JustificationAdvancesEveryRound: FFG now runs once per round, so finality has
+// to be judged in rounds and its per-round progression asserted directly. The
+// one-epoch Short run only drops the stock evaluator - neither replacement can
+// fire that early.
 func TestEndToEnd_HezeGenesis(t *testing.T) {
 	cfg := params.E2EMainnetTestConfig()
 	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
@@ -69,6 +75,8 @@ func TestEndToEnd_HezeGenesis(t *testing.T) {
 			ev.ChainProducesBlocks,
 			ev.AvailableAttestationsFlow,
 			ev.AttestationsInEveryRound,
+			ev.FinalizationOccursInRounds(3),
+			ev.JustificationAdvancesEveryRound,
 		),
 	)
 	r.run()
@@ -77,6 +85,9 @@ func TestEndToEnd_HezeGenesis(t *testing.T) {
 // hezeDroppedEvaluators are the stock minimal evaluators the Heze runs cannot
 // use; the reason for each is on TestEndToEnd_HezeGenesis.
 var hezeDroppedEvaluators = []string{
+	// Replaced by hezeFinalityEvaluators: this one reads the chain head's
+	// round-valued checkpoints as epochs.
+	ev.FinalizationOccurs(0).Name,
 	ev.VerifyBlockGraffiti.Name,
 	ev.FeeRecipientIsPresent.Name,
 	ev.ValidatorsVoteWithTheMajority.Name,
@@ -139,6 +150,8 @@ func TestEndToEnd_HezeGenesisCheckpointSync(t *testing.T) {
 			ev.ChainProducesBlocks,
 			ev.AvailableAttestationsFlow,
 			ev.AttestationsInEveryRound,
+			ev.FinalizationOccursInRounds(3),
+			ev.JustificationAdvancesEveryRound,
 		),
 	)
 	r.run()
@@ -169,6 +182,8 @@ func TestEndToEnd_HezeGenesisSlotStartFFG(t *testing.T) {
 			ev.ChainProducesBlocks,
 			ev.AvailableAttestationsFlow,
 			ev.AttestationsInEveryRound,
+			ev.FinalizationOccursInRounds(3),
+			ev.JustificationAdvancesEveryRound,
 		),
 	)
 	r.run()

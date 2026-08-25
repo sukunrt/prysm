@@ -11,6 +11,7 @@ go_library(
         "execution_engine.go",
         "fee_recipient.go",
         "finality.go",
+        "finality_rounds.go",
         "fork.go",
         "metrics.go",
         "node.go",
