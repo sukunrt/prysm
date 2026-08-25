@@ -2,7 +2,10 @@ load("@prysm//tools/go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",
-    srcs = ["available_attestation_committee.go"],
+    srcs = [
+        "available_attestation_committee.go",
+        "vote_ledger.go",
+    ],
     importpath = "github.com/OffchainLabs/prysm/v7/decoupled",
     visibility = ["//visibility:public"],
     deps = [

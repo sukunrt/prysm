@@ -19,14 +19,17 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/transition"
 	forkchoicetypes "github.com/OffchainLabs/prysm/v7/beacon-chain/forkchoice/types"
 	beaconState "github.com/OffchainLabs/prysm/v7/beacon-chain/state"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/validator"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	prysmTime "github.com/OffchainLabs/prysm/v7/time"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
@@ -417,7 +420,56 @@ func (s *Service) SubmitSignedAggregateSelectionProof(
 		log.WithFields(fields).Debug("Broadcasting aggregated attestation and proof")
 	}
 
+	s.logLocalFFGAggregate(ctx, agg)
+
 	return nil
+}
+
+// logLocalFFGAggregate records an aggregate this node just published in the vote
+// ledger. Gossip validation skips the node's own messages, so this is the only
+// place they can enter the run's ledger. Same line shape as the sync side, with
+// outcome "local".
+//
+// Off unless --goldfish-vote-ledger is set.
+func (s *Service) logLocalFFGAggregate(ctx context.Context, agg ethpb.SignedAggregateAttAndProof) {
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
+	aggregateAndProof := agg.AggregateAttestationAndProof()
+	att := aggregateAndProof.AggregateVal()
+	data := att.GetData()
+	if data == nil || data.Target == nil {
+		return
+	}
+	indices, err := s.attestingIndices(ctx, att)
+	if err != nil {
+		log.WithError(err).Debug("Could not name the seats of a local FFG aggregate")
+	}
+	start := slots.UnsafeStartTime(s.GenesisTimeFetcher.GenesisTime(), data.Slot)
+	log.WithFields(logrus.Fields{
+		"outcome":         "local",
+		"attSlot":         data.Slot,
+		"targetRound":     data.Target.Epoch,
+		"committeeIndex":  att.GetCommitteeIndex(),
+		"aggregatorIndex": aggregateAndProof.GetAggregatorIndex(),
+		"seats":           att.GetAggregationBits().Count(),
+		"arrivedMs":       time.Since(start).Milliseconds(),
+		"validators":      decoupled.VoteLedgerValidators(indices),
+	}).Info("FFG aggregate")
+}
+
+// attestingIndices resolves an attestation's aggregation bits to validator
+// indices against the head state's committees.
+func (s *Service) attestingIndices(ctx context.Context, att ethpb.Att) ([]uint64, error) {
+	st, err := s.HeadFetcher.HeadStateReadOnly(ctx)
+	if err != nil {
+		return nil, err
+	}
+	committees, err := helpers.AttestationCommitteesFromState(ctx, st, att)
+	if err != nil {
+		return nil, err
+	}
+	return attestation.AttestingIndices(att, committees...)
 }
 
 // AggregatedSigAndAggregationBits returns the aggregated signature and aggregation bits

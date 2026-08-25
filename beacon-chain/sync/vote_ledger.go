@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"github.com/OffchainLabs/prysm/v7/config/features"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/sirupsen/logrus"
 )
@@ -88,6 +90,44 @@ func (s *Service) logFFGVote(att ethpb.Att, arrived time.Time) {
 		fields["validator"] = att.GetAttestingIndex()
 	}
 	log.WithFields(fields).Info("FFG vote")
+}
+
+// logFFGAggregate writes one line for one aggregate that passed validation on
+// the aggregate topic. committee is the one the validation already resolved, so
+// the aggregation bits are named without a second lookup. arrived carries the
+// same clock basis as the FFG vote lines: milliseconds into the aggregate's own
+// attestation slot.
+//
+// Off unless --goldfish-vote-ledger is set.
+func (s *Service) logFFGAggregate(
+	signed ethpb.SignedAggregateAttAndProof,
+	committee []primitives.ValidatorIndex,
+	arrived time.Time,
+) {
+	if !features.Get().GoldfishVoteLedger || signed == nil {
+		return
+	}
+	aggregateAndProof := signed.AggregateAttestationAndProof()
+	att := aggregateAndProof.AggregateVal()
+	data := att.GetData()
+	if data == nil || data.Target == nil {
+		return
+	}
+	indices, err := attestation.AttestingIndices(att, committee)
+	if err != nil {
+		log.WithError(err).Debug("Could not name the seats of an FFG aggregate")
+	}
+	start := slots.UnsafeStartTime(s.cfg.clock.GenesisTime(), data.Slot)
+	log.WithFields(logrus.Fields{
+		"outcome":         "gossip",
+		"attSlot":         data.Slot,
+		"targetRound":     data.Target.Epoch,
+		"committeeIndex":  att.GetCommitteeIndex(),
+		"aggregatorIndex": aggregateAndProof.GetAggregatorIndex(),
+		"seats":           att.GetAggregationBits().Count(),
+		"arrivedMs":       arrived.Sub(start).Milliseconds(),
+		"validators":      decoupled.VoteLedgerValidators(indices),
+	}).Info("FFG aggregate")
 }
 
 // dropVote counts and records a head vote the node is discarding. Every path

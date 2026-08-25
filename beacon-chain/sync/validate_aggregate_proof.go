@@ -133,7 +133,7 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 		return pubsub.ValidationIgnore, nil
 	}
 
-	validationRes, err := s.validateAggregatedAtt(ctx, m)
+	committee, validationRes, err := s.validateAggregatedAtt(ctx, m)
 	if validationRes != pubsub.ValidationAccept {
 		return validationRes, err
 	}
@@ -142,6 +142,8 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 		return pubsub.ValidationIgnore, nil
 	}
 
+	s.logFFGAggregate(m, committee, receivedTime)
+
 	msg.ValidatorData = m
 
 	aggregateAttestationVerificationGossipSummary.Observe(float64(prysmTime.Since(receivedTime).Milliseconds()))
@@ -149,7 +151,11 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 	return pubsub.ValidationAccept, nil
 }
 
-func (s *Service) validateAggregatedAtt(ctx context.Context, signed ethpb.SignedAggregateAttAndProof) (pubsub.ValidationResult, error) {
+// The committee it returns is the one the aggregate's bits index into: the vote
+// ledger names the seats with it rather than resolving them a second time.
+func (s *Service) validateAggregatedAtt(
+	ctx context.Context, signed ethpb.SignedAggregateAttAndProof,
+) ([]primitives.ValidatorIndex, pubsub.ValidationResult, error) {
 	ctx, span := trace.StartSpan(ctx, "sync.validateAggregatedAtt")
 	defer span.End()
 
@@ -165,38 +171,38 @@ func (s *Service) validateAggregatedAtt(ctx context.Context, signed ethpb.Signed
 	if err := s.cfg.chain.VerifyLmdFfgConsistency(ctx, aggregate); err != nil {
 		tracing.AnnotateError(span, err)
 		attBadLmdConsistencyCount.Inc()
-		return pubsub.ValidationReject, err
+		return nil, pubsub.ValidationReject, err
 	}
 
 	// Verify current finalized checkpoint is an ancestor of the block defined by the attestation's beacon block root.
 	if !s.cfg.chain.InForkchoice(bytesutil.ToBytes32(data.BeaconBlockRoot)) {
 		tracing.AnnotateError(span, blockchain.ErrNotDescendantOfFinalized)
-		return pubsub.ValidationIgnore, blockchain.ErrNotDescendantOfFinalized
+		return nil, pubsub.ValidationIgnore, blockchain.ErrNotDescendantOfFinalized
 	}
 
 	bs, err := s.cfg.chain.AttestationTargetState(ctx, data.Target)
 	if err != nil {
 		tracing.AnnotateError(span, err)
-		return pubsub.ValidationIgnore, err
+		return nil, pubsub.ValidationIgnore, err
 	}
 
 	committeeIndex, _, result, err := s.validateCommitteeIndexAndCount(ctx, aggregate, bs)
 	if result != pubsub.ValidationAccept {
 		wrappedErr := errors.Wrapf(err, "could not validate committee index")
 		tracing.AnnotateError(span, wrappedErr)
-		return result, err
+		return nil, result, err
 	}
 
 	committee, err := helpers.BeaconCommitteeFromState(ctx, bs, aggregate.GetData().Slot, committeeIndex)
 	if err != nil {
 		tracing.AnnotateError(span, err)
-		return pubsub.ValidationIgnore, err
+		return nil, pubsub.ValidationIgnore, err
 	}
 
 	// Verify number of aggregation bits matches the committee size.
 	if err = helpers.VerifyBitfieldLength(aggregate.GetAggregationBits(), uint64(len(committee))); err != nil {
 		tracing.AnnotateError(span, err)
-		return pubsub.ValidationReject, err
+		return nil, pubsub.ValidationReject, err
 	}
 
 	// Verify validator index is within the beacon committee.
@@ -204,7 +210,7 @@ func (s *Service) validateAggregatedAtt(ctx context.Context, signed ethpb.Signed
 	if result != pubsub.ValidationAccept {
 		wrappedErr := errors.Wrapf(err, "could not validate index in committee")
 		tracing.AnnotateError(span, wrappedErr)
-		return result, wrappedErr
+		return nil, result, wrappedErr
 	}
 
 	// Verify selection proof reflects to the right validator.
@@ -220,7 +226,7 @@ func (s *Service) validateAggregatedAtt(ctx context.Context, signed ethpb.Signed
 		wrappedErr := errors.Wrapf(err, "could not validate selection for validator %d", aggregateAndProof.GetAggregatorIndex())
 		tracing.AnnotateError(span, wrappedErr)
 		attBadSelectionProofCount.Inc()
-		return pubsub.ValidationReject, wrappedErr
+		return nil, pubsub.ValidationReject, wrappedErr
 	}
 
 	// Verify selection signature, aggregator signature and attestation signature are valid.
@@ -229,18 +235,19 @@ func (s *Service) validateAggregatedAtt(ctx context.Context, signed ethpb.Signed
 	if err != nil {
 		wrappedErr := errors.Wrapf(err, "could not get aggregator sig set %d", aggregatorIndex)
 		tracing.AnnotateError(span, wrappedErr)
-		return pubsub.ValidationIgnore, wrappedErr
+		return nil, pubsub.ValidationIgnore, wrappedErr
 	}
 	attSigSet, err := blocks.AttestationSignatureBatch(ctx, bs, []ethpb.Att{aggregate})
 	if err != nil {
 		wrappedErr := errors.Wrapf(err, "could not verify aggregator signature %d", aggregatorIndex)
 		tracing.AnnotateError(span, wrappedErr)
-		return pubsub.ValidationIgnore, wrappedErr
+		return nil, pubsub.ValidationIgnore, wrappedErr
 	}
 	set := bls.NewSet()
 	set.Join(selectionSigSet).Join(aggregatorSigSet).Join(attSigSet)
 
-	return s.validateWithBatchVerifier(ctx, "aggregate", set)
+	res, err := s.validateWithBatchVerifier(ctx, "aggregate", set)
+	return committee, res, err
 }
 
 // validateBlocksInAttestation checks if the block being voted on is in the beaconDB.

@@ -26,6 +26,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/container/slice"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
@@ -581,7 +582,6 @@ func (s *Service) handleEpochBoundary(ctx context.Context, slot primitives.Slot,
 func (s *Service) handleBlockAttestations(ctx context.Context, blk interfaces.ReadOnlyBeaconBlock, st state.BeaconState) error {
 	// Feed in block's attestations to fork choice store.
 	for _, a := range blk.Body().Attestations() {
-		logFFGInclusion(blk.Slot(), a)
 		committees, err := helpers.AttestationCommitteesFromState(ctx, st, a)
 		if err != nil {
 			return err
@@ -590,6 +590,7 @@ func (s *Service) handleBlockAttestations(ctx context.Context, blk interfaces.Re
 		if err != nil {
 			return err
 		}
+		logFFGInclusion(blk.Slot(), a, indices)
 		r := bytesutil.ToBytes32(a.GetData().BeaconBlockRoot)
 		if s.cfg.ForkChoiceStore.HasNode(r) {
 			payloadStatus := true
@@ -614,7 +615,7 @@ func (s *Service) handleBlockAttestations(ctx context.Context, blk interfaces.Re
 // which slot's FFG votes landed in which block, and how many slots late.
 //
 // Off unless --goldfish-vote-ledger is set.
-func logFFGInclusion(blockSlot primitives.Slot, att ethpb.Att) {
+func logFFGInclusion(blockSlot primitives.Slot, att ethpb.Att, indices []uint64) {
 	if !features.Get().GoldfishVoteLedger || att == nil || att.GetData() == nil {
 		return
 	}
@@ -629,6 +630,7 @@ func logFFGInclusion(blockSlot primitives.Slot, att ethpb.Att) {
 		"inclusionSlots": inclusionSlots,
 		"committeeIndex": att.GetCommitteeIndex(),
 		"seats":          att.GetAggregationBits().Count(),
+		"validators":     decoupled.VoteLedgerValidators(indices),
 	}).Info("FFG vote included")
 }
 

@@ -426,7 +426,7 @@ func (s *Service) processVerifiedAttestation(
 }
 
 func (s *Service) processAggregate(ctx context.Context, aggregate ethpb.SignedAggregateAttAndProof) error {
-	res, err := s.validateAggregatedAtt(ctx, aggregate)
+	_, res, err := s.validateAggregatedAtt(ctx, aggregate)
 	if err != nil {
 		log.WithError(err).Debug("Pending aggregated attestation failed validation")
 		return errors.Wrap(err, "validate aggregated att")

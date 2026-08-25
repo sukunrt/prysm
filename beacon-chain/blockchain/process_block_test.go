@@ -3878,12 +3878,12 @@ func TestLogFFGInclusion_QuietUnlessTheLedgerIsOn(t *testing.T) {
 		Data:            &ethpb.AttestationData{Slot: 4, CommitteeIndex: 1},
 	}
 
-	logFFGInclusion(7, att)
+	logFFGInclusion(7, att, []uint64{9, 12})
 	require.Equal(t, 0, len(hook.AllEntries()))
 
 	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
 	defer reset()
-	logFFGInclusion(7, att)
+	logFFGInclusion(7, att, []uint64{9, 12})
 	require.Equal(t, 1, len(hook.AllEntries()))
 	entry := hook.LastEntry()
 	require.Equal(t, "FFG vote included", entry.Message)
@@ -3891,4 +3891,5 @@ func TestLogFFGInclusion_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	require.Equal(t, primitives.Slot(7), entry.Data["blockSlot"])
 	require.Equal(t, primitives.Slot(3), entry.Data["inclusionSlots"])
 	require.Equal(t, uint64(1), entry.Data["seats"])
+	require.Equal(t, "9,12", entry.Data["validators"])
 }

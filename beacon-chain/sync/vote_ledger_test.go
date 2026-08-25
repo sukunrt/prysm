@@ -80,6 +80,45 @@ func TestLogFFGVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	require.Equal(t, primitives.ValidatorIndex(7), entry.Data["validator"])
 }
 
+func TestLogFFGAggregate_QuietUnlessTheLedgerIsOn(t *testing.T) {
+	hook := logTest.NewGlobal()
+	s := ledgerService(t)
+	bits := bitfield.NewBitlist(4)
+	bits.SetBitAt(1, true)
+	bits.SetBitAt(3, true)
+	signed := &ethpb.SignedAggregateAttestationAndProof{
+		Message: &ethpb.AggregateAttestationAndProof{
+			AggregatorIndex: 5,
+			Aggregate: &ethpb.Attestation{
+				AggregationBits: bits,
+				Data: &ethpb.AttestationData{
+					Slot:           9,
+					CommitteeIndex: 2,
+					Target:         &ethpb.Checkpoint{Epoch: 1},
+				},
+			},
+		},
+	}
+	committee := []primitives.ValidatorIndex{4, 5, 8, 9}
+
+	s.logFFGAggregate(signed, committee, time.Now())
+	require.Equal(t, 0, len(hook.AllEntries()))
+
+	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
+	defer reset()
+	s.logFFGAggregate(signed, committee, time.Now())
+	require.Equal(t, 1, len(hook.AllEntries()))
+	entry := hook.LastEntry()
+	require.Equal(t, "FFG aggregate", entry.Message)
+	require.Equal(t, "gossip", entry.Data["outcome"])
+	require.Equal(t, primitives.Slot(9), entry.Data["attSlot"])
+	require.Equal(t, primitives.Round(1), entry.Data["targetRound"])
+	require.Equal(t, primitives.CommitteeIndex(2), entry.Data["committeeIndex"])
+	require.Equal(t, primitives.ValidatorIndex(5), entry.Data["aggregatorIndex"])
+	require.Equal(t, uint64(2), entry.Data["seats"])
+	require.Equal(t, "5,9", entry.Data["validators"])
+}
+
 // Every discard has to move the counter, whether or not the ledger is on:
 // the counter is what a run without the ledger has to reconcile against.
 func TestDropVote_AlwaysCountsTheDrop(t *testing.T) {
