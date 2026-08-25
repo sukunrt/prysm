@@ -251,6 +251,16 @@ func (b BlockSignatureBatches) Batch() *bls.SignatureBatch {
 	return sigs
 }
 
+// blockVersionForState returns the block version a state of the given version accepts. Heze owns
+// its own state container but reuses the Gloas wire containers, so a Heze state pairs with a
+// Gloas block.
+func blockVersionForState(stateVersion int) int {
+	if stateVersion == version.Heze {
+		return version.Gloas
+	}
+	return stateVersion
+}
+
 // ProcessBlockNoVerifyAnySig creates a new, modified beacon state by applying block operation
 // transformations as defined in the Ethereum Serenity specification. It does not validate
 // any block signature except for deposit and slashing signatures. It also returns the relevant
@@ -275,7 +285,7 @@ func ProcessBlockNoVerifyAnySig(
 		return set, nil, err
 	}
 
-	if st.Version() != signed.Block().Version() {
+	if blockVersionForState(st.Version()) != signed.Block().Version() {
 		return set, nil, fmt.Errorf("state and block are different version. %d != %d", st.Version(), signed.Block().Version())
 	}
 

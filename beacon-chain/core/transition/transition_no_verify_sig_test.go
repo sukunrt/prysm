@@ -1,6 +1,7 @@
 package transition_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
@@ -210,4 +211,17 @@ func TestProcessBlockDifferentVersion(t *testing.T) {
 	require.NoError(t, err)
 	_, _, err = transition.ProcessBlockNoVerifyAnySig(t.Context(), beaconState, wsb)
 	require.ErrorContains(t, "state and block are different version. 0 != 1", err)
+}
+
+// Heze owns its own state container but reuses the Gloas wire containers, so a Heze state must
+// accept a Gloas block. It fails later for other reasons; it must not fail on the version pair.
+func TestProcessBlockHezeStateTakesGloasBlock(t *testing.T) {
+	st, err := util.NewBeaconStateHeze()
+	require.NoError(t, err)
+	wsb, err := blocks.NewSignedBeaconBlock(util.HydrateSignedBeaconBlockGloas(&ethpb.SignedBeaconBlockGloas{}))
+	require.NoError(t, err)
+	_, _, err = transition.ProcessBlockNoVerifyAnySig(t.Context(), st, wsb)
+	if err != nil {
+		require.Equal(t, false, strings.Contains(err.Error(), "different version"))
+	}
 }
