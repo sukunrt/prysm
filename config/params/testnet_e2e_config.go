@@ -57,6 +57,15 @@ func E2EMainnetTestConfig() *BeaconChainConfig {
 	e2eConfig.DenebForkEpoch = E2ETestConfig().DenebForkEpoch
 	e2eConfig.ElectraForkEpoch = E2ETestConfig().ElectraForkEpoch
 	e2eConfig.FuluForkEpoch = E2ETestConfig().FuluForkEpoch
+	// Genesis is a Heze state, so both Gloas and Heze activate at epoch 0. Gloas
+	// must be scheduled too: most Gloas behaviour is gated on GloasForkEpoch
+	// rather than on the state version, and leaving it at FarFutureEpoch runs
+	// Gloas-shaped containers with every Gloas rule switched off. The forks that
+	// precede them keep the transition epochs above; e2e runs pass this config
+	// through types.InitForkCfg, which zeroes or unschedules each fork to match
+	// the run's start and end fork.
+	e2eConfig.GloasForkEpoch = 0
+	e2eConfig.HezeForkEpoch = 0
 
 	// Terminal Total Difficulty.
 	e2eConfig.TerminalTotalDifficulty = "480"

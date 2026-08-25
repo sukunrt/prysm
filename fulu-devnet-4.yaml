@@ -11,8 +11,8 @@ GENESIS_FORK_VERSION: 0x10000000
 
 # Forking
 # ---------------------------------------------------------------
-# Everything through Fulu activates at genesis. Entries tie at epoch 0
-# and break by version enum, so Fulu wins and the chain starts there.
+# Every fork activates at genesis. Entries tie at epoch 0 and break by
+# version enum, so Heze wins and the chain starts there.
 ALTAIR_FORK_VERSION: 0x11000000
 ALTAIR_FORK_EPOCH: 0
 BELLATRIX_FORK_VERSION: 0x12000000
@@ -26,12 +26,13 @@ ELECTRA_FORK_EPOCH: 0
 FULU_FORK_VERSION: 0x16000000
 FULU_FORK_EPOCH: 0
 
-# Gloas and Heze get fork versions but no epochs, so they inherit
-# FAR_FUTURE_EPOCH and stay unscheduled. Setting either to 0 does not
-# work: prysmctl cannot build a genesis state above Fulu, and the
-# upgrade path only fires when the chain crosses the boundary.
+# Genesis is a Heze state: prysmctl builds it directly, and there is no
+# upgrade to Heze. Gloas is scheduled at the same epoch because most Gloas
+# behaviour is gated on GLOAS_FORK_EPOCH rather than on the state version.
 GLOAS_FORK_VERSION: 0x17000000
+GLOAS_FORK_EPOCH: 0
 HEZE_FORK_VERSION: 0x18000000
+HEZE_FORK_EPOCH: 0
 
 # Deposit contract
 # ---------------------------------------------------------------

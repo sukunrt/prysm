@@ -2,11 +2,14 @@ package params_test
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 )
 
@@ -177,4 +180,36 @@ func TestForkFromConfig_UsesPassedConfig(t *testing.T) {
 	if !reflect.DeepEqual(fork, want) {
 		t.Errorf("ForkFromConfig() got = %v, want %v", fork, want)
 	}
+}
+
+// TestGenesisAtHeze_ForkScheduleTieBreak covers the setup step 4 builds: Gloas
+// and Heze both activate at epoch 0. Schedule entries that tie on the epoch
+// break by version enum, so Gloas sorts first and epoch 0 resolves to Heze.
+func TestGenesisAtHeze_ForkScheduleTieBreak(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.MainnetConfig().Copy()
+	cfg.AltairForkEpoch = 0
+	cfg.BellatrixForkEpoch = 0
+	cfg.CapellaForkEpoch = 0
+	cfg.DenebForkEpoch = 0
+	cfg.ElectraForkEpoch = 0
+	cfg.FuluForkEpoch = 0
+	cfg.GloasForkEpoch = 0
+	cfg.HezeForkEpoch = 0
+	cfg.InitializeForkSchedule()
+	params.OverrideBeaconConfig(cfg)
+
+	entry := params.GetNetworkScheduleEntry(0)
+	require.Equal(t, version.Heze, entry.VersionEnum)
+	require.DeepEqual(t, bytesutil.ToBytes4(cfg.HezeForkVersion), entry.ForkVersion)
+	require.Equal(t, primitives.Epoch(0), params.LastForkEpoch())
+}
+
+// TestForkNameHeze checks that --fork-name heze resolves; prysmctl builds the
+// generate-genesis enum from version.All().
+func TestForkNameHeze(t *testing.T) {
+	v, err := version.FromString("heze")
+	require.NoError(t, err)
+	require.Equal(t, version.Heze, v)
+	require.Equal(t, true, slices.Contains(version.All(), version.Heze))
 }

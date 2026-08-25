@@ -8,8 +8,8 @@ GENESIS_FORK_VERSION: 0x10000000
 
 # Forking
 # ---------------------------------------------------------------
-# Everything through Fulu activates at genesis. The highest fork
-# with epoch 0 wins the tie-break, so the chain starts at Fulu.
+# Every fork activates at genesis. The highest fork with epoch 0 wins
+# the tie-break, so the chain starts at Heze.
 ALTAIR_FORK_VERSION: 0x11000000
 ALTAIR_FORK_EPOCH: 0
 BELLATRIX_FORK_VERSION: 0x12000000
@@ -23,9 +23,12 @@ ELECTRA_FORK_EPOCH: 0
 FULU_FORK_VERSION: 0x16000000
 FULU_FORK_EPOCH: 0
 
-# Gloas and Heze stay unscheduled (inherited FAR_FUTURE_EPOCH).
+# Genesis is a Heze state. Gloas is scheduled at the same epoch because most
+# Gloas behaviour is gated on GLOAS_FORK_EPOCH rather than on the state version.
 GLOAS_FORK_VERSION: 0x17000000
+GLOAS_FORK_EPOCH: 0
 HEZE_FORK_VERSION: 0x18000000
+HEZE_FORK_EPOCH: 0
 
 # Deposit contract
 # ---------------------------------------------------------------                       DEPOSIT_CHAIN_ID: 4242

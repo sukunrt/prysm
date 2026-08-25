@@ -35,7 +35,19 @@ func InitForkCfg(start, end int, c *params.BeaconChainConfig) *params.BeaconChai
 	if start >= version.Fulu {
 		c.FuluForkEpoch = 0
 	}
+	if start >= version.Gloas {
+		c.GloasForkEpoch = 0
+	}
+	if start >= version.Heze {
+		c.HezeForkEpoch = 0
+	}
 
+	if end < version.Heze {
+		c.HezeForkEpoch = math.MaxUint64
+	}
+	if end < version.Gloas {
+		c.GloasForkEpoch = math.MaxUint64
+	}
 	if end < version.Fulu {
 		c.FuluForkEpoch = math.MaxUint64
 	}
