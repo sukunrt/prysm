@@ -2,6 +2,7 @@
 """Turn kurtosis/scrape.sh output into the step-6 measurement tables.
 
     kurtosis/summarize.py <scrapedir> [--slot-seconds 6] [--skip-slots 32]
+                                      [--slots-per-round 8]
 
 Counters are differenced between the first and last sample of the measurement
 window and divided by the number of slots in it, which gives the same
@@ -58,12 +59,12 @@ GOLDFISH = [
     "beacon_reorgs_total",
 ]
 
-CHAIN = [
-    "beacon_head_slot",
-    "beacon_clock_time_slot",
-    "beacon_finalized_epoch",
-    "beacon_current_justified_epoch",
-]
+# The FFG checkpoints carry rounds, so finality is a round-cadence quantity:
+# beacon_{current_justified,finalized}_round are the gauges that move once per
+# round, finality_latency_slots is the clock slot minus the first slot of the
+# last finalized round, and {justified,finalized}_round_advance_total over the
+# window's rounds is the per-round advance rate. All are plain scalars, so
+# parse() picks them up without a list here.
 
 
 def topic_family(labels):
@@ -129,6 +130,8 @@ def main():
     ap.add_argument("--slot-seconds", type=float, default=6.0)
     ap.add_argument("--skip-slots", type=int, default=32,
                     help="slots of warm-up dropped from the window")
+    ap.add_argument("--slots-per-round", type=int, default=8,
+                    help="SLOTS_PER_ROUND the run was configured with")
     args = ap.parse_args()
 
     d = pathlib.Path(args.scrapedir)
@@ -166,28 +169,69 @@ def main():
           f"{span * args.slot_seconds:.0f}s of chain time), "
           f"{len(per_node)} beacon nodes\n")
 
+    spr = args.slots_per_round
     print("## Finalization (end of run)\n")
-    print("| node | head slot | justified | finalized | reorgs | peers |")
-    print("|---|---|---|---|---|---|")
+    print("| node | head slot | just round | fin round | latency slots |"
+          " just advances | fin advances | reorgs | peers |")
+    print("|---|---|---|---|---|---|---|---|---|")
     for name, (_, (_, sc, _)) in windows.items():
         print(f"| {name} | {sc.get('beacon_head_slot', 0):.0f} | "
-              f"{sc.get('beacon_current_justified_epoch', 0):.0f} | "
-              f"{sc.get('beacon_finalized_epoch', 0):.0f} | "
+              f"{sc.get('beacon_current_justified_round', 0):.0f} | "
+              f"{sc.get('beacon_finalized_round', 0):.0f} | "
+              f"{sc.get('finality_latency_slots', 0):.0f} | "
+              f"{sc.get('justified_round_advance_total', 0):.0f} | "
+              f"{sc.get('finalized_round_advance_total', 0):.0f} | "
               f"{sc.get('beacon_reorgs_total', 0):.0f} | "
               f"{sc.get('p2p_peer_count', 0):.0f} |")
 
-    print("\n## Finalized epoch over time (one row per node)\n")
-    marks = sorted({int(sc.get("beacon_clock_time_slot", 0)) // 32
+    # The headline: finality latency in slots over the window, and the rate at
+    # which the two checkpoints advanced per round of the window.
+    print("\n## Finality latency and per-round advance rate (window)\n")
+    print("| node | latency min/mean/max | first fin slot | first fin round |"
+          " rounds | just/round | fin/round |")
+    print("|---|---|---|---|---|---|---|")
+    lat_all = []
+    for name, samples in per_node.items():
+        lat = [sc["finality_latency_slots"] for _, sc, _ in samples
+               if sc.get("finality_latency_slots") is not None
+               and sc.get("beacon_clock_time_slot", 0) >= skip
+               and sc.get("beacon_finalized_round", 0) > 0]
+        lat_all += lat
+        first_slot_fin, first_round_fin = "-", "-"
+        for _, sc, _ in samples:
+            if sc.get("beacon_finalized_round", 0) > 0:
+                first_slot_fin = f"{sc.get('beacon_clock_time_slot', 0):.0f}"
+                first_round_fin = f"{sc['beacon_finalized_round']:.0f}"
+                break
+        (_, sc0, _), (_, sc1, _) = windows[name]
+        rounds = max(1.0, span / spr)
+        just = (sc1.get("justified_round_advance_total", 0)
+                - sc0.get("justified_round_advance_total", 0)) / rounds
+        fin = (sc1.get("finalized_round_advance_total", 0)
+               - sc0.get("finalized_round_advance_total", 0)) / rounds
+        latcell = (f"{min(lat):.0f}/{sum(lat) / len(lat):.1f}/{max(lat):.0f}"
+                   if lat else "-")
+        print(f"| {name} | {latcell} | {first_slot_fin} | {first_round_fin} | "
+              f"{rounds:.0f} | {just:.2f} | {fin:.2f} |")
+    if lat_all:
+        print(f"\nfinality_latency_slots over all nodes and window samples: "
+              f"min {min(lat_all):.0f}, mean "
+              f"{sum(lat_all) / len(lat_all):.1f}, max {max(lat_all):.0f}, "
+              f"samples {len(lat_all)}")
+
+    print(f"\n## Finalized round over time (one row per node, "
+          f"{spr}-slot rounds)\n")
+    marks = sorted({int(sc.get("beacon_clock_time_slot", 0)) // spr
                     for s in per_node.values() for (_, sc, _) in s})
-    print("| node | " + " | ".join(f"e{m}" for m in marks) + " |")
+    print("| node | " + " | ".join(f"r{m}" for m in marks) + " |")
     print("|---" * (len(marks) + 1) + "|")
     for name, samples in per_node.items():
         cells = []
         for m in marks:
             val = ""
             for _, sc, _ in samples:
-                if int(sc.get("beacon_clock_time_slot", 0)) // 32 == m:
-                    val = f"{sc.get('beacon_finalized_epoch', 0):.0f}"
+                if int(sc.get("beacon_clock_time_slot", 0)) // spr == m:
+                    val = f"{sc.get('beacon_finalized_round', 0):.0f}"
             cells.append(val or "-")
         print(f"| {name} | " + " | ".join(cells) + " |")
 

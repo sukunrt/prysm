@@ -21,6 +21,14 @@ keep+='|p2p_pubsub_topic_active|p2p_peer_count|p2p_message_received_total'
 keep+='|p2p_message_failed_validation_total|goldfish_|beacon_reorgs_total'
 keep+='|beacon_head_slot|beacon_clock_time_slot|beacon_finalized_epoch'
 keep+='|beacon_current_justified_epoch|data_column_|rpc_data_columns'
+# The round-valued FFG family. The checkpoints carry rounds, so the *_round
+# gauges are the ones that move once per round; finality_latency_slots is the
+# headline (clock slot minus the finalized round's first slot) and the two
+# advance counters say how often each checkpoint actually moved.
+keep+='|beacon_finalized_round|beacon_current_justified_round'
+keep+='|beacon_previous_justified_round|finality_latency_slots'
+keep+='|justified_round_advance_total|finalized_round_advance_total'
+keep+='|beacon_prev_round_'
 keep+='|forkchoice_|process_cpu_seconds_total|process_resident_memory_bytes'
 # The blob/column families: a run with blob traffic has to show the columns
 # were built, gossip-verified, stored and served, not just that the subnets
