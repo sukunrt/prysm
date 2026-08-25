@@ -47,6 +47,26 @@ sed -i "/^SECONDS_PER_SLOT:/i $comment3\n$comment4\nAVAILABLE_ATTESTATION_DUE_BP
     /config/cl/config.yaml
 grep -q '^AVAILABLE_ATTESTATION_DUE_BPS_HEZE' /config/cl/config.yaml
 
+# SlotCommitteeCount = V / SLOTS_PER_ROUND / TARGET_COMMITTEE_SIZE, clamped to
+# [1, MAX_COMMITTEES_PER_SLOT] (beacon-chain/core/helpers/beacon_committee.go).
+# A target far above the per-slot pool floors that to one committee holding
+# the whole pool. The key is absent from the upstream template, so insert it.
+comment5='# One committee per slot: the whole V/SLOTS_PER_ROUND pool, one seat set.'
+sed -i "/^SECONDS_PER_SLOT:/i $comment5\nTARGET_COMMITTEE_SIZE: \$TARGET_COMMITTEE_SIZE" \
+    /config/cl/config.yaml
+grep -q '^TARGET_COMMITTEE_SIZE' /config/cl/config.yaml
+
+# The subnet count must equal the committee count per slot: one committee ->
+# one subnet -> every node observes every raw FFG vote instead of a 1/64
+# sample. Both keys are already literals in the upstream template, so these
+# REPLACE those lines; inserting new ones would leave two definitions.
+sed -i 's|^SUBNETS_PER_NODE: 2$|SUBNETS_PER_NODE: $SUBNETS_PER_NODE|' \
+    /config/cl/config.yaml
+sed -i 's|^ATTESTATION_SUBNET_COUNT: 64$|ATTESTATION_SUBNET_COUNT: $ATTESTATION_SUBNET_COUNT|' \
+    /config/cl/config.yaml
+test "$(grep -c '^SUBNETS_PER_NODE' /config/cl/config.yaml)" = 1
+test "$(grep -c '^ATTESTATION_SUBNET_COUNT' /config/cl/config.yaml)" = 1
+
 # The CL genesis state: prysmctl, not eth-genesis-state-generator. See
 # prysm-genesis-state.sh for the why. Installing it under the upstream name
 # leaves the stock entrypoint untouched.

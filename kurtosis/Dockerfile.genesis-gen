@@ -23,8 +23,14 @@ FROM ethpandaops/ethereum-genesis-generator:6.2.0 AS egg-newer
 FROM ethpandaops/ethereum-genesis-generator:6.0.2
 COPY --from=egg-newer /apps/validator-mapping /apps/validator-mapping
 
+# envsubst turns an unset variable into the empty string, so every key
+# patch-generator.sh writes as $VAR needs a default here. extra_env wins: the
+# entrypoint sources /defaults/defaults.env before /config/values.env.
 ENV SLOTS_PER_ROUND=8
 ENV AVAILABLE_ATTESTATION_DUE_BPS_HEZE=2500
+ENV TARGET_COMMITTEE_SIZE=3000
+ENV ATTESTATION_SUBNET_COUNT=1
+ENV SUBNETS_PER_NODE=2
 
 COPY prysmctl /usr/local/bin/prysmctl
 COPY prysm-genesis-state.sh /usr/local/bin/prysm-genesis-state.sh
