@@ -27,20 +27,15 @@ func (s *Store) head(ctx context.Context) ([32]byte, error) {
 		return [32]byte{}, err
 	}
 
-	// JustifiedRoot has to be known
-	var jn *Node
-	ej := s.emptyNodeByRoot[s.justifiedCheckpoint.Root]
-	if ej != nil {
-		jn = ej.node
-	} else {
-		// If the justifiedCheckpoint is from genesis, then the root is
-		// zeroHash. In this case it should be the root of forkchoice
-		// tree.
-		if s.justifiedCheckpoint.Epoch == params.BeaconConfig().GenesisEpoch {
-			jn = s.treeRootNode
-		} else {
-			return [32]byte{}, errors.WithMessage(errUnknownJustifiedRoot, fmt.Sprintf("%#x", s.justifiedCheckpoint.Root))
-		}
+	// After Heze the head is the Goldfish walk over the available attestation
+	// votes, not the best descendant of the justified node.
+	if s.goldfishActive() {
+		return s.goldfishHead()
+	}
+
+	jn, err := s.justifiedNode()
+	if err != nil {
+		return [32]byte{}, err
 	}
 
 	// If the justified node doesn't have a best descendant,
@@ -65,6 +60,20 @@ func (s *Store) head(ctx context.Context) ([32]byte, error) {
 	}
 
 	return bestDescendant.root, nil
+}
+
+// justifiedNode returns the store's justified node, which is where every head
+// walk starts.
+func (s *Store) justifiedNode() (*Node, error) {
+	if ej := s.emptyNodeByRoot[s.justifiedCheckpoint.Root]; ej != nil {
+		return ej.node, nil
+	}
+	// If the justifiedCheckpoint is from genesis, then the root is zeroHash. In
+	// this case it should be the root of the forkchoice tree.
+	if s.justifiedCheckpoint.Epoch == params.BeaconConfig().GenesisEpoch {
+		return s.treeRootNode, nil
+	}
+	return nil, errors.WithMessage(errUnknownJustifiedRoot, fmt.Sprintf("%#x", s.justifiedCheckpoint.Root))
 }
 
 // insert registers a new block node to the fork choice store's node list.

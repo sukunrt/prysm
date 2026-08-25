@@ -189,6 +189,12 @@ func (f *ForkChoice) IsCanonical(root [32]byte) bool {
 		return false
 	}
 
+	// After Heze the best descendant pointers no longer describe the head
+	// chain, the Goldfish walk does.
+	if f.store.goldfishActive() {
+		return f.store.isCanonicalGoldfish(pn.node)
+	}
+
 	if pn.node.bestDescendant == nil {
 		// The node doesn't have any children
 		if f.store.headNode.bestDescendant == nil {
