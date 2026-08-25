@@ -1,7 +1,9 @@
 package p2p
 
 import (
+	"crypto/ecdsa"
 	"fmt"
+	"net"
 	"testing"
 	"time"
 
@@ -14,17 +16,37 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 )
+
+// newGaterTestHost starts a libp2p host on an OS-assigned TCP port of ip and
+// returns it with the multiaddr other hosts should dial it on. The port is left
+// to the OS rather than hardcoded, so these tests do not collide with whatever
+// else happens to be listening on the machine.
+func newGaterTestHost(t *testing.T, ip net.IP, pkey *ecdsa.PrivateKey, opts ...libp2p.Option) (host.Host, ma.Multiaddr) {
+	t.Helper()
+
+	listen, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/0", ip))
+	require.NoError(t, err, "Failed to p2p listen")
+
+	h, err := libp2p.New(append([]libp2p.Option{privKeyOption(pkey), libp2p.ListenAddrs(listen)}, opts...)...)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, h.Close()) })
+
+	addrs, err := peer.AddrInfoToP2pAddrs(&peer.AddrInfo{ID: h.ID(), Addrs: h.Addrs()})
+	require.NoError(t, err)
+	require.Equal(t, true, len(addrs) > 0, "host has no dialable address")
+
+	return h, addrs[0]
+}
 
 func TestPeer_AtMaxLimit(t *testing.T) {
 	// create host and remote peer
 	ipAddr, pkey := createAddrAndPrivKey(t)
 	ipAddr2, pkey2 := createAddrAndPrivKey(t)
 
-	listen, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ipAddr, 2000))
-	require.NoError(t, err, "Failed to p2p listen")
 	s := &Service{
 		ipLimiter: leakybucket.NewCollector(ipLimit, ipBurst, 1*time.Second, false),
 	}
@@ -37,33 +59,20 @@ func TestPeer_AtMaxLimit(t *testing.T) {
 		},
 	})
 	s.cfg = &Config{MaxPeers: 0}
+	var err error
 	s.addrFilter, err = configureFilter(&Config{})
 	require.NoError(t, err)
 	s.started = true
-	h1, err := libp2p.New([]libp2p.Option{privKeyOption(pkey), libp2p.ListenAddrs(listen), libp2p.ConnectionGater(s)}...)
-	require.NoError(t, err)
+	h1, h1Addr := newGaterTestHost(t, ipAddr, pkey, libp2p.ConnectionGater(s))
 	s.host = h1
-	defer func() {
-		err := h1.Close()
-		require.NoError(t, err)
-	}()
 
 	for range highWatermarkBuffer {
 		addPeer(t, s.peers, peers.Connected, false)
 	}
 
 	// create alternate host
-	listen, err = ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ipAddr2, 3000))
-	require.NoError(t, err, "Failed to p2p listen")
-	h2, err := libp2p.New([]libp2p.Option{privKeyOption(pkey2), libp2p.ListenAddrs(listen)}...)
-	require.NoError(t, err)
-	defer func() {
-		err := h2.Close()
-		require.NoError(t, err)
-	}()
-	multiAddress, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d/p2p/%s", ipAddr, 2000, h1.ID()))
-	require.NoError(t, err)
-	addrInfo, err := peer.AddrInfoFromP2pAddr(multiAddress)
+	h2, _ := newGaterTestHost(t, ipAddr2, pkey2)
+	addrInfo, err := peer.AddrInfoFromP2pAddr(h1Addr)
 	require.NoError(t, err)
 	err = h2.Connect(t.Context(), *addrInfo)
 	require.NotNil(t, err, "Wanted connection to fail with max peer")
@@ -171,8 +180,6 @@ func TestPeer_BelowMaxLimit(t *testing.T) {
 	ipAddr, pkey := createAddrAndPrivKey(t)
 	ipAddr2, pkey2 := createAddrAndPrivKey(t)
 
-	listen, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ipAddr, 2000))
-	require.NoError(t, err, "Failed to p2p listen")
 	s := &Service{
 		ipLimiter: leakybucket.NewCollector(ipLimit, ipBurst, 1*time.Second, false),
 	}
@@ -185,29 +192,16 @@ func TestPeer_BelowMaxLimit(t *testing.T) {
 		},
 	})
 	s.cfg = &Config{MaxPeers: 1}
+	var err error
 	s.addrFilter, err = configureFilter(&Config{})
 	require.NoError(t, err)
-	h1, err := libp2p.New([]libp2p.Option{privKeyOption(pkey), libp2p.ListenAddrs(listen), libp2p.ConnectionGater(s)}...)
-	require.NoError(t, err)
+	h1, h1Addr := newGaterTestHost(t, ipAddr, pkey, libp2p.ConnectionGater(s))
 	s.host = h1
 	s.started = true
-	defer func() {
-		err := h1.Close()
-		require.NoError(t, err)
-	}()
 
 	// create alternate host
-	listen, err = ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ipAddr2, 3000))
-	require.NoError(t, err, "Failed to p2p listen")
-	h2, err := libp2p.New([]libp2p.Option{privKeyOption(pkey2), libp2p.ListenAddrs(listen)}...)
-	require.NoError(t, err)
-	defer func() {
-		err := h2.Close()
-		require.NoError(t, err)
-	}()
-	multiAddress, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d/p2p/%s", ipAddr, 2000, h1.ID()))
-	require.NoError(t, err)
-	addrInfo, err := peer.AddrInfoFromP2pAddr(multiAddress)
+	h2, _ := newGaterTestHost(t, ipAddr2, pkey2)
+	addrInfo, err := peer.AddrInfoFromP2pAddr(h1Addr)
 	require.NoError(t, err)
 	err = h2.Connect(t.Context(), *addrInfo)
 	assert.NoError(t, err, "Wanted connection to succeed")
@@ -223,37 +217,22 @@ func TestPeerAllowList(t *testing.T) {
 	// from that subnet.
 	cidr := "202.35.89.12/16"
 
-	listen, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ipAddr, 2000))
-	require.NoError(t, err, "Failed to p2p listen")
 	s := &Service{
 		ipLimiter: leakybucket.NewCollector(ipLimit, ipBurst, 1*time.Second, false),
 		peers: peers.NewStatus(t.Context(), &peers.StatusConfig{
 			ScorerParams: &scorers.Config{},
 		}),
 	}
+	var err error
 	s.addrFilter, err = configureFilter(&Config{AllowListCIDR: cidr})
 	require.NoError(t, err)
-	h1, err := libp2p.New([]libp2p.Option{privKeyOption(pkey), libp2p.ListenAddrs(listen), libp2p.ConnectionGater(s)}...)
-	require.NoError(t, err)
+	h1, _ := newGaterTestHost(t, ipAddr, pkey, libp2p.ConnectionGater(s))
 	s.host = h1
 	s.started = true
-	defer func() {
-		err := h1.Close()
-		require.NoError(t, err)
-	}()
 
 	// create alternate host
-	listen, err = ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ipAddr2, 3000))
-	require.NoError(t, err, "Failed to p2p listen")
-	h2, err := libp2p.New([]libp2p.Option{privKeyOption(pkey2), libp2p.ListenAddrs(listen)}...)
-	require.NoError(t, err)
-	defer func() {
-		err := h2.Close()
-		require.NoError(t, err)
-	}()
-	multiAddress, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d/p2p/%s", ipAddr2, 3000, h2.ID()))
-	require.NoError(t, err)
-	addrInfo, err := peer.AddrInfoFromP2pAddr(multiAddress)
+	_, h2Addr := newGaterTestHost(t, ipAddr2, pkey2)
+	addrInfo, err := peer.AddrInfoFromP2pAddr(h2Addr)
 	require.NoError(t, err)
 	err = h1.Connect(t.Context(), *addrInfo)
 	assert.NotNil(t, err, "Wanted connection to fail with allow list")
@@ -270,37 +249,22 @@ func TestPeerDenyList(t *testing.T) {
 	maskedIP := ipAddr2.Mask(mask)
 	cidr := maskedIP.String() + fmt.Sprintf("/%d", ones)
 
-	listen, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ipAddr, 2000))
-	require.NoError(t, err, "Failed to p2p listen")
 	s := &Service{
 		ipLimiter: leakybucket.NewCollector(ipLimit, ipBurst, 1*time.Second, false),
 		peers: peers.NewStatus(t.Context(), &peers.StatusConfig{
 			ScorerParams: &scorers.Config{},
 		}),
 	}
+	var err error
 	s.addrFilter, err = configureFilter(&Config{DenyListCIDR: []string{cidr}})
 	require.NoError(t, err)
-	h1, err := libp2p.New([]libp2p.Option{privKeyOption(pkey), libp2p.ListenAddrs(listen), libp2p.ConnectionGater(s)}...)
-	require.NoError(t, err)
+	h1, _ := newGaterTestHost(t, ipAddr, pkey, libp2p.ConnectionGater(s))
 	s.host = h1
 	s.started = true
-	defer func() {
-		err := h1.Close()
-		require.NoError(t, err)
-	}()
 
 	// create alternate host
-	listen, err = ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ipAddr2, 3000))
-	require.NoError(t, err, "Failed to p2p listen")
-	h2, err := libp2p.New([]libp2p.Option{privKeyOption(pkey2), libp2p.ListenAddrs(listen)}...)
-	require.NoError(t, err)
-	defer func() {
-		err := h2.Close()
-		require.NoError(t, err)
-	}()
-	multiAddress, err := ma.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d/p2p/%s", ipAddr2, 3000, h2.ID()))
-	require.NoError(t, err)
-	addrInfo, err := peer.AddrInfoFromP2pAddr(multiAddress)
+	_, h2Addr := newGaterTestHost(t, ipAddr2, pkey2)
+	addrInfo, err := peer.AddrInfoFromP2pAddr(h2Addr)
 	require.NoError(t, err)
 	err = h1.Connect(t.Context(), *addrInfo)
 	assert.NotNil(t, err, "Wanted connection to fail with deny list")
