@@ -18,7 +18,6 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"path/filepath"
 
 	"github.com/OffchainLabs/prysm/v7/io/file"
@@ -26,6 +25,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/validator/accounts/wallet"
 	"github.com/OffchainLabs/prysm/v7/validator/keymanager"
 	"github.com/OffchainLabs/prysm/v7/validator/keymanager/local"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -44,7 +44,7 @@ func main() {
 	ctx := context.Background()
 	privKeys, pubKeys, err := interop.DeterministicallyGenerateKeys(*startIndex, *numKeys)
 	if err != nil {
-		log.Fatalf("could not generate interop keys: %v", err)
+		log.WithError(err).Fatal("Could not generate interop keys")
 	}
 
 	w := wallet.New(&wallet.Config{
@@ -53,12 +53,12 @@ func main() {
 		WalletPassword: *password,
 	})
 	if err := w.SaveWallet(); err != nil {
-		log.Fatalf("could not save wallet: %v", err)
+		log.WithError(err).Fatal("Could not save wallet")
 	}
 
 	km, err := local.NewKeymanager(ctx, &local.SetupConfig{Wallet: w})
 	if err != nil {
-		log.Fatalf("could not create keymanager: %v", err)
+		log.WithError(err).Fatal("Could not create keymanager")
 	}
 
 	privBytes := make([][]byte, len(privKeys))
@@ -68,15 +68,15 @@ func main() {
 		pubBytes[i] = pubKeys[i].Marshal()
 	}
 	if err := km.ImportKeypairs(ctx, privBytes, pubBytes); err != nil {
-		log.Fatalf("could not import keypairs: %v", err)
+		log.WithError(err).Fatal("Could not import keypairs")
 	}
 
 	passwordFile := filepath.Join(*walletDir, wallet.DefaultWalletPasswordFile)
 	if err := file.WriteFile(passwordFile, []byte(*password)); err != nil {
-		log.Fatalf("could not write password file: %v", err)
+		log.WithError(err).Fatal("Could not write password file")
 	}
 
-	log.Printf("imported %d keys (index %d..%d) into %s",
+	log.Infof("Imported %d keys (index %d..%d) into %s",
 		*numKeys, *startIndex, *startIndex+*numKeys-1, *walletDir)
-	log.Printf("password file: %s", passwordFile)
+	log.Infof("Password file: %s", passwordFile)
 }
