@@ -128,6 +128,22 @@ func GethOsakaTime(genesisTime time.Time, cfg *clparams.BeaconChainConfig) *uint
 	return osakaTime
 }
 
+// GethAmsterdamTime calculates the absolute time of the amsterdam (aka gloas) fork
+// block by adding the relative time of the gloas fork epoch to the given genesis
+// timestamp. Heze is consensus-only and has no execution-layer counterpart.
+func GethAmsterdamTime(genesisTime time.Time, cfg *clparams.BeaconChainConfig) *uint64 {
+	var amsterdamTime *uint64
+	if cfg.GloasForkEpoch != math.MaxUint64 {
+		startSlot, err := slots.EpochStart(cfg.GloasForkEpoch)
+		if err == nil {
+			startTime := slots.UnsafeStartTime(genesisTime, startSlot)
+			newTime := uint64(startTime.Unix())
+			amsterdamTime = &newTime
+		}
+	}
+	return amsterdamTime
+}
+
 // GethBPO1Time calculates the absolute time of the BPO1 activation
 // by finding the first BlobSchedule entry with MaxBlobsPerBlock > 9 (Electra's limit)
 // which corresponds to the first BPO increase.
@@ -188,6 +204,10 @@ func GethTestnetGenesis(genesis time.Time, cfg *clparams.BeaconChainConfig) *cor
 	if cfg.FuluForkEpoch == 0 {
 		osakaTime = &genesisTime
 	}
+	amsterdamTime := GethAmsterdamTime(genesis, cfg)
+	if cfg.GloasForkEpoch == 0 {
+		amsterdamTime = &genesisTime
+	}
 	bpo1Time := GethBPO1Time(genesis, cfg)
 	bpo2Time := GethBPO2Time(genesis, cfg)
 	cc := &params.ChainConfig{
@@ -212,6 +232,7 @@ func GethTestnetGenesis(genesis time.Time, cfg *clparams.BeaconChainConfig) *cor
 		CancunTime:              cancunTime,
 		PragueTime:              pragueTime,
 		OsakaTime:               osakaTime,
+		AmsterdamTime:           amsterdamTime,
 		BPO1Time:                bpo1Time,
 		BPO2Time:                bpo2Time,
 		DepositContractAddress:  common.HexToAddress(cfg.DepositContractAddress),
