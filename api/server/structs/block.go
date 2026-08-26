@@ -614,3 +614,19 @@ type SignedExecutionPayloadEnvelopeContents struct {
 	KzgProofs                      []string                        `json:"kzg_proofs"`
 	Blobs                          []string                        `json:"blobs"`
 }
+
+// ----------------------------------------------------------------------------
+// Heze
+// ----------------------------------------------------------------------------
+
+type AvailableAttestationData struct {
+	Slot            string `json:"slot"`
+	PayloadPresent  bool   `json:"payload_present"`
+	BeaconBlockRoot string `json:"beacon_block_root"`
+}
+
+type AvailableAttestation struct {
+	AggregationBits string                    `json:"aggregation_bits"`
+	Data            *AvailableAttestationData `json:"data"`
+	Signature       string                    `json:"signature"`
+}

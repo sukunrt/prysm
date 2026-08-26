@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "attestation_data.go",
+        "available_attestation.go",
         "beacon_api_beacon_chain_client.go",
         "beacon_api_helpers.go",
         "beacon_api_node_client.go",
@@ -75,6 +76,7 @@ go_test(
     size = "small",
     srcs = [
         "attestation_data_test.go",
+        "available_attestation_test.go",
         "beacon_api_beacon_chain_client_test.go",
         "beacon_api_helpers_test.go",
         "beacon_api_node_client_test.go",
@@ -133,6 +135,7 @@ go_test(
         "@com_github_ethereum_go_ethereum//common/hexutil:go_default_library",
         "@com_github_golang_protobuf//ptypes/empty",
         "@com_github_pkg_errors//:go_default_library",
+        "@com_github_prysmaticlabs_go_bitfield//:go_default_library",
         "@org_golang_google_protobuf//types/known/emptypb:go_default_library",
         "@org_golang_google_protobuf//types/known/timestamppb:go_default_library",
         "@org_uber_go_mock//gomock:go_default_library",

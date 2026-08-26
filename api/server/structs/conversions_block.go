@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/api/server"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
@@ -2983,6 +2984,68 @@ func PayloadAttestationDataFromConsensus(d *eth.PayloadAttestationData) *Payload
 		PayloadPresent:    d.PayloadPresent,
 		BlobDataAvailable: d.BlobDataAvailable,
 	}
+}
+
+// availableAttestationBitsLength is the byte length of AvailableAttestation.AggregationBits, a
+// bitfield.Bitvector512 that MarshalSSZ rejects at any other length.
+const availableAttestationBitsLength = 64
+
+func AvailableAttestationFromConsensus(a *eth.AvailableAttestation) *AvailableAttestation {
+	return &AvailableAttestation{
+		AggregationBits: hexutil.Encode(a.AggregationBits),
+		Data:            AvailableAttestationDataFromConsensus(a.Data),
+		Signature:       hexutil.Encode(a.Signature),
+	}
+}
+
+func AvailableAttestationDataFromConsensus(d *eth.AvailableAttestationData) *AvailableAttestationData {
+	return &AvailableAttestationData{
+		Slot:            fmt.Sprintf("%d", d.Slot),
+		PayloadPresent:  d.PayloadPresent,
+		BeaconBlockRoot: hexutil.Encode(d.BeaconBlockRoot),
+	}
+}
+
+func (a *AvailableAttestation) ToConsensus() (*eth.AvailableAttestation, error) {
+	if a == nil {
+		return nil, errNilValue
+	}
+	aggregationBits, err := bytesutil.DecodeHexWithLength(a.AggregationBits, availableAttestationBitsLength)
+	if err != nil {
+		return nil, server.NewDecodeError(err, "AggregationBits")
+	}
+	data, err := a.Data.ToConsensus()
+	if err != nil {
+		return nil, server.NewDecodeError(err, "Data")
+	}
+	sig, err := bytesutil.DecodeHexWithLength(a.Signature, fieldparams.BLSSignatureLength)
+	if err != nil {
+		return nil, server.NewDecodeError(err, "Signature")
+	}
+	return &eth.AvailableAttestation{
+		AggregationBits: bitfield.Bitvector512(aggregationBits),
+		Data:            data,
+		Signature:       sig,
+	}, nil
+}
+
+func (d *AvailableAttestationData) ToConsensus() (*eth.AvailableAttestationData, error) {
+	if d == nil {
+		return nil, errNilValue
+	}
+	slot, err := strconv.ParseUint(d.Slot, 10, 64)
+	if err != nil {
+		return nil, server.NewDecodeError(err, "Slot")
+	}
+	beaconBlockRoot, err := bytesutil.DecodeHexWithLength(d.BeaconBlockRoot, fieldparams.RootLength)
+	if err != nil {
+		return nil, server.NewDecodeError(err, "BeaconBlockRoot")
+	}
+	return &eth.AvailableAttestationData{
+		Slot:            primitives.Slot(slot),
+		PayloadPresent:  d.PayloadPresent,
+		BeaconBlockRoot: beaconBlockRoot,
+	}, nil
 }
 
 func (b *SignedBeaconBlockGloas) ToGeneric() (*eth.GenericSignedBeaconBlock, error) {

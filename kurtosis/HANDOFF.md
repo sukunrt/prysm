@@ -106,10 +106,10 @@ run one shakeout first.
   `bpo_*` values. The args files use max 6 / target 3 at epoch 0.
   To test a larger schedule, also send more load:
   `blobsend -blobs <n>` sets the blobs per transaction (default 2).
-- Leave the VC on its gRPC default. The package defaults a 1:1 Prysm
-  BN/VC pair to gRPC; the Prysm REST client cannot decode Gloas or Heze
-  blocks. Do not enable the blobber, `--enable-beacon-rest-api`, or
-  multiple BNs per VC until REST support lands.
+- The VC runs on gRPC by default. The package defaults a 1:1 Prysm BN/VC
+  pair to gRPC. The REST client now supports the fork's duties, available
+  attestations included, so both paths work; add
+  `--enable-beacon-rest-api` to `vc_extra_params` to select REST.
 
 ## Send transactions
 

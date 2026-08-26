@@ -3,6 +3,7 @@ package beacon_api
 import (
 	"context"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/OffchainLabs/prysm/v7/api/client/event"
@@ -125,8 +126,12 @@ func (c *beaconApiValidatorClient) AttestationData(ctx context.Context, in *ethp
 }
 
 func (c *beaconApiValidatorClient) AvailableAttestationData(ctx context.Context, in *ethpb.AvailableAttestationDataRequest) (*ethpb.AvailableAttestationData, error) {
-	// lint:nopanic -- simulation stub; only the gRPC path is implemented.
-	panic("unimplemented: use grpc")
+	ctx, span := trace.StartSpan(ctx, "beacon-api.AvailableAttestationData")
+	defer span.End()
+
+	return wrapInMetrics[*ethpb.AvailableAttestationData]("AvailableAttestationData", func() (*ethpb.AvailableAttestationData, error) {
+		return c.availableAttestationData(ctx, in.Slot)
+	})
 }
 
 func (c *beaconApiValidatorClient) BeaconBlock(ctx context.Context, in *ethpb.BlockRequest) (*ethpb.GenericBeaconBlock, error) {
@@ -193,8 +198,12 @@ func (c *beaconApiValidatorClient) ProposeAttestation(ctx context.Context, in *e
 }
 
 func (c *beaconApiValidatorClient) ProposeAvailableAttestation(ctx context.Context, in *ethpb.AvailableAttestation) (*ethpb.AttestResponse, error) {
-	// lint:nopanic -- simulation stub; only the gRPC path is implemented.
-	panic("unimplemented: use the grpc path")
+	ctx, span := trace.StartSpan(ctx, "beacon-api.ProposeAvailableAttestation")
+	defer span.End()
+
+	return wrapInMetrics[*ethpb.AttestResponse]("ProposeAvailableAttestation", func() (*ethpb.AttestResponse, error) {
+		return c.proposeAvailableAttestation(ctx, in)
+	})
 }
 
 func (c *beaconApiValidatorClient) ProposeAttestationElectra(ctx context.Context, in *ethpb.SingleAttestation) (*ethpb.AttestResponse, error) {
@@ -296,15 +305,16 @@ func (c *beaconApiValidatorClient) SubmitSignedProposerPreferences(ctx context.C
 	})
 }
 
+// builderPreferencesWarning keeps the drop to one line per process: the gap is a static
+// configuration mismatch, so repeating it every push would only be noise.
+var builderPreferencesWarning sync.Once
+
 // TODO(gloas): Wire up actual REST call to POST /eth/v1alpha1/validator/builder_preferences
 func (c *beaconApiValidatorClient) SubmitBuilderPreferences(_ context.Context, _ *ethpb.SubmitBuilderPreferencesRequest) (*empty.Empty, error) {
-	log.Debug("SubmitBuilderPreferences not yet implemented for beacon API client, skipping")
-	return new(empty.Empty), nil
-}
-
-// TODO(gloas): Wire up actual REST call to POST /eth/v2/beacon/execution_payload/bid
-func (c *beaconApiValidatorClient) SubmitSignedExecutionPayloadBid(_ context.Context, _ *ethpb.SignedExecutionPayloadBid) (*empty.Empty, error) {
-	log.Debug("SubmitSignedExecutionPayloadBid not yet implemented for beacon API client, skipping")
+	builderPreferencesWarning.Do(func() {
+		log.Warn("Builder preferences are dropped in REST mode; a relay-configured validator needs " +
+			"the gRPC client until a REST endpoint exists")
+	})
 	return new(empty.Empty), nil
 }
 

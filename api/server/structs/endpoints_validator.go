@@ -36,6 +36,11 @@ type GetPayloadAttestationDataResponse struct {
 	Data    *PayloadAttestationData `json:"data"`
 }
 
+type GetAvailableAttestationDataResponse struct {
+	Version string                    `json:"version"`
+	Data    *AvailableAttestationData `json:"data"`
+}
+
 type ProduceSyncCommitteeContributionResponse struct {
 	Data *SyncCommitteeContribution `json:"data"`
 }

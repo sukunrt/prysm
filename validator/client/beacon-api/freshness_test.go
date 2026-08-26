@@ -288,6 +288,38 @@ func TestPayloadAttestationFreshnessOptions(t *testing.T) {
 	})
 }
 
+func TestAvailableAttestationFreshnessOptions(t *testing.T) {
+	octetHeader := http.Header{"Content-Type": {api.OctetStreamMediaType}}
+
+	t.Run("no hint yields no options", func(t *testing.T) {
+		require.Equal(t, true, availableAttestationFreshnessOptions(context.Background()) == nil)
+	})
+
+	t.Run("accept matches the announced head against an SSZ response", func(t *testing.T) {
+		want := [32]byte{0x11, 0x22, 0x33}
+		other := [32]byte{0x44}
+
+		ctx := iface.WithHint(context.Background(), headHint(want, 10, true, time.Time{}))
+		cfg := rest.ResolveOptions(availableAttestationFreshnessOptions(ctx)...)
+
+		require.Equal(t, true, cfg.Race)
+		require.Equal(t, true, cfg.SSZAccept(availableAttestationSSZ(t, want), octetHeader))
+		require.Equal(t, false, cfg.SSZAccept(availableAttestationSSZ(t, other), octetHeader))
+		require.Equal(t, false, cfg.SSZAccept([]byte("not ssz"), octetHeader))
+	})
+
+	t.Run("accept matches the announced head against a JSON response", func(t *testing.T) {
+		want := [32]byte{0x11, 0x22, 0x33}
+		other := [32]byte{0x44}
+
+		ctx := iface.WithHint(context.Background(), headHint(want, 10, true, time.Time{}))
+		cfg := rest.ResolveOptions(availableAttestationFreshnessOptions(ctx)...)
+
+		require.Equal(t, true, cfg.SSZAccept(attestationDataJSON(want), http.Header{}))
+		require.Equal(t, false, cfg.SSZAccept(attestationDataJSON(other), http.Header{}))
+	})
+}
+
 func TestPayloadAttestationBeaconBlockRoot(t *testing.T) {
 	root := [32]byte{0x11, 0x22, 0x33}
 
@@ -340,6 +372,12 @@ func attestationDataJSONWithIndex(root [32]byte, index uint64) json.RawMessage {
 // payloadAttestationSSZ marshals a PayloadAttestationData whose beacon_block_root is root.
 func payloadAttestationSSZ(t *testing.T, root [32]byte) []byte {
 	body, err := (&ethpb.PayloadAttestationData{BeaconBlockRoot: root[:]}).MarshalSSZ()
+	require.NoError(t, err)
+	return body
+}
+
+func availableAttestationSSZ(t *testing.T, root [32]byte) []byte {
+	body, err := (&ethpb.AvailableAttestationData{BeaconBlockRoot: root[:]}).MarshalSSZ()
 	require.NoError(t, err)
 	return body
 }

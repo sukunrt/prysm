@@ -308,10 +308,6 @@ func (c *grpcValidatorClient) SubmitBuilderPreferences(ctx context.Context, in *
 	return c.getClient().SubmitBuilderPreferences(ctx, in)
 }
 
-func (c *grpcValidatorClient) SubmitSignedExecutionPayloadBid(ctx context.Context, in *ethpb.SignedExecutionPayloadBid) (*empty.Empty, error) {
-	return c.getClient().SubmitSignedExecutionPayloadBid(ctx, in)
-}
-
 func (c *grpcValidatorClient) SubscribeCommitteeSubnets(ctx context.Context, in *ethpb.CommitteeSubnetsSubscribeRequest) (*empty.Empty, error) {
 	return c.getClient().SubscribeCommitteeSubnets(ctx, in)
 }

@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "handlers.go",
         "handlers_gloas.go",
+        "handlers_heze.go",
         "handlers_pool.go",
         "handlers_state.go",
         "handlers_validator.go",
@@ -79,6 +80,7 @@ go_test(
         "handlers_equivocation_test.go",
         "handlers_gloas_bid_test.go",
         "handlers_gloas_test.go",
+        "handlers_heze_test.go",
         "handlers_pool_test.go",
         "handlers_state_test.go",
         "handlers_test.go",

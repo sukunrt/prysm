@@ -2,6 +2,7 @@ package client
 
 import (
 	"testing"
+	"time"
 
 	field_params "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
@@ -10,6 +11,8 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
+	prysmTime "github.com/OffchainLabs/prysm/v7/time"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 )
 
@@ -85,6 +88,60 @@ func TestLogSubmittedAtts(t *testing.T) {
 		v.logSubmittedAtts(0)
 		assert.LogsContain(t, logHook, "committeeIndices=\"[63]\"")
 	})
+}
+
+func TestSaveSubmittedAttRecordsSubmissionTime(t *testing.T) {
+	v := validator{
+		submittedAtts:             make(map[submittedAttKey]*submittedAtt),
+		attestedSlotsByKeyByEpoch: make(map[primitives.Epoch]map[[field_params.BLSPubkeyLength]byte]primitives.Slot),
+	}
+	att := util.HydrateAttestation(&ethpb.Attestation{})
+	key := submittedAttKey{}
+	require.NoError(t, key.FromAttData(att.Data))
+
+	before := prysmTime.Now()
+	require.NoError(t, v.saveSubmittedAtt(att, make([]byte, field_params.BLSPubkeyLength), false))
+	first := v.submittedAtts[key].firstSubmitted
+	require.NoError(t, v.saveSubmittedAtt(att, make([]byte, field_params.BLSPubkeyLength), false))
+	after := prysmTime.Now()
+
+	entry := v.submittedAtts[key]
+	assert.Equal(t, first, entry.firstSubmitted, "first submission time changed on the second save")
+	assert.Equal(t, false, entry.firstSubmitted.Before(before), "first submission time predates save")
+	assert.Equal(t, false, entry.lastSubmitted.Before(entry.firstSubmitted), "last submission went back")
+	assert.Equal(t, false, entry.lastSubmitted.After(after), "last submission time is in the future")
+}
+
+func TestLogSubmittedAttsReportsSubmissionTime(t *testing.T) {
+	logHook := logTest.NewGlobal()
+	genesis := time.Now().Add(-time.Hour)
+	v := validator{
+		genesisTime:         genesis,
+		submittedAtts:       make(map[submittedAttKey]*submittedAtt),
+		submittedAggregates: make(map[submittedAttKey]*submittedAtt),
+	}
+	att := util.HydrateAttestation(&ethpb.Attestation{})
+	key := submittedAttKey{}
+	require.NoError(t, key.FromAttData(att.Data))
+	start, err := slots.StartTime(genesis, 3)
+	require.NoError(t, err)
+	v.submittedAtts[key] = &submittedAtt{
+		data: submittedAttData{
+			beaconBlockRoot: att.Data.BeaconBlockRoot,
+			source:          att.Data.Source,
+			target:          att.Data.Target,
+		},
+		pubkeys:        [][]byte{make([]byte, field_params.BLSPubkeyLength)},
+		committees:     []primitives.CommitteeIndex{0},
+		firstSubmitted: start.Add(150 * time.Millisecond),
+		lastSubmitted:  start.Add(180 * time.Millisecond),
+	}
+
+	v.logSubmittedAtts(3)
+
+	assert.LogsContain(t, logHook, "submittedSinceSlotStart=150ms")
+	assert.LogsContain(t, logHook, "submissionSpread=30ms")
+	assert.LogsDoNotContain(t, logHook, "sinceSlotStartTime")
 }
 
 func TestFromAttData(t *testing.T) {

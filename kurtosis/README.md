@@ -171,8 +171,9 @@ generator that contract first.
 - **Fewer than ~128 validators.** `prysmctl testnet generate-genesis` spins
   forever building the PTC window when there are not enough validators to
   fill it; 4 validators never returns. Keep the total at 128.
-- **Prysm VC on the REST API.** The REST client has no Gloas/Heze SSZ block
-  codec: `AvailableAttestationData` panics with `unimplemented: use grpc`
-  the first time a duty comes due. The package defaults a 1:1 Prysm BN/VC
-  pair to gRPC (`--beacon-rpc-provider`), so leave it there: no blobber, no
-  `--enable-beacon-rest-api`, one BN per VC, until REST support lands.
+## Validator API transport
+
+The REST client supports the fork's duties, available attestations included,
+so both transports work. ethereum-package still defaults a 1:1 Prysm BN/VC
+pair to gRPC (`--beacon-rpc-provider`); add `--enable-beacon-rest-api` to
+`vc_extra_params` to select REST.

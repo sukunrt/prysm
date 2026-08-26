@@ -5,9 +5,9 @@
 # at /validator to match the upstream offchainlabs image.
 #
 # No shim: since ethereum-package 04988b4 a 1:1 Prysm BN/VC pair defaults to
-# gRPC (--beacon-rpc-provider). The Prysm REST client still has no Gloas/Heze
-# support, so keep the VC on that default: no blobber, no
-# --enable-beacon-rest-api, one BN per VC, until REST support lands.
+# gRPC (--beacon-rpc-provider). The REST client now supports the fork's duties,
+# available attestations included, so either path works; add
+# --enable-beacon-rest-api to vc_extra_params to select REST.
 FROM debian:bookworm-slim
 
 RUN apt-get update \

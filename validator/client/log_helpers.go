@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"time"
 
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/container/slice"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	prysmTime "github.com/OffchainLabs/prysm/v7/time"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -22,9 +24,11 @@ type submittedAttData struct {
 }
 
 type submittedAtt struct {
-	data       submittedAttData
-	pubkeys    [][]byte
-	committees []primitives.CommitteeIndex
+	data           submittedAttData
+	pubkeys        [][]byte
+	committees     []primitives.CommitteeIndex
+	firstSubmitted time.Time
+	lastSubmitted  time.Time
 }
 
 // slotRootKey groups submissions made for the same slot and block root.
@@ -94,18 +98,15 @@ func (v *validator) saveSubmittedAtt(att ethpb.Att, pubkey []byte, isAggregate b
 		v.setAttestedSlot(bytesutil.ToBytes48(pubkey), data.Slot)
 	}
 
-	if submittedAtts[key] == nil {
-		submittedAtts[key] = &submittedAtt{
-			d,
-			[][]byte{},
-			[]primitives.CommitteeIndex{},
-		}
+	now := prysmTime.Now()
+	entry := submittedAtts[key]
+	if entry == nil {
+		entry = &submittedAtt{data: d, firstSubmitted: now}
+		submittedAtts[key] = entry
 	}
-	submittedAtts[key] = &submittedAtt{
-		d,
-		append(submittedAtts[key].pubkeys, pubkey),
-		append(submittedAtts[key].committees, att.GetCommitteeIndex()),
-	}
+	entry.pubkeys = append(entry.pubkeys, pubkey)
+	entry.committees = append(entry.committees, att.GetCommitteeIndex())
+	entry.lastSubmitted = now
 
 	return nil
 }
@@ -210,55 +211,53 @@ func (v *validator) LogSubmissions(slot primitives.Slot) {
 
 // logSubmittedAtts logs info about submitted attestations.
 func (v *validator) logSubmittedAtts(slot primitives.Slot) {
-	sinceSlotStartTime, err := v.sinceSlotStartTime(slot)
+	start, err := slots.StartTime(v.genesisTime, slot)
 	if err != nil {
-		log.WithError(err).WithField("slot", slot).Error("Failed to compute time since slot start")
+		log.WithError(err).WithField("slot", slot).Error("Failed to compute slot start time")
 	}
+	// An unset genesis time only happens in tests; the offset would be meaningless there.
+	startKnown := err == nil && !v.genesisTime.IsZero()
 
 	for _, attLog := range v.submittedAtts {
-		pubkeys := make([]string, len(attLog.pubkeys))
-		for i, p := range attLog.pubkeys {
-			pubkeys[i] = fmt.Sprintf("%#x", bytesutil.Trunc(p))
-		}
-		committees := make([]string, len(attLog.committees))
-		for i, c := range attLog.committees {
-			committees[i] = strconv.FormatUint(uint64(c), 10)
-		}
-		log.WithFields(logrus.Fields{
-			"slot":               slot,
-			"sinceSlotStartTime": sinceSlotStartTime,
-			"committeeIndices":   committees,
-			"pubkeys":            pubkeys,
-			"blockRoot":          fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.beaconBlockRoot)),
-			"sourceRound":        attLog.data.source.Epoch,
-			"sourceRoot":         fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.source.Root)),
-			"targetRound":        attLog.data.target.Epoch,
-			"targetRoot":         fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.target.Root)),
-		}).Info("Submitted new attestations")
+		log.WithFields(attLog.logFields(slot, start, startKnown)).Info("Submitted new attestations")
 	}
 	for _, attLog := range v.submittedAggregates {
-		pubkeys := make([]string, len(attLog.pubkeys))
-		for i, p := range attLog.pubkeys {
-			pubkeys[i] = fmt.Sprintf("%#x", bytesutil.Trunc(p))
-		}
-		committees := make([]string, len(attLog.committees))
-		for i, c := range attLog.committees {
-			committees[i] = strconv.FormatUint(uint64(c), 10)
-		}
-		log.WithFields(logrus.Fields{
-			"slot":             slot,
-			"committeeIndices": committees,
-			"pubkeys":          pubkeys,
-			"blockRoot":        fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.beaconBlockRoot)),
-			"sourceRound":      attLog.data.source.Epoch,
-			"sourceRoot":       fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.source.Root)),
-			"targetRound":      attLog.data.target.Epoch,
-			"targetRoot":       fmt.Sprintf("%#x", bytesutil.Trunc(attLog.data.target.Root)),
-		}).Info("Submitted new aggregate attestations")
+		log.WithFields(attLog.logFields(slot, start, startKnown)).
+			Info("Submitted new aggregate attestations")
 	}
 
 	v.submittedAtts = make(map[submittedAttKey]*submittedAtt)
 	v.submittedAggregates = make(map[submittedAttKey]*submittedAtt)
+}
+
+// logFields renders one summary line's fields. The submission times come from the timestamps
+// recorded in saveSubmittedAtt, not from the clock at logging time: the line is emitted only
+// after every duty of the slot returns, which can be seconds after the attestation went out.
+func (a *submittedAtt) logFields(
+	slot primitives.Slot, start time.Time, startKnown bool) logrus.Fields {
+	pubkeys := make([]string, len(a.pubkeys))
+	for i, p := range a.pubkeys {
+		pubkeys[i] = fmt.Sprintf("%#x", bytesutil.Trunc(p))
+	}
+	committees := make([]string, len(a.committees))
+	for i, c := range a.committees {
+		committees[i] = strconv.FormatUint(uint64(c), 10)
+	}
+	fields := logrus.Fields{
+		"slot":             slot,
+		"committeeIndices": committees,
+		"pubkeys":          pubkeys,
+		"blockRoot":        fmt.Sprintf("%#x", bytesutil.Trunc(a.data.beaconBlockRoot)),
+		"sourceRound":      a.data.source.Epoch,
+		"sourceRoot":       fmt.Sprintf("%#x", bytesutil.Trunc(a.data.source.Root)),
+		"targetRound":      a.data.target.Epoch,
+		"targetRoot":       fmt.Sprintf("%#x", bytesutil.Trunc(a.data.target.Root)),
+	}
+	if startKnown && !a.firstSubmitted.IsZero() {
+		fields["submittedSinceSlotStart"] = a.firstSubmitted.Sub(start).Round(time.Millisecond)
+		fields["submissionSpread"] = a.lastSubmitted.Sub(a.firstSubmitted).Round(time.Millisecond)
+	}
+	return fields
 }
 
 // logSubmittedPayloadAttestations logs info about submitted payload attestations.

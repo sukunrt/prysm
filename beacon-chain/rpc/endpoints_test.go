@@ -52,6 +52,7 @@ func Test_endpoints(t *testing.T) {
 		"/eth/v1/beacon/pool/voluntary_exits":                          {http.MethodGet, http.MethodPost},
 		"/eth/v1/beacon/pool/bls_to_execution_changes":                 {http.MethodGet, http.MethodPost},
 		"/eth/v1/beacon/pool/payload_attestations":                     {http.MethodGet, http.MethodPost},
+		"/eth/v1/beacon/pool/available_attestations":                   {http.MethodPost},
 		"/prysm/v1/beacon/individual_votes":                            {http.MethodPost},
 	}
 
@@ -119,6 +120,7 @@ func Test_endpoints(t *testing.T) {
 		"/eth/v1/validator/register_validator":                                     {http.MethodPost},
 		"/eth/v1/validator/liveness/{epoch}":                                       {http.MethodPost},
 		"/eth/v1/validator/payload_attestation_data":                               {http.MethodGet},
+		"/eth/v1/validator/available_attestation_data":                             {http.MethodGet},
 	}
 
 	prysmBeaconRoutes := map[string][]string{

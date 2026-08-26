@@ -192,17 +192,28 @@ func blockFreshnessOptions(ctx context.Context, decode func([]byte, http.Header)
 	return opts
 }
 
-// payloadAttestationFreshnessOptions builds the read options that steer an SSZ
-// payload attestation data read toward a node that already imported the head
-// announced on ctx, or nil if ctx has no hint. It uses:
+// payloadAttestationFreshnessOptions steers an SSZ payload attestation data read toward a node
+// that already imported the head announced on ctx.
+func payloadAttestationFreshnessOptions(ctx context.Context) []rest.GetOption {
+	return sszRootFreshnessOptions(ctx, payloadAttestationBeaconBlockRoot)
+}
+
+// availableAttestationFreshnessOptions steers an SSZ available attestation data read toward a node
+// that already imported the head announced on ctx.
+func availableAttestationFreshnessOptions(ctx context.Context) []rest.GetOption {
+	return sszRootFreshnessOptions(ctx, availableAttestationBeaconBlockRoot)
+}
+
+// sszRootFreshnessOptions builds the read options that steer an SSZ-preferred read toward a node
+// that already imported the head announced on ctx, or nil if ctx has no hint. It uses:
 //   - WithRace: query every node concurrently.
-//   - WithSSZAccept: among those responses, prefer the one whose beacon_block_root
-//     matches the announced head (decoded via payloadAttestationBeaconBlockRoot).
+//   - WithSSZAccept: among those responses, prefer the one whose root, read by extract, matches
+//     the announced head.
 //   - WithDeadline: bound the read by the hint deadline (floored by
 //     readFreshnessBudget so a lagging node still gets time to catch up).
 //   - WithRepoll: keep re-polling until a node reports the head or the deadline
 //     fires.
-func payloadAttestationFreshnessOptions(ctx context.Context) []rest.GetOption {
+func sszRootFreshnessOptions(ctx context.Context, extract func([]byte, http.Header) ([32]byte, bool)) []rest.GetOption {
 	hint, ok := freshnessHint(ctx)
 	if !ok {
 		return nil
@@ -215,7 +226,7 @@ func payloadAttestationFreshnessOptions(ctx context.Context) []rest.GetOption {
 			return true
 		}
 
-		gotRoot, ok := payloadAttestationBeaconBlockRoot(body, hdr)
+		gotRoot, ok := extract(body, hdr)
 		return ok && gotRoot == want.Root
 	}
 
@@ -241,6 +252,21 @@ func payloadAttestationFreshnessOptions(ctx context.Context) []rest.GetOption {
 func payloadAttestationBeaconBlockRoot(body []byte, hdr http.Header) ([32]byte, bool) {
 	if strings.Contains(hdr.Get("Content-Type"), api.OctetStreamMediaType) {
 		d := &ethpb.PayloadAttestationData{}
+		if err := d.UnmarshalSSZ(body); err != nil {
+			return [32]byte{}, false
+		}
+
+		return bytesutil.ToBytes32(d.BeaconBlockRoot), true
+	}
+
+	return rootExtractor("beacon_block_root")(json.RawMessage(body))
+}
+
+// availableAttestationBeaconBlockRoot extracts the beacon_block_root from an available
+// attestation data response, which GetSSZ may return as SSZ or JSON.
+func availableAttestationBeaconBlockRoot(body []byte, hdr http.Header) ([32]byte, bool) {
+	if strings.Contains(hdr.Get("Content-Type"), api.OctetStreamMediaType) {
+		d := &ethpb.AvailableAttestationData{}
 		if err := d.UnmarshalSSZ(body); err != nil {
 			return [32]byte{}, false
 		}

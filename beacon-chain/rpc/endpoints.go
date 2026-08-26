@@ -449,6 +449,16 @@ func (s *Service) validatorEndpoints(
 			methods: []string{http.MethodGet},
 		},
 		{
+			template: "/eth/v1/validator/available_attestation_data",
+			name:     namespace + ".GetAvailableAttestationData",
+			middleware: []middleware.Middleware{
+				middleware.AcceptHeaderHandler([]string{api.JsonMediaType, api.OctetStreamMediaType}),
+				middleware.AcceptEncodingHeaderHandler(),
+			},
+			handler: server.GetAvailableAttestationData,
+			methods: []string{http.MethodGet},
+		},
+		{
 			template: "/eth/v1/validator/execution_payload_envelopes/{slot}/{beacon_block_root}",
 			name:     namespace + ".ExecutionPayloadEnvelope",
 			middleware: []middleware.Middleware{
@@ -970,6 +980,17 @@ func (s *Service) beaconEndpoints(
 				middleware.AcceptEncodingHeaderHandler(),
 			},
 			handler: server.SubmitPayloadAttestations,
+			methods: []string{http.MethodPost},
+		},
+		{
+			template: "/eth/v1/beacon/pool/available_attestations",
+			name:     namespace + ".SubmitAvailableAttestations",
+			middleware: []middleware.Middleware{
+				middleware.ContentTypeHandler([]string{api.JsonMediaType, api.OctetStreamMediaType}),
+				middleware.AcceptHeaderHandler([]string{api.JsonMediaType}),
+				middleware.AcceptEncodingHeaderHandler(),
+			},
+			handler: server.SubmitAvailableAttestations,
 			methods: []string{http.MethodPost},
 		},
 		{

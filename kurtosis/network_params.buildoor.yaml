@@ -30,10 +30,9 @@ participants:
     vc_type: prysm
     vc_image: prysm-validator:buildoor-final
     # The package defaults a 1:1 Prysm BN/VC pair to gRPC
-    # (--beacon-rpc-provider) since ethereum-package 04988b4. Keep it there:
-    # the Prysm REST client has no Gloas/Heze support, so do not enable the
-    # blobber, --enable-beacon-rest-api, or multiple BNs per VC until REST
-    # support lands.
+    # (--beacon-rpc-provider) since ethereum-package 04988b4. The REST client
+    # now supports the fork's duties, available attestations included, so both
+    # paths work; add --enable-beacon-rest-api below to select REST.
     vc_extra_params:
       # Cast the FFG attestation at slot start (plus <=200 ms jitter) instead
       # of on block arrival, so publish time does not depend on block

@@ -767,10 +767,9 @@ func (v *validator) getAttestationData(ctx context.Context, slot primitives.Slot
 	epoch := slots.ToEpoch(slot)
 	postElectra := epoch >= params.BeaconConfig().ElectraForkEpoch
 
-	ctx, err := v.withHeadHint(ctx, slot, attestationDueComponent(slot))
-	if err != nil {
-		return nil, fmt.Errorf("attach freshness hint: %w", err)
-	}
+	// No freshness hint: take the beacon node's answer as-is. The hint's index criterion
+	// (tracked head full => index 1) is unsatisfiable for a same-slot head, which forkchoice
+	// reports as not-full by design, so the read would stall to its deadline.
 
 	// Pre-Electra: committee index varies per validator.
 	// Post-Gloas: index signals payload status.
