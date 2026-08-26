@@ -2,12 +2,15 @@ package node
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"runtime"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/api/server/structs"
@@ -36,6 +39,24 @@ type dummyIdentity enode.ID
 
 func (_ dummyIdentity) Verify(_ *enr.Record, _ []byte) error { return nil }
 func (id dummyIdentity) NodeAddr(_ *enr.Record) []byte       { return id[:] }
+
+type delayedENRPeerManager struct {
+	mockp2p.MockPeerManager
+	mu     sync.Mutex
+	record *enr.Record
+}
+
+func (m *delayedENRPeerManager) ENR() *enr.Record {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.record
+}
+
+func (m *delayedENRPeerManager) setENR(record *enr.Record) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.record = record
+}
 
 func TestSyncStatus(t *testing.T) {
 	currentSlot := new(primitives.Slot)
@@ -317,6 +338,65 @@ func TestGetIdentity(t *testing.T) {
 		e := &httputil.DefaultJsonError{}
 		require.NoError(t, json.Unmarshal(writer.Body.Bytes(), e))
 		assert.Equal(t, http.StatusInternalServerError, e.Code)
+		assert.StringContains(t, "Could not obtain enr", e.Message)
+	})
+
+	t.Run("waits for late ENR", func(t *testing.T) {
+		peerManager := &delayedENRPeerManager{
+			MockPeerManager: mockp2p.MockPeerManager{
+				PID:           "foo",
+				BHost:         &mockp2p.MockHost{Addresses: []ma.Multiaddr{p2pAddr}},
+				DiscoveryAddr: []ma.Multiaddr{discAddr1, discAddr2},
+			},
+		}
+		s := &Server{
+			PeerManager:        peerManager,
+			MetadataProvider:   metadataProvider,
+			GenesisTimeFetcher: &mock.ChainService{},
+		}
+
+		go func() {
+			time.Sleep(200 * time.Millisecond)
+			peerManager.setENR(enrRecord)
+		}()
+
+		request := httptest.NewRequest(http.MethodGet, "http://example.com/eth/v1/node/identity", nil)
+		writer := httptest.NewRecorder()
+		writer.Body = &bytes.Buffer{}
+
+		s.GetIdentity(writer, request)
+		require.Equal(t, http.StatusOK, writer.Code)
+		resp := &structs.GetIdentityResponse{}
+		require.NoError(t, json.Unmarshal(writer.Body.Bytes(), resp))
+		expectedEnr, err := p2p.SerializeENR(enrRecord)
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprint("enr:", expectedEnr), resp.Data.Enr)
+	})
+
+	t.Run("context cancelled while waiting for ENR", func(t *testing.T) {
+		peerManager := &delayedENRPeerManager{
+			MockPeerManager: mockp2p.MockPeerManager{
+				PID:           "foo",
+				BHost:         &mockp2p.MockHost{Addresses: []ma.Multiaddr{p2pAddr}},
+				DiscoveryAddr: []ma.Multiaddr{discAddr1, discAddr2},
+			},
+		}
+		s := &Server{
+			PeerManager:      peerManager,
+			MetadataProvider: metadataProvider,
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		request := httptest.NewRequest(http.MethodGet, "http://example.com/eth/v1/node/identity", nil)
+		request = request.WithContext(ctx)
+		writer := httptest.NewRecorder()
+		writer.Body = &bytes.Buffer{}
+
+		s.GetIdentity(writer, request)
+		require.Equal(t, http.StatusInternalServerError, writer.Code)
+		e := &httputil.DefaultJsonError{}
+		require.NoError(t, json.Unmarshal(writer.Body.Bytes(), e))
 		assert.StringContains(t, "Could not obtain enr", e.Message)
 	})
 

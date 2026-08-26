@@ -1,10 +1,12 @@
 package node
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/OffchainLabs/prysm/v7/api/server/structs"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p"
@@ -16,7 +18,10 @@ import (
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/p2p/enr"
 )
+
+const enrWaitTimeout = 30 * time.Second
 
 var (
 	stateConnecting    = ethpb.ConnectionState_CONNECTING.String()
@@ -54,9 +59,22 @@ func (s *Server) GetSyncStatus(w http.ResponseWriter, r *http.Request) {
 
 // GetIdentity retrieves data about the node's network presence.
 func (s *Server) GetIdentity(w http.ResponseWriter, r *http.Request) {
-	_, span := trace.StartSpan(r.Context(), "node.GetIdentity")
+	ctx, span := trace.StartSpan(r.Context(), "node.GetIdentity")
 	defer span.End()
 
+	// The HTTP listener opens before the P2P service has built the local ENR, and tooling may
+	// read this endpoint as soon as the port accepts connections. The first request after the
+	// port opens must succeed, so wait for the ENR instead of failing during startup.
+	record, err := s.waitForENR(ctx)
+	if err != nil {
+		httputil.HandleError(w, "Could not obtain enr: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	serializedEnr, err := p2p.SerializeENR(record)
+	if err != nil {
+		httputil.HandleError(w, "Could not obtain enr: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	peerId := s.PeerManager.PeerID().String()
 	sourcep2p := s.PeerManager.Host().Addrs()
 	p2pAddresses := make([]string, len(sourcep2p))
@@ -71,11 +89,6 @@ func (s *Server) GetIdentity(w http.ResponseWriter, r *http.Request) {
 	discoveryAddresses := make([]string, len(sourceDisc))
 	for i := range sourceDisc {
 		discoveryAddresses[i] = sourceDisc[i].String()
-	}
-	serializedEnr, err := p2p.SerializeENR(s.PeerManager.ENR())
-	if err != nil {
-		httputil.HandleError(w, "Could not obtain enr: "+err.Error(), http.StatusInternalServerError)
-		return
 	}
 	currentEpoch := slots.ToEpoch(s.GenesisTimeFetcher.CurrentSlot())
 	metadata := s.MetadataProvider.Metadata()
@@ -99,6 +112,26 @@ func (s *Server) GetIdentity(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	httputil.WriteJson(w, resp)
+}
+
+func (s *Server) waitForENR(ctx context.Context) (*enr.Record, error) {
+	if record := s.PeerManager.ENR(); record != nil {
+		return record, nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, enrWaitTimeout)
+	defer cancel()
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-ticker.C:
+			if record := s.PeerManager.ENR(); record != nil {
+				return record, nil
+			}
+		}
+	}
 }
 
 // GetVersion requests that the beacon node identify information about its implementation in a
