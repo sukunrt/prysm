@@ -11,13 +11,14 @@ real wall clock, real docker networking, same binaries.
 
 Builds `beacon-chain`, `validator` and `prysmctl` with `go build`
 (statically linked: CGO for blst, `netgo,osusergo` so nothing reaches for
-glibc's NSS at runtime), then three images:
+glibc's NSS at runtime), then four images:
 
 | image | contents |
 | --- | --- |
 | `prysm-beacon-chain:local` | the beacon node at `/beacon-chain` |
 | `prysm-validator:local` | the validator client at `/validator` |
-| `prysm-genesis-gen:local` | patched `ethereum-genesis-generator` |
+| `prysm-genesis-gen:local` | the fork generator branch plus this tree's `prysmctl` |
+| `prysm-buildoor:local` | `sukunrt/buildoor` branch `decoupled` |
 
 Each is also tagged with the jj change id of the working copy
 (`prysm-beacon-chain:yssuxmntpnsm`, ...), so a run can be traced back to the
@@ -37,9 +38,8 @@ kurtosis enclave inspect decoupled
 kurtosis service logs decoupled cl-1-prysm-geth --follow
 ```
 
-`network_params.yaml` is the 2-node shakeout. For a measurement run raise
-`participants[0].count` and lower `num_validator_keys_per_node` to keep the
-total near 128.
+`network_params.yaml` is the 5-node baseline (250 validators). Node count and
+keys per node are free; keep the total at 128 or more.
 
 ## Drive the execution layer
 
@@ -147,24 +147,16 @@ depends on it.
 - **Deposit-poller chain-id mismatch.** kurtosis' network id versus the
   config's; it only disables deposit following. Not worth chasing.
 
-## The EL is pinned
+## The EL pin
 
-`el_image` is `ethpandaops/geth:glamsterdam-devnet-8`, commit 366048ea
-(2026-08-10) -- the same binary the ethshadow baseline ran, so the two
-harnesses differ in their networking, not their clients.
-
-It cannot simply be moved to `ethereum/client-go:latest`. geth master from
-2026-08-19 answers every `forkchoiceUpdatedV4` with
-
-    Invalid payload attributes: failed to process builder deposit queue:
-    empty system contract: no code at
-    0x0000bFF46984e3725691FA540a8C7589300D8282
-
-so no proposer ever gets a local payload and the chain sits at slot 0. Newer
-geth expects the ePBS builder-deposit system contract in the EL genesis
-alloc, and `ethereum-genesis-generator` 6.0.2 deploys only 4788, 2935, 7002,
-7251 and the deposit contract. Whoever bumps the EL has to teach the
-generator that contract first.
+`el_image` defaults to `ethpandaops/geth:glamsterdam-devnet-8`, commit
+366048ea (2026-08-10) -- the same binary the ethshadow baseline ran, so the
+two harnesses differ in their networking, not their clients. The pin is
+comparability, not necessity: newer geth needs the EIP-8282 builder
+deposit/exit contracts predeployed in the EL genesis, which the fork
+generator (based on 6.2.1) provides. geth `master-fd07354` (2026-08-26)
+passed both harnesses; `network_params.geth-master.yaml` is that run's args.
+Always pin a build, never `:latest`.
 
 ## Things that are not
 
