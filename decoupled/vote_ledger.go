@@ -4,10 +4,48 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/OffchainLabs/prysm/v7/config/features"
+	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
+	"github.com/sirupsen/logrus"
 )
+
+// LogLocalFFGVote records the node's own FFG attestation in the vote ledger.
+// The gossip validator never sees the attestations this node publishes, so the
+// submission paths (gRPC and REST) are the only places they can enter the run's
+// ledger. Same line shape as the sync side, with outcome "local".
+func LogLocalFFGVote(log logrus.FieldLogger, genesisTime time.Time, att ethpb.Att) {
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
+	data := att.GetData()
+	if data == nil || data.Target == nil {
+		return
+	}
+	seats := uint64(1)
+	if bits := att.GetAggregationBits(); bits != nil {
+		seats = bits.Count()
+	}
+	start := slots.UnsafeStartTime(genesisTime, data.Slot)
+	fields := logrus.Fields{
+		"outcome":        "local",
+		"attSlot":        data.Slot,
+		"targetRound":    data.Target.Epoch,
+		"committeeIndex": att.GetCommitteeIndex(),
+		"seats":          seats,
+		"arrivedMs":      time.Since(start).Milliseconds(),
+		"blockRoot":      fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
+		"dataRoot":       VoteLedgerDataRoot(att),
+	}
+	if att.IsSingle() {
+		fields["validator"] = att.GetAttestingIndex()
+	}
+	log.WithFields(fields).Info("FFG vote")
+}
 
 // VoteLedgerValidators renders validator indices as the goldfish vote ledger's
 // validators field: a comma-separated list, no spaces, in the order given. Every

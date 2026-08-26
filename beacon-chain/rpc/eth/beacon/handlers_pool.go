@@ -24,6 +24,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	mvslice "github.com/OffchainLabs/prysm/v7/container/multi-value-slice"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	"github.com/OffchainLabs/prysm/v7/network/httputil"
@@ -373,6 +374,8 @@ func (s *Server) handleAttestationsPostElectra(
 			}
 			continue
 		}
+
+		decoupled.LogLocalFFGVote(log, s.TimeFetcher.GenesisTime(), singleAtt)
 	}
 
 	// Save to pool after broadcast (slow path - requires state fetching)

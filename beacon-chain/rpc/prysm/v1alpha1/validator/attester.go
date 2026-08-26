@@ -312,44 +312,11 @@ func (vs *Server) proposeAtt(
 		return nil, status.Errorf(codes.Internal, "Could not broadcast attestation: %v", err)
 	}
 
-	vs.logLocalFFGVote(att)
+	decoupled.LogLocalFFGVote(log, vs.TimeFetcher.GenesisTime(), att)
 
 	return &ethpb.AttestResponse{
 		AttestationDataRoot: root[:],
 	}, nil
-}
-
-// logLocalFFGVote records the node's own FFG attestation in the vote ledger.
-// The gossip validator never sees the attestations this node publishes, so this
-// is the only place they can enter the run's ledger. Same line shape as the
-// sync side, with outcome "local".
-func (vs *Server) logLocalFFGVote(att ethpb.Att) {
-	if !features.Get().GoldfishVoteLedger {
-		return
-	}
-	data := att.GetData()
-	if data == nil || data.Target == nil {
-		return
-	}
-	seats := uint64(1)
-	if bits := att.GetAggregationBits(); bits != nil {
-		seats = bits.Count()
-	}
-	start := slots.UnsafeStartTime(vs.TimeFetcher.GenesisTime(), data.Slot)
-	fields := logrus.Fields{
-		"outcome":        "local",
-		"attSlot":        data.Slot,
-		"targetRound":    data.Target.Epoch,
-		"committeeIndex": att.GetCommitteeIndex(),
-		"seats":          seats,
-		"arrivedMs":      time.Since(start).Milliseconds(),
-		"blockRoot":      fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
-		"dataRoot":       decoupled.VoteLedgerDataRoot(att),
-	}
-	if att.IsSingle() {
-		fields["validator"] = att.GetAttestingIndex()
-	}
-	log.WithFields(fields).Info("FFG vote")
 }
 
 func (vs *Server) proposeAvailableAtt(
