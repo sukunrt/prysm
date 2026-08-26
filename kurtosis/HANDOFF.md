@@ -106,10 +106,10 @@ run one shakeout first.
   `bpo_*` values. The args files use max 6 / target 3 at epoch 0.
   To test a larger schedule, also send more load:
   `blobsend -blobs <n>` sets the blobs per transaction (default 2).
-- Keep `vc_image` on this fork's validator image.
-  The image removes the `--beacon-rest-api-provider` flag.
-  The Prysm REST client cannot decode Gloas or Heze blocks.
-  With the flag, the validator client stops at its first duty.
+- Leave the VC on its gRPC default. The package defaults a 1:1 Prysm
+  BN/VC pair to gRPC; the Prysm REST client cannot decode Gloas or Heze
+  blocks. Do not enable the blobber, `--enable-beacon-rest-api`, or
+  multiple BNs per VC until REST support lands.
 
 ## Send transactions
 

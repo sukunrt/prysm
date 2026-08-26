@@ -3,6 +3,11 @@
 # ethereum-package's prysm VC launcher (src/vc/prysm.star) does not override
 # the entrypoint, so the binary has to be the image ENTRYPOINT, and it lives
 # at /validator to match the upstream offchainlabs image.
+#
+# No shim: since ethereum-package 04988b4 a 1:1 Prysm BN/VC pair defaults to
+# gRPC (--beacon-rpc-provider). The Prysm REST client still has no Gloas/Heze
+# support, so keep the VC on that default: no blobber, no
+# --enable-beacon-rest-api, one BN per VC, until REST support lands.
 FROM debian:bookworm-slim
 
 RUN apt-get update \
@@ -10,9 +15,5 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY validator /validator
-# ... behind a shim that drops --beacon-rest-api-provider, which the package
-# passes unconditionally and which switches Prysm onto a REST client that has
-# no Gloas/Heze SSZ block codec. See validator-entrypoint.sh.
-COPY validator-entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/validator"]

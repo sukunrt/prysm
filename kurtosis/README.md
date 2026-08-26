@@ -16,7 +16,7 @@ glibc's NSS at runtime), then three images:
 | image | contents |
 | --- | --- |
 | `prysm-beacon-chain:local` | the beacon node at `/beacon-chain` |
-| `prysm-validator:local` | the validator client, behind a shim entrypoint |
+| `prysm-validator:local` | the validator client at `/validator` |
 | `prysm-genesis-gen:local` | patched `ethereum-genesis-generator` |
 
 Each is also tagged with the jj change id of the working copy
@@ -169,9 +169,6 @@ generator that contract first.
   fill it; 4 validators never returns. Keep the total at 128.
 - **Prysm VC on the REST API.** The REST client has no Gloas/Heze SSZ block
   codec: `AvailableAttestationData` panics with `unimplemented: use grpc`
-  the first time a duty comes due. The package passes
-  `--beacon-rest-api-provider` unconditionally, and Prysm turns the REST
-  client on for the flag's mere presence (`ctx.IsSet`,
-  `config/features/config.go:372`), so no `vc_extra_params` value can undo
-  it. `validator-entrypoint.sh` strips the flag inside the image, which is
-  why the VC image has a shim entrypoint instead of the bare binary.
+  the first time a duty comes due. The package defaults a 1:1 Prysm BN/VC
+  pair to gRPC (`--beacon-rpc-provider`), so leave it there: no blobber, no
+  `--enable-beacon-rest-api`, one BN per VC, until REST support lands.

@@ -35,8 +35,7 @@ for target in beacon-chain validator prysmctl; do
         -o "$ctx/$target" "./cmd/$target"
 done
 cp kurtosis/genesis-gen/prysm-genesis-state.sh \
-   kurtosis/genesis-gen/patch-generator.sh \
-   kurtosis/beacon-entrypoint.sh kurtosis/validator-entrypoint.sh "$ctx/"
+   kurtosis/genesis-gen/patch-generator.sh "$ctx/"
 
 build() {
     local dockerfile=$1 image=$2 context=${3:-$ctx}

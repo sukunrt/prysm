@@ -24,11 +24,11 @@ participants:
     cl_image: prysm-beacon-chain:geth-master
     vc_type: prysm
     vc_image: prysm-validator:geth-master
-    # The Prysm VC must talk gRPC: its REST client has no Gloas/Heze SSZ
-    # block codec. The package passes --beacon-rest-api-provider
-    # unconditionally and Prysm enables the REST client on the flag's mere
-    # presence, which no vc_extra_params value can undo -- the image's
-    # entrypoint shim drops the flag instead. See validator-entrypoint.sh.
+    # The package defaults a 1:1 Prysm BN/VC pair to gRPC
+    # (--beacon-rpc-provider) since ethereum-package 04988b4. Keep it there:
+    # the Prysm REST client has no Gloas/Heze support, so do not enable the
+    # blobber, --enable-beacon-rest-api, or multiple BNs per VC until REST
+    # support lands.
     vc_extra_params:
       # Cast the FFG attestation at slot start (plus <=200 ms jitter) instead
       # of on block arrival, so publish time does not depend on block
