@@ -20,13 +20,13 @@ func (c *beaconApiValidatorClient) submitAggregateSelectionProof(
 	in *ethpb.AggregateSelectionRequest,
 	index primitives.ValidatorIndex,
 	committeeLength uint64,
+	attDataRoot []byte,
 ) (*ethpb.AggregateSelectionResponse, error) {
-	attestationDataRoot, err := c.getAttestationDataRootFromRequest(ctx, in, committeeLength)
-	if err != nil {
+	if err := c.validateAggregateSelectionRequest(ctx, in, committeeLength, attDataRoot); err != nil {
 		return nil, err
 	}
 
-	aggregateAttestationResponse, err := c.aggregateAttestation(ctx, in.Slot, attestationDataRoot, in.CommitteeIndex)
+	aggregateAttestationResponse, err := c.aggregateAttestation(ctx, in.Slot, attDataRoot, in.CommitteeIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -58,13 +58,13 @@ func (c *beaconApiValidatorClient) submitAggregateSelectionProofElectra(
 	in *ethpb.AggregateSelectionRequest,
 	index primitives.ValidatorIndex,
 	committeeLength uint64,
+	attDataRoot []byte,
 ) (*ethpb.AggregateSelectionElectraResponse, error) {
-	attestationDataRoot, err := c.getAttestationDataRootFromRequest(ctx, in, committeeLength)
-	if err != nil {
+	if err := c.validateAggregateSelectionRequest(ctx, in, committeeLength, attDataRoot); err != nil {
 		return nil, err
 	}
 
-	aggregateAttestationResponse, err := c.aggregateAttestationElectra(ctx, in.Slot, attestationDataRoot, in.CommitteeIndex)
+	aggregateAttestationResponse, err := c.aggregateAttestationElectra(ctx, in.Slot, attDataRoot, in.CommitteeIndex)
 	if err != nil {
 		return nil, err
 	}
@@ -91,35 +91,39 @@ func (c *beaconApiValidatorClient) submitAggregateSelectionProofElectra(
 	}, nil
 }
 
-func (c *beaconApiValidatorClient) getAttestationDataRootFromRequest(ctx context.Context, in *ethpb.AggregateSelectionRequest, committeeLength uint64) ([]byte, error) {
+// validateAggregateSelectionRequest checks the node and the caller are fit to aggregate. The
+// attestation data root is supplied by the caller — the root of the data it signed at attestation
+// time — and is never re-derived here: a fresh fetch would name the current head, while the pool
+// holds the head as it was at signing time.
+func (c *beaconApiValidatorClient) validateAggregateSelectionRequest(
+	ctx context.Context,
+	in *ethpb.AggregateSelectionRequest,
+	committeeLength uint64,
+	attDataRoot []byte,
+) error {
 	isOptimistic, err := c.isOptimistic(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// An optimistic validator MUST NOT participate in attestation. (i.e., sign across the DOMAIN_BEACON_ATTESTER, DOMAIN_SELECTION_PROOF or DOMAIN_AGGREGATE_AND_PROOF domains).
 	if isOptimistic {
-		return nil, errors.New("the node is currently optimistic and cannot serve validators")
+		return errors.New("the node is currently optimistic and cannot serve validators")
 	}
 
 	isAggregator, err := helpers.IsAggregator(committeeLength, in.SlotSignature)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get aggregator status")
+		return errors.Wrap(err, "failed to get aggregator status")
 	}
 	if !isAggregator {
-		return nil, errors.New("validator is not an aggregator")
+		return errors.New("validator is not an aggregator")
 	}
 
-	attestationData, err := c.attestationData(ctx, in.Slot, in.CommitteeIndex)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get attestation data for slot=%d and committee_index=%d", in.Slot, in.CommitteeIndex)
+	if len(attDataRoot) == 0 {
+		return errors.New("attestation data root of the signed attestation is required")
 	}
 
-	attestationDataRoot, err := attestationData.HashTreeRoot()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to calculate attestation data root")
-	}
-	return attestationDataRoot[:], nil
+	return nil
 }
 
 func (c *beaconApiValidatorClient) aggregateAttestation(

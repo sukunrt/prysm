@@ -429,33 +429,33 @@ func (mr *MockValidatorClientMockRecorder) StartEventStream(ctx, topics, eventsC
 }
 
 // SubmitAggregateSelectionProof mocks base method.
-func (m *MockValidatorClient) SubmitAggregateSelectionProof(ctx context.Context, in *eth.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64) (*eth.AggregateSelectionResponse, error) {
+func (m *MockValidatorClient) SubmitAggregateSelectionProof(ctx context.Context, in *eth.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64, attDataRoot []byte) (*eth.AggregateSelectionResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SubmitAggregateSelectionProof", ctx, in, index, committeeLength)
+	ret := m.ctrl.Call(m, "SubmitAggregateSelectionProof", ctx, in, index, committeeLength, attDataRoot)
 	ret0, _ := ret[0].(*eth.AggregateSelectionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SubmitAggregateSelectionProof indicates an expected call of SubmitAggregateSelectionProof.
-func (mr *MockValidatorClientMockRecorder) SubmitAggregateSelectionProof(ctx, in, index, committeeLength any) *gomock.Call {
+func (mr *MockValidatorClientMockRecorder) SubmitAggregateSelectionProof(ctx, in, index, committeeLength, attDataRoot any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitAggregateSelectionProof", reflect.TypeOf((*MockValidatorClient)(nil).SubmitAggregateSelectionProof), ctx, in, index, committeeLength)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitAggregateSelectionProof", reflect.TypeOf((*MockValidatorClient)(nil).SubmitAggregateSelectionProof), ctx, in, index, committeeLength, attDataRoot)
 }
 
 // SubmitAggregateSelectionProofElectra mocks base method.
-func (m *MockValidatorClient) SubmitAggregateSelectionProofElectra(ctx context.Context, in *eth.AggregateSelectionRequest, arg2 primitives.ValidatorIndex, arg3 uint64) (*eth.AggregateSelectionElectraResponse, error) {
+func (m *MockValidatorClient) SubmitAggregateSelectionProofElectra(ctx context.Context, in *eth.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64, attDataRoot []byte) (*eth.AggregateSelectionElectraResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SubmitAggregateSelectionProofElectra", ctx, in, arg2, arg3)
+	ret := m.ctrl.Call(m, "SubmitAggregateSelectionProofElectra", ctx, in, index, committeeLength, attDataRoot)
 	ret0, _ := ret[0].(*eth.AggregateSelectionElectraResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SubmitAggregateSelectionProofElectra indicates an expected call of SubmitAggregateSelectionProofElectra.
-func (mr *MockValidatorClientMockRecorder) SubmitAggregateSelectionProofElectra(ctx, in, arg2, arg3 any) *gomock.Call {
+func (mr *MockValidatorClientMockRecorder) SubmitAggregateSelectionProofElectra(ctx, in, index, committeeLength, attDataRoot any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitAggregateSelectionProofElectra", reflect.TypeOf((*MockValidatorClient)(nil).SubmitAggregateSelectionProofElectra), ctx, in, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubmitAggregateSelectionProofElectra", reflect.TypeOf((*MockValidatorClient)(nil).SubmitAggregateSelectionProofElectra), ctx, in, index, committeeLength, attDataRoot)
 }
 
 // SubmitBuilderPreferences mocks base method.

@@ -496,7 +496,7 @@ func TestRunnerPushesProposerSettings_ValidContext(t *testing.T) {
 		delay(t)
 		return &ethpb.AttestResponse{AttestationDataRoot: make([]byte, fieldparams.RootLength)}, nil
 	}).AnyTimes()
-	vcm.EXPECT().SubmitAggregateSelectionProof(liveCtx, gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, req *ethpb.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64) (*ethpb.AggregateSelectionResponse, error) {
+	vcm.EXPECT().SubmitAggregateSelectionProof(liveCtx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, req *ethpb.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64, attDataRoot []byte) (*ethpb.AggregateSelectionResponse, error) {
 		defer assertValidContext(t, timedCtx, ctx)
 		delay(t)
 		ckpt := &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)}

@@ -69,10 +69,12 @@ func (v *validator) SubmitAggregateAndProof(ctx context.Context, slot primitives
 		PublicKey:      pubKey[:],
 		SlotSignature:  slotSig,
 	}
+	attDataRoot := v.signedAttDataRoot(ctx, slot, duty.CommitteeIndex)
+
 	// TODO: look at renaming SubmitAggregateSelectionProof functions as they are GET beacon API
 	var agg ethpb.AggregateAttAndProof
 	if postElectra {
-		res, err := v.validatorClient.SubmitAggregateSelectionProofElectra(ctx, aggSelectionRequest, duty.ValidatorIndex, duty.CommitteeLength)
+		res, err := v.validatorClient.SubmitAggregateSelectionProofElectra(ctx, aggSelectionRequest, duty.ValidatorIndex, duty.CommitteeLength, attDataRoot)
 		if err != nil {
 			v.handleSubmitAggSelectionProofError(err, slot, fmtKey)
 			return
@@ -83,7 +85,7 @@ func (v *validator) SubmitAggregateAndProof(ctx context.Context, slot primitives
 			agg = res.AggregateAndProof
 		}
 	} else {
-		res, err := v.validatorClient.SubmitAggregateSelectionProof(ctx, aggSelectionRequest, duty.ValidatorIndex, duty.CommitteeLength)
+		res, err := v.validatorClient.SubmitAggregateSelectionProof(ctx, aggSelectionRequest, duty.ValidatorIndex, duty.CommitteeLength, attDataRoot)
 		if err != nil {
 			v.handleSubmitAggSelectionProofError(err, slot, fmtKey)
 			return
@@ -167,6 +169,31 @@ func (v *validator) SubmitAggregateAndProof(ctx context.Context, slot primitives
 	if v.emitAccountMetrics {
 		ValidatorAggSuccessVec.WithLabelValues(fmtKey).Inc()
 	}
+}
+
+// signedAttDataRoot returns the hash tree root of the attestation data this validator signed for
+// the slot, or nil if it could not be obtained. The aggregation query must name the data that was
+// signed: the pool holds votes naming the head at signing time, while a fresh mid-slot fetch names
+// whatever block has since been imported.
+//
+// Post-Electra this is a hit on the per-slot cache the attest duty filled, since an aggregator is
+// always also an attester for the slot. A miss falls through to getAttestationData's own fetch.
+// A failure is never fatal: the gRPC beacon node selects by slot and committee and ignores the
+// root, so aggregation must still be attempted.
+func (v *validator) signedAttDataRoot(ctx context.Context, slot primitives.Slot, committeeIndex primitives.CommitteeIndex) []byte {
+	data, err := v.getAttestationData(ctx, slot, committeeIndex)
+	if err != nil {
+		log.WithField("slot", slot).WithError(err).
+			Warn("Could not get signed attestation data for aggregation")
+		return nil
+	}
+	root, err := data.HashTreeRoot()
+	if err != nil {
+		log.WithField("slot", slot).WithError(err).
+			Warn("Could not hash signed attestation data for aggregation")
+		return nil
+	}
+	return root[:]
 }
 
 // Signs input slot with domain selection proof. This is used to create the signature for aggregator selection.

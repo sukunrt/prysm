@@ -233,21 +233,21 @@ func (c *beaconApiValidatorClient) ProposeExit(ctx context.Context, in *ethpb.Si
 	})
 }
 
-func (c *beaconApiValidatorClient) SubmitAggregateSelectionProof(ctx context.Context, in *ethpb.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64) (*ethpb.AggregateSelectionResponse, error) {
+func (c *beaconApiValidatorClient) SubmitAggregateSelectionProof(ctx context.Context, in *ethpb.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64, attDataRoot []byte) (*ethpb.AggregateSelectionResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "beacon-api.SubmitAggregateSelectionProof")
 	defer span.End()
 
 	return wrapInMetrics[*ethpb.AggregateSelectionResponse]("SubmitAggregateSelectionProof", func() (*ethpb.AggregateSelectionResponse, error) {
-		return c.submitAggregateSelectionProof(ctx, in, index, committeeLength)
+		return c.submitAggregateSelectionProof(ctx, in, index, committeeLength, attDataRoot)
 	})
 }
 
-func (c *beaconApiValidatorClient) SubmitAggregateSelectionProofElectra(ctx context.Context, in *ethpb.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64) (*ethpb.AggregateSelectionElectraResponse, error) {
+func (c *beaconApiValidatorClient) SubmitAggregateSelectionProofElectra(ctx context.Context, in *ethpb.AggregateSelectionRequest, index primitives.ValidatorIndex, committeeLength uint64, attDataRoot []byte) (*ethpb.AggregateSelectionElectraResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "beacon-api.SubmitAggregateSelectionProofElectra")
 	defer span.End()
 
 	return wrapInMetrics[*ethpb.AggregateSelectionElectraResponse]("SubmitAggregateSelectionProofElectra", func() (*ethpb.AggregateSelectionElectraResponse, error) {
-		return c.submitAggregateSelectionProofElectra(ctx, in, index, committeeLength)
+		return c.submitAggregateSelectionProofElectra(ctx, in, index, committeeLength, attDataRoot)
 	})
 }
 

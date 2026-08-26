@@ -55,11 +55,18 @@ func TestSubmitAggregateAndProof_SignFails(t *testing.T) {
 				gomock.Any(), // epoch
 			).Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil /*err*/)
 
+			// Pre-Electra there is no per-slot cache, so the duty fetches the data it signed.
+			m.validatorClient.EXPECT().AttestationData(
+				gomock.Any(), // ctx
+				gomock.Any(), // request
+			).Return(util.HydrateAttestationData(&ethpb.AttestationData{}), nil)
+
 			m.validatorClient.EXPECT().SubmitAggregateSelectionProof(
 				gomock.Any(), // ctx
 				gomock.AssignableToTypeOf(&ethpb.AggregateSelectionRequest{}),
 				gomock.Any(),
 				gomock.Any(),
+				gomock.Any(), // attestation data root
 			).Return(&ethpb.AggregateSelectionResponse{
 				AggregateAndProof: &ethpb.AggregateAttestationAndProof{
 					AggregatorIndex: 0,
@@ -96,11 +103,18 @@ func TestSubmitAggregateAndProof_Ok(t *testing.T) {
 				gomock.Any(), // epoch
 			).Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil /*err*/)
 
+			// Pre-Electra there is no per-slot cache, so the duty fetches the data it signed.
+			m.validatorClient.EXPECT().AttestationData(
+				gomock.Any(), // ctx
+				gomock.Any(), // request
+			).Return(util.HydrateAttestationData(&ethpb.AttestationData{}), nil)
+
 			m.validatorClient.EXPECT().SubmitAggregateSelectionProof(
 				gomock.Any(), // ctx
 				gomock.AssignableToTypeOf(&ethpb.AggregateSelectionRequest{}),
 				gomock.Any(),
 				gomock.Any(),
+				gomock.Any(), // attestation data root
 			).Return(&ethpb.AggregateSelectionResponse{
 				AggregateAndProof: &ethpb.AggregateAttestationAndProof{
 					AggregatorIndex: 0,
@@ -140,16 +154,22 @@ func TestSubmitAggregateAndProof_Ok(t *testing.T) {
 				PublicKey: validatorKey.PublicKey().Marshal(),
 			})
 
+			slot := params.BeaconConfig().SlotsPerEpoch.Mul(electraForkEpoch)
+			expectedRoot := prefillSignedAttestationData(t, validator, slot)
+
 			m.validatorClient.EXPECT().DomainData(
 				gomock.Any(), // ctx
 				gomock.Any(), // epoch
 			).Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil /*err*/)
 
+			// No AttestationData EXPECT: the cached data the attest duty signed must be reused,
+			// so any re-fetch fails the mock.
 			m.validatorClient.EXPECT().SubmitAggregateSelectionProofElectra(
 				gomock.Any(), // ctx
 				gomock.AssignableToTypeOf(&ethpb.AggregateSelectionRequest{}),
 				gomock.Any(),
 				gomock.Any(),
+				expectedRoot[:],
 			).Return(&ethpb.AggregateSelectionElectraResponse{
 				AggregateAndProof: &ethpb.AggregateAttestationAndProofElectra{
 					AggregatorIndex: 0,
@@ -170,7 +190,7 @@ func TestSubmitAggregateAndProof_Ok(t *testing.T) {
 				gomock.AssignableToTypeOf(&ethpb.SignedAggregateSubmitElectraRequest{}),
 			).Return(&ethpb.SignedAggregateSubmitResponse{AttestationDataRoot: make([]byte, 32)}, nil)
 
-			validator.SubmitAggregateAndProof(t.Context(), params.BeaconConfig().SlotsPerEpoch.Mul(electraForkEpoch), pubKey)
+			validator.SubmitAggregateAndProof(t.Context(), slot, pubKey)
 		})
 	}
 	for _, isSlashingProtectionMinimal := range [...]bool{false, true} {
@@ -191,6 +211,9 @@ func TestSubmitAggregateAndProof_Ok(t *testing.T) {
 				PublicKey: validatorKey.PublicKey().Marshal(),
 			})
 
+			slot := params.BeaconConfig().SlotsPerEpoch.Mul(gloasForkEpoch)
+			expectedRoot := prefillSignedAttestationData(t, validator, slot)
+
 			m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).
 				Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
 
@@ -201,11 +224,13 @@ func TestSubmitAggregateAndProof_Ok(t *testing.T) {
 				}),
 				SelectionProof: make([]byte, 96),
 			}
+			// No AttestationData EXPECT: the cached data the attest duty signed must be reused.
 			m.validatorClient.EXPECT().SubmitAggregateSelectionProofElectra(
 				gomock.Any(),
 				gomock.AssignableToTypeOf(&ethpb.AggregateSelectionRequest{}),
 				gomock.Any(),
 				gomock.Any(),
+				expectedRoot[:],
 			).Return(&ethpb.AggregateSelectionElectraResponse{AggregateAndProof: electraAggregate}, nil)
 
 			m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).
@@ -219,9 +244,126 @@ func TestSubmitAggregateAndProof_Ok(t *testing.T) {
 				return &ethpb.SignedAggregateSubmitResponse{AttestationDataRoot: make([]byte, 32)}, nil
 			})
 
-			validator.SubmitAggregateAndProof(t.Context(), params.BeaconConfig().SlotsPerEpoch.Mul(gloasForkEpoch), pubKey)
+			validator.SubmitAggregateAndProof(t.Context(), slot, pubKey)
 		})
 	}
+}
+
+// prefillSignedAttestationData seeds the per-slot cache the attest duty would have filled and
+// returns the root the aggregation duty must query with.
+func prefillSignedAttestationData(t *testing.T, v *validator, slot primitives.Slot) [32]byte {
+	data := util.HydrateAttestationData(&ethpb.AttestationData{Slot: slot})
+	v.cachedAttestationData = data
+	root, err := data.HashTreeRoot()
+	require.NoError(t, err)
+	return root
+}
+
+func TestSubmitAggregateAndProof_CacheMissFetchesOnce(t *testing.T) {
+	electraForkEpoch := uint64(1)
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.ElectraForkEpoch = primitives.Epoch(electraForkEpoch)
+	params.OverrideBeaconConfig(cfg)
+
+	validator, m, validatorKey, finish := setup(t, false)
+	defer finish()
+	var pubKey [fieldparams.BLSPubkeyLength]byte
+	copy(pubKey[:], validatorKey.PublicKey().Marshal())
+	validator.duties = testDutyStore(&ethpb.ValidatorDuty{
+		PublicKey: validatorKey.PublicKey().Marshal(),
+	})
+
+	slot := params.BeaconConfig().SlotsPerEpoch.Mul(electraForkEpoch)
+	data := util.HydrateAttestationData(&ethpb.AttestationData{Slot: slot})
+	expectedRoot, err := data.HashTreeRoot()
+	require.NoError(t, err)
+
+	m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).
+		Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
+
+	// Empty cache: the duty falls through to a single fetch, and that root is what it queries.
+	m.validatorClient.EXPECT().AttestationData(gomock.Any(), gomock.Any()).Return(data, nil).Times(1)
+
+	m.validatorClient.EXPECT().SubmitAggregateSelectionProofElectra(
+		gomock.Any(),
+		gomock.AssignableToTypeOf(&ethpb.AggregateSelectionRequest{}),
+		gomock.Any(),
+		gomock.Any(),
+		expectedRoot[:],
+	).Return(&ethpb.AggregateSelectionElectraResponse{
+		AggregateAndProof: &ethpb.AggregateAttestationAndProofElectra{
+			AggregatorIndex: 0,
+			Aggregate: util.HydrateAttestationElectra(&ethpb.AttestationElectra{
+				AggregationBits: make([]byte, 1),
+			}),
+			SelectionProof: make([]byte, 96),
+		},
+	}, nil)
+
+	m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).
+		Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
+
+	m.validatorClient.EXPECT().SubmitSignedAggregateSelectionProofElectra(
+		gomock.Any(),
+		gomock.AssignableToTypeOf(&ethpb.SignedAggregateSubmitElectraRequest{}),
+	).Return(&ethpb.SignedAggregateSubmitResponse{AttestationDataRoot: make([]byte, 32)}, nil)
+
+	validator.SubmitAggregateAndProof(t.Context(), slot, pubKey)
+}
+
+func TestSubmitAggregateAndProof_NoAttestationData(t *testing.T) {
+	electraForkEpoch := uint64(1)
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.ElectraForkEpoch = primitives.Epoch(electraForkEpoch)
+	params.OverrideBeaconConfig(cfg)
+
+	hook := logTest.NewGlobal()
+	validator, m, validatorKey, finish := setup(t, false)
+	defer finish()
+	var pubKey [fieldparams.BLSPubkeyLength]byte
+	copy(pubKey[:], validatorKey.PublicKey().Marshal())
+	validator.duties = testDutyStore(&ethpb.ValidatorDuty{
+		PublicKey: validatorKey.PublicKey().Marshal(),
+	})
+
+	slot := params.BeaconConfig().SlotsPerEpoch.Mul(electraForkEpoch)
+
+	m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).
+		Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
+
+	m.validatorClient.EXPECT().AttestationData(gomock.Any(), gomock.Any()).
+		Return(nil, errors.New("bad request"))
+
+	// The duty proceeds with a nil root: the gRPC beacon node ignores it.
+	m.validatorClient.EXPECT().SubmitAggregateSelectionProofElectra(
+		gomock.Any(),
+		gomock.AssignableToTypeOf(&ethpb.AggregateSelectionRequest{}),
+		gomock.Any(),
+		gomock.Any(),
+		[]byte(nil),
+	).Return(&ethpb.AggregateSelectionElectraResponse{
+		AggregateAndProof: &ethpb.AggregateAttestationAndProofElectra{
+			AggregatorIndex: 0,
+			Aggregate: util.HydrateAttestationElectra(&ethpb.AttestationElectra{
+				AggregationBits: make([]byte, 1),
+			}),
+			SelectionProof: make([]byte, 96),
+		},
+	}, nil)
+
+	m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).
+		Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
+
+	m.validatorClient.EXPECT().SubmitSignedAggregateSelectionProofElectra(
+		gomock.Any(),
+		gomock.AssignableToTypeOf(&ethpb.SignedAggregateSubmitElectraRequest{}),
+	).Return(&ethpb.SignedAggregateSubmitResponse{AttestationDataRoot: make([]byte, 32)}, nil)
+
+	validator.SubmitAggregateAndProof(t.Context(), slot, pubKey)
+
+	require.LogsContain(t, hook, "Could not get signed attestation data for aggregation")
 }
 
 func TestSubmitAggregateAndProof_Distributed(t *testing.T) {
@@ -255,11 +397,18 @@ func TestSubmitAggregateAndProof_Distributed(t *testing.T) {
 			}
 			validator.aggSelector = dvProvider
 
+			// Pre-Electra there is no per-slot cache, so the duty fetches the data it signed.
+			m.validatorClient.EXPECT().AttestationData(
+				gomock.Any(), // ctx
+				gomock.Any(), // request
+			).Return(util.HydrateAttestationData(&ethpb.AttestationData{}), nil)
+
 			m.validatorClient.EXPECT().SubmitAggregateSelectionProof(
 				gomock.Any(), // ctx
 				gomock.AssignableToTypeOf(&ethpb.AggregateSelectionRequest{}),
 				gomock.Any(),
 				gomock.Any(),
+				gomock.Any(), // attestation data root
 			).Return(&ethpb.AggregateSelectionResponse{
 				AggregateAndProof: &ethpb.AggregateAttestationAndProof{
 					AggregatorIndex: 0,

@@ -49,16 +49,14 @@ func TestSubmitAggregateSelectionProof(t *testing.T) {
 		name                       string
 		isOptimistic               bool
 		syncingErr                 error
-		attestationDataErr         error
 		aggregateAttestationErr    error
-		attestationDataCalled      int
+		missingAttDataRoot         bool
 		aggregateAttestationCalled int
 		expectedErrorMsg           string
 		committeesAtSlot           uint64
 	}{
 		{
 			name:                       "success",
-			attestationDataCalled:      1,
 			aggregateAttestationCalled: 1,
 		},
 		{
@@ -72,14 +70,12 @@ func TestSubmitAggregateSelectionProof(t *testing.T) {
 			expectedErrorMsg: "failed to get syncing status",
 		},
 		{
-			name:                  "attestation data error",
-			attestationDataCalled: 1,
-			attestationDataErr:    errors.New("bad request"),
-			expectedErrorMsg:      fmt.Sprintf("failed to get attestation data for slot=%d and committee_index=%d", slot, committeeIndex),
+			name:               "missing attestation data root",
+			missingAttDataRoot: true,
+			expectedErrorMsg:   "attestation data root of the signed attestation is required",
 		},
 		{
 			name:                       "aggregate attestation error",
-			attestationDataCalled:      1,
 			aggregateAttestationCalled: 1,
 			aggregateAttestationErr:    errors.New("bad request"),
 			expectedErrorMsg:           "bad request",
@@ -112,22 +108,18 @@ func TestSubmitAggregateSelectionProof(t *testing.T) {
 				test.syncingErr,
 			).Times(1)
 
-			// Call attestation data to get attestation data root to query aggregate attestation.
+			// The aggregation duty supplies the root of the data it signed; the client must
+			// never re-fetch attestation data here.
 			handler.EXPECT().Get(
 				gomock.Any(),
 				fmt.Sprintf("%s?committee_index=%d&slot=%d", attestationDataEndpoint, committeeIndex, slot),
-				&structs.GetAttestationDataResponse{},
-			).SetArg(
-				2,
-				attestationDataResponse,
-			).Return(
-				test.attestationDataErr,
-			).Times(test.attestationDataCalled)
+				gomock.Any(),
+			).Times(0)
 
 			attestationJSON, err := json.Marshal(jsonifyAttestation(aggregateAttestation))
 			require.NoError(t, err)
 
-			// Call attestation data to get attestation data root to query aggregate attestation.
+			// The aggregate is queried by the root the caller supplied.
 			handler.EXPECT().Get(
 				gomock.Any(),
 				fmt.Sprintf("%s?attestation_data_root=%s&committee_index=%d&slot=%d", aggregateAttestationEndpoint, hexutil.Encode(attestationDataRootBytes[:]), committeeIndex, slot),
@@ -169,12 +161,16 @@ func TestSubmitAggregateSelectionProof(t *testing.T) {
 			if test.committeesAtSlot != 0 {
 				committees = test.committeesAtSlot
 			}
+			attDataRoot := attestationDataRootBytes[:]
+			if test.missingAttDataRoot {
+				attDataRoot = nil
+			}
 			actualResponse, err := validatorClient.submitAggregateSelectionProof(ctx, &ethpb.AggregateSelectionRequest{
 				Slot:           slot,
 				CommitteeIndex: committeeIndex,
 				PublicKey:      pubkey,
 				SlotSignature:  slotSignatureBytes,
-			}, validatorIndex, committees)
+			}, validatorIndex, committees, attDataRoot)
 			if test.expectedErrorMsg == "" {
 				require.NoError(t, err)
 				assert.DeepEqual(t, expectedResponse, actualResponse)
@@ -218,16 +214,14 @@ func TestSubmitAggregateSelectionProofElectra(t *testing.T) {
 		name                       string
 		isOptimistic               bool
 		syncingErr                 error
-		attestationDataErr         error
 		aggregateAttestationErr    error
-		attestationDataCalled      int
+		missingAttDataRoot         bool
 		aggregateAttestationCalled int
 		expectedErrorMsg           string
 		committeesAtSlot           uint64
 	}{
 		{
 			name:                       "success",
-			attestationDataCalled:      1,
 			aggregateAttestationCalled: 1,
 		},
 		{
@@ -241,14 +235,12 @@ func TestSubmitAggregateSelectionProofElectra(t *testing.T) {
 			expectedErrorMsg: "failed to get syncing status",
 		},
 		{
-			name:                  "attestation data error",
-			attestationDataCalled: 1,
-			attestationDataErr:    errors.New("bad request"),
-			expectedErrorMsg:      fmt.Sprintf("failed to get attestation data for slot=%d and committee_index=%d", slot, committeeIndex),
+			name:               "missing attestation data root",
+			missingAttDataRoot: true,
+			expectedErrorMsg:   "attestation data root of the signed attestation is required",
 		},
 		{
 			name:                       "aggregate attestation error",
-			attestationDataCalled:      1,
 			aggregateAttestationCalled: 1,
 			aggregateAttestationErr:    errors.New("bad request"),
 			expectedErrorMsg:           "bad request",
@@ -281,22 +273,18 @@ func TestSubmitAggregateSelectionProofElectra(t *testing.T) {
 				test.syncingErr,
 			).Times(1)
 
-			// Call attestation data to get attestation data root to query aggregate attestation.
+			// The aggregation duty supplies the root of the data it signed; the client must
+			// never re-fetch attestation data here.
 			handler.EXPECT().Get(
 				gomock.Any(),
 				fmt.Sprintf("%s?committee_index=%d&slot=%d", attestationDataEndpoint, committeeIndex, slot),
-				&structs.GetAttestationDataResponse{},
-			).SetArg(
-				2,
-				attestationDataResponse,
-			).Return(
-				test.attestationDataErr,
-			).Times(test.attestationDataCalled)
+				gomock.Any(),
+			).Times(0)
 
 			attestationJSON, err := json.Marshal(jsonifyAttestationElectra(aggregateAttestation))
 			require.NoError(t, err)
 
-			// Call attestation data to get attestation data root to query aggregate attestation.
+			// The aggregate is queried by the root the caller supplied.
 			handler.EXPECT().Get(
 				gomock.Any(),
 				fmt.Sprintf("%s?attestation_data_root=%s&committee_index=%d&slot=%d", aggregateAttestationEndpoint, hexutil.Encode(attestationDataRootBytes[:]), committeeIndex, slot),
@@ -338,12 +326,16 @@ func TestSubmitAggregateSelectionProofElectra(t *testing.T) {
 			if test.committeesAtSlot != 0 {
 				committees = test.committeesAtSlot
 			}
+			attDataRoot := attestationDataRootBytes[:]
+			if test.missingAttDataRoot {
+				attDataRoot = nil
+			}
 			actualResponse, err := validatorClient.submitAggregateSelectionProofElectra(ctx, &ethpb.AggregateSelectionRequest{
 				Slot:           slot,
 				CommitteeIndex: committeeIndex,
 				PublicKey:      pubkey,
 				SlotSignature:  slotSignatureBytes,
-			}, validatorIndex, committees)
+			}, validatorIndex, committees, attDataRoot)
 			if test.expectedErrorMsg == "" {
 				require.NoError(t, err)
 				assert.DeepEqual(t, expectedResponse, actualResponse)

@@ -272,11 +272,13 @@ func (c *grpcValidatorClient) ProposeExit(ctx context.Context, in *ethpb.SignedV
 	return c.getClient().ProposeExit(ctx, in)
 }
 
-func (c *grpcValidatorClient) SubmitAggregateSelectionProof(ctx context.Context, in *ethpb.AggregateSelectionRequest, _ primitives.ValidatorIndex, _ uint64) (*ethpb.AggregateSelectionResponse, error) {
+// The attestation data root is unused: the beacon node selects from its own pool by slot and
+// committee index and prefers the group holding the aggregator's own vote.
+func (c *grpcValidatorClient) SubmitAggregateSelectionProof(ctx context.Context, in *ethpb.AggregateSelectionRequest, _ primitives.ValidatorIndex, _ uint64, _ []byte) (*ethpb.AggregateSelectionResponse, error) {
 	return c.getClient().SubmitAggregateSelectionProof(ctx, in)
 }
 
-func (c *grpcValidatorClient) SubmitAggregateSelectionProofElectra(ctx context.Context, in *ethpb.AggregateSelectionRequest, _ primitives.ValidatorIndex, _ uint64) (*ethpb.AggregateSelectionElectraResponse, error) {
+func (c *grpcValidatorClient) SubmitAggregateSelectionProofElectra(ctx context.Context, in *ethpb.AggregateSelectionRequest, _ primitives.ValidatorIndex, _ uint64, _ []byte) (*ethpb.AggregateSelectionElectraResponse, error) {
 	return c.getClient().SubmitAggregateSelectionProofElectra(ctx, in)
 }
 
