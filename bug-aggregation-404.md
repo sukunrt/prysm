@@ -105,7 +105,7 @@ same instant; (d) read-until re-poll — no freshness hint on this path, single 
   for committees outside their subnets, this would gut inclusion. Also one wasted attestation_data
   fetch per duty and a misleading WARN per slot.
 
-## Fix (implemented in vwkkzklx; full spec)
+## Fix (implemented in truqvxky; full spec)
 
 Semantics ruling: the aggregator queries with the root of the attestation data **it signed at
 attestation time**, never a fresh mid-slot fetch. A re-derived root names the head at derivation
@@ -216,10 +216,12 @@ Recipe: final-02 topology — 5 nodes, vc-1..3 REST, vc-4..5 gRPC,
 `--decoupled-ffg-vote-at-slot-start`; build images with a dedicated tag (never `:local` while
 another enclave runs) and scope log collection by the enclave uuid label
 `com.kurtosistech.enclave-id` (full uuid; `enclave inspect` prints the short one). Run ≥80
-slots. Measured in ~/dev/prysm2-run-logs/aggfix-01/ (PASS bar):
+slots. Measured in ~/dev/prysm2-run-logs/aggfix-01/ and aggfix2-01/ (PASS bar):
 
 - "No attestations to aggregate": 0 on every VC (82 slots; ~0 acceptable, slot-0 warmup only).
-- "Submitted new aggregate attestations": one per slot per VC — 82/82 on all five, REST == gRPC.
+- "Submitted new aggregate attestations": REST miss rate equal to gRPC's and zero aggregation
+  errors. Not "no misses": a ~0.4% silent per-slot miss predates the fix and shows on gRPC too
+  (final-02 gRPC 121/122; aggfix2-01 2/425 across both arms).
 - Aggregate roots: REST matches pool majority except on pool-split slots, where it publishes the
   group holding its own vote (aggfix-01: 232/246 majority; all 14 mismatches on the 21 split
   slots, same groups gRPC's own-bit preference chose). "Always majority" is the wrong criterion:
