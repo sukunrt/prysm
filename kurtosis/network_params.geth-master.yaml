@@ -1,12 +1,9 @@
-# network_params.yaml plus a genesis-seeded buildoor. Run-scoped: the baseline
-# file stays byte-identical so the two runs are comparable.
+# network_params.yaml on geth master: the newer-geth shakeout. Run-scoped;
+# the baseline file keeps its pin.
 #
-#   IMAGE_TAG=buildoor-final ./kurtosis/build-images.sh
-#   kurtosis run --enclave buildoor ~/dev/ethereum-package \
-#       --args-file kurtosis/network_params.buildoor.yaml
-#
-# The images carry a run-scoped tag, not :local, so building here cannot
-# replace the images a live enclave's containers were started from.
+#   IMAGE_TAG=geth-master ./kurtosis/build-images.sh
+#   kurtosis run --enclave geth-master ~/dev/ethereum-package \
+#       --args-file kurtosis/network_params.geth-master.yaml
 #
 # 5 nodes x 50 keys = 250 validators, 12s slots: the chain config and client
 # flags of the Shadow goldfish sims on a plain meshed devnet. Node count and
@@ -17,18 +14,16 @@
 
 participants:
   - el_type: geth
-    # Pinned, not :latest. Commit 366048ea (2026-08-10), byte for byte the
-    # geth the ethshadow baseline ran; kept for comparability with earlier
-    # runs. Newer geth works since the generator base moved to 6.2.1, which
-    # predeploys the EIP-8282 builder contracts: master-fd07354 passed both
-    # harnesses on 2026-08-26 (see network_params.geth-master.yaml).
-    el_image: ethpandaops/geth:glamsterdam-devnet-8
+    # geth master, pinned build fd07354 (2026-08-26). Works only with the
+    # 6.2.1-based prysm-genesis-gen, which predeploys the EIP-8282 builder
+    # deposit/exit contracts geth master reads.
+    el_image: ethpandaops/geth:master-fd07354
     cl_type: prysm
     # Built by kurtosis/build-images.sh from this tree. Also tagged with the
-    # jj change id; :local is what a run uses so the file does not churn.
-    cl_image: prysm-beacon-chain:buildoor-final
+    # jj change id; :geth-master is what a run uses so the file does not churn.
+    cl_image: prysm-beacon-chain:geth-master
     vc_type: prysm
-    vc_image: prysm-validator:buildoor-final
+    vc_image: prysm-validator:geth-master
     # The Prysm VC must talk gRPC: its REST client has no Gloas/Heze SSZ
     # block codec. The package passes --beacon-rest-api-provider
     # unconditionally and Prysm enables the REST client on the flag's mere
@@ -65,13 +60,13 @@ participants:
   # round(0.3 x 5) = 2 nodes whose EL takes no peers: their transactions
   # reach a block only through their own proposer. Same CL config as above.
   - el_type: geth
-    el_image: ethpandaops/geth:glamsterdam-devnet-8
+    el_image: ethpandaops/geth:master-fd07354
     el_extra_params:
       - --maxpeers=0
     cl_type: prysm
-    cl_image: prysm-beacon-chain:buildoor-final
+    cl_image: prysm-beacon-chain:geth-master
     vc_type: prysm
-    vc_image: prysm-validator:buildoor-final
+    vc_image: prysm-validator:geth-master
     vc_extra_params:
       - --decoupled-ffg-vote-at-slot-start
     use_separate_vc: true
@@ -116,7 +111,7 @@ ethereum_genesis_generator_params:
   # Patched generator: Heze stripped from the CL->EL fork mapping (Heze is
   # CL-only), the fork's own keys added to the CL config template, and the CL
   # genesis state built by prysmctl instead of eth-genesis-state-generator.
-  image: prysm-genesis-gen:buildoor-final
+  image: prysm-genesis-gen:geth-master
   extra_env:
     # Four rounds to the 32-slot epoch: the attestation-traffic multiplier
     # the measurements are about.
@@ -137,11 +132,6 @@ ethereum_genesis_generator_params:
     # fork digest is the only thing that reads it. ExtraEnvVars are rendered
     # after the fork versions in values.env.tmpl, so this wins.
     HEZE_FORK_VERSION: "0x90000000"
-    # Mint one 0xB0 builder deposit at key index NUMBER_OF_VALIDATORS (250),
-    # which is exactly the index a buildoor instance derives while the
-    # package's own builder_count is 0. prysmctl splits it out of the deposit
-    # file before ProcessPreGenesisDeposits, so the validator set is untouched.
-    BUILDER_COUNT: 1
     # No SLOT_DURATION_IN_SECONDS here: the generator's default is 12 and so
     # is this run's slot. Set it whenever seconds_per_slot is not 12 -- the
     # package exports SLOT_DURATION_MS only, and the CL template reads
@@ -162,33 +152,7 @@ ethereum_genesis_generator_params:
 # spamoor outright (walletpool.go:636, nil big.Int in Cmp). Carrying the arms
 # over needs the premine, i.e. a way to put spamoor's derived children in
 # network_params.prefunded_accounts. Until then: no additional services.
-additional_services:
-  - buildoor
-
-# Attached through the instances schema, not mev_type: buildoor, which is
-# deprecated in the pin and drags relay enrichment across every participant.
-buildoor_params:
-  # Patched upstream: Heze->Amsterdam engine version, plus the two
-  # finalization gates that keep a genesis-seeded builder out of the bid path.
-  # See kurtosis/Dockerfile.buildoor.
-  image: prysm-buildoor:buildoor-final
-  # Route B (the builder API) stays off for parity with run 13; the
-  # bid/reveal path under test is the p2p one.
-  builder_api: false
-  epbs_builder: true
-  # The builder is seeded into the genesis registry, so there is nothing to
-  # deposit or onboard and no EIP-8282 contracts to read.
-  lifecycle: false
-  instances:
-    # 1-based over the post-count-expansion node list: the first meshed-EL
-    # node, so the builder's payloads carry the shared mempool.
-    - participant: 1
-  extra_args:
-    # Off by default, and off fails RequireBidGasLimitCompatible: the bid's
-    # gas limit must equal min(max(target, parent-d), parent+d) exactly. This
-    # makes buildoor adjust the built payload to that value.
-    - --build-enforce-bid-gas-limit
-    - --log-level=debug
+additional_services: []
 
 wait_for_finalization: false
 global_log_level: info

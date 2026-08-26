@@ -67,7 +67,7 @@ The args files already set all of these.
 | Where | Value | Reason |
 | --- | --- | --- |
 | `network_params` | all fork epochs = 0, also `gloas_fork_epoch` and `heze_fork_epoch` | The genesis state is a Heze state. Gloas at 0 also puts Amsterdam at the EL genesis time. `forkchoiceUpdatedV4` needs that. |
-| `el_image` | `ethpandaops/geth:glamsterdam-devnet-8` | Newer geth needs the EIP-8282 builder-deposit contract in the EL genesis. The generator base in this repo does not deploy it. See the caution below. |
+| `el_image` | a pinned geth build | The default pin is `glamsterdam-devnet-8`, for comparability with earlier runs. geth master also works: build `master-fd07354` passed both harnesses on 2026-08-26 (`network_params.geth-master.yaml`). Use a pinned build, not `:latest`. |
 | generator `extra_env` | `SLOTS_PER_ROUND: 8` | The main knob of the fork. 4 rounds per 32-slot epoch. |
 | generator `extra_env` | `AVAILABLE_ATTESTATION_DUE_BPS_HEZE: 2500` | When the availability vote is due, in basis points of the slot. |
 | generator `extra_env` | `TARGET_COMMITTEE_SIZE: 3000` | Committees must be large, near 3000 validators, at every scale. With few validators this floors to one committee per slot. |
@@ -84,10 +84,10 @@ The generator image does three things a stock generator does not:
   If it does, geth asks for a newer engine API and the chain stops.
 - It makes the genesis state with `prysmctl testnet generate-genesis --fork heze`.
 
-Caution: do not move `el_image` to a newer geth without a test.
-Generator releases v6.1.4 and later do deploy the EIP-8282 contracts,
-but this repo's generator image has an older base. To use a newer geth,
-first move the base image in `Dockerfile.genesis-gen` and test the patches.
+Newer geth needs the EIP-8282 builder deposit/exit contracts in the EL
+genesis. This repo's generator image (base 6.2.1) predeploys them, so any
+geth up to `master-fd07354` (2026-08-26) works. For a geth newer than that,
+run one shakeout first.
 
 ## Values you can change
 

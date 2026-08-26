@@ -11,22 +11,13 @@
 #
 # The patches live in patch-generator.sh; read that first.
 
-# ethereum-package >= the buildoor-instances schema runs
-# /apps/validator-mapping/merge.sh out of the genesis-generator image to turn
-# the per-participant key ranges into the validator-ranges file it hands each
-# buildoor. 6.0.2 predates that script, and the run aborts with exit 127
-# before any node starts. Take the script from a generator that has it rather
-# than rebasing off 6.0.2, whose CL config template is what carries the fork's
-# patches. It is a pure jq/yq/sed script and 6.0.2 has all three.
-FROM ethpandaops/ethereum-genesis-generator:6.2.0 AS egg-newer
-
-FROM ethpandaops/ethereum-genesis-generator:6.0.2
-COPY --from=egg-newer /apps/validator-mapping /apps/validator-mapping
-# 6.0.2's eth2-val-tools calls the builder credential type 0x03 and emits
-# 0300... credentials; the prefix is signed over, so nothing downstream can fix
-# it. 6.2.0 emits 0xb0. Only the builder deposits use this binary -- validator
-# entries stay on 6.0.2, whose derivation is identical.
-COPY --from=egg-newer /usr/local/bin/eth2-val-tools /usr/local/bin/eth2-val-tools-620
+# 6.2.1: has /apps/validator-mapping (needed by ethereum-package's
+# buildoor-instances schema), an eth2-val-tools that emits 0xb0 builder
+# credentials, and -- the reason for the bump off 6.0.2 -- the EIP-8282
+# builder deposit/exit predeploys in the EL genesis (gated on
+# GLOAS_FORK_EPOCH), which is what lets geth newer than glamsterdam-devnet-8
+# process the builder deposit queue.
+FROM ethpandaops/ethereum-genesis-generator:6.2.1
 
 # envsubst turns an unset variable into the empty string, so every key
 # patch-generator.sh writes as $VAR needs a default here. extra_env wins: the
@@ -46,6 +37,11 @@ ENV BUILDER_COUNT=0
 ENV BUILDER_KEY_INDEX=""
 ENV BUILDER_DEPOSIT_GWEI=1000000000000
 ENV BUILDER_EXEC_ADDR=0x8943545177806ED17B9F23F0a21ee5948eCaa776
+
+# prysm-genesis-state.sh calls eth2-val-tools-620 for builder deposits, from
+# when the base was 6.0.2 (whose eth2-val-tools emitted 0x03 credentials) and
+# a 6.2.0 binary rode along. The base binary emits 0xb0 itself now.
+RUN ln -s /usr/local/bin/eth2-val-tools /usr/local/bin/eth2-val-tools-620
 
 COPY prysmctl /usr/local/bin/prysmctl
 COPY prysm-genesis-state.sh /usr/local/bin/prysm-genesis-state.sh

@@ -12,16 +12,11 @@
 
 participants:
   - el_type: geth
-    # Pinned, not :latest. This is commit 366048ea (2026-08-10), byte for
-    # byte the geth the ethshadow baseline ran, which is the point of having
-    # two harnesses. It also has to be pinned: geth master from 2026-08-19
-    # rejects every forkchoiceUpdatedV4 with "failed to process builder
-    # deposit queue: empty system contract: no code at
-    # 0x0000bFF46984e3725691FA540a8C7589300D8282" -- newer geth wants the
-    # ePBS builder-deposit system contract in the EL genesis, and
-    # ethereum-genesis-generator 6.0.2 does not deploy it (it knows only
-    # 4788, 2935, 7002, 7251 and the deposit contract). Moving to a newer
-    # geth means teaching the generator that contract first.
+    # Pinned, not :latest. Commit 366048ea (2026-08-10), byte for byte the
+    # geth the ethshadow baseline ran; kept for comparability with earlier
+    # runs. Newer geth works since the generator base moved to 6.2.1, which
+    # predeploys the EIP-8282 builder contracts: master-fd07354 passed both
+    # harnesses on 2026-08-26 (see network_params.geth-master.yaml).
     el_image: ethpandaops/geth:glamsterdam-devnet-8
     cl_type: prysm
     # Built by kurtosis/build-images.sh from this tree. Also tagged with the

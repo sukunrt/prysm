@@ -31,7 +31,7 @@ grep -q 'HEZE is CL-only' /apps/el-gen/generate_genesis.sh
 # ethereum_genesis_generator_params.extra_env, overrides it.
 comment1='# Rounds per epoch = SLOTS_PER_EPOCH / SLOTS_PER_ROUND. The committee'
 comment2='# shuffle repeats every round: the attestation-traffic multiplier.'
-sed -i "/^SECONDS_PER_SLOT:/i $comment1\n$comment2\nSLOTS_PER_ROUND: \$SLOTS_PER_ROUND" \
+sed -i "/^SLOT_DURATION_MS:/i $comment1\n$comment2\nSLOTS_PER_ROUND: \$SLOTS_PER_ROUND" \
     /config/cl/config.yaml
 grep -q '^SLOTS_PER_ROUND' /config/cl/config.yaml
 
@@ -43,7 +43,7 @@ grep -q '^SLOTS_PER_ROUND' /config/cl/config.yaml
 # --chain-config-file), so one line moves the whole run's vote deadline.
 comment3='# How far into the slot an available attestation is due, in basis'
 comment4='# points. The head-timing sweep axis.'
-sed -i "/^SECONDS_PER_SLOT:/i $comment3\n$comment4\nAVAILABLE_ATTESTATION_DUE_BPS_HEZE: \$AVAILABLE_ATTESTATION_DUE_BPS_HEZE" \
+sed -i "/^SLOT_DURATION_MS:/i $comment3\n$comment4\nAVAILABLE_ATTESTATION_DUE_BPS_HEZE: \$AVAILABLE_ATTESTATION_DUE_BPS_HEZE" \
     /config/cl/config.yaml
 grep -q '^AVAILABLE_ATTESTATION_DUE_BPS_HEZE' /config/cl/config.yaml
 
@@ -51,8 +51,8 @@ grep -q '^AVAILABLE_ATTESTATION_DUE_BPS_HEZE' /config/cl/config.yaml
 # [1, MAX_COMMITTEES_PER_SLOT] (beacon-chain/core/helpers/beacon_committee.go).
 # A target far above the per-slot pool floors that to one committee holding
 # the whole pool. The key is absent from the upstream template, so insert it.
-comment5='# One committee per slot: the whole V/SLOTS_PER_ROUND pool, one seat set.'
-sed -i "/^SECONDS_PER_SLOT:/i $comment5\nTARGET_COMMITTEE_SIZE: \$TARGET_COMMITTEE_SIZE" \
+comment5='# ~3000-validator committees at every scale; small runs floor to one per slot.'
+sed -i "/^SLOT_DURATION_MS:/i $comment5\nTARGET_COMMITTEE_SIZE: \$TARGET_COMMITTEE_SIZE" \
     /config/cl/config.yaml
 grep -q '^TARGET_COMMITTEE_SIZE' /config/cl/config.yaml
 
