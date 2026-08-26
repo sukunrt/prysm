@@ -84,6 +84,30 @@ func TestEndToEnd_HezeGenesis(t *testing.T) {
 	r.run()
 }
 
+// TestEndToEnd_HezeGenesisRESTApi is TestEndToEnd_HezeGenesis with the validator clients on the
+// REST API instead of gRPC. It is the only run that exercises the fork-local available attestation
+// endpoints; every other run reaches their gRPC counterparts, and AvailableAttestationsFlow is what
+// proves the REST ones carried the votes.
+func TestEndToEnd_HezeGenesisRESTApi(t *testing.T) {
+	cfg := params.E2EMainnetTestConfig()
+	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
+	cfg.SlotsPerRound = 8
+
+	r := e2eMinimal(t, cfg,
+		types.WithEpochs(5),
+		types.WithValidatorRESTApi(),
+		withoutEvaluators(hezeDroppedEvaluators...),
+		withEvaluators(
+			ev.ChainProducesBlocks,
+			ev.AvailableAttestationsFlow,
+			ev.AttestationsInEveryRound,
+			ev.FinalizationOccursInRounds(3),
+			ev.JustificationAdvancesEveryRound,
+		),
+	)
+	r.run()
+}
+
 // hezeDroppedEvaluators are the stock minimal evaluators the Heze runs cannot
 // use; the reason for each is on TestEndToEnd_HezeGenesis.
 var hezeDroppedEvaluators = []string{
