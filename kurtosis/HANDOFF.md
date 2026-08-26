@@ -117,13 +117,6 @@ The args files run spamoor with three arms: transfers with 16 KiB calldata
 This needs spamoor v1.2.0 or later with `--without-batcher` — see
 `plan-spamoor-kurtosis.md`. Do not remove the eoatx arm's `client_group`.
 
-For a quick run without spamoor, `blobsend` sends one blob transaction and
-one transfer per slot:
-
-```sh
-go run ./kurtosis/blobsend -rpc http://127.0.0.1:<el-rpc-port> -interval <slot-time>
-```
-
 ## Measure
 
 ```sh

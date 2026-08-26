@@ -43,22 +43,11 @@ keys per node are free; keep the total at 128 or more.
 
 ## Drive the execution layer
 
-```sh
-go run ./kurtosis/blobsend -rpc http://127.0.0.1:<el-rpc> -interval 6s
-```
-
-A run on empty payloads has no data columns to carry, so the supernodes have
-nothing to custody or serve. `blobsend` sends one blob transaction and one
-value transfer per slot from two of the package's prefunded dev accounts
-(separate accounts because geth pins a sender to one txpool subpool), waits
-for each receipt and logs the block, gas and blob gas. Sidecars carry cell
-proofs, which is what a Fulu txpool accepts.
-
-Every transaction carries a 500k gas limit. Amsterdam reprices state access --
-a bare transfer costs ~207k on first touch, not 21000 -- and a tool that
-hardcodes the pre-Amsterdam cost has its funding transfers die out-of-gas.
-That is what left run 02 with no blob transactions and therefore no columns
-at all.
+A run on empty payloads has no data columns to carry, so the nodes have
+nothing to custody or serve. The args files run three spamoor arms (eoatx
+transfers, public and private blob arms) as the standard traffic; see the
+`spamoor_params` block in `network_params.yaml` and
+`plan-spamoor-kurtosis.md` for why v1.2.0+ with `--without-batcher`.
 
 ## Measure
 

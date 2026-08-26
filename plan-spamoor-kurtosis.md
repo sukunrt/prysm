@@ -89,3 +89,30 @@ Funding cost: 60 wallets x 204,600 = ~12.3M gas, two blocks; root (prefunded_add
 3. EL RPC: gasUsed of the funding blocks ~204,600 per funding tx; then steady 8 tx/slot eoatx
    and 6 blobs/slot; isolated-EL blob txs appear only in their own proposers' blocks.
 4. Confirm no refill storm at `refill_interval` (default 600s): balances stay above threshold.
+
+## blobsend: keep or delete
+
+Verdict: delete. Spamoor covers everything blobsend did; nothing consumes its output.
+
+- No pipeline reads it. Nothing in the repo imports or invokes `kurtosis/blobsend` except its own
+  docs (kurtosis/README.md:47, kurtosis/HANDOFF.md:124). elscan.py measures blob gas from the
+  chain, not from blobsend's receipt log; summarize.py/vclogs.py never mention it. The only other
+  mentions are historical comments in ~/dev/prysm2-run-logs (outside the repo).
+- Capabilities are matched. Deterministic N blobs/slot: `throughput: 2, sidecars: 3`. Cell-proof
+  sidecars: the blobs scenario sends v1 sidecars. The two-account subpool trick: each spamoor arm
+  derives its own child wallets from its own seed, so blob and calldata senders are disjoint.
+- The one edge it had — `go run` against an already-running enclave with zero config — is nearly
+  gone: the committed args files always start the three spamoor arms, so a bare enclave only
+  exists if someone strips `additional_services`. Ad-hoc spamoor is still possible then
+  (`docker run ethpandaops/spamoor:v1.2.3 spamoor-daemon --without-batcher --privkey ...
+  --rpchost ...`; the one-shot `spamoor` CLI lacks `--without-batcher`, so use the daemon or keep
+  wallet counts under ~40).
+- Cost of keeping: 180 lines that hardcode Amsterdam gas prices (must track repricings), a
+  dependency on testing/endtoend/components/eth1 internals, and a second traffic tool for
+  ethpandaops to read in the handoff. go.mod is unaffected either way (go-ethereum is used
+  throughout).
+
+Removal: delete `kurtosis/blobsend/` (main.go, BUILD.bazel); drop README.md's "Drive the
+execution layer" section (lines 44-61) in favor of a pointer to the spamoor arms; drop the
+"quick run without spamoor" paragraph in HANDOFF.md (lines 120-125). `eth1.New4844CellTx` stays —
+the e2e tests use it.
