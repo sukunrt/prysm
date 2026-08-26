@@ -103,9 +103,8 @@ run one shakeout first.
 - Do not use `--minimum-peers-per-subnet`. The args files set it to 4 only
   because a 5-node enclave cannot reach the default of 6.
 - The blob schedule is free. The generator builds BLOB_SCHEDULE from the
-  `bpo_*` values. The args files use max 6 / target 3 at epoch 0.
-  To test a larger schedule, also send more load:
-  `blobsend -blobs <n>` sets the blobs per transaction (default 2).
+  `bpo_*` values. The args files use max 21 / target 14 at epoch 0, the
+  current mainnet BPO2 values.
 - The VC runs on gRPC by default. The package defaults a 1:1 Prysm BN/VC
   pair to gRPC. The REST client now supports the fork's duties, available
   attestations included, so both paths work; add
@@ -113,17 +112,17 @@ run one shakeout first.
 
 ## Send transactions
 
-Empty blocks have no data columns. To fill blocks, run:
+The args files run spamoor with three arms: transfers with 16 KiB calldata
+(8 per slot), a public blob arm, and a blob arm pinned to an isolated EL.
+This needs spamoor v1.2.0 or later with `--without-batcher` — see
+`plan-spamoor-kurtosis.md`. Do not remove the eoatx arm's `client_group`.
+
+For a quick run without spamoor, `blobsend` sends one blob transaction and
+one transfer per slot:
 
 ```sh
 go run ./kurtosis/blobsend -rpc http://127.0.0.1:<el-rpc-port> -interval <slot-time>
 ```
-
-This sends one blob transaction and one transfer per slot.
-
-Note: spamoor as an `additional_service` does not work here.
-Its funding transaction is larger than the 9M block gas limit.
-It needs its child wallets in `prefunded_accounts` first.
 
 ## Measure
 

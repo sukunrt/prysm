@@ -89,6 +89,9 @@ network_params:
   num_validator_keys_per_node: 50
   # As the Shadow genesis carries it.
   genesis_gaslimit: 9000000
+  # genesis_gaslimit only seeds block 0; the package's default 200M target
+  # then lets the limit climb 1/1024 per block. This holds it at 9M.
+  gas_limit: 9000000
   # Enough for five nodes' images, keys and genesis before slot 0.
   genesis_delay: 180
 
@@ -107,8 +110,9 @@ network_params:
   # BLOB_SCHEDULE out of the BPO_* vars, so exactly one non-default BPO gives
   # exactly one entry; bpo_2..5 stay at FAR_FUTURE.
   bpo_1_epoch: 0
-  bpo_1_max_blobs: 6
-  bpo_1_target_blobs: 3
+  # Mainnet's current BPO2 values; the Shadow harness runs the same schedule.
+  bpo_1_max_blobs: 21
+  bpo_1_target_blobs: 14
   bpo_2_epoch: 18446744073709551615
 
 ethereum_genesis_generator_params:
@@ -148,23 +152,51 @@ ethereum_genesis_generator_params:
     # package exports SLOT_DURATION_MS only, and the CL template reads
     # SECONDS_PER_SLOT from that variable.
 
-# No traffic arms. The Shadow rung recipe drives eoatx (8 tx/slot, 16 KiB
-# calldata) and blob arms (2 tx x 3 sidecars, one private arm pinned to each
-# isolated EL) through spamoor, and premines spamoor's child wallets into the
-# EL genesis alloc. The premine is not optional here: the package gives
-# spamoor one fixed --privkey (prefunded_addresses[13]) and no seam for the
-# derived child addresses, so spamoor funds its children on chain -- and its
-# funding transaction does not fit a 9.0 M block:
-#
-#   could not send funding txs: ... failed to submit after 3 attempts:
-#   exceeds block gas limit                      (spamoor v1.1.17, stock arm)
-#
-# Every arm then dies the same way, and the wallet with no balance panics
-# spamoor outright (walletpool.go:636, nil big.Int in Cmp). Carrying the arms
-# over needs the premine, i.e. a way to put spamoor's derived children in
-# network_params.prefunded_accounts. Until then: no additional services.
+# The Shadow traffic recipe, via spamoor. Funding works since spamoor v1.2.0:
+# with --without-batcher each child wallet gets its own 204,600-gas funding tx
+# (Amsterdam first-touch price), so nothing approaches the block gas limit.
+# See plan-spamoor-kurtosis.md. eoatx is pinned to a meshed EL: unpinned it
+# round-robins every EL, wedges wallets on the isolated ones, and stalls at
+# max_pending.
+spamoor_params:
+  image: ethpandaops/spamoor:v1.2.3
+  extra_args:
+    - --without-batcher
+  start_chainload: false
+  spammers:
+    - name: eoatx
+      scenario: eoatx
+      config:
+        throughput: 8
+        max_pending: 16
+        max_wallets: 40
+        # 16 KiB calldata costs 21000 + 64*16384 = 1069576 gas; ~3% headroom.
+        gas_limit: 1100000
+        data: random:16384
+        client_group: 1-geth-prysm
+    - name: blobs-public
+      scenario: blobs
+      config:
+        throughput: 2
+        sidecars: 3
+        max_pending: 6
+        max_wallets: 10
+        client_group: 1-geth-prysm
+    - name: blobs-private
+      scenario: blobs
+      config:
+        throughput: 2
+        sidecars: 3
+        max_pending: 6
+        max_wallets: 10
+        client_group: 4-geth-prysm
+
 additional_services:
   - buildoor
+  # buildoor wins every slot from ~30 on, so isolated proposers never build
+  # locally and the private blob arm starves. The private block class only
+  # exists without a builder.
+  - spamoor
 
 # Attached through the instances schema, not mev_type: buildoor, which is
 # deprecated in the pin and drags relay enrichment across every participant.
