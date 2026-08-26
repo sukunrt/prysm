@@ -1,49 +1,19 @@
-# Patched ethpandaops/ethereum-genesis-generator for the decoupled fork.
+# ethereum-genesis-generator for the decoupled fork. The patches live in a
+# real branch now: github.com/sukunrt/ethereum-genesis-generator, branch
+# `decoupled`, forked from upstream v6.2.1 -- one commit per patch, diffable
+# against upstream:
 #
-# Mirrors decoupled-shadow-sim/Dockerfile.genesis-gen, plus the CL genesis
-# state itself (kurtosis has no equivalent of that repo's post-hoc
-# make-heze-genesis.sh, so the swap happens inside the image).
+#  1. config-example/cl/config.yaml: SLOTS_PER_ROUND,
+#     AVAILABLE_ATTESTATION_DUE_BPS_HEZE, TARGET_COMMITTEE_SIZE added;
+#     SUBNETS_PER_NODE / ATTESTATION_SUBNET_COUNT are env vars.
+#  2. apps/el-gen/generate_genesis.sh: Heze is CL-only, no bogota in the EL.
+#  3. defaults/defaults.env: envsubst defaults for the above + BUILDER_*.
+#  4. apps/prysm-genesis-state.sh installed over eth-genesis-state-generator.
 #
-# Everything else the fork needs is already reachable from
-# network_params.yaml: gloas_fork_epoch / heze_fork_epoch = 0, a single-entry
-# BLOB_SCHEDULE from bpo_1_*, and Amsterdam at the EL genesis time as a
-# consequence of gloas_fork_epoch 0.
-#
-# The patches live in patch-generator.sh; read that first.
-
-# 6.2.1: has /apps/validator-mapping (needed by ethereum-package's
-# buildoor-instances schema), an eth2-val-tools that emits 0xb0 builder
-# credentials, and -- the reason for the bump off 6.0.2 -- the EIP-8282
-# builder deposit/exit predeploys in the EL genesis (gated on
-# GLOAS_FORK_EPOCH), which is what lets geth newer than glamsterdam-devnet-8
-# process the builder deposit queue.
-FROM ethpandaops/ethereum-genesis-generator:6.2.1
-
-# envsubst turns an unset variable into the empty string, so every key
-# patch-generator.sh writes as $VAR needs a default here. extra_env wins: the
-# entrypoint sources /defaults/defaults.env before /config/values.env.
-ENV SLOTS_PER_ROUND=8
-ENV AVAILABLE_ATTESTATION_DUE_BPS_HEZE=2500
-ENV TARGET_COMMITTEE_SIZE=3000
-ENV ATTESTATION_SUBNET_COUNT=1
-ENV SUBNETS_PER_NODE=2
-
-# Builder registry seeding, off by default so a baseline genesis is unchanged.
-# BUILDER_EXEC_ADDR must be a real address even at BUILDER_COUNT=0: the
-# entrypoint rewrites WITHDRAWAL_ADDRESS to "null" for 0x00 withdrawals, so
-# there is nothing else to fall back to. This is the package's own default
-# withdrawal address, prefunded in the EL genesis.
-ENV BUILDER_COUNT=0
-ENV BUILDER_KEY_INDEX=""
-ENV BUILDER_DEPOSIT_GWEI=1000000000000
-ENV BUILDER_EXEC_ADDR=0x8943545177806ED17B9F23F0a21ee5948eCaa776
-
-# prysm-genesis-state.sh calls eth2-val-tools-620 for builder deposits, from
-# when the base was 6.0.2 (whose eth2-val-tools emitted 0x03 credentials) and
-# a 6.2.0 binary rode along. The base binary emits 0xb0 itself now.
-RUN ln -s /usr/local/bin/eth2-val-tools /usr/local/bin/eth2-val-tools-620
-
+# build-images.sh builds the branch into decoupled-genesis-gen-base directly
+# from the git URL (docker builds git contexts), pinned to the rev below.
+# Only prysmctl still comes from this tree: it generates the Heze genesis
+# state, so it must match the fork's consensus types exactly.
+FROM decoupled-genesis-gen-base
+LABEL genesis-gen.patch=decoupled@a40dc31d75b9362cfb62b252e346ec7d19ceefab
 COPY prysmctl /usr/local/bin/prysmctl
-COPY prysm-genesis-state.sh /usr/local/bin/prysm-genesis-state.sh
-COPY patch-generator.sh /tmp/patch-generator.sh
-RUN /tmp/patch-generator.sh

@@ -109,7 +109,11 @@ is not in the container.
 
 The generator image parameter is
 `ethereum_genesis_generator_params.image`; `extra_env` under the same key
-reaches `values.env`. The package needed no fork.
+reaches `values.env`. The package needed no fork. The generator did:
+the patches live as commits on
+`github.com/sukunrt/ethereum-genesis-generator`, branch `decoupled`
+(forked from v6.2.1), which `build-images.sh` builds straight from the git
+URL; `Dockerfile.genesis-gen` only adds this tree's `prysmctl` on top.
 
 ### Heze is CL-only
 
@@ -117,13 +121,13 @@ Upstream maps every CL fork to the next EL fork by ordinal, so Heze would
 schedule `bogotaTime`. geth then demands the next engine-API version at that
 timestamp while Prysm keeps calling `forkchoiceUpdatedV4` for its
 Gloas-shaped blocks; every fcu fails with -38005 and the chain stalls. This
-killed `decoupled-shadow-sim` run data12. `Dockerfile.genesis-gen` disables
+killed `decoupled-shadow-sim` run data12. The fork branch disables
 `genesis_add_heze`; if a future Heze design does need an EL fork, teach
 Prysm the engine-API version first.
 
 ### The genesis state
 
-`genesis-gen/prysm-genesis-state.sh` is installed over
+The fork's `apps/prysm-genesis-state.sh` is installed over
 `eth-genesis-state-generator`, so the stock entrypoint is untouched. It
 builds a `deposit_data.json` with `eth2-val-tools` over the same mnemonic
 the keystores use (so the genesis registry holds exactly those pubkeys in

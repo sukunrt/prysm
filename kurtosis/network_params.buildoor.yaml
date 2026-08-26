@@ -116,6 +116,8 @@ ethereum_genesis_generator_params:
   # Patched generator: Heze stripped from the CL->EL fork mapping (Heze is
   # CL-only), the fork's own keys added to the CL config template, and the CL
   # genesis state built by prysmctl instead of eth-genesis-state-generator.
+  # The patches are commits on sukunrt/ethereum-genesis-generator, branch
+  # `decoupled`; this image is that branch plus this tree's prysmctl.
   image: prysm-genesis-gen:buildoor-final
   extra_env:
     # Four rounds to the 32-slot epoch: the attestation-traffic multiplier

@@ -34,8 +34,13 @@ for target in beacon-chain validator prysmctl; do
         -ldflags '-linkmode external -extldflags "-static"' \
         -o "$ctx/$target" "./cmd/$target"
 done
-cp kurtosis/genesis-gen/prysm-genesis-state.sh \
-   kurtosis/genesis-gen/patch-generator.sh "$ctx/"
+# The generator patches live in a fork branch (see Dockerfile.genesis-gen);
+# build it straight from the git URL, pinned. Docker caches the layers, so
+# this is only slow the first time.
+genesis_gen_rev=a40dc31d75b9362cfb62b252e346ec7d19ceefab
+echo "==> docker build decoupled-genesis-gen-base ($genesis_gen_rev)"
+docker build -t decoupled-genesis-gen-base \
+    "https://github.com/sukunrt/ethereum-genesis-generator.git#$genesis_gen_rev"
 
 build() {
     local dockerfile=$1 image=$2 context=${3:-$ctx}
