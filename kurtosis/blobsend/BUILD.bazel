@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("@prysm//tools/go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/OffchainLabs/prysm/v7/kurtosis/blobsend",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//config/fieldparams:go_default_library",
+        "//testing/endtoend/components/eth1:go_default_library",
+        "@com_github_ethereum_go_ethereum//common:go_default_library",
+        "@com_github_ethereum_go_ethereum//core/types:go_default_library",
+        "@com_github_ethereum_go_ethereum//crypto:go_default_library",
+        "@com_github_ethereum_go_ethereum//ethclient:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "blobsend",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
