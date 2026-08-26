@@ -37,8 +37,8 @@ participants:
     vc_extra_params:
       # Cast the FFG attestation at slot start (plus <=200 ms jitter) instead
       # of on block arrival, so publish time does not depend on block
-      # propagation. VC-only flag. Do not set --decoupled-ffg-vote-jitter;
-      # its default is already 200 ms.
+      # propagation. VC-only flag. --decoupled-ffg-vote-jitter adjusts the
+      # jitter; the 200 ms default is recommended.
       - --decoupled-ffg-vote-at-slot-start
     use_separate_vc: true
     # Fulu is at epoch 0, and the package refuses to start a PeerDAS network
@@ -124,9 +124,12 @@ ethereum_genesis_generator_params:
     # How far into the slot an availability attestation is due, in basis
     # points of the slot.
     AVAILABLE_ATTESTATION_DUE_BPS_HEZE: 2500
-    # One committee per slot, holding the whole V/SLOTS_PER_ROUND pool.
+    # ~3000-validator committees at every scale. Small runs like this one
+    # floor to one committee per slot holding the whole per-slot pool.
     TARGET_COMMITTEE_SIZE: 3000
-    # Subnet count == committees per slot, so every node sees every raw vote.
+    # Always committees per slot: validators / SLOTS_PER_ROUND /
+    # TARGET_COMMITTEE_SIZE, min 1. Derived from 250 validators here;
+    # recompute when scaling.
     ATTESTATION_SUBNET_COUNT: 1
     # As the Shadow sims run it. With one subnet both draws land on subnet 0.
     SUBNETS_PER_NODE: 2
