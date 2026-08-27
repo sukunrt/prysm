@@ -150,6 +150,28 @@ Always pin a build, never `:latest`.
 - **Fewer than ~128 validators.** `prysmctl testnet generate-genesis` spins
   forever building the PTC window when there are not enough validators to
   fill it; 4 validators never returns. Keep the total at 128.
+## dora
+
+`network_params.dora.yaml` runs the baseline plus the dora explorer. Stock
+dora corrupts its view on this chain: checkpoints carry rounds, dora reads
+them as epochs, finalizes early and mis-orphans blocks. Two beacon-API
+surfaces therefore translate rounds to epochs (`finality_checkpoints` and the
+`finalized_checkpoint` event; epoch of the round's FFG target slot, boundary
+root always a finalized ancestor) and carry the raw round in additive
+`round`/`round_root` fields. `/prysm/v1/validators/{id}/participation` takes
+`?round=N` and reports per-round voted stake under `previous_round_*` names.
+Everything else still emits rounds in epoch fields; see
+plan-finality-round-detailed.md 5.3.
+
+`prysm-dora` builds `sukunrt/dora` branch `decoupled` (upstream master
+7174f49 plus round display): a Round current/finalized stat, a Recent Rounds
+panel (round | time | finality | voted stake, last 32 rounds kept in its db),
+and a payload-envelope fetch retry (the availability event races the node's
+envelope persistence; without the retry live slots show payload status
+"Data Unavailable" until finalization). Known cosmetic gaps: dora's own
+epoch-scoped vote and PTC-quorum columns aggregate round-valued attestation
+targets it cannot interpret.
+
 ## Validator API transport
 
 The REST client supports the fork's duties, available attestations included,

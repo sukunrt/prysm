@@ -112,6 +112,17 @@ run one shakeout first.
   attestations included, so both paths work; add
   `--enable-beacon-rest-api` to `vc_extra_params` to select REST.
 
+## Watch the chain
+
+`network_params.dora.yaml` adds the dora explorer (image `prysm-dora`, built
+from `sukunrt/dora` branch `decoupled`). The beacon nodes translate
+`finality_checkpoints` and the `finalized_checkpoint` event to real epochs so
+stock explorers survive; the raw round rides in additive `round` fields, and
+the dora fork shows it: a Round current/finalized stat and a Recent Rounds
+panel with per-round FFG voted stake. Do not run stock dora against this
+chain with older beacon images -- it mis-orphans blocks once round-valued
+finality moves.
+
 ## Send transactions
 
 The args files run spamoor with three arms: transfers with 16 KiB calldata
