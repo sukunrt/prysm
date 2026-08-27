@@ -1,13 +1,14 @@
-# network_params.yaml plus dora, on 5 x 64 keys: the dora shakeout. Run-scoped;
-# the baseline file stays untouched.
+# network_params.yaml plus dora, on 5 x 64 keys. Run-scoped; the baseline file
+# stays untouched.
 #
-#   IMAGE_TAG=dora ./kurtosis/build-images.sh
-#   kurtosis run --enclave dora ~/dev/ethereum-package \
+#   IMAGE_TAG=rounds ./kurtosis/build-images.sh
+#   kurtosis run --enclave rounds ~/dev/ethereum-package \
 #       --args-file kurtosis/network_params.dora.yaml
 #
-# dora is an external Go client reading the nodes' REST APIs. This run exists
-# to learn which parts of it survive a Heze chain as-is: REST responses carry
-# Eth-Consensus-Version: heze, and checkpoints carry rounds, not epochs.
+# The beacon nodes translate finality_checkpoints and the finalized_checkpoint
+# event to real epochs (rounds ride along in additive fields), and the dora
+# fork shows rounds: a Round stat and a Recent Rounds panel. See
+# kurtosis/Dockerfile.dora.
 #
 # Only defaults that matter are spelled out; everything else comes from the
 # package's own network_params.yaml.
@@ -21,10 +22,10 @@ participants:
     # harnesses on 2026-08-26 (see network_params.geth-master.yaml).
     el_image: ethpandaops/geth:glamsterdam-devnet-8
     cl_type: prysm
-    # Built by IMAGE_TAG=dora kurtosis/build-images.sh from this tree.
-    cl_image: prysm-beacon-chain:dora
+    # Built by IMAGE_TAG=rounds kurtosis/build-images.sh from this tree.
+    cl_image: prysm-beacon-chain:rounds
     vc_type: prysm
-    vc_image: prysm-validator:dora
+    vc_image: prysm-validator:rounds
     # The package defaults a 1:1 Prysm BN/VC pair to gRPC
     # (--beacon-rpc-provider) since ethereum-package 04988b4. The REST client
     # now supports the fork's duties, available attestations included, so both
@@ -63,9 +64,9 @@ participants:
     el_extra_params:
       - --maxpeers=0
     cl_type: prysm
-    cl_image: prysm-beacon-chain:dora
+    cl_image: prysm-beacon-chain:rounds
     vc_type: prysm
-    vc_image: prysm-validator:dora
+    vc_image: prysm-validator:rounds
     vc_extra_params:
       - --decoupled-ffg-vote-at-slot-start
     use_separate_vc: true
@@ -116,7 +117,7 @@ ethereum_genesis_generator_params:
   # genesis state built by prysmctl instead of eth-genesis-state-generator.
   # The patches are commits on sukunrt/ethereum-genesis-generator, branch
   # `decoupled`; this image is that branch plus this tree's prysmctl.
-  image: prysm-genesis-gen:dora
+  image: prysm-genesis-gen:rounds
   extra_env:
     # Four rounds to the 32-slot epoch: the attestation-traffic multiplier
     # the measurements are about.
@@ -181,9 +182,9 @@ spamoor_params:
         client_group: 4-geth-prysm
 
 dora_params:
-  # Pinned dora master of 2026-08-27; master carries the Gloas/glamsterdam
-  # support. Not :latest, per the same rule as every other image here.
-  image: ethpandaops/dora:master-7174f49
+  # The dora fork: upstream master-7174f49 plus round-aware finality display.
+  # See kurtosis/Dockerfile.dora.
+  image: prysm-dora:rounds
 
 additional_services:
   - dora

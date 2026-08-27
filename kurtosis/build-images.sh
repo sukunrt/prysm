@@ -41,6 +41,12 @@ genesis_gen_rev=a40dc31d75b9362cfb62b252e346ec7d19ceefab
 echo "==> docker build decoupled-genesis-gen-base ($genesis_gen_rev)"
 docker build -t decoupled-genesis-gen-base \
     "https://github.com/sukunrt/ethereum-genesis-generator.git#$genesis_gen_rev"
+# Same pattern for the dora fork (see Dockerfile.dora): its own multi-stage
+# Dockerfile builds the UI and the Go binary.
+dora_rev=502e98540ae00137455e994125f47b15aff546bb
+echo "==> docker build decoupled-dora-base ($dora_rev)"
+docker build -t decoupled-dora-base \
+    "https://github.com/sukunrt/dora.git#$dora_rev"
 
 build() {
     local dockerfile=$1 image=$2 context=${3:-$ctx}
@@ -53,7 +59,9 @@ build Dockerfile.beacon-chain prysm-beacon-chain
 build Dockerfile.validator prysm-validator
 build Dockerfile.genesis-gen prysm-genesis-gen
 # buildoor clones its own source, so it takes an empty context rather than the
-# 300 MB of prysm binaries the other three need.
+# 300 MB of prysm binaries the other three need. dora only adds labels on its
+# git-built base.
 build Dockerfile.buildoor prysm-buildoor "$empty_ctx"
+build Dockerfile.dora prysm-dora "$empty_ctx"
 
 echo "==> done; images tagged :$tag and :$change_id"
