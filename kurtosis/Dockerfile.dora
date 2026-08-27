@@ -1,6 +1,6 @@
 # dora for the decoupled fork. The patches live in the branch:
 # github.com/sukunrt/dora, branch `decoupled`, forked from upstream 7174f49.
-# Two commits:
+# Three commits:
 #
 #  1. consensus: track justified/finalized rounds -- raw finality_checkpoints
 #     fetch picks up the fork's additive round fields; SLOTS_PER_ROUND from the
@@ -8,10 +8,12 @@
 #  2. index: Round stat (current/finalized), Recent Rounds panel
 #     (round | time | finality | voted stake), per-round participation poller
 #     (last 32 rounds in explorer_state). Hidden on chains without rounds.
+#  3. indexer: retry the payload envelope fetch -- the availability event
+#     races the node's envelope persistence.
 #
 # The base is dora's own multi-stage Dockerfile (node builds ui-package, then
 # Go, then slim), built straight from the git URL by build-images.sh.
 
 FROM decoupled-dora-base
 LABEL dora.rev=7174f49
-LABEL dora.patch=decoupled@502e98540ae00137455e994125f47b15aff546bb
+LABEL dora.patch=decoupled@34a97b9005b7a50d093fe5b1124d1218e4f17cf0

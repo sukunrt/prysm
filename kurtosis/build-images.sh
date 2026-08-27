@@ -43,7 +43,7 @@ docker build -t decoupled-genesis-gen-base \
     "https://github.com/sukunrt/ethereum-genesis-generator.git#$genesis_gen_rev"
 # Same pattern for the dora fork (see Dockerfile.dora): its own multi-stage
 # Dockerfile builds the UI and the Go binary.
-dora_rev=502e98540ae00137455e994125f47b15aff546bb
+dora_rev=34a97b9005b7a50d093fe5b1124d1218e4f17cf0
 echo "==> docker build decoupled-dora-base ($dora_rev)"
 docker build -t decoupled-dora-base \
     "https://github.com/sukunrt/dora.git#$dora_rev"
