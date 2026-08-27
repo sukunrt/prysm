@@ -151,8 +151,11 @@ type GetValidatorPerformanceResponse struct {
 }
 
 type GetValidatorParticipationResponse struct {
-	Epoch         string                  `json:"epoch"`
-	Finalized     bool                    `json:"finalized"`
+	Epoch     string `json:"epoch"`
+	Finalized bool   `json:"finalized"`
+	// Round is the round the previous-round numbers describe. Only set when the
+	// request addressed a round.
+	Round         string                  `json:"round,omitempty"`
 	Participation *ValidatorParticipation `json:"participation"`
 }
 
@@ -167,6 +170,13 @@ type ValidatorParticipation struct {
 	PreviousEpochAttestingGwei       string `json:"previous_epoch_attesting_gwei"`
 	PreviousEpochTargetAttestingGwei string `json:"previous_epoch_target_attesting_gwei"`
 	PreviousEpochHeadAttestingGwei   string `json:"previous_epoch_head_attesting_gwei"`
+	// The fork rotates the participation arrays per round, so the attesting
+	// balances above describe a round, not an epoch. These aliases say so
+	// explicitly and are only set when the request addressed a round.
+	PreviousRoundActiveGwei          string `json:"previous_round_active_gwei,omitempty"`
+	PreviousRoundAttestingGwei       string `json:"previous_round_attesting_gwei,omitempty"`
+	PreviousRoundTargetAttestingGwei string `json:"previous_round_target_attesting_gwei,omitempty"`
+	PreviousRoundHeadAttestingGwei   string `json:"previous_round_head_attesting_gwei,omitempty"`
 }
 
 type GetValidatorExecutionPayloadEnvelopeResponse struct {

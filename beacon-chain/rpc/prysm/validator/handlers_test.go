@@ -554,3 +554,119 @@ func pubKey(i uint64) []byte {
 	binary.LittleEndian.PutUint64(pubKey, i)
 	return pubKey
 }
+
+// participationRoundServer builds the same fixture as
+// TestServer_GetValidatorParticipation_CurrentAndPrevEpoch on a config with an
+// 8-slot round, so round addressing has more than one round to choose from.
+func participationRoundServer(t *testing.T) *Server {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+	helpers.ClearCache()
+
+	ctx := t.Context()
+	beaconDB := dbTest.SetupDB(t)
+	validatorCount := uint64(32)
+	validators := make([]*ethpb.Validator, validatorCount)
+	balances := make([]uint64, validatorCount)
+	for i := range validators {
+		validators[i] = &ethpb.Validator{
+			PublicKey:             bytesutil.ToBytes(uint64(i), 48),
+			WithdrawalCredentials: make([]byte, 32),
+			ExitEpoch:             params.BeaconConfig().FarFutureEpoch,
+			EffectiveBalance:      params.BeaconConfig().MaxEffectiveBalance,
+		}
+		balances[i] = params.BeaconConfig().MaxEffectiveBalance
+	}
+	// Committees are sized per ROUND in this fork (beacon_committee.go:56), so the
+	// aggregation bits must be validatorCount/SlotsPerRound, not /SlotsPerEpoch.
+	att := &ethpb.PendingAttestation{
+		Data:            util.HydrateAttestationData(&ethpb.AttestationData{}),
+		InclusionDelay:  1,
+		AggregationBits: bitfield.NewBitlist(validatorCount / uint64(params.BeaconConfig().SlotsPerRound)),
+	}
+	headState, err := util.NewBeaconState()
+	require.NoError(t, err)
+	require.NoError(t, headState.SetSlot(8))
+	require.NoError(t, headState.SetValidators(validators))
+	require.NoError(t, headState.SetBalances(balances))
+	require.NoError(t, headState.AppendCurrentEpochAttestations(att))
+	require.NoError(t, headState.AppendPreviousEpochAttestations(att))
+
+	b := util.NewBeaconBlock()
+	b.Block.Slot = 8
+	util.SaveBlock(t, ctx, beaconDB, b)
+	bRoot, err := b.Block.HashTreeRoot()
+	require.NoError(t, err)
+	require.NoError(t, beaconDB.SaveStateSummary(ctx, &ethpb.StateSummary{Root: bRoot[:]}))
+	require.NoError(t, beaconDB.SaveStateSummary(ctx, &ethpb.StateSummary{Root: params.BeaconConfig().ZeroHash[:]}))
+	require.NoError(t, beaconDB.SaveGenesisBlockRoot(ctx, bRoot))
+	require.NoError(t, beaconDB.SaveState(ctx, headState, bRoot))
+	require.NoError(t, beaconDB.SaveState(ctx, headState, params.BeaconConfig().ZeroHash))
+
+	offset := int64(params.BeaconConfig().SlotsPerEpoch.Mul(params.BeaconConfig().SecondsPerSlot))
+	st, _ := util.DeterministicGenesisState(t, 4)
+	s := &Server{
+		Stater:   &testutil.MockStater{BeaconState: st},
+		BeaconDB: beaconDB,
+		CoreService: &core.Service{
+			HeadFetcher: &mock.ChainService{State: headState},
+			StateGen:    stategen.New(beaconDB, doublylinkedtree.New()),
+			GenesisTimeFetcher: &mock.ChainService{
+				Genesis: prysmTime.Now().Add(time.Duration(-1*offset) * time.Second),
+			},
+			FinalizedFetcher: &mock.ChainService{FinalizedCheckPoint: &ethpb.Checkpoint{Epoch: 100}},
+		},
+		CanonicalFetcher: &mock.ChainService{CanonicalRoots: map[[32]byte]bool{bRoot: true}},
+	}
+	addDefaultReplayerBuilder(s, beaconDB)
+	return s
+}
+
+func participationRequest(t *testing.T, s *Server, query string) *httptest.ResponseRecorder {
+	t.Helper()
+	request := httptest.NewRequest(http.MethodGet, "http://example.com"+query, nil)
+	request.SetPathValue("state_id", "head")
+	writer := httptest.NewRecorder()
+	writer.Body = &bytes.Buffer{}
+	s.GetParticipation(writer, request)
+	return writer
+}
+
+func TestServer_GetValidatorParticipation_Round(t *testing.T) {
+	t.Run("no round param is unchanged", func(t *testing.T) {
+		s := participationRoundServer(t)
+		writer := participationRequest(t, s, "")
+		require.Equal(t, http.StatusOK, writer.Code, writer.Body.String())
+		var vp *structs.GetValidatorParticipationResponse
+		require.NoError(t, json.NewDecoder(writer.Body).Decode(&vp))
+		assert.Equal(t, "", vp.Round)
+		assert.Equal(t, "", vp.Participation.PreviousRoundActiveGwei)
+	})
+	t.Run("round happy path", func(t *testing.T) {
+		s := participationRoundServer(t)
+		writer := participationRequest(t, s, "?round=1")
+		require.Equal(t, http.StatusOK, writer.Code, writer.Body.String())
+		var vp *structs.GetValidatorParticipationResponse
+		require.NoError(t, json.NewDecoder(writer.Body).Decode(&vp))
+		assert.Equal(t, "1", vp.Round)
+		assert.Equal(t, vp.Participation.PreviousEpochActiveGwei, vp.Participation.PreviousRoundActiveGwei)
+		assert.Equal(t, vp.Participation.PreviousEpochTargetAttestingGwei, vp.Participation.PreviousRoundTargetAttestingGwei)
+		assert.Equal(t,
+			fmt.Sprintf("%d", uint64(params.BeaconConfig().MaxEffectiveBalance)*32),
+			vp.Participation.PreviousRoundActiveGwei)
+	})
+	t.Run("future round rejected", func(t *testing.T) {
+		s := participationRoundServer(t)
+		writer := participationRequest(t, s, "?round=9999")
+		require.Equal(t, http.StatusBadRequest, writer.Code)
+		require.StringContains(t, "has not finished", writer.Body.String())
+	})
+	t.Run("unparseable round rejected", func(t *testing.T) {
+		s := participationRoundServer(t)
+		writer := participationRequest(t, s, "?round=abc")
+		require.Equal(t, http.StatusBadRequest, writer.Code)
+		require.StringContains(t, "Invalid round", writer.Body.String())
+	})
+}

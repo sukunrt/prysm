@@ -3,6 +3,7 @@ package validator
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/OffchainLabs/prysm/v7/api/server/structs"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/core"
@@ -10,6 +11,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	"github.com/OffchainLabs/prysm/v7/network/httputil"
+	eth "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
@@ -27,33 +29,55 @@ func (s *Server) GetParticipation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	st, err := s.Stater.State(ctx, []byte(stateId))
-	if err != nil {
-		shared.WriteStateFetchError(w, err)
-		return
+	rawRound := r.URL.Query().Get("round")
+
+	var vp *eth.ValidatorParticipationResponse
+	var rpcError *core.RpcError
+	var round primitives.Round
+	byRound := rawRound != ""
+	if byRound {
+		n, parseErr := strconv.ParseUint(rawRound, 10, 64)
+		if parseErr != nil {
+			httputil.HandleError(w, "Invalid round: "+parseErr.Error(), http.StatusBadRequest)
+			return
+		}
+		vp, round, rpcError = s.CoreService.ValidatorParticipationAtRound(ctx, primitives.Round(n))
+	} else {
+		st, stateErr := s.Stater.State(ctx, []byte(stateId))
+		if stateErr != nil {
+			shared.WriteStateFetchError(w, stateErr)
+			return
+		}
+		vp, rpcError = s.CoreService.ValidatorParticipation(ctx, slots.ToEpoch(st.Slot()))
 	}
-	stEpoch := slots.ToEpoch(st.Slot())
-	vp, rpcError := s.CoreService.ValidatorParticipation(ctx, stEpoch)
 	if rpcError != nil {
 		httputil.HandleError(w, rpcError.Err.Error(), core.ErrorReasonToHTTP(rpcError.Reason))
 		return
 	}
 
+	participation := &structs.ValidatorParticipation{
+		GlobalParticipationRate:          fmt.Sprintf("%f", vp.Participation.GlobalParticipationRate),
+		VotedEther:                       fmt.Sprintf("%d", vp.Participation.VotedEther),
+		EligibleEther:                    fmt.Sprintf("%d", vp.Participation.EligibleEther),
+		CurrentEpochActiveGwei:           fmt.Sprintf("%d", vp.Participation.CurrentEpochActiveGwei),
+		CurrentEpochAttestingGwei:        fmt.Sprintf("%d", vp.Participation.CurrentEpochAttestingGwei),
+		CurrentEpochTargetAttestingGwei:  fmt.Sprintf("%d", vp.Participation.CurrentEpochTargetAttestingGwei),
+		PreviousEpochActiveGwei:          fmt.Sprintf("%d", vp.Participation.PreviousEpochActiveGwei),
+		PreviousEpochAttestingGwei:       fmt.Sprintf("%d", vp.Participation.PreviousEpochAttestingGwei),
+		PreviousEpochTargetAttestingGwei: fmt.Sprintf("%d", vp.Participation.PreviousEpochTargetAttestingGwei),
+		PreviousEpochHeadAttestingGwei:   fmt.Sprintf("%d", vp.Participation.PreviousEpochHeadAttestingGwei),
+	}
 	response := &structs.GetValidatorParticipationResponse{
-		Epoch:     fmt.Sprintf("%d", vp.Epoch),
-		Finalized: vp.Finalized,
-		Participation: &structs.ValidatorParticipation{
-			GlobalParticipationRate:          fmt.Sprintf("%f", vp.Participation.GlobalParticipationRate),
-			VotedEther:                       fmt.Sprintf("%d", vp.Participation.VotedEther),
-			EligibleEther:                    fmt.Sprintf("%d", vp.Participation.EligibleEther),
-			CurrentEpochActiveGwei:           fmt.Sprintf("%d", vp.Participation.CurrentEpochActiveGwei),
-			CurrentEpochAttestingGwei:        fmt.Sprintf("%d", vp.Participation.CurrentEpochAttestingGwei),
-			CurrentEpochTargetAttestingGwei:  fmt.Sprintf("%d", vp.Participation.CurrentEpochTargetAttestingGwei),
-			PreviousEpochActiveGwei:          fmt.Sprintf("%d", vp.Participation.PreviousEpochActiveGwei),
-			PreviousEpochAttestingGwei:       fmt.Sprintf("%d", vp.Participation.PreviousEpochAttestingGwei),
-			PreviousEpochTargetAttestingGwei: fmt.Sprintf("%d", vp.Participation.PreviousEpochTargetAttestingGwei),
-			PreviousEpochHeadAttestingGwei:   fmt.Sprintf("%d", vp.Participation.PreviousEpochHeadAttestingGwei),
-		},
+		Epoch:         fmt.Sprintf("%d", vp.Epoch),
+		Finalized:     vp.Finalized,
+		Participation: participation,
+	}
+	if byRound {
+		response.Round = fmt.Sprintf("%d", round)
+		participation.PreviousRoundActiveGwei = participation.PreviousEpochActiveGwei
+		participation.PreviousRoundAttestingGwei = participation.PreviousEpochAttestingGwei
+		participation.PreviousRoundTargetAttestingGwei = participation.PreviousEpochTargetAttestingGwei
+		participation.PreviousRoundHeadAttestingGwei = participation.PreviousEpochHeadAttestingGwei
 	}
 	httputil.WriteJson(w, response)
 }

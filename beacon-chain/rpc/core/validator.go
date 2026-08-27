@@ -853,7 +853,69 @@ func (s *Service) ValidatorParticipation(
 	if endSlot > currentSlot {
 		endSlot = currentSlot
 	}
+	return s.participationAtSlot(ctx, endSlot, requestedEpoch)
+}
 
+// ValidatorParticipationAtRound retrieves the participation numbers describing a
+// single round.
+//
+// The fork rotates the participation arrays at every round boundary, so a state
+// sampled inside round N+1 carries round N's attestations in its "previous"
+// array. Sampling at the end of round N+1 therefore reads round N complete,
+// including attestations included late. The returned round is the one the
+// previous-round numbers describe.
+func (s *Service) ValidatorParticipationAtRound(
+	ctx context.Context,
+	requestedRound primitives.Round,
+) (
+	*ethpb.ValidatorParticipationResponse,
+	primitives.Round,
+	*RpcError,
+) {
+	currentSlot := s.GenesisTimeFetcher.CurrentSlot()
+	currentRound := slots.RoundAt(currentSlot)
+
+	// Round N is only complete once round N+1 has started, so N must be strictly
+	// behind the current round.
+	if requestedRound >= currentRound {
+		return nil, 0, &RpcError{
+			Err: fmt.Errorf(
+				"cannot retrieve information about a round that has not finished, current round %d, requesting %d",
+				currentRound, requestedRound),
+			Reason: BadRequest,
+		}
+	}
+	endSlot, err := slots.RoundEnd(requestedRound + 1)
+	if err != nil {
+		return nil, 0, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not get slot from requested round")}
+	}
+	if endSlot > currentSlot {
+		endSlot = currentSlot
+	}
+	sampled := slots.RoundAt(endSlot)
+	if sampled == 0 {
+		return nil, 0, &RpcError{
+			Err:    errors.New("no completed round is available yet"),
+			Reason: BadRequest,
+		}
+	}
+	p, rpcErr := s.participationAtSlot(ctx, endSlot, slots.ToEpoch(endSlot))
+	if rpcErr != nil {
+		return nil, 0, rpcErr
+	}
+	return p, sampled - 1, nil
+}
+
+// participationAtSlot replays to endSlot and precomputes the participation
+// balances the state carries there.
+func (s *Service) participationAtSlot(
+	ctx context.Context,
+	endSlot primitives.Slot,
+	requestedEpoch primitives.Epoch,
+) (
+	*ethpb.ValidatorParticipationResponse,
+	*RpcError,
+) {
 	// ReplayerBuilder ensures that a canonical chain is followed to the slot
 	beaconSt, err := s.ReplayerBuilder.ReplayerForSlot(endSlot).ReplayBlocks(ctx)
 	if err != nil {
