@@ -11,14 +11,21 @@ real wall clock, real docker networking, same binaries.
 
 Builds `beacon-chain`, `validator` and `prysmctl` with `go build`
 (statically linked: CGO for blst, `netgo,osusergo` so nothing reaches for
-glibc's NSS at runtime), then four images:
+glibc's NSS at runtime), then five images:
 
 | image | contents |
 | --- | --- |
 | `prysm-beacon-chain:local` | the beacon node at `/beacon-chain` |
 | `prysm-validator:local` | the validator client at `/validator` |
 | `prysm-genesis-gen:local` | the fork generator branch plus this tree's `prysmctl` |
-| `prysm-buildoor:local` | `sukunrt/buildoor` branch `decoupled` |
+| `prysm-buildoor:local` | `sukunrt/buildoor` branch `decoupled`, its own Dockerfile |
+| `prysm-dora:local` | `sukunrt/dora` branch `decoupled`, its own Dockerfile |
+
+buildoor and dora build straight from their branch tips (docker git-URL
+contexts); the fork branches carry complete Dockerfiles. The generator
+branch also builds standalone — it compiles `prysmctl` from the pushed
+prysm branch — but the local build overlays this tree's `prysmctl` so
+genesis-type changes work without a push.
 
 Each is also tagged with the jj change id of the working copy
 (`prysm-beacon-chain:yssuxmntpnsm`, ...), so a run can be traced back to the

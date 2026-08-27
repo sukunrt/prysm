@@ -203,7 +203,7 @@ additional_services:
 buildoor_params:
   # Patched upstream: Heze->Amsterdam engine version, plus the two
   # finalization gates that keep a genesis-seeded builder out of the bid path.
-  # See kurtosis/Dockerfile.buildoor.
+  # See github.com/sukunrt/buildoor branch decoupled.
   image: prysm-buildoor:buildoor-final
   # Route B (the builder API) stays off for parity with run 13; the
   # bid/reveal path under test is the p2p one.

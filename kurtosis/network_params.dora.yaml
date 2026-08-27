@@ -8,7 +8,7 @@
 # The beacon nodes translate finality_checkpoints and the finalized_checkpoint
 # event to real epochs (rounds ride along in additive fields), and the dora
 # fork shows rounds: a Round stat and a Recent Rounds panel. See
-# kurtosis/Dockerfile.dora.
+# github.com/sukunrt/dora branch decoupled.
 #
 # Only defaults that matter are spelled out; everything else comes from the
 # package's own network_params.yaml.
@@ -183,7 +183,7 @@ spamoor_params:
 
 dora_params:
   # The dora fork: upstream master-7174f49 plus round-aware finality display.
-  # See kurtosis/Dockerfile.dora.
+  # See github.com/sukunrt/dora branch decoupled.
   image: prysm-dora:rounds
 
 additional_services:

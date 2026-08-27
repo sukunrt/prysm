@@ -10,10 +10,12 @@
 #  3. defaults/defaults.env: envsubst defaults for the above + BUILDER_*.
 #  4. apps/prysm-genesis-state.sh installed over eth-genesis-state-generator.
 #
-# build-images.sh builds the branch into decoupled-genesis-gen-base directly
-# from the git URL (docker builds git contexts), pinned to the rev below.
-# Only prysmctl still comes from this tree: it generates the Heze genesis
-# state, so it must match the fork's consensus types exactly.
+# build-images.sh builds the branch tip into decoupled-genesis-gen-base
+# directly from the git URL (docker builds git contexts). The branch builds
+# its own prysmctl from the pushed prysm fork; this overlay replaces it with
+# the working copy's build, so local prysm changes to the genesis types take
+# effect without a push. prysmctl generates the Heze genesis state and must
+# match the fork's consensus types exactly.
 FROM decoupled-genesis-gen-base
-LABEL genesis-gen.patch=decoupled@a40dc31d75b9362cfb62b252e346ec7d19ceefab
+LABEL genesis-gen.patch=decoupled
 COPY prysmctl /usr/local/bin/prysmctl
