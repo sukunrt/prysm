@@ -54,6 +54,11 @@ type AttestationData struct {
 type Checkpoint struct {
 	Epoch string `json:"epoch"`
 	Root  string `json:"root"`
+	// Round and RoundRoot are the decoupled fork's raw checkpoint, carried
+	// alongside the epoch-translated pair above. Both are omitempty so every
+	// other Checkpoint serialization stays byte-identical.
+	Round     string `json:"round,omitempty"`
+	RoundRoot string `json:"round_root,omitempty"`
 }
 
 type Committee struct {

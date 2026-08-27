@@ -3665,12 +3665,102 @@ func TestGetFinalityCheckpoints(t *testing.T) {
 		resp := &structs.GetFinalityCheckpointsResponse{}
 		require.NoError(t, json.Unmarshal(writer.Body.Bytes(), resp))
 		require.NotNil(t, resp.Data)
-		assert.Equal(t, strconv.FormatUint(uint64(fakeState.FinalizedCheckpoint().Epoch), 10), resp.Data.Finalized.Epoch)
+		// The checkpoint block is the round's FFG target, one slot before the
+		// round starts, so even at SlotsPerRound == SlotsPerEpoch the advertised
+		// epoch is one behind the round. The state is at slot 0, so the boundary
+		// root lookup falls back to the checkpoint's own root.
+		assert.Equal(t, strconv.FormatUint(uint64(fakeState.FinalizedCheckpoint().Epoch)-1, 10), resp.Data.Finalized.Epoch)
 		assert.DeepEqual(t, hexutil.Encode(fakeState.FinalizedCheckpoint().Root), resp.Data.Finalized.Root)
-		assert.Equal(t, strconv.FormatUint(uint64(fakeState.CurrentJustifiedCheckpoint().Epoch), 10), resp.Data.CurrentJustified.Epoch)
+		assert.Equal(t, strconv.FormatUint(uint64(fakeState.CurrentJustifiedCheckpoint().Epoch)-1, 10), resp.Data.CurrentJustified.Epoch)
 		assert.DeepEqual(t, hexutil.Encode(fakeState.CurrentJustifiedCheckpoint().Root), resp.Data.CurrentJustified.Root)
-		assert.Equal(t, strconv.FormatUint(uint64(fakeState.PreviousJustifiedCheckpoint().Epoch), 10), resp.Data.PreviousJustified.Epoch)
+		assert.Equal(t, strconv.FormatUint(uint64(fakeState.PreviousJustifiedCheckpoint().Epoch)-1, 10), resp.Data.PreviousJustified.Epoch)
 		assert.DeepEqual(t, hexutil.Encode(fakeState.PreviousJustifiedCheckpoint().Root), resp.Data.PreviousJustified.Root)
+	})
+	t.Run("rounds translated to epochs", func(t *testing.T) {
+		params.SetupTestConfigCleanup(t)
+		cfg := params.BeaconConfig().Copy()
+		cfg.SlotsPerRound = 8
+		params.OverrideBeaconConfig(cfg)
+
+		st, err := util.NewBeaconState()
+		require.NoError(t, err)
+		require.NoError(t, st.SetSlot(100))
+		roots := make([][]byte, cfg.SlotsPerHistoricalRoot)
+		for i := range roots {
+			roots[i] = bytesutil.PadTo([]byte(fmt.Sprintf("root-%d", i)), 32)
+		}
+		require.NoError(t, st.SetBlockRoots(roots))
+		require.NoError(t, st.SetPreviousJustifiedCheckpoint(&eth.Checkpoint{
+			Epoch: 9, Root: bytesutil.PadTo([]byte("pj"), 32),
+		}))
+		require.NoError(t, st.SetCurrentJustifiedCheckpoint(&eth.Checkpoint{
+			Epoch: 11, Root: bytesutil.PadTo([]byte("cj"), 32),
+		}))
+		require.NoError(t, st.SetFinalizedCheckpoint(&eth.Checkpoint{
+			Epoch: 8, Root: bytesutil.PadTo([]byte("f"), 32),
+		}))
+
+		roundServer := &Server{
+			Stater:                &testutil.MockStater{BeaconState: st},
+			HeadFetcher:           chainService,
+			OptimisticModeFetcher: chainService,
+			FinalizationFetcher:   chainService,
+		}
+		request := httptest.NewRequest(http.MethodGet, "/eth/v1/beacon/states/{state_id}/finality_checkpoints", nil)
+		request.SetPathValue("state_id", "head")
+		writer := httptest.NewRecorder()
+		writer.Body = &bytes.Buffer{}
+
+		roundServer.GetFinalityCheckpoints(writer, request)
+		require.Equal(t, http.StatusOK, writer.Code)
+		resp := &structs.GetFinalityCheckpointsResponse{}
+		require.NoError(t, json.Unmarshal(writer.Body.Bytes(), resp))
+
+		// Round 8's checkpoint block is its FFG target, slot 63 (round start 64
+		// minus the offset). Slot 63 is in epoch 1, whose boundary is slot 32.
+		// The naive rule (epoch of the round start) would claim epoch 2 with the
+		// slot-64 block -- the checkpoint block's child, not yet final.
+		assert.Equal(t, "1", resp.Data.Finalized.Epoch)
+		assert.Equal(t, hexutil.Encode(roots[32]), resp.Data.Finalized.Root)
+		assert.Equal(t, "8", resp.Data.Finalized.Round)
+		assert.Equal(t, hexutil.Encode(bytesutil.PadTo([]byte("f"), 32)), resp.Data.Finalized.RoundRoot)
+		// Round 11 targets slot 87, inside epoch 2; boundary is slot 64.
+		assert.Equal(t, "2", resp.Data.CurrentJustified.Epoch)
+		assert.Equal(t, hexutil.Encode(roots[64]), resp.Data.CurrentJustified.Root)
+		assert.Equal(t, "11", resp.Data.CurrentJustified.Round)
+		// Round 9 targets slot 71, inside epoch 2.
+		assert.Equal(t, "2", resp.Data.PreviousJustified.Epoch)
+		assert.Equal(t, "9", resp.Data.PreviousJustified.Round)
+	})
+	t.Run("round 0 passes through", func(t *testing.T) {
+		params.SetupTestConfigCleanup(t)
+		cfg := params.BeaconConfig().Copy()
+		cfg.SlotsPerRound = 8
+		params.OverrideBeaconConfig(cfg)
+
+		st, err := util.NewBeaconState()
+		require.NoError(t, err)
+		require.NoError(t, st.SetSlot(100))
+		require.NoError(t, st.SetFinalizedCheckpoint(&eth.Checkpoint{Epoch: 0, Root: make([]byte, 32)}))
+
+		roundServer := &Server{
+			Stater:                &testutil.MockStater{BeaconState: st},
+			HeadFetcher:           chainService,
+			OptimisticModeFetcher: chainService,
+			FinalizationFetcher:   chainService,
+		}
+		request := httptest.NewRequest(http.MethodGet, "/eth/v1/beacon/states/{state_id}/finality_checkpoints", nil)
+		request.SetPathValue("state_id", "head")
+		writer := httptest.NewRecorder()
+		writer.Body = &bytes.Buffer{}
+
+		roundServer.GetFinalityCheckpoints(writer, request)
+		require.Equal(t, http.StatusOK, writer.Code)
+		resp := &structs.GetFinalityCheckpointsResponse{}
+		require.NoError(t, json.Unmarshal(writer.Body.Bytes(), resp))
+		assert.Equal(t, "0", resp.Data.Finalized.Epoch)
+		assert.Equal(t, hexutil.Encode(make([]byte, 32)), resp.Data.Finalized.Root)
+		assert.Equal(t, "0", resp.Data.Finalized.Round)
 	})
 	t.Run("no state_id", func(t *testing.T) {
 		request := httptest.NewRequest(http.MethodGet, "/eth/v1/beacon/states/{state_id}/finality_checkpoints", nil)

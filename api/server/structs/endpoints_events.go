@@ -60,9 +60,13 @@ type UnaggregatedAttEventSource struct {
 }
 
 type FinalizedCheckpointEvent struct {
-	Block               string `json:"block"`
-	State               string `json:"state"`
-	Epoch               string `json:"epoch"`
+	Block string `json:"block"`
+	State string `json:"state"`
+	Epoch string `json:"epoch"`
+	// Round and RoundRoot are the decoupled fork's raw finalized checkpoint,
+	// omitempty so stock consumers see a byte-identical event.
+	Round               string `json:"round,omitempty"`
+	RoundRoot           string `json:"round_root,omitempty"`
 	ExecutionOptimistic bool   `json:"execution_optimistic"`
 }
 

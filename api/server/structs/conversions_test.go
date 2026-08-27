@@ -647,3 +647,22 @@ func TestBeaconStateGloasFromConsensus(t *testing.T) {
 	require.Equal(t, hexutil.Encode(bytes.Repeat([]byte{0x26}, 20)), got.PayloadExpectedWithdrawals[0].ExecutionAddress)
 	require.Equal(t, "10", got.PayloadExpectedWithdrawals[0].Amount)
 }
+
+func TestFinalizedCheckpointEventFromData(t *testing.T) {
+	data := &statefeed.FinalizedCheckpointData{
+		Block:               [32]byte{0x11},
+		State:               [32]byte{0x22},
+		Epoch:               2,
+		Round:               8,
+		RoundRoot:           [32]byte{0x33},
+		ExecutionOptimistic: true,
+	}
+	b, err := json.Marshal(FinalizedCheckpointEventFromData(data))
+	require.NoError(t, err)
+	want := `{"block":"0x1100000000000000000000000000000000000000000000000000000000000000",` +
+		`"state":"0x2200000000000000000000000000000000000000000000000000000000000000",` +
+		`"epoch":"2","round":"8",` +
+		`"round_root":"0x3300000000000000000000000000000000000000000000000000000000000000",` +
+		`"execution_optimistic":true}`
+	assert.Equal(t, want, string(b))
+}

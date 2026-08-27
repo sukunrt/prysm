@@ -927,6 +927,14 @@ moves.
       responses now carry rounds in `*Epoch` fields. No proto change
       (mock rule); one comment at the ChainHead construction site names
       the unit.
+      **Amended 2026-08-27:** two surfaces now translate to real epochs so
+      stock consumers (dora) survive: `finality_checkpoints` and the
+      `finalized_checkpoint` event speak epochs via `helpers.EpochCheckpoint`
+      (epoch of the round's FFG target slot, boundary root always a finalized
+      ancestor) and carry the raw round in additive `round`/`round_root`
+      fields. `/prysm/v1/validators/{id}/participation` gained `?round=N` and
+      `previous_round_*` aliases. Everything else here stays round-valued as
+      written. Do not revert the translation to raw rounds.
 - [ ] **Verifying that justification/finalization is PROGRESSING is a
       stated requirement (user, 2026-08-21), not a nice-to-have.** It is
       asserted at every ladder tier:

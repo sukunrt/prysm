@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"bytes"
 	"context"
 	"math"
 
@@ -118,4 +119,51 @@ func CheckpointEpoch(round primitives.Round) (primitives.Epoch, error) {
 		return 0, err
 	}
 	return slots.ToEpoch(s), nil
+}
+
+// EpochCheckpoint translates a round-valued checkpoint into the epoch-valued
+// checkpoint standard beacon-API consumers expect.
+//
+// The epoch is taken from the checkpoint block's own slot (the round's FFG
+// target, one slot before the round starts), not from the round's first slot:
+// when a round boundary coincides with an epoch boundary the block at the
+// epoch's first slot is the checkpoint block's child and can still reorg, so
+// deriving from the target slot keeps the boundary root an ancestor-or-self of
+// the checkpoint block at every FFG_TARGET_OFFSET_SLOTS. The cost is that on
+// those rounds the advertised epoch lags by one until the next round.
+//
+// The pair is what a stock consumer reads as "everything before epoch*32 is
+// justified/finalized". The raw round and round root stay available alongside
+// it in the API responses that call this.
+//
+// Round 0 and the zero checkpoint pass through unchanged: at genesis there is
+// no earlier boundary to name, and on configs where SlotsPerRound equals
+// SlotsPerEpoch the translation is near-identity anyway.
+func EpochCheckpoint(
+	st state.ReadOnlyBeaconState,
+	round primitives.Round,
+	root []byte,
+) (primitives.Epoch, []byte, error) {
+	target, err := slots.FFGTargetSlot(round)
+	if err != nil {
+		return 0, nil, err
+	}
+	epoch := slots.ToEpoch(target)
+	if epoch == 0 {
+		return 0, root, nil
+	}
+	boundary, err := slots.EpochStart(epoch)
+	if err != nil {
+		return 0, nil, err
+	}
+	// BlockRootAtSlot's window is [st.Slot()-SlotsPerHistoricalRoot, st.Slot()),
+	// strict on the upper end. When the boundary is not inside it, or the state
+	// carries no root there, the checkpoint's own root is the newest root known
+	// justified/finalized; it is a descendant of the boundary block, so naming it
+	// never over-claims.
+	boundaryRoot, err := BlockRootAtSlot(st, boundary)
+	if err != nil || bytes.Equal(boundaryRoot, params.BeaconConfig().ZeroHash[:]) {
+		return epoch, root, nil
+	}
+	return epoch, boundaryRoot, nil
 }

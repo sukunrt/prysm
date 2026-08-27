@@ -1672,6 +1672,8 @@ func FinalizedCheckpointEventFromData(data *statefeed.FinalizedCheckpointData) *
 		Block:               hexutil.Encode(data.Block[:]),
 		State:               hexutil.Encode(data.State[:]),
 		Epoch:               fmt.Sprintf("%d", data.Epoch),
+		Round:               fmt.Sprintf("%d", data.Round),
+		RoundRoot:           hexutil.Encode(data.RoundRoot[:]),
 		ExecutionOptimistic: data.ExecutionOptimistic,
 	}
 }

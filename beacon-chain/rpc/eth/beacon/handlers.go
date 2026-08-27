@@ -1443,28 +1443,47 @@ func (s *Server) GetFinalityCheckpoints(w http.ResponseWriter, r *http.Request) 
 	}
 	isFinalized := s.FinalizationFetcher.IsFinalized(ctx, blockRoot)
 
-	pj := st.PreviousJustifiedCheckpoint()
-	cj := st.CurrentJustifiedCheckpoint()
-	f := st.FinalizedCheckpoint()
+	pj, err := epochCheckpoint(st, st.PreviousJustifiedCheckpoint())
+	if err != nil {
+		httputil.HandleError(w, "Could not translate previous justified checkpoint: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	cj, err := epochCheckpoint(st, st.CurrentJustifiedCheckpoint())
+	if err != nil {
+		httputil.HandleError(w, "Could not translate current justified checkpoint: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	f, err := epochCheckpoint(st, st.FinalizedCheckpoint())
+	if err != nil {
+		httputil.HandleError(w, "Could not translate finalized checkpoint: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 	resp := &structs.GetFinalityCheckpointsResponse{
 		Data: &structs.FinalityCheckpoints{
-			PreviousJustified: &structs.Checkpoint{
-				Epoch: strconv.FormatUint(uint64(pj.Epoch), 10),
-				Root:  hexutil.Encode(pj.Root),
-			},
-			CurrentJustified: &structs.Checkpoint{
-				Epoch: strconv.FormatUint(uint64(cj.Epoch), 10),
-				Root:  hexutil.Encode(cj.Root),
-			},
-			Finalized: &structs.Checkpoint{
-				Epoch: strconv.FormatUint(uint64(f.Epoch), 10),
-				Root:  hexutil.Encode(f.Root),
-			},
+			PreviousJustified: pj,
+			CurrentJustified:  cj,
+			Finalized:         f,
 		},
 		ExecutionOptimistic: isOptimistic,
 		Finalized:           isFinalized,
 	}
 	httputil.WriteJson(w, resp)
+}
+
+// epochCheckpoint renders a round-valued consensus checkpoint as the
+// epoch-valued checkpoint the beacon API is specified to return, keeping the
+// raw round and round root in the additive round fields.
+func epochCheckpoint(st state.BeaconState, cp *eth.Checkpoint) (*structs.Checkpoint, error) {
+	epoch, root, err := corehelpers.EpochCheckpoint(st, cp.Epoch, cp.Root)
+	if err != nil {
+		return nil, err
+	}
+	return &structs.Checkpoint{
+		Epoch:     strconv.FormatUint(uint64(epoch), 10),
+		Root:      hexutil.Encode(root),
+		Round:     strconv.FormatUint(uint64(cp.Epoch), 10),
+		RoundRoot: hexutil.Encode(cp.Root),
+	}, nil
 }
 
 // GetGenesis retrieves details of the chain's genesis which can be used to identify chain.

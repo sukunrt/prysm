@@ -113,11 +113,17 @@ type HeadData struct {
 }
 
 // FinalizedCheckpointData is the data sent with FinalizedCheckpoint events.
+//
+// Epoch/Block/State are the epoch-translated checkpoint a stock beacon-API
+// consumer expects: the epoch containing the finalized round's first slot, the
+// canonical block root at that epoch's first slot, and that block's state root.
+// Round/RoundRoot carry the fork's raw finalized checkpoint unchanged.
 type FinalizedCheckpointData struct {
-	Block [32]byte
-	State [32]byte
-	// Epoch keeps its name to match the event's wire field; its value is a ROUND.
-	Epoch               primitives.Round
+	Block               [32]byte
+	State               [32]byte
+	Epoch               primitives.Epoch
+	Round               primitives.Round
+	RoundRoot           [32]byte
 	ExecutionOptimistic bool
 }
 

@@ -635,7 +635,16 @@ func (s *Service) sendNewFinalizedEvent(ctx context.Context, postState state.Bea
 	}
 	s.headLock.RUnlock()
 
-	blk, err := s.cfg.BeaconDB.Block(ctx, bytesutil.ToBytes32(postState.FinalizedCheckpoint().Root))
+	cp := postState.FinalizedCheckpoint()
+	// The fork's checkpoints are round-valued. The event's epoch/block/state
+	// fields are specified as epoch-valued, so translate them here, at the only
+	// producer of this feed type, and carry the raw round alongside.
+	epoch, root, err := helpers.EpochCheckpoint(postState, cp.Epoch, cp.Root)
+	if err != nil {
+		log.WithError(err).Error("Could not translate finalized round to an epoch. Finalized event will not be emitted")
+		return
+	}
+	blk, err := s.cfg.BeaconDB.Block(ctx, bytesutil.ToBytes32(root))
 	if err != nil {
 		log.WithError(err).Error("Could not retrieve block for finalized checkpoint root. Finalized event will not be emitted")
 		return
@@ -649,9 +658,11 @@ func (s *Service) sendNewFinalizedEvent(ctx context.Context, postState state.Bea
 	s.cfg.StateNotifier.StateFeed().Send(&feed.Event{
 		Type: statefeed.FinalizedCheckpoint,
 		Data: &statefeed.FinalizedCheckpointData{
-			Epoch:               postState.FinalizedCheckpoint().Epoch,
-			Block:               bytesutil.ToBytes32(postState.FinalizedCheckpoint().Root),
+			Epoch:               epoch,
+			Block:               bytesutil.ToBytes32(root),
 			State:               stateRoot,
+			Round:               cp.Epoch,
+			RoundRoot:           bytesutil.ToBytes32(cp.Root),
 			ExecutionOptimistic: isValidPayload,
 		},
 	})

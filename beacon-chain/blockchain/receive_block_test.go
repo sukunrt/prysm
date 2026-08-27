@@ -451,10 +451,65 @@ func Test_sendNewFinalizedEvent(t *testing.T) {
 	assert.Equal(t, statefeed.FinalizedCheckpoint, int(e.Type))
 	fc, ok := e.Data.(*statefeed.FinalizedCheckpointData)
 	require.Equal(t, true, ok, "event has wrong data type")
-	assert.Equal(t, primitives.Round(123), fc.Epoch)
+	// The checkpoint block is the round's FFG target, one slot before the round
+	// starts, so even with SlotsPerRound == SlotsPerEpoch the advertised epoch is
+	// one behind the round. The raw round is carried alongside it.
+	assert.Equal(t, primitives.Epoch(122), fc.Epoch)
+	assert.Equal(t, primitives.Round(123), fc.Round)
 	assert.DeepEqual(t, sbbRoot, fc.Block)
+	assert.DeepEqual(t, sbbRoot, fc.RoundRoot)
 	assert.DeepEqual(t, finalizedStRoot, fc.State)
 	assert.Equal(t, false, fc.ExecutionOptimistic)
+}
+
+func Test_sendNewFinalizedEvent_translatesRound(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerRound = 8
+	params.OverrideBeaconConfig(cfg)
+
+	s, _ := minimalTestService(t)
+	notifier := &blockchainTesting.MockStateNotifier{RecordEvents: true}
+	s.cfg.StateNotifier = notifier
+
+	// Round 8's checkpoint targets slot 63, inside epoch 1: the block at the
+	// epoch-1 boundary (slot 32), and the state it produced.
+	boundarySt, err := util.NewBeaconState()
+	require.NoError(t, err)
+	boundaryStRoot, err := boundarySt.HashTreeRoot(s.ctx)
+	require.NoError(t, err)
+	b := util.NewBeaconBlock()
+	b.Block.Slot = 32
+	b.Block.StateRoot = boundaryStRoot[:]
+	sbb, err := blocks.NewSignedBeaconBlock(b)
+	require.NoError(t, err)
+	boundaryRoot, err := sbb.Block().HashTreeRoot()
+	require.NoError(t, err)
+	require.NoError(t, s.cfg.BeaconDB.SaveBlock(s.ctx, sbb))
+
+	st, err := util.NewBeaconState()
+	require.NoError(t, err)
+	require.NoError(t, st.SetSlot(100))
+	roots := make([][]byte, cfg.SlotsPerHistoricalRoot)
+	for i := range roots {
+		roots[i] = bytesutil.PadTo([]byte{byte(i)}, 32)
+	}
+	roots[32] = boundaryRoot[:]
+	require.NoError(t, st.SetBlockRoots(roots))
+	roundRoot := bytesutil.ToBytes32(bytesutil.PadTo([]byte("round-8"), 32))
+	require.NoError(t, st.SetFinalizedCheckpoint(&ethpb.Checkpoint{Epoch: 8, Root: roundRoot[:]}))
+
+	s.sendNewFinalizedEvent(s.ctx, st)
+
+	require.Equal(t, 1, len(notifier.ReceivedEvents()))
+	fc, ok := notifier.ReceivedEvents()[0].Data.(*statefeed.FinalizedCheckpointData)
+	require.Equal(t, true, ok, "event has wrong data type")
+	// Round 8's checkpoint block sits at slot 63, in epoch 1; boundary slot 32.
+	assert.Equal(t, primitives.Epoch(1), fc.Epoch)
+	assert.DeepEqual(t, boundaryRoot, fc.Block)
+	assert.DeepEqual(t, boundaryStRoot, fc.State)
+	assert.Equal(t, primitives.Round(8), fc.Round)
+	assert.DeepEqual(t, roundRoot, fc.RoundRoot)
 }
 
 func Test_executePostFinalizationTasks(t *testing.T) {
@@ -518,7 +573,8 @@ func Test_executePostFinalizationTasks(t *testing.T) {
 		assert.Equal(t, statefeed.FinalizedCheckpoint, int(e.Type))
 		fc, ok := e.Data.(*statefeed.FinalizedCheckpointData)
 		require.Equal(t, true, ok, "event has wrong data type")
-		assert.Equal(t, primitives.Round(123), fc.Epoch)
+		assert.Equal(t, primitives.Epoch(122), fc.Epoch)
+		assert.Equal(t, primitives.Round(123), fc.Round)
 		assert.DeepEqual(t, headRoot, fc.Block)
 		assert.DeepEqual(t, finalizedStRoot, fc.State)
 		assert.Equal(t, false, fc.ExecutionOptimistic)
@@ -559,7 +615,8 @@ func Test_executePostFinalizationTasks(t *testing.T) {
 		assert.Equal(t, statefeed.FinalizedCheckpoint, int(e.Type))
 		fc, ok := e.Data.(*statefeed.FinalizedCheckpointData)
 		require.Equal(t, true, ok, "event has wrong data type")
-		assert.Equal(t, primitives.Round(123), fc.Epoch)
+		assert.Equal(t, primitives.Epoch(122), fc.Epoch)
+		assert.Equal(t, primitives.Round(123), fc.Round)
 		assert.DeepEqual(t, headRoot, fc.Block)
 		assert.DeepEqual(t, finalizedStRoot, fc.State)
 		assert.Equal(t, false, fc.ExecutionOptimistic)
