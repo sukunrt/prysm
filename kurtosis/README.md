@@ -52,9 +52,10 @@ transfers, public and private blob arms) as the standard traffic; see the
 ## Measure
 
 ```sh
-kurtosis/scrape.sh <enclave> <outdir> 6      # one metrics sample per slot
-kurtosis/summarize.py <outdir> --slot-seconds 6 --skip-slots 32
+kurtosis/scrape.sh <enclave> <outdir> 12     # one metrics sample per slot
+kurtosis/summarize.py <outdir> --slot-seconds 12 --skip-slots 32
 kurtosis/vclogs.py <outdir>                  # needs docker logs vc-* > vc-*.log
+kurtosis/votetally.py <outdir> --validators 250   # needs docker logs cl-* > cl-*.log
 kurtosis/elscan.py <el-rpc-url>              # blob gas per execution block
 ```
 
@@ -65,18 +66,15 @@ and prints the same per-slot-per-node tables the ethshadow baseline
 metrics, the slots at which `goldfish_gate_retreat` and `beacon_reorgs_total`
 moved, and the supernode's column-subnet state. `vclogs.py` reads the
 validator clients' logs for attesters per slot, per-round-offset flatness and
-the late-published slots; `elscan.py` walks the execution chain and reports
-the blob gas in every block, which is how a run proves its payloads were not
-empty.
+the late-published slots; `votetally.py` reconciles every scheduled head-vote
+seat against the `--goldfish-vote-ledger` lines in the beacon nodes' logs;
+`elscan.py` walks the execution chain and reports the blob gas in every block,
+which is how a run proves its payloads were not empty.
 
 Prysm exports no received-bytes counter (`p2p_pubsub_rpc_recv_pub_bytes_total`
 is declared but never incremented), so received bytes are derived from the
 message count and the family's mean sent size — the same derivation the
 baseline used.
-
-`runs/` holds one directory per measurement run: the `network_params.yaml` it
-ran and a `summary.md` with its numbers. The bulky raw scrapes and node logs
-live outside the repo, in `~/dev/prysm2-run-logs/<run>/`.
 
 ## What had to be injected, and where
 

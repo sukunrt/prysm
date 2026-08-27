@@ -59,6 +59,8 @@ There are two args files:
 - `network_params.buildoor.yaml` — baseline plus one ePBS builder.
   The builder is in the genesis registry. It bids on the p2p path.
   Build the images with `IMAGE_TAG=<tag>` and use that tag in this file.
+  Check buildoor's "Builder found in beacon state" log line: only
+  `state=registered` means the bid loop will run.
 
 ## Values that must not change
 
@@ -123,6 +125,7 @@ This needs spamoor v1.2.0 or later with `--without-batcher` — see
 kurtosis/scrape.sh <enclave> <outdir> <slot-seconds>   # metrics, one sample per slot
 kurtosis/summarize.py <outdir> --slot-seconds 12 --skip-slots 32
 kurtosis/vclogs.py <outdir>        # attesters per slot; needs vc-*.log dumps
+kurtosis/votetally.py <outdir> --validators 250   # head-vote seats; needs cl-*.log dumps
 kurtosis/elscan.py <el-rpc-url>    # blob gas per block
 ```
 
