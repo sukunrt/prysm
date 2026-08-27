@@ -62,7 +62,7 @@ kurtosis/elscan.py <el-rpc-url>              # blob gas per execution block
 `scrape.sh` polls every beacon node's `/metrics` and keeps only the families
 the measurements use; `summarize.py` differences the counters over the window
 and prints the same per-slot-per-node tables the ethshadow baseline
-(`decoupled-shadow-sim/data19/baseline.md`) reports, plus the Goldfish
+reports, plus the Goldfish
 metrics, the slots at which `goldfish_gate_retreat` and `beacon_reorgs_total`
 moved, and the supernode's column-subnet state. `vclogs.py` reads the
 validator clients' logs for attesters per slot, per-round-offset flatness and
@@ -107,8 +107,8 @@ URL; `Dockerfile.genesis-gen` only adds this tree's `prysmctl` on top.
 Upstream maps every CL fork to the next EL fork by ordinal, so Heze would
 schedule `bogotaTime`. geth then demands the next engine-API version at that
 timestamp while Prysm keeps calling `forkchoiceUpdatedV4` for its
-Gloas-shaped blocks; every fcu fails with -38005 and the chain stalls. This
-killed `decoupled-shadow-sim` run data12. The fork branch disables
+Gloas-shaped blocks; every fcu fails with -38005 and the chain stalls (it
+killed an early ethshadow run). The fork branch disables
 `genesis_add_heze`; if a future Heze design does need an EL fork, teach
 Prysm the engine-API version first.
 
