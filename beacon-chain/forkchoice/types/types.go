@@ -12,7 +12,7 @@ import (
 // in other packages.
 //
 // Epoch keeps its name to match the proto field it mirrors; its value is a
-// Simplex ROUND (see plan-finality-round.md).
+// Simplex ROUND (see plan/plan-finality-round.md).
 type Checkpoint struct {
 	Epoch primitives.Round
 	Root  [fieldparams.RootLength]byte

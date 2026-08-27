@@ -47,7 +47,7 @@ A run on empty payloads has no data columns to carry, so the nodes have
 nothing to custody or serve. The args files run three spamoor arms (eoatx
 transfers, public and private blob arms) as the standard traffic; see the
 `spamoor_params` block in `network_params.yaml` and
-`plan-spamoor-kurtosis.md` for why v1.2.0+ with `--without-batcher`.
+`plan/plan-spamoor-kurtosis.md` for why v1.2.0+ with `--without-batcher`.
 
 ## Measure
 
@@ -161,7 +161,7 @@ root always a finalized ancestor) and carry the raw round in additive
 `round`/`round_root` fields. `/prysm/v1/validators/{id}/participation` takes
 `?round=N` and reports per-round voted stake under `previous_round_*` names.
 Everything else still emits rounds in epoch fields; see
-plan-finality-round-detailed.md 5.3.
+plan/plan-finality-round-detailed.md 5.3.
 
 `prysm-dora` builds `sukunrt/dora` branch `decoupled` (upstream master
 7174f49 plus round display): a Round current/finalized stat, a Recent Rounds

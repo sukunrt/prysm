@@ -128,7 +128,7 @@ finality moves.
 The args files run spamoor with three arms: transfers with 16 KiB calldata
 (8 per slot), a public blob arm, and a blob arm pinned to an isolated EL.
 This needs spamoor v1.2.0 or later with `--without-batcher` — see
-`plan-spamoor-kurtosis.md`. Do not remove the eoatx arm's `client_group`.
+`plan/plan-spamoor-kurtosis.md`. Do not remove the eoatx arm's `client_group`.
 
 ## Measure
 

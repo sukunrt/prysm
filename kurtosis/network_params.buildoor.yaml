@@ -155,7 +155,7 @@ ethereum_genesis_generator_params:
 # The Shadow traffic recipe, via spamoor. Funding works since spamoor v1.2.0:
 # with --without-batcher each child wallet gets its own 204,600-gas funding tx
 # (Amsterdam first-touch price), so nothing approaches the block gas limit.
-# See plan-spamoor-kurtosis.md. eoatx is pinned to a meshed EL: unpinned it
+# See plan/plan-spamoor-kurtosis.md. eoatx is pinned to a meshed EL: unpinned it
 # round-robins every EL, wedges wallets on the isolated ones, and stalls at
 # max_pending.
 spamoor_params:
