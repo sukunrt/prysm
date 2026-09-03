@@ -2,7 +2,9 @@
 package bytesutil
 
 import (
+	"encoding/binary"
 	"fmt"
+	"math/rand/v2"
 	"unsafe"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -152,4 +154,21 @@ func ReverseByteOrder(input []byte) []byte {
 // to ensure that the byte slice will not modified after the string is created.
 func UnsafeCastToString(byteSlice []byte) string {
 	return *(*string)(unsafe.Pointer(&byteSlice)) // #nosec G103
+}
+
+// RandomBytes returns n bytes of randomness, or nil when n is not positive.
+//
+// The bytes are scratch space for a stress test, so the only requirement is
+// high entropy: snappy must not compress them away. A CSPRNG is not needed.
+func RandomBytes(n int) []byte {
+	if n <= 0 {
+		return nil
+	}
+	b := make([]byte, n)
+	var word [8]byte
+	for i := 0; i < n; i += 8 {
+		binary.LittleEndian.PutUint64(word[:], rand.Uint64())
+		copy(b[i:], word[:])
+	}
+	return b
 }

@@ -131,6 +131,7 @@ func TestProposeAvailableAttestation(t *testing.T) {
 		config.ElectraForkEpoch = 0
 		config.GloasForkEpoch = 0
 		config.HezeForkEpoch = 0
+		config.GoldfishScratchSpace = 123
 		params.OverrideBeaconConfig(config)
 
 		attSlot := params.BeaconConfig().SlotsPerEpoch + 1
@@ -160,12 +161,16 @@ func TestProposeAvailableAttestation(t *testing.T) {
 				BeaconBlockRoot: root[:],
 				PayloadPresent:  false,
 			},
+			ScratchSpace: []byte{9},
 		}
 		_, err = server.proposeAvailableAtt(t.Context(), req)
 		assert.NoError(t, err)
 		assert.Equal(t, true, broadcaster.BroadcastCalled.Load())
 		require.Equal(t, 1, len(broadcaster.BroadcastMessages))
 		assert.Equal(t, true, proto.Equal(req, broadcaster.BroadcastMessages[0]))
+		sent, ok := broadcaster.BroadcastMessages[0].(*ethpb.AvailableAttestation)
+		require.Equal(t, true, ok)
+		require.Equal(t, 123, len(sent.ScratchSpace))
 		require.Equal(t, 1, len(cs.AvailableAttestations))
 		assert.Equal(t, true, proto.Equal(req, cs.AvailableAttestations[0]))
 	})

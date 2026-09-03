@@ -332,3 +332,44 @@ func TestExtractDataTypeFromTypeMapInvalid(t *testing.T) {
 	_, err = extractDataTypeFromTypeMap(types.AttestationMap, []byte{0x00, 0x01}, chain)
 	require.ErrorIs(t, err, errInvalidDigest)
 }
+
+// TestService_decodePubsubMessage_ScratchPaddedBlock runs the real gossip seam:
+// EncodeGossip prefixes a Gloas block with scratch bytes and
+// decodePubsubMessage must strip them again.
+func TestService_decodePubsubMessage_ScratchPaddedBlock(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	params.BeaconConfig().FuluForkEpoch = params.BeaconConfig().ElectraForkEpoch + 4096*2
+	params.BeaconConfig().GloasForkEpoch = params.BeaconConfig().FuluForkEpoch + 4096*2
+	params.BeaconConfig().ConsensusBlockScratchSpace = 1000
+	params.BeaconConfig().InitializeForkSchedule()
+	types.InitializeDataMaps()
+
+	blk := util.NewBeaconBlockGloas()
+	want, err := blk.MarshalSSZ()
+	require.NoError(t, err)
+
+	p2pt := p2ptesting.NewTestP2P(t)
+	buf := new(bytes.Buffer)
+	_, err = p2pt.Encoding().EncodeGossip(buf, blk)
+	require.NoError(t, err)
+	require.Equal(t, true, buf.Len() > len(want))
+
+	digest := params.ForkDigest(params.BeaconConfig().GloasForkEpoch)
+	topic := fmt.Sprintf(p2p.GossipTypeMapping[reflect.TypeFor[*ethpb.SignedBeaconBlock]()], digest)
+	chain := &mock.ChainService{ValidatorsRoot: [32]byte{}, Genesis: time.Now()}
+	s := &Service{cfg: &config{
+		p2p:   p2pt,
+		chain: chain,
+		clock: startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
+	}}
+
+	got, err := s.decodePubsubMessage(&pubsub.Message{
+		Message: &pb.Message{Data: buf.Bytes(), Topic: &topic},
+	})
+	require.NoError(t, err)
+	wsb, ok := got.(interfaces.ReadOnlySignedBeaconBlock)
+	require.Equal(t, true, ok)
+	gotSSZ, err := wsb.MarshalSSZ()
+	require.NoError(t, err)
+	require.DeepEqual(t, want, gotSSZ)
+}

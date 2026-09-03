@@ -337,7 +337,10 @@ func configureBeacon(cliCtx *cli.Context) error {
 	if err := params.VerifyPreset(params.BeaconConfig()); err != nil {
 		return err
 	}
-	return params.VerifyRounds(params.BeaconConfig())
+	if err := params.VerifyRounds(params.BeaconConfig()); err != nil {
+		return err
+	}
+	return params.VerifyScratchSpace(params.BeaconConfig())
 }
 
 func startBaseServices(cliCtx *cli.Context, beacon *BeaconNode, depositAddress string, clearer *dbClearer) (*backfill.Store, error) {

@@ -1,6 +1,7 @@
 package beacon
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -79,21 +80,29 @@ func (s *Server) SubmitAvailableAttestations(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+var errAvailableAttestationList = errors.New("Invalid SSZ available attestation list size")
+
+// decodeAvailableAttestationsSSZ decodes a List[AvailableAttestation] body.
+// The element is variable-size, so the body is an offset table followed by the
+// elements, not a concatenation of fixed-size elements.
 func decodeAvailableAttestationsSSZ(r io.Reader) ([]*eth.AvailableAttestation, []*server.IndexedError, error) {
 	body, err := io.ReadAll(r)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "could not read request body")
 	}
-	sszSize := (&eth.AvailableAttestation{}).SizeSSZ()
-	if len(body) == 0 || len(body)%sszSize != 0 {
-		return nil, nil, errors.New("Invalid SSZ available attestation list size")
+	offsets, err := availableAttestationOffsets(body)
+	if err != nil {
+		return nil, nil, err
 	}
-	n := len(body) / sszSize
-	atts := make([]*eth.AvailableAttestation, n)
+	atts := make([]*eth.AvailableAttestation, len(offsets))
 	var failures []*server.IndexedError
-	for i := range n {
+	for i, start := range offsets {
+		end := len(body)
+		if i+1 < len(offsets) {
+			end = int(offsets[i+1])
+		}
 		a := &eth.AvailableAttestation{}
-		if err := a.UnmarshalSSZ(body[i*sszSize : (i+1)*sszSize]); err != nil {
+		if err := a.UnmarshalSSZ(body[start:end]); err != nil {
 			failures = append(failures, &server.IndexedError{
 				Index:   i,
 				Message: "Could not decode SSZ available attestation: " + err.Error(),
@@ -103,6 +112,29 @@ func decodeAvailableAttestationsSSZ(r io.Reader) ([]*eth.AvailableAttestation, [
 		atts[i] = a
 	}
 	return atts, failures, nil
+}
+
+// availableAttestationOffsets reads the offset table of an SSZ list of
+// variable-size elements. The first offset is the table length, so it gives
+// the element count.
+func availableAttestationOffsets(body []byte) ([]uint32, error) {
+	if len(body) < 4 {
+		return nil, errAvailableAttestationList
+	}
+	first := binary.LittleEndian.Uint32(body[:4])
+	if first < 4 || first%4 != 0 || uint64(first) > uint64(len(body)) {
+		return nil, errAvailableAttestationList
+	}
+	offsets := make([]uint32, first/4)
+	prev := uint32(0)
+	for i := range offsets {
+		o := binary.LittleEndian.Uint32(body[i*4 : i*4+4])
+		if o < prev || uint64(o) > uint64(len(body)) {
+			return nil, errAvailableAttestationList
+		}
+		offsets[i], prev = o, o
+	}
+	return offsets, nil
 }
 
 // decodeAvailableAttestationsJSON decodes a JSON array of AvailableAttestation from body. Returns

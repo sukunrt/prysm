@@ -13,8 +13,8 @@ import (
 )
 
 func (c *AvailableAttestation) SizeSSZ() int {
-	size := 201
-
+	size := 205
+	size += len(c.ScratchSpace)
 	return size
 }
 
@@ -25,6 +25,7 @@ func (c *AvailableAttestation) MarshalSSZ() ([]byte, error) {
 
 func (c *AvailableAttestation) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
+	offset := 205
 
 	// Field 0: AggregationBits
 	if len([]byte(c.AggregationBits)) != 64 {
@@ -46,19 +47,37 @@ func (c *AvailableAttestation) MarshalSSZTo(dst []byte) ([]byte, error) {
 	}
 	dst = append(dst, c.Signature...)
 
+	// Field 3: ScratchSpace
+	dst = ssz.WriteOffset(dst, offset)
+	offset += len(c.ScratchSpace)
+
+	// Field 3: ScratchSpace
+	if len(c.ScratchSpace) > 65536 {
+		return nil, ssz.ErrListTooBig
+	}
+	dst = append(dst, c.ScratchSpace...)
 	return dst, err
 }
 
 func (c *AvailableAttestation) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size != 201 {
+	if size < 205 {
 		return ssz.ErrSize
 	}
 
 	sszSlice0 := buf[0:64]    // c.AggregationBits
 	sszSlice1 := buf[64:105]  // c.Data
 	sszSlice2 := buf[105:201] // c.Signature
+
+	sszVarOffset3 := ssz.ReadOffset(buf[201:205]) // c.ScratchSpace
+	if sszVarOffset3 != 205 {
+		return ssz.ErrInvalidVariableOffset
+	}
+	if sszVarOffset3 > size {
+		return ssz.ErrOffset
+	}
+	sszSlice3 := buf[sszVarOffset3:] // c.ScratchSpace
 
 	// Field 0: AggregationBits
 	c.AggregationBits = make([]byte, 0, 64)
@@ -73,6 +92,9 @@ func (c *AvailableAttestation) UnmarshalSSZ(buf []byte) error {
 	// Field 2: Signature
 	c.Signature = make([]byte, 0, 96)
 	c.Signature = append(c.Signature, sszSlice2...)
+
+	// Field 3: ScratchSpace
+	c.ScratchSpace = append([]byte{}, sszSlice3...)
 	return err
 }
 
@@ -103,6 +125,18 @@ func (c *AvailableAttestation) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 		return ssz.ErrBytesLength
 	}
 	hh.PutBytes(c.Signature)
+	// Field 3: ScratchSpace
+
+	{
+		if len(c.ScratchSpace) > 65536 {
+			return ssz.ErrBytesLength
+		}
+		subIndx := hh.Index()
+		hh.AppendBytes32(c.ScratchSpace)
+		numItems := uint64(len(c.ScratchSpace))
+		hh.MerkleizeWithMixin(subIndx, numItems, (65536*1+31)/32)
+	}
+
 	hh.Merkleize(indx)
 	return nil
 }

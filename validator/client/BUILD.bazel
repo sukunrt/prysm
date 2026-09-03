@@ -184,6 +184,7 @@ go_test(
         "//testing/util:go_default_library",
         "//testing/validator-mock:go_default_library",
         "//third_party/go-bip39:go_default_library",
+        "//time:go_default_library",
         "//time/slots:go_default_library",
         "//validator/accounts/testing:go_default_library",
         "//validator/accounts/wallet:go_default_library",

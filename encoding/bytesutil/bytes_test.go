@@ -332,3 +332,24 @@ func BenchmarkSafeCopyBytes(b *testing.B) {
 		_ = a
 	})
 }
+
+func TestRandomBytes(t *testing.T) {
+	assert.Equal(t, 0, len(bytesutil.RandomBytes(0)))
+	assert.Equal(t, true, bytesutil.RandomBytes(0) == nil)
+	assert.Equal(t, true, bytesutil.RandomBytes(-1) == nil)
+
+	for _, n := range []int{1, 7, 8, 9, 100, 1000} {
+		b := bytesutil.RandomBytes(n)
+		assert.Equal(t, n, len(b))
+		zero := true
+		for _, c := range b {
+			if c != 0 {
+				zero = false
+				break
+			}
+		}
+		assert.Equal(t, false, zero, "all zero at n=%d", n)
+	}
+
+	assert.DeepNotEqual(t, bytesutil.RandomBytes(64), bytesutil.RandomBytes(64))
+}

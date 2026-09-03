@@ -102,6 +102,8 @@ func TestGetSpec(t *testing.T) {
 	config.MinAttestationInclusionDelay = 26
 	config.SlotsPerEpoch = 27
 	config.SlotsPerRound = 27
+	config.ConsensusBlockScratchSpace = 300
+	config.GoldfishScratchSpace = 400
 	config.FFGTargetOffsetSlots = 133
 	config.MinSeedLookahead = 28
 	config.MaxSeedLookahead = 29
@@ -249,7 +251,7 @@ func TestGetSpec(t *testing.T) {
 	require.NoError(t, json.Unmarshal(writer.Body.Bytes(), &resp))
 	data, ok := resp.Data.(map[string]any)
 	require.Equal(t, true, ok)
-	assert.Equal(t, 216, len(data))
+	assert.Equal(t, 218, len(data))
 	for k, v := range data {
 		t.Run(k, func(t *testing.T) {
 			switch k {
@@ -363,6 +365,10 @@ func TestGetSpec(t *testing.T) {
 				assert.Equal(t, "27", v)
 			case "SLOTS_PER_ROUND":
 				assert.Equal(t, "27", v)
+			case "CONSENSUS_BLOCK_SCRATCH_SPACE":
+				assert.Equal(t, "300", v)
+			case "GOLDFISH_SCRATCH_SPACE":
+				assert.Equal(t, "400", v)
 			case "FFG_TARGET_OFFSET_SLOTS":
 				assert.Equal(t, "133", v)
 			case "MIN_SEED_LOOKAHEAD":

@@ -10,8 +10,9 @@ times, topics, and gossip verdicts.
 
 The send path is in jj change `vonqrnkz` ("Add available attestation send path").
 The message is `AvailableAttestation`: 64-byte seat bits (Bitvector512), data
-(slot, payload_present, beacon_block_root), and a 96-byte signature. Total: 201
-bytes. It goes on one global gossip topic: `available_attestation`.
+(slot, payload_present, beacon_block_root), a 96-byte signature and the
+variable-length `scratch_space`. Total: 205 bytes plus the scratch length. It
+goes on one global gossip topic: `available_attestation`.
 
 How the send path works:
 

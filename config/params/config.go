@@ -103,6 +103,10 @@ type BeaconChainConfig struct {
 	PayloadDueBPS                   primitives.BP    `yaml:"PAYLOAD_DUE_BPS" spec:"true"`                     // PayloadDueBPS defines the cutoff for an execution payload to be considered timely, in basis points of the slot.
 	AvailableAttestationDueBPSHeze  primitives.BP    `yaml:"AVAILABLE_ATTESTATION_DUE_BPS_HEZE" spec:"true"`  // AvailableAttestationDueBPSHeze defines the available attestation due time in basis points of the slot (Heze).
 
+	// Scratch space. Meaningless bytes that grow a message for a stress test.
+	ConsensusBlockScratchSpace uint64 `yaml:"CONSENSUS_BLOCK_SCRATCH_SPACE" spec:"true"` // ConsensusBlockScratchSpace is the number of scratch bytes the gossip encoder puts before a Gloas block.
+	GoldfishScratchSpace       uint64 `yaml:"GOLDFISH_SCRATCH_SPACE" spec:"true"`        // GoldfishScratchSpace is the number of scratch bytes an available attestation carries.
+
 	// Prysm-internal (non-spec) parameters.
 	EquivocationEarlyDueBPS primitives.BP `yaml:"-"` // Cutoff for an "early" proposer equivocation, in basis points of the slot.
 

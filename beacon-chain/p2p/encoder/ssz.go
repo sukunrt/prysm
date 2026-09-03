@@ -43,6 +43,11 @@ func (_ SszNetworkEncoder) EncodeGossip(w io.Writer, msg ssz.Marshaler) (int, er
 	if err != nil {
 		return 0, err
 	}
+	if scratchPadded(msg) {
+		if b, err = addScratchPrefix(b); err != nil {
+			return 0, err
+		}
+	}
 	if uint64(len(b)) > MaxPayloadSize {
 		return 0, errors.Errorf("gossip message exceeds max gossip size: %d bytes > %d bytes", len(b), MaxPayloadSize)
 	}
@@ -87,6 +92,11 @@ func (_ SszNetworkEncoder) DecodeGossip(b []byte, to ssz.Unmarshaler) error {
 	b, err := DecodeSnappy(b, MaxPayloadSize)
 	if err != nil {
 		return err
+	}
+	if scratchPadded(to) {
+		if b, err = stripScratchPrefix(b); err != nil {
+			return err
+		}
 	}
 	return doDecode(b, to)
 }

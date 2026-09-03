@@ -3,6 +3,7 @@ package beacon_api
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -58,11 +59,15 @@ func (c *beaconApiValidatorClient) proposeAvailableAttestation(
 	headers := map[string]string{api.VersionHeader: version.String(version.Heze)}
 
 	// Prefer SSZ; fall back to JSON if the beacon node does not accept octet-stream request bodies.
-	// The SSZ body is the List[AvailableAttestation] encoding, here a single fixed-size element.
-	sszBody, err := att.MarshalSSZ()
+	// The element is variable-size, so the List[AvailableAttestation] body is a one-entry offset
+	// table holding the value 4, then the element.
+	elem, err := att.MarshalSSZ()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to marshal available attestation ssz")
 	}
+	sszBody := make([]byte, 4, 4+len(elem))
+	binary.LittleEndian.PutUint32(sszBody, 4)
+	sszBody = append(sszBody, elem...)
 	if _, _, err = c.handler.PostSSZ(ctx, availableAttestationsEndpoint, headers, bytes.NewBuffer(sszBody)); err == nil {
 		return &ethpb.AttestResponse{AttestationDataRoot: root[:]}, nil
 	}

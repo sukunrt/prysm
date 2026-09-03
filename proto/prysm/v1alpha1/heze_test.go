@@ -3,6 +3,8 @@ package eth_test
 import (
 	"testing"
 
+	"github.com/OffchainLabs/go-bitfield"
+
 	enginev1 "github.com/OffchainLabs/prysm/v7/proto/engine/v1"
 	eth "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
@@ -78,4 +80,47 @@ func fillGloasVariableLengthFields(s *eth.BeaconStateGloas) error {
 		Address: make([]byte, 20),
 	}}
 	return nil
+}
+
+func TestAvailableAttestation_ScratchSpaceRoundTrip(t *testing.T) {
+	for _, n := range []int{0, 1, 100, 65536} {
+		scratch := make([]byte, n)
+		for i := range scratch {
+			scratch[i] = byte(i)
+		}
+		att := &eth.AvailableAttestation{
+			AggregationBits: bitfield.NewBitvector512(),
+			Data: &eth.AvailableAttestationData{
+				Slot:            9,
+				PayloadPresent:  true,
+				BeaconBlockRoot: make([]byte, 32),
+			},
+			Signature:    make([]byte, 96),
+			ScratchSpace: scratch,
+		}
+		enc, err := att.MarshalSSZ()
+		require.NoError(t, err)
+		require.Equal(t, 205+n, len(enc))
+
+		got := &eth.AvailableAttestation{}
+		require.NoError(t, got.UnmarshalSSZ(enc))
+		require.DeepEqual(t, att.ScratchSpace, got.ScratchSpace)
+		require.Equal(t, att.Data.Slot, got.Data.Slot)
+		require.DeepEqual(t, att.Signature, got.Signature)
+	}
+}
+
+func TestAvailableAttestation_ScratchSpaceChangesTheRoot(t *testing.T) {
+	base := &eth.AvailableAttestation{
+		AggregationBits: bitfield.NewBitvector512(),
+		Data:            &eth.AvailableAttestationData{Slot: 9, BeaconBlockRoot: make([]byte, 32)},
+		Signature:       make([]byte, 96),
+	}
+	empty, err := base.HashTreeRoot()
+	require.NoError(t, err)
+
+	base.ScratchSpace = []byte{1, 2, 3}
+	filled, err := base.HashTreeRoot()
+	require.NoError(t, err)
+	require.DeepNotEqual(t, empty, filled)
 }

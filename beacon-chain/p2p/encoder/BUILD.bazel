@@ -5,6 +5,7 @@ go_library(
     srcs = [
         "doc.go",
         "network_encoding.go",
+        "scratch.go",
         "ssz.go",
         "varint.go",
     ],
@@ -15,7 +16,11 @@ go_library(
     ],
     deps = [
         "//config/params:go_default_library",
+        "//consensus-types/interfaces:go_default_library",
+        "//encoding/bytesutil:go_default_library",
         "//math:go_default_library",
+        "//proto/prysm/v1alpha1:go_default_library",
+        "//runtime/version:go_default_library",
         "@com_github_gogo_protobuf//proto:go_default_library",
         "@com_github_golang_snappy//:go_default_library",
         "@com_github_offchainlabs_methodical_ssz//ssz:go_default_library",
@@ -26,6 +31,7 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = [
+        "scratch_test.go",
         "snappy_test.go",
         "ssz_test.go",
         "varint_test.go",
@@ -33,7 +39,10 @@ go_test(
     data = glob(["testdata/**"]),
     embed = [":go_default_library"],
     deps = [
+        "//beacon-chain/p2p/types:go_default_library",
         "//config/params:go_default_library",
+        "//consensus-types/interfaces:go_default_library",
+        "//encoding/bytesutil:go_default_library",
         "//proto/prysm/v1alpha1:go_default_library",
         "//testing/assert:go_default_library",
         "//testing/require:go_default_library",

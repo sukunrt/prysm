@@ -1,9 +1,11 @@
 package structs
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/OffchainLabs/go-bitfield"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	eth "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
@@ -112,4 +114,70 @@ func TestAvailableAttestationDataToConsensusErrors(t *testing.T) {
 		_, err := d.ToConsensus()
 		require.ErrorContains(t, "BeaconBlockRoot", err)
 	})
+}
+
+func TestAvailableAttestationScratchSpaceRoundTrip(t *testing.T) {
+	t.Run("non-empty", func(t *testing.T) {
+		consensus := availableAttestationConsensus()
+		consensus.ScratchSpace = bytesOf(0xcc, 100)
+		s := AvailableAttestationFromConsensus(consensus)
+		require.Equal(t, hexutil.Encode(consensus.ScratchSpace), s.ScratchSpace)
+
+		back, err := s.ToConsensus()
+		require.NoError(t, err)
+		require.DeepEqual(t, consensus.ScratchSpace, back.ScratchSpace)
+	})
+
+	t.Run("an empty field writes 0x", func(t *testing.T) {
+		s := AvailableAttestationFromConsensus(availableAttestationConsensus())
+		require.Equal(t, "0x", s.ScratchSpace)
+	})
+
+	t.Run("absent, empty and 0x all read as nil", func(t *testing.T) {
+		valid := AvailableAttestationFromConsensus(availableAttestationConsensus())
+		for _, in := range []string{"", "0x"} {
+			a := *valid
+			a.ScratchSpace = in
+			back, err := a.ToConsensus()
+			require.NoError(t, err)
+			require.IsNil(t, back.ScratchSpace)
+		}
+	})
+
+	t.Run("bad hex is a decode error", func(t *testing.T) {
+		a := *AvailableAttestationFromConsensus(availableAttestationConsensus())
+		a.ScratchSpace = "not-hex"
+		_, err := a.ToConsensus()
+		require.ErrorContains(t, "ScratchSpace", err)
+	})
+
+	t.Run("over the bound is a decode error", func(t *testing.T) {
+		a := *AvailableAttestationFromConsensus(availableAttestationConsensus())
+		a.ScratchSpace = hexutil.Encode(bytesOf(0x01, params.MaxScratchSpace+1))
+		_, err := a.ToConsensus()
+		require.ErrorContains(t, "ScratchSpace", err)
+	})
+}
+
+func TestAvailableAttestationJSONRoundTrip(t *testing.T) {
+	consensus := availableAttestationConsensus()
+	consensus.ScratchSpace = bytesOf(0xcc, 8)
+	enc, err := json.Marshal(AvailableAttestationFromConsensus(consensus))
+	require.NoError(t, err)
+
+	s := &AvailableAttestation{}
+	require.NoError(t, json.Unmarshal(enc, s))
+	back, err := s.ToConsensus()
+	require.NoError(t, err)
+	require.DeepEqual(t, consensus.ScratchSpace, back.ScratchSpace)
+
+	// An object without the key decodes to a nil field.
+	s = &AvailableAttestation{}
+	require.NoError(t, json.Unmarshal([]byte(`{"aggregation_bits":"`+
+		hexutil.Encode(consensus.AggregationBits)+`","signature":"`+
+		hexutil.Encode(consensus.Signature)+`","data":{"slot":"7","payload_present":true,`+
+		`"beacon_block_root":"`+hexutil.Encode(consensus.Data.BeaconBlockRoot)+`"}}`), s))
+	back, err = s.ToConsensus()
+	require.NoError(t, err)
+	require.IsNil(t, back.ScratchSpace)
 }

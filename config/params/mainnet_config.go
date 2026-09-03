@@ -143,7 +143,12 @@ var mainnetBeaconConfig = &BeaconChainConfig{
 	// AVAILABLE_ATTESTATION_DUE_BPS: available committee validators publish at
 	// 25% of the slot, after the assumed first-quarter block delivery phase.
 	AvailableAttestationDueBPSHeze: primitives.BP(2500),
-	EquivocationEarlyDueBPS:        primitives.BP(7500),
+
+	// Scratch space.
+	ConsensusBlockScratchSpace: 0,
+	GoldfishScratchSpace:       100,
+
+	EquivocationEarlyDueBPS: primitives.BP(7500),
 
 	// Ethereum PoW parameters.
 	DepositChainID:         1, // Chain ID of eth1 mainnet.

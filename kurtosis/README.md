@@ -98,6 +98,7 @@ is not in the container.
 | Amsterdam at the EL genesis time | falls out of `gloas_fork_epoch: 0` |
 | `SLOTS_PER_ROUND: 8` | new line in the image's CL config template; `extra_env` overrides it |
 | `AVAILABLE_ATTESTATION_DUE_BPS_HEZE` | same route; it is the head-timing sweep axis |
+| `CONSENSUS_BLOCK_SCRATCH_SPACE`, `GOLDFISH_SCRATCH_SPACE` | same route; they are the message-size sweep axes |
 | Heze not mapped to an EL fork | `genesis_add_heze` patched out |
 | a Heze CL genesis state | `prysmctl` replaces `eth-genesis-state-generator` |
 

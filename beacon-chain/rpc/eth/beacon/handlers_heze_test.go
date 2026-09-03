@@ -2,6 +2,7 @@ package beacon
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,8 +12,12 @@ import (
 	"github.com/OffchainLabs/prysm/v7/api"
 	"github.com/OffchainLabs/prysm/v7/api/server/structs"
 	chainMock "github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain/testing"
+	mockp2p "github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/testing"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator"
 	mockSync "github.com/OffchainLabs/prysm/v7/beacon-chain/sync/initial-sync/testing"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/crypto/bls"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	eth "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
@@ -45,6 +50,21 @@ func availableAttestationsServer(delegate eth.BeaconNodeValidatorServer, syncing
 		OptimisticModeFetcher:   &chainMock.ChainService{},
 		V1Alpha1ValidatorServer: delegate,
 	}
+}
+
+// availableAttestationsSSZList builds the SSZ List[AvailableAttestation] body:
+// the offset table, then the elements.
+func availableAttestationsSSZList(t *testing.T, atts ...*eth.AvailableAttestation) []byte {
+	t.Helper()
+	table := make([]byte, 4*len(atts))
+	var elems []byte
+	for i, att := range atts {
+		binary.LittleEndian.PutUint32(table[i*4:], uint32(len(table)+len(elems)))
+		enc, err := att.MarshalSSZ()
+		require.NoError(t, err)
+		elems = append(elems, enc...)
+	}
+	return append(table, elems...)
 }
 
 func availableAttestationsRequest(t *testing.T, body []byte, ssz bool) *http.Request {
@@ -97,9 +117,8 @@ func TestSubmitAvailableAttestations_SSZ(t *testing.T) {
 			return &eth.AttestResponse{}, nil
 		})
 
-	body, err := att.MarshalSSZ()
-	require.NoError(t, err)
-	require.Equal(t, 201, len(body))
+	body := availableAttestationsSSZList(t, att)
+	require.Equal(t, 4+205, len(body))
 
 	w := httptest.NewRecorder()
 	w.Body = &bytes.Buffer{}
@@ -111,19 +130,29 @@ func TestSubmitAvailableAttestations_SSZ(t *testing.T) {
 func TestSubmitAvailableAttestations_SSZTwoElements(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	delegate := mock2.NewMockBeaconNodeValidatorServer(ctrl)
-	delegate.EXPECT().ProposeAvailableAttestation(gomock.Any(), gomock.Any()).
-		Return(&eth.AttestResponse{}, nil).Times(2)
+	var got []*eth.AvailableAttestation
+	delegate.EXPECT().ProposeAvailableAttestation(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ any, a *eth.AvailableAttestation) (*eth.AttestResponse, error) {
+			got = append(got, a)
+			return &eth.AttestResponse{}, nil
+		}).Times(2)
 
-	first, err := testAvailableAttestation(9).MarshalSSZ()
-	require.NoError(t, err)
-	second, err := testAvailableAttestation(10).MarshalSSZ()
-	require.NoError(t, err)
+	first := testAvailableAttestation(9)
+	first.ScratchSpace = make([]byte, 100)
+	second := testAvailableAttestation(10)
+	second.ScratchSpace = make([]byte, 7)
+	body := availableAttestationsSSZList(t, first, second)
 
 	w := httptest.NewRecorder()
 	w.Body = &bytes.Buffer{}
 	availableAttestationsServer(delegate, false).
-		SubmitAvailableAttestations(w, availableAttestationsRequest(t, append(first, second...), true))
+		SubmitAvailableAttestations(w, availableAttestationsRequest(t, body, true))
 	require.Equal(t, http.StatusOK, w.Code)
+	require.Equal(t, 2, len(got))
+	require.Equal(t, primitives.Slot(9), got[0].Data.Slot)
+	require.Equal(t, 100, len(got[0].ScratchSpace))
+	require.Equal(t, primitives.Slot(10), got[1].Data.Slot)
+	require.Equal(t, 7, len(got[1].ScratchSpace))
 }
 
 func TestSubmitAvailableAttestations_BadRequests(t *testing.T) {
@@ -217,4 +246,39 @@ func TestSubmitAvailableAttestations_DelegateError(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	assert.StringContains(t, "incorrect available attestation signature", w.Body.String())
 	assert.Equal(t, false, bytes.Contains(w.Body.Bytes(), []byte("rpc error")))
+}
+
+// TestSubmitAvailableAttestations_FillsScratchSpace runs the REST handler into
+// a real validator.Server, the delegate the node wires up, so the fill site in
+// proposeAvailableAtt is reached. A gomock delegate stops short of it.
+func TestSubmitAvailableAttestations_FillsScratchSpace(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.HezeForkEpoch = 0
+	cfg.GoldfishScratchSpace = 77
+	params.OverrideBeaconConfig(cfg)
+
+	sk, err := bls.RandKey()
+	require.NoError(t, err)
+	att := testAvailableAttestation(0)
+	att.Data.PayloadPresent = false
+	att.Signature = sk.Sign([]byte("scratch")).Marshal()
+
+	broadcaster := &mockp2p.MockBroadcaster{}
+	delegate := &validator.Server{
+		SyncChecker: &mockSync.Sync{IsSyncing: false},
+		TimeFetcher: &chainMock.ChainService{},
+		P2P:         broadcaster,
+	}
+
+	w := httptest.NewRecorder()
+	w.Body = &bytes.Buffer{}
+	availableAttestationsServer(delegate, false).SubmitAvailableAttestations(
+		w, availableAttestationsRequest(t, availableAttestationsSSZList(t, att), true))
+	require.Equal(t, http.StatusOK, w.Code)
+
+	require.Equal(t, 1, len(broadcaster.BroadcastMessages))
+	sent, ok := broadcaster.BroadcastMessages[0].(*eth.AvailableAttestation)
+	require.Equal(t, true, ok)
+	require.Equal(t, 77, len(sent.ScratchSpace))
 }

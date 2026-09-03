@@ -36,6 +36,10 @@ message AvailableAttestation {
   AvailableAttestationData data = 2;
 
   bytes signature = 3 [(ethereum.eth.ext.ssz_size) = "96"];
+
+  // Meaningless bytes that grow the message for a stress test. Not signed:
+  // the signature covers AvailableAttestationData only.
+  bytes scratch_space = 4 [(ethereum.eth.ext.ssz_max) = "65536"];
 }
 
 // BeaconStateHeze represents the beacon state in the Heze fork. It is a

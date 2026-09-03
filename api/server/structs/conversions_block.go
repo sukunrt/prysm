@@ -7,6 +7,7 @@ import (
 	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/api/server"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/container/slice"
@@ -2995,6 +2996,7 @@ func AvailableAttestationFromConsensus(a *eth.AvailableAttestation) *AvailableAt
 		AggregationBits: hexutil.Encode(a.AggregationBits),
 		Data:            AvailableAttestationDataFromConsensus(a.Data),
 		Signature:       hexutil.Encode(a.Signature),
+		ScratchSpace:    hexutil.Encode(a.ScratchSpace),
 	}
 }
 
@@ -3022,10 +3024,18 @@ func (a *AvailableAttestation) ToConsensus() (*eth.AvailableAttestation, error) 
 	if err != nil {
 		return nil, server.NewDecodeError(err, "Signature")
 	}
+	var scratch []byte
+	if a.ScratchSpace != "" && a.ScratchSpace != "0x" {
+		scratch, err = bytesutil.DecodeHexWithMaxLength(a.ScratchSpace, params.MaxScratchSpace)
+		if err != nil {
+			return nil, server.NewDecodeError(err, "ScratchSpace")
+		}
+	}
 	return &eth.AvailableAttestation{
 		AggregationBits: bitfield.Bitvector512(aggregationBits),
 		Data:            data,
 		Signature:       sig,
+		ScratchSpace:    scratch,
 	}, nil
 }
 

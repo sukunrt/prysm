@@ -121,8 +121,9 @@ Wire shapes (proto/prysm/v1alpha1/heze.proto:14-49, SSZ in proto/prysm/v1alpha1/
 
 - `AvailableAttestationData` — fixed 41 bytes SSZ: `slot` (uint64), `payload_present` (bool),
   `beacon_block_root` (32 bytes).
-- `AvailableAttestation` — fixed 201 bytes SSZ: `aggregation_bits` (Bitvector512, 64 bytes),
-  `data`, `signature` (96 bytes).
+- `AvailableAttestation` — variable-size SSZ, 205 bytes plus the scratch length:
+  `aggregation_bits` (Bitvector512, 64 bytes), `data`, `signature` (96 bytes) and
+  `scratch_space` (List[byte, 65536], offset-encoded).
 
 Type detail that ripples through the structs work: `AvailableAttestation.AggregationBits` is
 typed `bitfield.Bitvector512` (`proto/prysm/v1alpha1/heze.pb.go:92`, Go import
@@ -191,9 +192,9 @@ Handler `SubmitAvailableAttestations` on the eth/beacon `Server`, in a new
 - Body JSON: array of `structs.AvailableAttestation`
   `{"aggregation_bits":"0x…64 bytes…","data":{…as above…},"signature":"0x…"}`; empty array is a
   400 `"no data submitted"`.
-- Body SSZ (`Content-Type: application/octet-stream`, `httputil.IsRequestSsz`): concatenated
-  fixed 201-byte elements; empty or misaligned body is a 400 `"Invalid SSZ available
-  attestation list size"`. Use `(&eth.AvailableAttestation{}).SizeSSZ()` for the element size.
+- Body SSZ (`Content-Type: application/octet-stream`, `httputil.IsRequestSsz`): the SSZ list
+  encoding of a variable-size element, an offset table followed by the elements; an empty or
+  malformed body is a 400 `"Invalid SSZ available attestation list size"`.
 - Per-element decode failures collect into `server.IndexedError`s (index + message) and the
   element is skipped (nil slot); decode of the list as a whole failing is a plain 400.
 - Delegate each decoded element to `s.V1Alpha1ValidatorServer.ProposeAvailableAttestation` —
@@ -245,8 +246,8 @@ with a package const `availableAttestationsEndpoint = "/eth/v1/beacon/pool/avail
   `AVAILABLE_ATTESTATION_DUE_BPS_HEZE` due time. Pre-existing, identical on the gRPC path; do
   not change it, but do not claim the read is bounded by the Goldfish deadline either.
 - `proposeAvailableAttestation(ctx, att)`: nil-guard att and att.Data (`"available attestation
-  is nil"`); compute `root := att.Data.HashTreeRoot()` up front; `PostSSZ` of `att.MarshalSSZ()`
-  (one 201-byte element — the list encoding of one element is the element) to
+  is nil"`); compute `root := att.Data.HashTreeRoot()` up front; `PostSSZ` of the one-element
+  SSZ list — a 4-byte offset table holding the value 4, then `att.MarshalSSZ()` — to
   `availableAttestationsEndpoint` with header `Eth-Consensus-Version: heze`. On a
   `httputil.DefaultJsonError` with Code 415, warn once and fall back to `Post` of the JSON array
   `[]*structs.AvailableAttestation{AvailableAttestationFromConsensus(att)}` with the same

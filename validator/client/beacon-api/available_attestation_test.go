@@ -2,6 +2,7 @@ package beacon_api
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -109,12 +110,15 @@ func TestProposeAvailableAttestation(t *testing.T) {
 			PayloadPresent:  true,
 			BeaconBlockRoot: testhelpers.FillByteSlice(32, 0x11),
 		},
-		Signature: testhelpers.FillByteSlice(96, 0x22),
+		Signature:    testhelpers.FillByteSlice(96, 0x22),
+		ScratchSpace: testhelpers.FillByteSlice(100, 0x33),
 	}
 	wantRoot, err := att.Data.HashTreeRoot()
 	require.NoError(t, err)
-	sszBody, err := att.MarshalSSZ()
+	elem, err := att.MarshalSSZ()
 	require.NoError(t, err)
+	// The SSZ body is List[AvailableAttestation]: a one-entry offset table, then the element.
+	sszBody := append([]byte{4, 0, 0, 0}, elem...)
 	jsonBody, err := json.Marshal([]*structs.AvailableAttestation{structs.AvailableAttestationFromConsensus(att)})
 	require.NoError(t, err)
 	headers := map[string]string{api.VersionHeader: version.String(version.Heze)}
@@ -134,6 +138,29 @@ func TestProposeAvailableAttestation(t *testing.T) {
 		resp, err := client.proposeAvailableAttestation(t.Context(), att)
 		require.NoError(t, err)
 		assert.DeepEqual(t, wantRoot[:], resp.AttestationDataRoot)
+	})
+
+	t.Run("the SSZ body is a one-element list", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		handler := mock.NewMockHandler(ctrl)
+		var posted []byte
+		handler.EXPECT().PostSSZ(gomock.Any(), availableAttestationsEndpoint, headers, gomock.Any()).
+			DoAndReturn(func(_ any, _ string, _ map[string]string, body *bytes.Buffer) ([]byte, http.Header, error) {
+				posted = body.Bytes()
+				return nil, nil, nil
+			}).Times(1)
+
+		client := &beaconApiValidatorClient{handler: handler}
+		_, err := client.proposeAvailableAttestation(t.Context(), att)
+		require.NoError(t, err)
+
+		require.Equal(t, true, len(posted) > 4)
+		require.Equal(t, uint32(4), binary.LittleEndian.Uint32(posted[:4]))
+		got := &ethpb.AvailableAttestation{}
+		require.NoError(t, got.UnmarshalSSZ(posted[4:]))
+		assert.DeepEqual(t, att.ScratchSpace, got.ScratchSpace)
+		assert.DeepEqual(t, att.Signature, got.Signature)
 	})
 
 	t.Run("falls back to JSON on 415", func(t *testing.T) {

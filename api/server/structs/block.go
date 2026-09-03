@@ -629,4 +629,5 @@ type AvailableAttestation struct {
 	AggregationBits string                    `json:"aggregation_bits"`
 	Data            *AvailableAttestationData `json:"data"`
 	Signature       string                    `json:"signature"`
+	ScratchSpace    string                    `json:"scratch_space,omitempty"`
 }

@@ -353,6 +353,10 @@ func (vs *Server) proposeAvailableAtt(
 
 	// TODO(later): plug the monitoring path by sending the operation event like in availableAtt.
 
+	// Scratch space grows the vote for a stress test. It carries no meaning and
+	// is not signed, so whatever the client sent is overwritten here.
+	att.ScratchSpace = bytesutil.RandomBytes(int(params.BeaconConfig().GoldfishScratchSpace))
+
 	// Broadcast the available attestation to the network.
 	if err := vs.P2P.Broadcast(ctx, att); err != nil {
 		return nil, status.Errorf(codes.Internal, "Could not broadcast available attestation: %v", err)
