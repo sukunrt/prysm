@@ -58,7 +58,8 @@ while true; do
         {
             echo "# TS $ts"
             curl -sf --max-time 4 "http://$hostport/metrics" |
-                grep -E "$keep" || echo "# SCRAPE_FAILED"
+                grep -E "$keep" |
+                grep -Ev '^goldfish_vote_arrival_milliseconds_bucket' || echo "# SCRAPE_FAILED"
         } >> "$outdir/$svc.metrics"
     done < "$outdir/targets.txt"
     sleep "$interval"

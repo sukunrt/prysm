@@ -143,7 +143,7 @@ func (s *Service) validateExecutionPayloadEnvelope(ctx context.Context, pid peer
 	msg.ValidatorData = signedEnvelope
 	startTime, err := slots.StartTime(s.cfg.clock.GenesisTime(), env.Slot())
 	if err == nil {
-		syncExecutionPayloadEnvelopeArrivalDelaySeconds.Observe(receivedTime.Sub(startTime).Seconds())
+		syncExecutionPayloadEnvelopeArrival.Observe(float64(receivedTime.Sub(startTime).Milliseconds()))
 	} else {
 		log.WithError(err).WithField("slot", env.Slot()).Debug("Could not compute execution payload envelope slot start time")
 	}

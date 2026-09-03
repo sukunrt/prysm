@@ -336,6 +336,7 @@ func (s *Service) Start() {
 	s.processPendingBlocksQueue()
 	s.processPendingPayloadEnvelopeQueue()
 	go s.runLatePayloadRequest()
+	go s.runVoteSeatJobs()
 	s.maintainPeerStatuses()
 	s.resyncIfBehind()
 

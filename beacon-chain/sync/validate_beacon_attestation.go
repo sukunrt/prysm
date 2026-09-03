@@ -240,7 +240,7 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 	// Attach final validated attestation to the message for further pipeline use
 	msg.ValidatorData = attForValidation
 
-	s.logFFGVote(att, start)
+	s.recordFFGVote(att, start)
 
 	return pubsub.ValidationAccept, nil
 }
@@ -600,7 +600,7 @@ func (s *Service) validateAvailableAttestation(
 		// block is imported, and ignore it for now so gossip does not penalize the
 		// peer that forwarded a vote we simply cannot check yet.
 		s.savePendingAvailableAtt(att)
-		s.logVote(att, voteQueued, "", arrived)
+		s.recordVote(att, voteQueued, "", arrived)
 		// The block can still be imported, and its queue drained, between the
 		// check above and the insert. Take a second look so whichever of the two
 		// sees the block last is the one that drains it.
@@ -619,7 +619,7 @@ func (s *Service) validateAvailableAttestation(
 	}
 
 	msg.ValidatorData = att
-	s.logVote(att, voteAccepted, "", arrived)
+	s.recordVote(att, voteAccepted, "", arrived)
 
 	// TODO(sukunrt): mark the attestation as seen
 	return pubsub.ValidationAccept, nil

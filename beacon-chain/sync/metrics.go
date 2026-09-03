@@ -15,6 +15,22 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+// slotMsBuckets covers a whole slot in 50 ms steps, the shape every
+// slot-relative histogram in this package uses. Arrivals inside the early
+// tolerance land in le="0", later ones than a slot in +Inf.
+var slotMsBuckets = prometheus.LinearBuckets(0, 50, 240)
+
+// fractionBuckets is 0.05..1 in twentieths. It is built by hand because
+// prometheus.LinearBuckets accumulates float error and emits le="1.0000000000000002",
+// which no literal query matches.
+var fractionBuckets = func() []float64 {
+	b := make([]float64, 20)
+	for i := range b {
+		b[i] = float64(i+1) / 20
+	}
+	return b
+}()
+
 var (
 	topicPeerCount = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -54,6 +70,60 @@ var (
 	// good. Every such path is named here: the generic gossip counters cannot
 	// tell a queued vote from a dropped one, which is what made run 06's 2.4%
 	// shortfall take two runs to place.
+	goldfishVoteArrival = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "goldfish_vote_arrival_milliseconds",
+			Help:    "Time from slot start to a counted Goldfish head vote.",
+			Buckets: slotMsBuckets,
+		},
+	)
+	goldfishVoteSeats = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "goldfish_vote_seats",
+			Help: "Goldfish head vote seats of a slot, counted at the next slot start, as fork " +
+				"choice reads them.",
+		},
+	)
+	ffgVoteArrival = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "ffg_vote_arrival_milliseconds",
+			Help:    "Time from slot start to an FFG attestation that passed gossip validation.",
+			Buckets: slotMsBuckets,
+		},
+	)
+	ffgVoteSeats = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "ffg_vote_seats",
+			Help: "Attested seats in the pool at the aggregate due point, subscribed committees only.",
+		},
+	)
+	ffgExpectedSeats = promauto.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "ffg_expected_seats",
+			Help: "Seats of the subscribed committees ffg_vote_seats is drawn from.",
+		},
+	)
+	ffgCommitteeSeatFraction = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "ffg_committee_seat_fraction",
+			Help:    "Attested fraction of one subscribed committee at the aggregate due point.",
+			Buckets: fractionBuckets,
+		},
+	)
+	ffgAggregateArrival = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "ffg_aggregate_arrival_milliseconds",
+			Help:    "Time from slot start to an accepted FFG aggregate.",
+			Buckets: slotMsBuckets,
+		},
+	)
+	ffgAggregateSeatFraction = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "ffg_aggregate_seat_fraction",
+			Help:    "Committee fraction one accepted FFG aggregate carries.",
+			Buckets: fractionBuckets,
+		},
+	)
 	availableAttDropCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "goldfish_vote_drop_total",
@@ -151,11 +221,11 @@ var (
 			Help: "Time to verify gossiped attestations",
 		},
 	)
-	syncPayloadAttestationArrivalDelaySeconds = promauto.NewHistogram(
+	syncPayloadAttestationArrival = promauto.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:    "sync_payload_attestation_arrival_delay_seconds",
+			Name:    "sync_payload_attestation_arrival_milliseconds",
 			Help:    "Time from slot start to payload attestation gossip arrival.",
-			Buckets: prometheus.DefBuckets,
+			Buckets: slotMsBuckets,
 		},
 	)
 	blockVerificationGossipSummary = promauto.NewSummary(
@@ -176,10 +246,11 @@ var (
 			Help: "Time for gossiped blob sidecars to arrive",
 		},
 	)
-	dataColumnSidecarArrivalGossipSummary = promauto.NewSummary(
-		prometheus.SummaryOpts{
-			Name: "gossip_data_column_sidecar_arrival_milliseconds",
-			Help: "Time for gossiped data column sidecars to arrive",
+	dataColumnSidecarArrivalGossipHistogram = promauto.NewHistogram(
+		prometheus.HistogramOpts{
+			Name:    "gossip_data_column_sidecar_arrival_milliseconds",
+			Help:    "Time for gossiped data column sidecars to arrive",
+			Buckets: slotMsBuckets,
 		},
 	)
 	blobSidecarVerificationGossipSummary = promauto.NewSummary(
@@ -236,11 +307,11 @@ var (
 			Help: "Count the number of times data columns have been recovered from the execution layer.",
 		},
 	)
-	syncExecutionPayloadEnvelopeArrivalDelaySeconds = promauto.NewHistogram(
+	syncExecutionPayloadEnvelopeArrival = promauto.NewHistogram(
 		prometheus.HistogramOpts{
-			Name:    "sync_execution_payload_envelope_arrival_delay_seconds",
+			Name:    "sync_execution_payload_envelope_arrival_milliseconds",
 			Help:    "Time from slot start to execution payload envelope gossip arrival.",
-			Buckets: prometheus.DefBuckets,
+			Buckets: slotMsBuckets,
 		},
 	)
 	syncPayloadEnvelopeByRangeServedTotal = promauto.NewCounter(

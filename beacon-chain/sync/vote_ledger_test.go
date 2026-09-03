@@ -46,12 +46,12 @@ func TestLogVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	hook := logTest.NewGlobal()
 	s := ledgerService(t)
 
-	s.logVote(ledgerVote(), voteAccepted, "", time.Now())
+	s.recordVote(ledgerVote(), voteAccepted, "", time.Now())
 	require.Equal(t, 0, len(hook.AllEntries()))
 
 	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
 	defer reset()
-	s.logVote(ledgerVote(), voteAccepted, "", time.Now())
+	s.recordVote(ledgerVote(), voteAccepted, "", time.Now())
 	require.Equal(t, 1, len(hook.AllEntries()))
 	require.Equal(t, voteAccepted, hook.LastEntry().Data["outcome"])
 }
@@ -68,12 +68,12 @@ func TestLogFFGVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
 		},
 	}
 
-	s.logFFGVote(att, time.Now())
+	s.recordFFGVote(att, time.Now())
 	require.Equal(t, 0, len(hook.AllEntries()))
 
 	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
 	defer reset()
-	s.logFFGVote(att, time.Now())
+	s.recordFFGVote(att, time.Now())
 	require.Equal(t, 1, len(hook.AllEntries()))
 	entry := hook.LastEntry()
 	require.Equal(t, "FFG vote", entry.Message)
@@ -105,12 +105,12 @@ func TestLogFFGAggregate_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	}
 	committee := []primitives.ValidatorIndex{4, 5, 8, 9}
 
-	s.logFFGAggregate(signed, committee, time.Now())
+	s.recordFFGAggregate(signed, committee, time.Now())
 	require.Equal(t, 0, len(hook.AllEntries()))
 
 	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
 	defer reset()
-	s.logFFGAggregate(signed, committee, time.Now())
+	s.recordFFGAggregate(signed, committee, time.Now())
 	require.Equal(t, 1, len(hook.AllEntries()))
 	entry := hook.LastEntry()
 	require.Equal(t, "FFG aggregate", entry.Message)
@@ -192,4 +192,15 @@ func TestDropVote_AlwaysCountsTheDrop(t *testing.T) {
 	before := counterVecValue(t, "target_state")
 	s.dropVote(ledgerVote(), "target_state", time.Now())
 	require.Equal(t, before+1, counterVecValue(t, "target_state"))
+}
+
+func TestSlotSeatCounter_TakeReadsTheSlotAndForgetsIt(t *testing.T) {
+	c := &slotSeatCounter{m: make(map[primitives.Slot]uint64)}
+	c.add(3, 2)
+	c.add(3, 5)
+	c.add(4, 1)
+	require.Equal(t, uint64(7), c.take(3))
+	require.Equal(t, uint64(0), c.take(3))
+	require.Equal(t, uint64(1), c.take(4))
+	require.Equal(t, 0, len(c.m))
 }

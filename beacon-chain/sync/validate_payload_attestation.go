@@ -74,7 +74,7 @@ func (s *Service) validatePayloadAttestation(ctx context.Context, pid peer.ID, m
 	s.logPTCVote(pa, "gossip", receivedTime)
 	startTime, err := slots.StartTime(s.cfg.clock.GenesisTime(), pa.Slot())
 	if err == nil {
-		syncPayloadAttestationArrivalDelaySeconds.Observe(receivedTime.Sub(startTime).Seconds())
+		syncPayloadAttestationArrival.Observe(float64(receivedTime.Sub(startTime).Milliseconds()))
 	} else {
 		log.WithError(err).WithField("slot", pa.Slot()).Debug("Could not compute payload attestation slot start time")
 	}

@@ -25,30 +25,57 @@ const (
 	voteReplayed = "replayed" // handed to forkchoice by the pending queue
 	voteQueued   = "queued"   // parked until its block arrives; not yet counted
 	voteDropped  = "dropped"  // discarded, see the reason field
+	voteLocal    = "local"    // this node's own vote, handed to forkchoice by the RPC
 )
 
-// logVote writes one line for one head vote. arrived is when the vote entered
-// validation, so the line carries both the arrival and the decision time as
-// milliseconds into the vote's own slot: that is what says whether a vote was
+// msIntoSlot is a time as milliseconds into the slot it belongs to. Negative
+// for an arrival inside the early tolerance.
+func msIntoSlot(genesis time.Time, slot primitives.Slot, t time.Time) float64 {
+	return float64(t.Sub(slots.UnsafeStartTime(genesis, slot)).Milliseconds())
+}
+
+// recordVote takes in one head vote. arrived is when the vote entered
+// validation, so the ledger line carries both the arrival and the decision time
+// as milliseconds into the vote's own slot: that is what says whether a vote was
 // refused for being late or was simply never delivered.
 //
-// Off unless --goldfish-vote-ledger is set: the topic carries one message per
-// seat holder per slot, so this is a run instrument, not a production log.
-func (s *Service) logVote(
+// The metrics are always on; the ledger line needs --goldfish-vote-ledger,
+// because the topic carries one message per seat holder per slot.
+func (s *Service) recordVote(
 	att *ethpb.AvailableAttestation, outcome, reason string, arrived time.Time,
 ) {
-	if !features.Get().GoldfishVoteLedger || att == nil || att.Data == nil {
+	recordVote(s.cfg.clock.GenesisTime(), att, outcome, reason, arrived)
+}
+
+// RecordLocalVote takes in a head vote this node published itself. Own votes
+// never reach the gossip subscriber, so the RPC that broadcasts one calls this
+// instead.
+func RecordLocalVote(genesis time.Time, att *ethpb.AvailableAttestation) {
+	recordVote(genesis, att, voteLocal, "", time.Now())
+}
+
+func recordVote(
+	genesis time.Time, att *ethpb.AvailableAttestation, outcome, reason string, arrived time.Time,
+) {
+	if att == nil || att.Data == nil {
 		return
 	}
 	slot := att.Data.Slot
-	start := slots.UnsafeStartTime(s.cfg.clock.GenesisTime(), slot)
+	// A queued vote is counted when it is replayed, a dropped one never.
+	if outcome == voteAccepted || outcome == voteReplayed || outcome == voteLocal {
+		goldfishVoteArrival.Observe(msIntoSlot(genesis, slot, arrived))
+		voteSeats.add(slot, att.AggregationBits.Count())
+	}
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
 	fields := logrus.Fields{
 		"outcome":   outcome,
 		"voteSlot":  slot,
 		"seats":     att.AggregationBits.Count(),
 		"blockRoot": fmt.Sprintf("%#x", bytesutil.ToBytes32(att.Data.BeaconBlockRoot)),
-		"arrivedMs": arrived.Sub(start).Milliseconds(),
-		"decidedMs": time.Since(start).Milliseconds(),
+		"arrivedMs": int64(msIntoSlot(genesis, slot, arrived)),
+		"decidedMs": int64(msIntoSlot(genesis, slot, time.Now())),
 	}
 	if reason != "" {
 		fields["reason"] = reason
@@ -61,32 +88,36 @@ func (s *Service) logVote(
 	log.WithFields(fields).Info("Goldfish vote")
 }
 
-// logFFGVote writes one line for one FFG attestation that passed gossip
-// validation. arrived is when the attestation entered validation, carried as
-// milliseconds into the attestation's own slot: the same clock basis as the
-// head-vote lines above, so both parse the same way.
+// recordFFGVote takes in one FFG attestation that passed gossip validation.
+// arrived is when the attestation entered validation, carried as milliseconds
+// into the attestation's own slot: the same clock basis as the head-vote lines
+// above, so both parse the same way.
 //
-// Off unless --goldfish-vote-ledger is set.
-func (s *Service) logFFGVote(att ethpb.Att, arrived time.Time) {
-	if !features.Get().GoldfishVoteLedger || att == nil {
+// The metric is always on; the ledger line needs --goldfish-vote-ledger.
+func (s *Service) recordFFGVote(att ethpb.Att, arrived time.Time) {
+	if att == nil {
 		return
 	}
 	data := att.GetData()
 	if data == nil || data.Target == nil {
 		return
 	}
+	genesis := s.cfg.clock.GenesisTime()
+	ffgVoteArrival.Observe(msIntoSlot(genesis, data.Slot, arrived))
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
 	seats := uint64(1)
 	if bits := att.GetAggregationBits(); bits != nil {
 		seats = bits.Count()
 	}
-	start := slots.UnsafeStartTime(s.cfg.clock.GenesisTime(), data.Slot)
 	fields := logrus.Fields{
 		"outcome":        "gossip",
 		"attSlot":        data.Slot,
 		"targetRound":    data.Target.Epoch,
 		"committeeIndex": att.GetCommitteeIndex(),
 		"seats":          seats,
-		"arrivedMs":      arrived.Sub(start).Milliseconds(),
+		"arrivedMs":      int64(msIntoSlot(genesis, data.Slot, arrived)),
 		"blockRoot":      fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
 		"dataRoot":       decoupled.VoteLedgerDataRoot(att),
 	}
@@ -96,19 +127,19 @@ func (s *Service) logFFGVote(att ethpb.Att, arrived time.Time) {
 	log.WithFields(fields).Info("FFG vote")
 }
 
-// logFFGAggregate writes one line for one aggregate that passed validation on
-// the aggregate topic. committee is the one the validation already resolved, so
-// the aggregation bits are named without a second lookup. arrived carries the
-// same clock basis as the FFG vote lines: milliseconds into the aggregate's own
+// recordFFGAggregate takes in one aggregate that passed validation on the
+// aggregate topic. committee is the one the validation already resolved, so the
+// aggregation bits are named without a second lookup. arrived carries the same
+// clock basis as the FFG vote lines: milliseconds into the aggregate's own
 // attestation slot.
 //
-// Off unless --goldfish-vote-ledger is set.
-func (s *Service) logFFGAggregate(
+// The metrics are always on; the ledger line needs --goldfish-vote-ledger.
+func (s *Service) recordFFGAggregate(
 	signed ethpb.SignedAggregateAttAndProof,
 	committee []primitives.ValidatorIndex,
 	arrived time.Time,
 ) {
-	if !features.Get().GoldfishVoteLedger || signed == nil {
+	if signed == nil {
 		return
 	}
 	aggregateAndProof := signed.AggregateAttestationAndProof()
@@ -117,11 +148,19 @@ func (s *Service) logFFGAggregate(
 	if data == nil || data.Target == nil {
 		return
 	}
+	genesis := s.cfg.clock.GenesisTime()
+	ffgAggregateArrival.Observe(msIntoSlot(genesis, data.Slot, arrived))
+	if len(committee) > 0 {
+		ffgAggregateSeatFraction.Observe(
+			float64(att.GetAggregationBits().Count()) / float64(len(committee)))
+	}
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
 	indices, err := attestation.AttestingIndices(att, committee)
 	if err != nil {
 		log.WithError(err).Debug("Could not name the seats of an FFG aggregate")
 	}
-	start := slots.UnsafeStartTime(s.cfg.clock.GenesisTime(), data.Slot)
 	log.WithFields(logrus.Fields{
 		"outcome":         "gossip",
 		"attSlot":         data.Slot,
@@ -129,7 +168,7 @@ func (s *Service) logFFGAggregate(
 		"committeeIndex":  att.GetCommitteeIndex(),
 		"aggregatorIndex": aggregateAndProof.GetAggregatorIndex(),
 		"seats":           att.GetAggregationBits().Count(),
-		"arrivedMs":       arrived.Sub(start).Milliseconds(),
+		"arrivedMs":       int64(msIntoSlot(genesis, data.Slot, arrived)),
 		"blockRoot":       fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
 		"dataRoot":        decoupled.VoteLedgerDataRoot(att),
 		"validators":      decoupled.VoteLedgerValidators(indices),
@@ -154,14 +193,13 @@ func (s *Service) logDataColumn(
 	if !features.Get().GoldfishVoteLedger {
 		return
 	}
-	start := slots.UnsafeStartTime(s.cfg.clock.GenesisTime(), column.Slot())
 	log.WithFields(logrus.Fields{
 		"outcome":            outcome,
 		"slot":               column.Slot(),
 		"blockRoot":          fmt.Sprintf("%#x", column.BlockRoot()),
 		"columnIndex":        column.Index(),
 		"kzgCommitmentCount": len(column.Column()),
-		"arrivedMs":          arrived.Sub(start).Milliseconds(),
+		"arrivedMs":          int64(msIntoSlot(s.cfg.clock.GenesisTime(), column.Slot(), arrived)),
 	}).Info("Data column")
 }
 
@@ -179,7 +217,6 @@ func (s *Service) logPTCVote(
 	if !features.Get().GoldfishVoteLedger {
 		return
 	}
-	start := slots.UnsafeStartTime(s.cfg.clock.GenesisTime(), pa.Slot())
 	log.WithFields(logrus.Fields{
 		"outcome":           outcome,
 		"slot":              pa.Slot(),
@@ -187,7 +224,7 @@ func (s *Service) logPTCVote(
 		"validatorIndex":    pa.ValidatorIndex(),
 		"payloadPresent":    pa.PayloadPresent(),
 		"blobDataAvailable": pa.BlobDataAvailable(),
-		"arrivedMs":         arrived.Sub(start).Milliseconds(),
+		"arrivedMs":         int64(msIntoSlot(s.cfg.clock.GenesisTime(), pa.Slot(), arrived)),
 	}).Info("PTC vote")
 }
 
@@ -198,5 +235,5 @@ func (s *Service) dropVote(
 	att *ethpb.AvailableAttestation, reason string, arrived time.Time,
 ) {
 	availableAttDropCount.WithLabelValues(reason).Inc()
-	s.logVote(att, voteDropped, reason, arrived)
+	s.recordVote(att, voteDropped, reason, arrived)
 }

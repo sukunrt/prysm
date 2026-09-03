@@ -78,6 +78,7 @@ go_library(
         "validate_sync_contribution_proof.go",
         "validate_voluntary_exit.go",
         "vote_ledger.go",
+        "vote_seats.go",
     ],
     importpath = "github.com/OffchainLabs/prysm/v7/beacon-chain/sync",
     visibility = [

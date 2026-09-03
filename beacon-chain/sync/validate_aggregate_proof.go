@@ -142,7 +142,7 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 		return pubsub.ValidationIgnore, nil
 	}
 
-	s.logFFGAggregate(m, committee, receivedTime)
+	s.recordFFGAggregate(m, committee, receivedTime)
 
 	msg.ValidatorData = m
 

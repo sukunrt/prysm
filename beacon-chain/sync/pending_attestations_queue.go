@@ -525,7 +525,7 @@ func (s *Service) processAvailableAttestation(ctx context.Context, att *ethpb.Av
 		log.WithError(err).Debug("Could not record pending available attestation")
 		return
 	}
-	s.logVote(att, voteReplayed, "", arrived)
+	s.recordVote(att, voteReplayed, "", arrived)
 	if err := s.cfg.p2p.Broadcast(ctx, att); err != nil {
 		log.WithError(err).Debug("Could not broadcast pending available attestation")
 	}
