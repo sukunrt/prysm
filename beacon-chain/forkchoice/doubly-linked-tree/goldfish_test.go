@@ -1,16 +1,19 @@
 package doublylinkedtree
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	forkchoicetypes "github.com/OffchainLabs/prysm/v7/beacon-chain/forkchoice/types"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
+	logTest "github.com/sirupsen/logrus/hooks/test"
 )
 
 // counterValue reads a package level prometheus counter, which is process wide
@@ -740,4 +743,31 @@ func TestGoldfish_RoundStartProposalMustDescendFromTheStableRoot(t *testing.T) {
 	head, err := f.Head(t.Context())
 	require.NoError(t, err)
 	require.Equal(t, rootB, head)
+}
+
+func TestGoldfishNewSlot_WritesTheSummaryLine(t *testing.T) {
+	hook := logTest.NewGlobal()
+	f := setupGoldfish(t, 0, 0)
+	ctx := context.Background()
+	f.store.goldfishVotes.insert(1, 7, goldfishVote{root: [32]byte{'a'}, seats: 3})
+	f.store.goldfishVotes.insert(1, 8, goldfishVote{root: [32]byte{'a'}, seats: 2})
+
+	require.NoError(t, f.NewSlot(ctx, 2))
+	entry := hook.LastEntry()
+	require.NotNil(t, entry)
+	require.Equal(t, "Goldfish votes", entry.Message)
+	require.Equal(t, decoupled.SummaryPurpose, entry.Data["purpose"])
+	require.Equal(t, primitives.Slot(1), entry.Data["slot"])
+	require.Equal(t, uint64(2), entry.Data["votes"])
+	require.Equal(t, uint64(5), entry.Data["seats"])
+	require.Equal(t, uint64(decoupled.AvailableAttestationCommitteeSize), entry.Data["committeeSeats"])
+
+	hook.Reset()
+	require.NoError(t, f.NewSlot(ctx, 3))
+	entry = hook.LastEntry()
+	require.NotNil(t, entry)
+	require.Equal(t, "Goldfish votes", entry.Message)
+	require.Equal(t, primitives.Slot(2), entry.Data["slot"])
+	require.Equal(t, uint64(0), entry.Data["votes"])
+	require.Equal(t, uint64(0), entry.Data["seats"])
 }

@@ -14,6 +14,7 @@ go_library(
         "decode_pubsub.go",
         "doc.go",
         "error.go",
+        "ffg_summary.go",
         "fork_watcher.go",
         "fuzz_exports.go",  # keep
         "late_payload_request.go",
@@ -194,6 +195,7 @@ go_test(
         "data_columns_reconstruct_test.go",
         "decode_pubsub_test.go",
         "error_test.go",
+        "ffg_summary_test.go",
         "fork_watcher_test.go",
         "kzg_batch_verifier_test.go",
         "late_payload_request_test.go",

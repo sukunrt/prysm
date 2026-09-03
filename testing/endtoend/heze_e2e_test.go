@@ -79,6 +79,7 @@ func TestEndToEnd_HezeGenesis(t *testing.T) {
 			ev.AttestationsInEveryRound,
 			ev.FinalizationOccursInRounds(3),
 			ev.JustificationAdvancesEveryRound,
+			ev.SummaryLogLines,
 		),
 	)
 	r.run()
@@ -858,6 +859,28 @@ func TestEndToEnd_HezeGenesisShort(t *testing.T) {
 		},
 		withoutEvaluators(hezeDroppedEvaluators...),
 		withEvaluators(ev.ChainProducesBlocks, ev.AvailableAttestationsFlow),
+	)
+	r.run()
+}
+
+// TestEndToEnd_HezeGenesisSummaryLog is the Short run with the per-vote ledger
+// on. It proves the four per-slot summary lines are written, parse, and agree
+// with the ledger they are meant to replace.
+func TestEndToEnd_HezeGenesisSummaryLog(t *testing.T) {
+	cfg := params.E2EMainnetTestConfig()
+	cfg = types.InitForkCfg(version.Heze, version.Heze, cfg)
+	cfg.SlotsPerRound = 8
+
+	r := e2eMinimal(t, cfg,
+		types.WithEpochs(1),
+		types.WithGoldfishVoteLedger(),
+		func(c *types.E2EConfig) {
+			c.TestSync = false
+			c.TestDeposits = false
+			c.TestFeature = false
+		},
+		withoutEvaluators(hezeDroppedEvaluators...),
+		withEvaluators(ev.ChainProducesBlocks, ev.AvailableAttestationsFlow, ev.SummaryLogLines),
 	)
 	r.run()
 }

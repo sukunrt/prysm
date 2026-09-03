@@ -10,12 +10,12 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/gloas"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/execution"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
-	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
 	payloadattribute "github.com/OffchainLabs/prysm/v7/consensus-types/payload-attribute"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	enginev1 "github.com/OffchainLabs/prysm/v7/proto/engine/v1"
@@ -198,39 +198,31 @@ func (s *Service) ReceiveExecutionPayloadEnvelope(ctx context.Context, signed in
 // traverses gossip — so the line is one per envelope, not one per route.
 //
 // arrived is milliseconds into the envelope's own slot, the same clock basis as
-// the vote ledger's lines, so a run can ask when a slot's payload landed
+// the other summary lines, so a run can ask when a slot's payload landed
 // relative to the votes cast on it. payloadBytes is the SSZ-encoded size of the
 // execution payload, and blobCount comes from the bid the block committed to.
-//
-// Off unless --goldfish-vote-ledger is set.
 func (s *Service) logPayloadEnvelope(
 	envelope interfaces.ROExecutionPayloadEnvelope,
 	payload interfaces.ExecutionData,
 	st state.BeaconState,
 	arrived time.Time,
 ) {
-	if !features.Get().GoldfishVoteLedger {
-		return
-	}
 	txs, err := payload.Transactions()
 	if err != nil {
 		log.WithError(err).Debug("Could not read the transactions of a payload envelope")
 	}
-	root := envelope.BeaconBlockRoot()
 	slotStart := slots.UnsafeStartTime(s.genesisTime, envelope.Slot())
-	fields := logrus.Fields{
-		"slot":         envelope.Slot(),
-		"blockRoot":    fmt.Sprintf("%#x", root),
-		"builderIndex": envelope.BuilderIndex(),
-		"arrivedMs":    arrived.Sub(slotStart).Milliseconds(),
-		"txCount":      len(txs),
-		"payloadBytes": payload.SizeSSZ(),
-		"gasUsed":      payload.GasUsed(),
-	}
+	fields := decoupled.SummaryFields(envelope.Slot())
+	fields["blockRoot"] = decoupled.SummaryRoot(envelope.BeaconBlockRoot())
+	fields["builderIndex"] = envelope.BuilderIndex()
+	fields["arrivedMs"] = arrived.Sub(slotStart).Milliseconds()
+	fields["txCount"] = len(txs)
+	fields["payloadBytes"] = payload.SizeSSZ()
+	fields["gasUsed"] = payload.GasUsed()
 	if bid, err := st.LatestExecutionPayloadBid(); err == nil && bid != nil {
 		fields["blobCount"] = len(bid.BlobKzgCommitments())
 	}
-	log.WithFields(fields).Info("Payload envelope")
+	log.WithFields(fields).Info("Payload received")
 }
 
 func (s *Service) setHeadFull(root [32]byte) interfaces.ReadOnlySignedBeaconBlock {

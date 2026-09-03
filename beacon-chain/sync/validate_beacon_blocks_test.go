@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/OffchainLabs/go-bitfield"
 	mock "github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain/testing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed"
 	opfeed "github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/operation"
@@ -35,6 +36,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
@@ -2318,4 +2320,32 @@ func TestBlockVerifyingState_SameEpochAsParent(t *testing.T) {
 	// Verify that the returned state is at slot 1 (parent state slot)
 	// This confirms that the branch at line 361 was taken (returning parentState directly)
 	assert.Equal(t, primitives.Slot(1), result.Slot())
+}
+
+func TestLogBlockReceived(t *testing.T) {
+	hook := logTest.NewGlobal()
+	b := util.NewBeaconBlock()
+	b.Block.Slot = 12
+	b.Block.ProposerIndex = 77
+	b.Block.Body.Attestations = []*ethpb.Attestation{
+		util.HydrateAttestation(&ethpb.Attestation{AggregationBits: bitfield.Bitlist{0b1101}}),
+		util.HydrateAttestation(&ethpb.Attestation{AggregationBits: bitfield.Bitlist{0b1011}}),
+	}
+	blk, err := blocks.NewSignedBeaconBlock(b)
+	require.NoError(t, err)
+	root := [32]byte{0x1a, 0x2b, 0x3c, 0x4d}
+
+	logBlockReceived(blk, root, 412*time.Millisecond, 9*time.Millisecond)
+	entry := hook.LastEntry()
+	require.NotNil(t, entry)
+	require.Equal(t, "Block received", entry.Message)
+	require.Equal(t, decoupled.SummaryPurpose, entry.Data["purpose"])
+	require.Equal(t, primitives.Slot(12), entry.Data["slot"])
+	require.Equal(t, "0x1a2b3c4d", entry.Data["blockRoot"])
+	require.Equal(t, primitives.ValidatorIndex(77), entry.Data["proposerIndex"])
+	require.Equal(t, int64(412), entry.Data["arrivedMs"])
+	require.Equal(t, int64(9), entry.Data["validationMs"])
+	require.Equal(t, blk.SizeSSZ(), entry.Data["bytes"])
+	require.Equal(t, 2, entry.Data["attestations"])
+	require.Equal(t, uint64(4), entry.Data["ffgSeats"])
 }

@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 	"time"
 
@@ -13,12 +12,12 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/execution"
 	mockExecution "github.com/OffchainLabs/prysm/v7/beacon-chain/execution/testing"
 	state_native "github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native"
-	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	enginev1 "github.com/OffchainLabs/prysm/v7/proto/engine/v1"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
@@ -301,7 +300,7 @@ func countStateEventsByType(ch chan *feed.Event) map[feed.EventType]int {
 	}
 }
 
-func TestLogPayloadEnvelope_QuietUnlessTheLedgerIsOn(t *testing.T) {
+func TestLogPayloadEnvelope_WrittenWithoutTheLedger(t *testing.T) {
 	hook := logTest.NewGlobal()
 	st, err := util.NewBeaconStateGloas(func(s *ethpb.BeaconStateGloas) error {
 		s.LatestExecutionPayloadBid.BlobKzgCommitments = [][]byte{
@@ -327,19 +326,15 @@ func TestLogPayloadEnvelope_QuietUnlessTheLedgerIsOn(t *testing.T) {
 
 	s := &Service{genesisTime: time.Now()}
 	s.logPayloadEnvelope(envelope, payload, st, time.Now())
-	require.Equal(t, 0, len(hook.AllEntries()))
-
-	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
-	defer reset()
-	s.logPayloadEnvelope(envelope, payload, st, time.Now())
 	require.Equal(t, 1, len(hook.AllEntries()))
 	entry := hook.LastEntry()
-	require.Equal(t, "Payload envelope", entry.Message)
+	require.Equal(t, "Payload received", entry.Message)
+	require.Equal(t, decoupled.SummaryPurpose, entry.Data["purpose"])
 	require.Equal(t, primitives.Slot(6), entry.Data["slot"])
 	require.Equal(t, primitives.BuilderIndex(3), entry.Data["builderIndex"])
 	require.Equal(t, 2, entry.Data["txCount"])
 	require.Equal(t, payload.SizeSSZ(), entry.Data["payloadBytes"])
 	require.Equal(t, uint64(21000), entry.Data["gasUsed"])
 	require.Equal(t, 2, entry.Data["blobCount"])
-	require.Equal(t, fmt.Sprintf("%#x", envelope.BeaconBlockRoot()), entry.Data["blockRoot"])
+	require.Equal(t, decoupled.SummaryRoot(envelope.BeaconBlockRoot()), entry.Data["blockRoot"])
 }

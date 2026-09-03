@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/OffchainLabs/prysm/v7/api"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
@@ -111,6 +112,14 @@ func WithStateDiff() E2EConfigOpt {
 			"--enable-state-diff",
 			"--state-diff-exponents=6,5", // Small exponents for quick testing
 		)
+	}
+}
+
+// WithGoldfishVoteLedger turns on the per-vote ledger lines on every beacon
+// node, so a run can cross-check the summary lines against them.
+func WithGoldfishVoteLedger() E2EConfigOpt {
+	return func(cfg *E2EConfig) {
+		cfg.BeaconFlags = append(cfg.BeaconFlags, "--"+features.GoldfishVoteLedger.Name)
 	}
 }
 

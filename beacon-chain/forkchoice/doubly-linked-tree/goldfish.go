@@ -101,6 +101,13 @@ func (g *goldfishVotes) seats(slot primitives.Slot) uint64 {
 	return total
 }
 
+// voters returns the number of validators that hold a vote for the given slot.
+// One gossip message carries one validator's seats, so this counts the
+// validators the node heard from.
+func (g *goldfishVotes) voters(slot primitives.Slot) uint64 {
+	return uint64(len(g.votes[slot]))
+}
+
 // goldfishProposals records the round start blocks that arrived during their
 // own round. It is the stub of the spec's store.round_proposals and
 // store.round_proposal_conflicts: the finality gadget that would distinguish a
@@ -205,14 +212,19 @@ func goldfishActiveAt(slot primitives.Slot) bool {
 	return slots.ToEpoch(slot) >= params.BeaconConfig().HezeForkEpoch
 }
 
-// goldfishNewSlot prunes the vote store and reports the share of the committee
-// that was heard from for the slot that just ended. Called from NewSlot, that
-// is at the slot boundary, which is exactly the "before the next slot start"
-// cutoff the metric names.
+// goldfishNewSlot prunes the vote store and reports the votes heard for the slot
+// that just ended, as a metric and as the Goldfish votes summary line. Called
+// from NewSlot, that is at the slot boundary, which is exactly the "before the
+// next slot start" cutoff. A vote that arrives after the tick is not counted.
 func (s *Store) goldfishNewSlot(slot primitives.Slot) {
 	if slot > 0 {
 		seats := s.goldfishVotes.seats(slot - 1)
 		goldfishSeatFraction.Set(float64(seats) / float64(decoupled.AvailableAttestationCommitteeSize))
+		fields := decoupled.SummaryFields(slot - 1)
+		fields["votes"] = s.goldfishVotes.voters(slot - 1)
+		fields["seats"] = seats
+		fields["committeeSeats"] = uint64(decoupled.AvailableAttestationCommitteeSize)
+		log.WithFields(fields).Info("Goldfish votes")
 	}
 	s.goldfishVotes.prune(slot)
 	s.goldfishProposals.prune(slots.RoundAt(slot))

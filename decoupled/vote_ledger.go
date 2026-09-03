@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/OffchainLabs/prysm/v7/config/features"
+	"github.com/OffchainLabs/prysm/v7/config/params"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
@@ -88,4 +90,25 @@ func VoteLedgerRootPrefix(root string) string {
 		return root[:8]
 	}
 	return root
+}
+
+// SummaryPurpose is the value of the purpose field on every per-slot summary
+// line. One grep on it pulls all four lines out of a node's log.
+const SummaryPurpose = "goldfish-summary"
+
+// SummaryFields is the field set every summary line starts from.
+func SummaryFields(slot primitives.Slot) logrus.Fields {
+	return logrus.Fields{"purpose": SummaryPurpose, "slot": slot}
+}
+
+// SummaryActive reports whether the given slot is at or after the Heze fork.
+func SummaryActive(slot primitives.Slot) bool {
+	return slots.ToEpoch(slot) >= params.BeaconConfig().HezeForkEpoch
+}
+
+// SummaryRoot renders the first 4 bytes of a root with the 0x prefix. Every
+// summary line names roots this way, so the block and the payload line of one
+// slot join on blockRoot.
+func SummaryRoot(root [32]byte) string {
+	return fmt.Sprintf("%#x", root[:4])
 }

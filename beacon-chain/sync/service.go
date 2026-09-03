@@ -214,6 +214,7 @@ type Service struct {
 	selfBuildSigFailSlot                 primitives.Slot
 	pendingPayloadAttestations           map[[32]byte][]pendingPayloadAttestation
 	pendingPayloadAttestationLock        sync.RWMutex
+	ffgVotes                             *ffgVoteCounters
 }
 
 // NewService initializes new regular sync service.
@@ -234,6 +235,7 @@ func NewService(ctx context.Context, opts ...Option) *Service {
 		proposerPreferencesCache:   cache.NewProposerPreferencesCache(),
 		pendingPayloadEnvelopes:    make(map[[32]byte]map[uint64]*ethpb.SignedExecutionPayloadEnvelope),
 		pendingPayloadAttestations: make(map[[32]byte][]pendingPayloadAttestation),
+		ffgVotes:                   newFFGVoteCounters(),
 	}
 
 	for _, opt := range opts {
@@ -552,6 +554,10 @@ func (s *Service) startDiscoveryAndSubscriptions() {
 
 	// Start the fork watcher.
 	go s.p2pHandlerControlLoop()
+
+	// waitForChainStart has set the clock. NewSlotTickerWithOffset panics on a
+	// zero genesis time, so this cannot start from Start().
+	go s.runFFGVoteSummary()
 }
 
 func (s *Service) writeErrorResponseToStream(responseCode byte, reason string, stream libp2pcore.Stream) {

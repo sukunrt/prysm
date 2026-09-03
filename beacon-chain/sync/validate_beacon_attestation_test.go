@@ -952,10 +952,11 @@ func TestService_validateUnaggregatedAttTopic_SubnetMatch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := s.validateUnaggregatedAttTopic(ctx, att, st, tt.topic)
+			got, res, err := s.validateUnaggregatedAttTopic(ctx, att, st, tt.topic)
 			require.Equal(t, tt.want, res)
 			if tt.want == pubsub.ValidationAccept {
 				require.NoError(t, err)
+				require.Equal(t, subnet, got)
 			}
 		})
 	}

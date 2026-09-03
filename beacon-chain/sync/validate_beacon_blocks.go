@@ -20,6 +20,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/consensus-types/interfaces"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/rand"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
@@ -242,22 +243,17 @@ func (s *Service) validateBeaconBlockPubSub(ctx context.Context, pid peer.ID, ms
 	msg.ValidatorData = blkPb // Used in downstream subscriber
 
 	// Log the arrival time of the accepted block
-	graffiti := blk.Block().Body().Graffiti()
 	startTime, err := slots.StartTime(genesisTime, blk.Block().Slot())
-	logFields := logrus.Fields{
-		"blockSlot":     blk.Block().Slot(),
-		"proposerIndex": blk.Block().ProposerIndex(),
-		"graffiti":      string(graffiti[:]),
-	}
 	if err != nil {
-		log.WithError(err).WithFields(logFields).Warn("Received block, could not report timing information.")
+		log.WithError(err).WithFields(logrus.Fields{
+			"blockSlot":     blk.Block().Slot(),
+			"proposerIndex": blk.Block().ProposerIndex(),
+		}).Warn("Received block, could not report timing information.")
 		return pubsub.ValidationAccept, nil
 	}
 	sinceSlotStartTime := receivedTime.Sub(startTime)
 	validationTime := prysmTime.Now().Sub(receivedTime)
-	logFields["sinceSlotStartTime"] = sinceSlotStartTime
-	logFields["validationTime"] = validationTime
-	log.WithFields(logFields).Debug("Received block")
+	logBlockReceived(blk, blockRoot, sinceSlotStartTime, validationTime)
 
 	blockArrivalGossipSummary.Observe(float64(sinceSlotStartTime.Milliseconds()))
 	blockVerificationGossipSummary.Observe(float64(validationTime.Milliseconds()))
@@ -272,6 +268,32 @@ func (s *Service) validateBeaconBlockPubSub(ctx context.Context, pid peer.ID, ms
 	}
 
 	return pubsub.ValidationAccept, nil
+}
+
+// logBlockReceived writes the summary line of a block that arrived on gossip and
+// passed validation. The node's own proposal enters over RPC and gets no line;
+// Synced new block already covers the import for every route.
+func logBlockReceived(
+	blk interfaces.ReadOnlySignedBeaconBlock,
+	root [32]byte,
+	arrived, validation time.Duration,
+) {
+	atts := blk.Block().Body().Attestations()
+	// A validator holds one position per slot by design, so the bit sum over the
+	// block's attestations is the number of validators it carries an FFG vote for.
+	ffgSeats := uint64(0)
+	for _, att := range atts {
+		ffgSeats += att.GetAggregationBits().Count()
+	}
+	fields := decoupled.SummaryFields(blk.Block().Slot())
+	fields["blockRoot"] = decoupled.SummaryRoot(root)
+	fields["proposerIndex"] = blk.Block().ProposerIndex()
+	fields["arrivedMs"] = arrived.Milliseconds()
+	fields["validationMs"] = validation.Milliseconds()
+	fields["bytes"] = blk.SizeSSZ()
+	fields["attestations"] = len(atts)
+	fields["ffgSeats"] = ffgSeats
+	log.WithFields(fields).Info("Block received")
 }
 
 func (s *Service) validateBeaconBlock(ctx context.Context, blk interfaces.ReadOnlySignedBeaconBlock, blockRoot [32]byte) error {

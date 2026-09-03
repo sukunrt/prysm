@@ -146,7 +146,7 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 		return pubsub.ValidationIgnore, err
 	}
 
-	validationRes, err := s.validateUnaggregatedAttTopic(ctx, att, preState, *msg.Topic)
+	subnet, validationRes, err := s.validateUnaggregatedAttTopic(ctx, att, preState, *msg.Topic)
 	if validationRes != pubsub.ValidationAccept {
 		return validationRes, wrapAttestationError(err, att)
 	}
@@ -241,28 +241,30 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 	msg.ValidatorData = attForValidation
 
 	s.recordFFGVote(att, start)
+	s.countFFGVote(att, subnet)
 
 	return pubsub.ValidationAccept, nil
 }
 
-// This validates beacon unaggregated attestation has correct topic string.
-func (s *Service) validateUnaggregatedAttTopic(ctx context.Context, a eth.Att, bs state.ReadOnlyBeaconState, t string) (pubsub.ValidationResult, error) {
+// This validates beacon unaggregated attestation has correct topic string, and
+// returns the subnet the attestation belongs to.
+func (s *Service) validateUnaggregatedAttTopic(ctx context.Context, a eth.Att, bs state.ReadOnlyBeaconState, t string) (uint64, pubsub.ValidationResult, error) {
 	ctx, span := trace.StartSpan(ctx, "sync.validateUnaggregatedAttTopic")
 	defer span.End()
 
 	_, valCount, result, err := s.validateCommitteeIndexAndCount(ctx, a, bs)
 	if result != pubsub.ValidationAccept {
-		return result, err
+		return 0, result, err
 	}
 	subnet := helpers.ComputeSubnetForAttestation(valCount, a)
 	format := p2p.GossipTypeMapping[reflect.TypeFor[*eth.Attestation]()]
 	digest := params.ForkDigest(slots.ToEpoch(a.GetData().Slot))
 	expected := fmt.Sprintf(format, digest, subnet) + s.cfg.p2p.Encoding().ProtocolSuffix()
 	if t != expected {
-		return pubsub.ValidationReject, errors.New("attestation's subnet does not match with pubsub topic")
+		return 0, pubsub.ValidationReject, errors.New("attestation's subnet does not match with pubsub topic")
 	}
 
-	return pubsub.ValidationAccept, nil
+	return subnet, pubsub.ValidationAccept, nil
 }
 
 func (s *Service) validateCommitteeIndexAndCount(
