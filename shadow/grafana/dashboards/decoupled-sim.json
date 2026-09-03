@@ -1,0 +1,70 @@
+{
+  "uid": "decoupled-sim",
+  "title": "Decoupled Shadow Sim",
+  "timezone": "utc",
+  "time": { "from": "2000-01-01T00:00:00Z", "to": "2000-01-01T00:25:00Z" },
+  "refresh": "",
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Head slot",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "beacon_head_slot", "legendFormat": "{{instance}}" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Finalized epoch",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "beacon_finalized_epoch", "legendFormat": "{{instance}}" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Connected libp2p peers",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "connected_libp2p_peers", "legendFormat": "{{instance}}" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Gossip beacon block verification p95 (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, instance) (rate(gossip_beacon_block_verification_milliseconds_bucket[1m])))",
+          "legendFormat": "{{instance}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Payload envelope processing p95 (s)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, instance) (rate(beacon_execution_payload_envelope_processing_duration_seconds_bucket[1m])))",
+          "legendFormat": "{{instance}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Attestations in received blocks",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "targets": [
+        { "expr": "beacon_attestations_in_block", "legendFormat": "{{instance}}" }
+      ]
+    }
+  ]
+}

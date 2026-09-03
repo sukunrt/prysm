@@ -109,6 +109,8 @@ the patches live as commits on
 `github.com/sukunrt/ethereum-genesis-generator`, branch `decoupled`
 (forked from v6.2.1), which `build-images.sh` builds straight from the git
 URL; `Dockerfile.genesis-gen` only adds this tree's `prysmctl` on top.
+The Shadow harness (`shadow/`) runs the same image, so one build serves
+both harnesses.
 
 ### Heze is CL-only
 
