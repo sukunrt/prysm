@@ -48,6 +48,10 @@ kurtosis service logs decoupled cl-1-prysm-geth --follow
 `network_params.yaml` is the 5-node baseline (250 validators). Node count and
 keys per node are free; keep the total at 128 or more.
 
+At 10 or more participants the package zero-pads names: `cl-01-prysm-geth`,
+spamoor client `01-geth-prysm`. The spamoor `client_group` values must
+follow, or every arm logs "no clients available" and blocks stay empty.
+
 ## Drive the execution layer
 
 A run on empty payloads has no data columns to carry, so the nodes have

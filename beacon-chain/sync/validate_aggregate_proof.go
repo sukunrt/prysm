@@ -20,6 +20,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	prysmTime "github.com/OffchainLabs/prysm/v7/time"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -104,10 +105,20 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 		return pubsub.ValidationReject, errors.New("bad block referenced in attestation data")
 	}
 
+	// The pool holds the Electra form, so the seen check must query with it.
+	poolAgg := aggregate
+	if aggregate.Version() >= version.Electra {
+		electra, ok := ethpb.AttestationElectraFromAtt(aggregate)
+		if !ok {
+			return pubsub.ValidationReject, errors.Errorf("invalid aggregate type: %T", aggregate)
+		}
+		poolAgg = electra
+	}
+
 	if features.Get().EnableExperimentalAttestationPool {
 		// It is possible that some aggregate in the pool already covers all bits
 		// of this aggregate, in which case we can ignore it.
-		isRedundant, err := s.cfg.attestationCache.AggregateIsRedundant(aggregate)
+		isRedundant, err := s.cfg.attestationCache.AggregateIsRedundant(poolAgg)
 		if err != nil {
 			tracing.AnnotateError(span, err)
 			return pubsub.ValidationIgnore, err
@@ -117,7 +128,7 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 		}
 	} else {
 		// Verify aggregate attestation has not already been seen via aggregate gossip, within a block, or through the creation locally.
-		seen, err := s.cfg.attPool.HasAggregatedAttestation(aggregate)
+		seen, err := s.cfg.attPool.HasAggregatedAttestation(poolAgg)
 		if err != nil {
 			tracing.AnnotateError(span, err)
 			return pubsub.ValidationIgnore, err

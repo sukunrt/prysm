@@ -165,7 +165,7 @@ spamoor_params:
         # 16 KiB calldata costs 21000 + 64*16384 = 1069576 gas; ~3% headroom.
         gas_limit: 1100000
         data: random:16384
-        client_group: 1-geth-prysm
+        client_group: 01-geth-prysm
     - name: blobs-public
       scenario: blobs
       config:
@@ -173,7 +173,7 @@ spamoor_params:
         sidecars: 3
         max_pending: 6
         max_wallets: 10
-        client_group: 1-geth-prysm
+        client_group: 01-geth-prysm
     - name: blobs-private
       scenario: blobs
       config:
@@ -181,10 +181,15 @@ spamoor_params:
         sidecars: 3
         max_pending: 6
         max_wallets: 10
-        client_group: 9-geth-prysm
+        client_group: 09-geth-prysm
+
+dora_params:
+  # The dora fork, github.com/sukunrt/dora branch decoupled; shows rounds.
+  image: prysm-dora:local
 
 additional_services:
   - spamoor
+  - dora
 
 wait_for_finalization: false
 global_log_level: info

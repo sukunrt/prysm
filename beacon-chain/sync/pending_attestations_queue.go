@@ -359,8 +359,16 @@ func (s *Service) fallbackToIndividualVerification(
 	return verified
 }
 
-// saveAttestation saves an attestation to the appropriate pool.
+// saveAttestation saves an attestation to the appropriate pool. The pool and the seen-bits cache
+// key on the attestation version, so every entry is stored in the Electra form.
 func (s *Service) saveAttestation(att ethpb.Att) error {
+	if att.Version() >= version.Electra {
+		electra, ok := ethpb.AttestationElectraFromAtt(att)
+		if !ok {
+			return fmt.Errorf("attestation cannot be converted to Electra, type=%T", att)
+		}
+		att = electra
+	}
 	if features.Get().EnableExperimentalAttestationPool {
 		return s.cfg.attestationCache.Add(att)
 	}

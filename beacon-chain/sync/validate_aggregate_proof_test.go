@@ -826,3 +826,80 @@ func Test_SetAggregatorIndexRoundSeen(t *testing.T) {
 	require.Equal(t, false, r.hasSeenAggregatorIndexRound(round+1, aggIndex))
 	require.Equal(t, true, r.setAggregatorIndexRoundSeen(round+1, aggIndex))
 }
+
+func TestValidateAggregateAndProof_GloasAggregateSeenAsElectra(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig()
+	cfg.FuluForkEpoch = 0
+	cfg.GloasForkEpoch = 0
+	params.OverrideBeaconConfig(cfg)
+	params.BeaconConfig().InitializeForkSchedule()
+
+	db := dbtest.SetupDB(t)
+	p := p2ptest.NewTestP2P(t)
+
+	beaconState, err := util.NewBeaconState()
+	require.NoError(t, err)
+
+	b := util.NewBeaconBlock()
+	util.SaveBlock(t, t.Context(), db, b)
+	root, err := b.Block.HashTreeRoot()
+	require.NoError(t, err)
+
+	aggBits := bitfield.NewBitlist(3)
+	aggBits.SetBitAt(0, true)
+	aggBits.SetBitAt(1, true)
+	cb := primitives.NewAttestationCommitteeBits()
+	cb.SetBitAt(0, true)
+	att := util.HydrateAttestationGloas(&ethpb.AttestationGloas{
+		Data: &ethpb.AttestationData{
+			Slot:            1,
+			BeaconBlockRoot: root[:],
+			Source:          &ethpb.Checkpoint{Epoch: 0, Root: bytesutil.PadTo([]byte("hello-world"), 32)},
+			Target:          &ethpb.Checkpoint{Epoch: 0, Root: bytesutil.PadTo([]byte("hello-world"), 32)},
+		},
+		AggregationBits: aggBits,
+		CommitteeBits:   cb,
+	})
+	signedAggregateAndProof := &ethpb.SignedAggregateAttestationAndProofGloas{
+		Message: &ethpb.AggregateAttestationAndProofGloas{
+			Aggregate:      att,
+			SelectionProof: make([]byte, fieldparams.BLSSignatureLength),
+		},
+		Signature: make([]byte, fieldparams.BLSSignatureLength),
+	}
+
+	require.NoError(t, beaconState.SetGenesisTime(time.Now()))
+	chain := &mock.ChainService{Genesis: time.Now().Add(-oneEpoch()), State: beaconState}
+	r := &Service{
+		cfg: &config{
+			attPool:             attestations.NewPool(),
+			p2p:                 p,
+			beaconDB:            db,
+			initialSync:         &mockSync.Sync{IsSyncing: false},
+			chain:               chain,
+			clock:               startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
+			attestationNotifier: (&mock.ChainService{}).OperationNotifier(),
+		},
+		seenAggregatedAttestationCache: lruwrpr.New(10),
+		blkRootToPendingAtts:           make(map[[32]byte][]any),
+	}
+	r.initCaches()
+
+	electra, ok := ethpb.AttestationElectraFromAtt(att)
+	require.Equal(t, true, ok)
+	require.NoError(t, r.cfg.attPool.SaveAggregatedAttestation(electra))
+
+	buf := new(bytes.Buffer)
+	_, err = p.Encoding().EncodeGossip(buf, signedAggregateAndProof)
+	require.NoError(t, err)
+
+	topic := p2p.GossipTypeMapping[reflect.TypeFor[*ethpb.SignedAggregateAttestationAndProof]()]
+	topic = r.addDigestToTopic(topic, r.currentForkDigest())
+	msg := &pubsub.Message{Message: &pubsubpb.Message{Data: buf.Bytes(), Topic: &topic}}
+
+	res, err := r.validateAggregateAndProof(t.Context(), "", msg)
+	require.NoError(t, err)
+	assert.Equal(t, pubsub.ValidationIgnore, res, "Gloas aggregate was not matched to the pool")
+	assert.Equal(t, 0, len(r.blkRootToPendingAtts), "Aggregate was processed after the seen check")
+}

@@ -872,3 +872,39 @@ func TestKV_SeenAggregated_Cache(t *testing.T) {
 		assert.Equal(t, true, has, "Remaining attestation should still be found")
 	})
 }
+
+func TestKV_Aggregated_DeleteGloasAggregatedAttestation(t *testing.T) {
+	newAtts := func() (*ethpb.AttestationGloas, *ethpb.AttestationElectra) {
+		cb := primitives.NewAttestationCommitteeBits()
+		cb.SetBitAt(0, true)
+		gloas := util.HydrateAttestationGloas(&ethpb.AttestationGloas{
+			Data:            &ethpb.AttestationData{Slot: 2},
+			AggregationBits: bitfield.Bitlist{0b1101},
+			CommitteeBits:   cb,
+		})
+		dummy := util.HydrateAttestationElectra(&ethpb.AttestationElectra{
+			Data:            &ethpb.AttestationData{Slot: 2},
+			AggregationBits: bitfield.Bitlist{0b1111},
+			CommitteeBits:   cb,
+		})
+		return gloas, dummy
+	}
+
+	t.Run("electra form is deleted", func(t *testing.T) {
+		cache := NewAttCaches()
+		gloas, dummy := newAtts()
+		electra, ok := ethpb.AttestationElectraFromAtt(gloas)
+		require.Equal(t, true, ok)
+		require.NoError(t, cache.SaveAggregatedAttestation(electra))
+		require.NoError(t, cache.DeleteAggregatedAttestation(dummy))
+		assert.Equal(t, 0, cache.AggregatedAttestationCount())
+	})
+
+	t.Run("gloas form is not deleted", func(t *testing.T) {
+		cache := NewAttCaches()
+		gloas, dummy := newAtts()
+		require.NoError(t, cache.SaveAggregatedAttestation(gloas))
+		require.NoError(t, cache.DeleteAggregatedAttestation(dummy))
+		assert.Equal(t, 1, cache.AggregatedAttestationCount())
+	})
+}

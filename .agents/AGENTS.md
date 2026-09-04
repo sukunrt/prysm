@@ -34,3 +34,14 @@ Prysm implements the [Ethereum consensus specs](https://github.com/ethereum/cons
 - Every PR needs a changelog fragment: `changelog/<github_user>_<branch_name>.md` (managed by `unclog`).
 - Keep comments short — one line, no multi-line explanations.
 - Verify tests you add or modify with `/test`.
+
+## kurtosis
+- With 10 or more participants ethereum-package zero-pads names: services are
+  `cl-01-prysm-geth`, `el-01-geth-prysm`; spamoor clients are `01-geth-prysm`.
+  Below 10 they are `cl-1-prysm-geth`, `1-geth-prysm`. A `client_group` that
+  matches no client makes spamoor log "no clients available" and every block
+  is empty. Read the names from the enclave (`kurtosis enclave inspect`,
+  spamoor `/api/clients`) before writing them.
+- A run is not verified until one slot is checked end to end: transactions
+  in the EL block, attestations and `payload_attestations` in the beacon
+  block, FFG aggregates and PTC votes in the beacon log. Report the numbers.

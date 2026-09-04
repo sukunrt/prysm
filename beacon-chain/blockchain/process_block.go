@@ -600,12 +600,23 @@ func (s *Service) handleBlockAttestations(ctx context.Context, blk interfaces.Re
 				payloadStatus = a.GetData().CommitteeIndex == 1
 			}
 			s.cfg.ForkChoiceStore.ProcessAttestation(ctx, indices, r, a.GetData().Slot, payloadStatus)
-		} else if features.Get().EnableExperimentalAttestationPool {
-			if err = s.cfg.AttestationCache.Add(a); err != nil {
+		} else {
+			// The pool keys on the attestation version, so store the Electra form.
+			poolAtt := a
+			if a.Version() >= version.Electra {
+				electra, ok := ethpb.AttestationElectraFromAtt(a)
+				if !ok {
+					return fmt.Errorf("attestation cannot be converted to Electra, type=%T", a)
+				}
+				poolAtt = electra
+			}
+			if features.Get().EnableExperimentalAttestationPool {
+				if err = s.cfg.AttestationCache.Add(poolAtt); err != nil {
+					return err
+				}
+			} else if err = s.cfg.AttPool.SaveBlockAttestation(poolAtt); err != nil {
 				return err
 			}
-		} else if err = s.cfg.AttPool.SaveBlockAttestation(a); err != nil {
-			return err
 		}
 	}
 	return nil
