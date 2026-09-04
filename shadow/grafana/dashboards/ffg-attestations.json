@@ -1,0 +1,559 @@
+{
+ "uid": "ffg-attestations",
+ "title": "FFG Attestations",
+ "schemaVersion": 39,
+ "version": 1,
+ "editable": true,
+ "timezone": "utc",
+ "refresh": "",
+ "tags": [
+  "shadow",
+  "decoupled"
+ ],
+ "time": {
+  "from": "2000-01-01T00:04:00Z",
+  "to": "2000-01-01T00:07:30Z"
+ },
+ "templating": {
+  "list": []
+ },
+ "panels": [
+  {
+   "type": "timeseries",
+   "title": "FFG vote seats received per slot, per node",
+   "id": 1,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "ffg_vote_seats",
+     "legendFormat": "{{instance}}"
+    },
+    {
+     "refId": "B",
+     "expr": "max(ffg_expected_seats)",
+     "legendFormat": "expected"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "FFG seat fraction per node",
+   "id": 2,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 0,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     },
+     "unit": "percentunit",
+     "max": 1,
+     "min": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "ffg_vote_seats / ffg_expected_seats",
+     "legendFormat": "{{instance}}"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "FFG vote arrival, ms after slot start, network",
+   "id": 3,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 8,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     },
+     "unit": "ms"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(ffg_vote_arrival_milliseconds_bucket[1m])))",
+     "legendFormat": "p50"
+    },
+    {
+     "refId": "B",
+     "expr": "histogram_quantile(0.9, sum by (le) (rate(ffg_vote_arrival_milliseconds_bucket[1m])))",
+     "legendFormat": "p90"
+    },
+    {
+     "refId": "C",
+     "expr": "histogram_quantile(0.99, sum by (le) (rate(ffg_vote_arrival_milliseconds_bucket[1m])))",
+     "legendFormat": "p99"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "FFG vote arrival p95 per node",
+   "id": 4,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 8,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     },
+     "unit": "ms"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.95, sum by (le, instance) (rate(ffg_vote_arrival_milliseconds_bucket[1m])))",
+     "legendFormat": "{{instance}}"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "FFG aggregate arrival, ms after slot start, network",
+   "id": 5,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 16,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     },
+     "unit": "ms"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(ffg_aggregate_arrival_milliseconds_bucket[1m])))",
+     "legendFormat": "p50"
+    },
+    {
+     "refId": "B",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(ffg_aggregate_arrival_milliseconds_bucket[1m])))",
+     "legendFormat": "p95"
+    },
+    {
+     "refId": "C",
+     "expr": "histogram_quantile(1.0, sum by (le) (rate(ffg_aggregate_arrival_milliseconds_bucket[1m])))",
+     "legendFormat": "max"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "FFG aggregate seat coverage, fraction of committee",
+   "id": 6,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 16,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     },
+     "unit": "percentunit",
+     "max": 1,
+     "min": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(ffg_aggregate_seat_fraction_bucket[1m])))",
+     "legendFormat": "p50"
+    },
+    {
+     "refId": "B",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(ffg_aggregate_seat_fraction_bucket[1m])))",
+     "legendFormat": "p95"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "FFG votes received per second, per node",
+   "id": 7,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 24,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     },
+     "unit": "ops"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(ffg_vote_arrival_milliseconds_count[1m])",
+     "legendFormat": "{{instance}}"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Aggregated attestations in pool, per node",
+   "id": 8,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 24,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "aggregated_attestations_in_pool_total",
+     "legendFormat": "{{instance}}"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Goldfish head vote seats per slot, per node",
+   "id": 9,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 32,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "goldfish_vote_seats",
+     "legendFormat": "{{instance}}"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Goldfish vote arrival, ms after slot start",
+   "id": 10,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 32,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     },
+     "unit": "ms"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(goldfish_vote_arrival_milliseconds_bucket[1m])))",
+     "legendFormat": "p50"
+    },
+    {
+     "refId": "B",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(goldfish_vote_arrival_milliseconds_bucket[1m])))",
+     "legendFormat": "p95"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Pubsub drops per second by topic",
+   "id": 11,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 40,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     },
+     "unit": "ops"
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (topic) (rate(p2p_pubsub_undeliverable_total[1m]))",
+     "legendFormat": "undeliverable {{topic}}"
+    },
+    {
+     "refId": "B",
+     "expr": "sum by (topic) (rate(p2p_pubsub_reject_total[1m]))",
+     "legendFormat": "reject {{topic}}"
+    }
+   ]
+  },
+  {
+   "type": "timeseries",
+   "title": "Head slot and connected peers",
+   "id": 12,
+   "datasource": {
+    "type": "prometheus",
+    "uid": "shadow-sim"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 40,
+    "w": 12,
+    "h": 8
+   },
+   "fieldConfig": {
+    "defaults": {
+     "custom": {
+      "lineWidth": 1,
+      "fillOpacity": 5
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "beacon_head_slot",
+     "legendFormat": "head slot {{instance}}"
+    },
+    {
+     "refId": "B",
+     "expr": "connected_libp2p_peers",
+     "legendFormat": "peers {{instance}}"
+    }
+   ]
+  }
+ ]
+}

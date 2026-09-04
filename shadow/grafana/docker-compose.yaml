@@ -1,0 +1,15 @@
+# Grafana over the Prometheus data a Shadow run recorded. Start Prometheus on
+# the run's TSDB first (see README, "Metrics"), then `docker compose up`.
+# Host networking so the container reaches Prometheus on 127.0.0.1:9199.
+services:
+  grafana:
+    image: grafana/grafana:latest
+    network_mode: host
+    environment:
+      GF_SERVER_HTTP_PORT: "3199"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
