@@ -71,6 +71,7 @@ Options:
 | `--seed` | 1 | the country and supernode draw |
 | `--slots-per-round` | 8 | `SLOTS_PER_ROUND`; the per-slot pool is validators / this |
 | `--target-committee-size` | 3000 | `TARGET_COMMITTEE_SIZE`; committees per slot = pool / this, minimum 1 |
+| `--aggregators-per-committee` | 64 | `TARGET_AGGREGATORS_PER_COMMITTEE`; expected aggregators in a committee |
 | `--subnets` | 1 | `ATTESTATION_SUBNET_COUNT` |
 | `--subnets-per-node` | 2 | `SUBNETS_PER_NODE` |
 | `--aggregate-due-bps` | 5000 | `AGGREGATE_DUE_BPS_GLOAS`; FFG votes count at this point of the slot |

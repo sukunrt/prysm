@@ -70,6 +70,8 @@ def parse_args():
                     help="SLOTS_PER_ROUND; the per-slot pool is validators / this")
     ap.add_argument("--target-committee-size", type=int, default=3000,
                     help="TARGET_COMMITTEE_SIZE; committees per slot = pool / this, min 1")
+    ap.add_argument("--aggregators-per-committee", type=int, default=64,
+                    help="TARGET_AGGREGATORS_PER_COMMITTEE; expected aggregators in a committee")
     ap.add_argument("--subnets", type=int, default=1, help="ATTESTATION_SUBNET_COUNT")
     ap.add_argument("--subnets-per-node", type=int, default=2, help="SUBNETS_PER_NODE")
     ap.add_argument("--aggregate-due-bps", type=int, default=5000,
@@ -212,6 +214,7 @@ def sim_config(args, country, supers, vals):
                     "CONSENSUS_BLOCK_SCRATCH_SPACE": str(args.block_scratch),
                     "SLOTS_PER_ROUND": str(args.slots_per_round),
                     "TARGET_COMMITTEE_SIZE": str(args.target_committee_size),
+                    "TARGET_AGGREGATORS_PER_COMMITTEE": str(args.aggregators_per_committee),
                     "ATTESTATION_SUBNET_COUNT": str(args.subnets),
                     "SUBNETS_PER_NODE": str(args.subnets_per_node),
                     "AGGREGATE_DUE_BPS_GLOAS": str(args.aggregate_due_bps),
