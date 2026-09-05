@@ -1,0 +1,251 @@
+{
+  "Id": "ebb9bc1c8a1b324ab4da2cc2088fd4e6f650c05a36e88730fa1a3c262cf3e18d",
+  "Created": "2026-09-05T07:40:29.168968471Z",
+  "Path": "/bin/sh",
+  "Args": [
+    "-c",
+    "./files-artifacts-expander"
+  ],
+  "State": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:40:29.253209803Z",
+    "FinishedAt": "2026-09-05T07:40:29.468027769Z"
+  },
+  "Image": "sha256:e48a1be869c66cec26378c9327909360f315c7aa8017c915d1c15d883b068d87",
+  "ResolvConfPath": "/var/lib/docker/containers/ebb9bc1c8a1b324ab4da2cc2088fd4e6f650c05a36e88730fa1a3c262cf3e18d/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/ebb9bc1c8a1b324ab4da2cc2088fd4e6f650c05a36e88730fa1a3c262cf3e18d/hostname",
+  "HostsPath": "/var/lib/docker/containers/ebb9bc1c8a1b324ab4da2cc2088fd4e6f650c05a36e88730fa1a3c262cf3e18d/hosts",
+  "LogPath": "/var/lib/docker/containers/ebb9bc1c8a1b324ab4da2cc2088fd4e6f650c05a36e88730fa1a3c262cf3e18d/ebb9bc1c8a1b324ab4da2cc2088fd4e6f650c05a36e88730fa1a3c262cf3e18d-json.log",
+  "Name": "/files-artifacts-expander--57fea1c3725241c283eb7c99a23c1a3f--ea7358083e76487d908bb1000914d86c",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [
+      "files-artifact-expansion--1b46c90c5d274891afab622d3eba297a--ea7358083e76487d908bb1000914d86c:/files-artifacts/02af5d498f2046ccb82fa16849eda529",
+      "files-artifact-expansion--397733096e034f798e8014156f2dcc8f--ea7358083e76487d908bb1000914d86c:/files-artifacts/b7725c60c6634264af567b32970acb62",
+      "files-artifact-expansion--847978a94ca34889bd41a830eb96fe3c--ea7358083e76487d908bb1000914d86c:/files-artifacts/c92b767a074e4358a0a7c210676cdcf5"
+    ],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "json-file",
+      "Config": {}
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {},
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": false
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "ebb9bc1c8a1b324ab4da2cc2088fd4e6f650c05a36e88730fa1a3c262cf3e18d",
+      "LowerDir": "/var/lib/docker/overlay2/768776ef171bfb964ca85b90a0d36479d926811659497fcce37ab4167d29f837-init/diff:/var/lib/docker/overlay2/2e80a0902a916af6d607cd5e0225681ac42465f959804345bf74f56ecaa640a8/diff:/var/lib/docker/overlay2/9c5f2d7120cd699577358410a9530c2d096e65d0752f03bb6e9913d88c69846f/diff:/var/lib/docker/overlay2/2b0937f6f51d9a758a3e6c5d52a38bf3f6f734d41c617c5bb70bc1c08fb08da6/diff:/var/lib/docker/overlay2/3620be798f3a567315e54da526735bfe2dda8a422c413c72a877c3eaa99143a5/diff",
+      "MergedDir": "/var/lib/docker/overlay2/768776ef171bfb964ca85b90a0d36479d926811659497fcce37ab4167d29f837/merged",
+      "UpperDir": "/var/lib/docker/overlay2/768776ef171bfb964ca85b90a0d36479d926811659497fcce37ab4167d29f837/diff",
+      "WorkDir": "/var/lib/docker/overlay2/768776ef171bfb964ca85b90a0d36479d926811659497fcce37ab4167d29f837/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--1b46c90c5d274891afab622d3eba297a--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--1b46c90c5d274891afab622d3eba297a--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/files-artifacts/02af5d498f2046ccb82fa16849eda529",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--397733096e034f798e8014156f2dcc8f--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--397733096e034f798e8014156f2dcc8f--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/files-artifacts/b7725c60c6634264af567b32970acb62",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--847978a94ca34889bd41a830eb96fe3c--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--847978a94ca34889bd41a830eb96fe3c--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/files-artifacts/c92b767a074e4358a0a7c210676cdcf5",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    }
+  ],
+  "Config": {
+    "Hostname": "ebb9bc1c8a1b",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "Tty": false,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "SERIALIZED_ARGS={\"apiContainerIpAddress\":\"172.16.20.4\",\"apiContainerPort\":7443,\"filesArtifactExpansions\":[{\"filesIdentifier\":\"el_cl_genesis_data\",\"dirPathToExpandTo\":\"/files-artifacts/c92b767a074e4358a0a7c210676cdcf5\"},{\"filesIdentifier\":\"05-prysm-geth-52-64\",\"dirPathToExpandTo\":\"/files-artifacts/02af5d498f2046ccb82fa16849eda529\"},{\"filesIdentifier\":\"prysm-password\",\"dirPathToExpandTo\":\"/files-artifacts/b7725c60c6634264af567b32970acb62\"}]}",
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": [
+      "/bin/sh",
+      "-c",
+      "./files-artifacts-expander"
+    ],
+    "Image": "kurtosistech/files-artifacts-expander:1.18.1",
+    "Volumes": null,
+    "WorkingDir": "/run",
+    "Entrypoint": null,
+    "OnBuild": null,
+    "Labels": {
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "files-artifacts-expander",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.guid": "57fea1c3725241c283eb7c99a23c1a3f",
+      "com.kurtosistech.user-service-guid": "5a186f0d73ef4a2cb0eaac1eef565379",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "",
+    "SandboxKey": "",
+    "Ports": {},
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "",
+    "Gateway": "",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "",
+    "IPPrefixLen": 0,
+    "IPv6Gateway": "",
+    "MacAddress": "",
+    "Networks": {
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {
+          "IPv4Address": "172.16.20.40"
+        },
+        "Links": null,
+        "Aliases": null,
+        "MacAddress": "",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "",
+        "Gateway": "",
+        "IPAddress": "",
+        "IPPrefixLen": 0,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "files-artifacts-expander--57fea1c3725241c283eb7c99a23c1a3f--ea7358083e76487d908bb1000914d86c",
+          "ebb9bc1c8a1b"
+        ]
+      }
+    }
+  }
+}

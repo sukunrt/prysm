@@ -1,0 +1,224 @@
+{
+  "Id": "dd8d12606faa149ccd4842e259048ff4c602e18b7ec58107886f2b7074d210a4",
+  "Created": "2026-09-05T07:39:57.581195287Z",
+  "Path": "sleep",
+  "Args": [
+    "99999"
+  ],
+  "State": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 2037979,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:39:57.604907473Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Image": "sha256:20e591ceb9b0fc6dd0bbeeebe3626cc5d254abae509aa8c8b2260abf48a455d4",
+  "ResolvConfPath": "/var/lib/docker/containers/dd8d12606faa149ccd4842e259048ff4c602e18b7ec58107886f2b7074d210a4/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/dd8d12606faa149ccd4842e259048ff4c602e18b7ec58107886f2b7074d210a4/hostname",
+  "HostsPath": "/var/lib/docker/containers/dd8d12606faa149ccd4842e259048ff4c602e18b7ec58107886f2b7074d210a4/hosts",
+  "LogPath": "",
+  "Name": "/validator-key-generation-cl-validator-keystore--64300c153ff34c48ad82eefe19054db2",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "fluentd",
+      "Config": {
+        "fluentd-address": "172.16.20.3:9713",
+        "fluentd-async": "true",
+        "labels": "com.kurtosistech.container-type,kurtosis_enclave_uuid,kurtosis_service_uuid,kurtosis_service_name"
+      }
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {},
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": true
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "dd8d12606faa149ccd4842e259048ff4c602e18b7ec58107886f2b7074d210a4",
+      "LowerDir": "/var/lib/docker/overlay2/e40b6c14c60f44c30d55396574dc4699ce66908bf9d8c7d5dc854a00f83c483d-init/diff:/var/lib/docker/overlay2/c499307f6645d152da7ed98c340a1e76f3c3477130bcc9a377b2e6b25f398224/diff:/var/lib/docker/overlay2/80cbcf2925b2658cb3d6312c1ac45fb4d9a63b82f4f3b7dd2b74756f39029a34/diff:/var/lib/docker/overlay2/ec4b4eab7f04be9585a0d516afd8608134dda0ec97fab7b4df0a494851c919ca/diff",
+      "MergedDir": "/var/lib/docker/overlay2/e40b6c14c60f44c30d55396574dc4699ce66908bf9d8c7d5dc854a00f83c483d/merged",
+      "UpperDir": "/var/lib/docker/overlay2/e40b6c14c60f44c30d55396574dc4699ce66908bf9d8c7d5dc854a00f83c483d/diff",
+      "WorkDir": "/var/lib/docker/overlay2/e40b6c14c60f44c30d55396574dc4699ce66908bf9d8c7d5dc854a00f83c483d/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [],
+  "Config": {
+    "Hostname": "dd8d12606faa",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "Tty": false,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": null,
+    "Image": "protolambda/eth2-val-tools:latest",
+    "Volumes": null,
+    "WorkingDir": "/app",
+    "Entrypoint": [
+      "sleep",
+      "99999"
+    ],
+    "OnBuild": null,
+    "Labels": {
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "user-service",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.guid": "64300c153ff34c48ad82eefe19054db2",
+      "com.kurtosistech.id": "validator-key-generation-cl-validator-keystore",
+      "com.kurtosistech.ports": "",
+      "com.kurtosistech.private-ip": "172.16.20.5",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c",
+      "kurtosis_service_name": "validator-key-generation-cl-validator-keystore",
+      "kurtosis_service_uuid": "64300c153ff34c48ad82eefe19054db2"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "a478e9d902321316ac4515aaa5ef5cadb7a013fb31336f23fb1f7b66d420312d",
+    "SandboxKey": "/var/run/docker/netns/a478e9d90232",
+    "Ports": {},
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "",
+    "Gateway": "",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "",
+    "IPPrefixLen": 0,
+    "IPv6Gateway": "",
+    "MacAddress": "",
+    "Networks": {
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {
+          "IPv4Address": "172.16.20.5"
+        },
+        "Links": null,
+        "Aliases": [
+          "validator-key-generation-cl-validator-keystore"
+        ],
+        "MacAddress": "8e:57:48:24:96:b1",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "57ccd79db00e113de1ecc0efa8a480ae5c7a766e9e4d93dbebac5322aa949995",
+        "Gateway": "172.16.20.1",
+        "IPAddress": "172.16.20.5",
+        "IPPrefixLen": 22,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "validator-key-generation-cl-validator-keystore--64300c153ff34c48ad82eefe19054db2",
+          "validator-key-generation-cl-validator-keystore",
+          "dd8d12606faa"
+        ]
+      }
+    }
+  }
+}

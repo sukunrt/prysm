@@ -1,0 +1,249 @@
+{
+  "Id": "6e1b7cd1fc055f9b99faad11d5030ef813f17ecc8d4448140c90611a55af6290",
+  "Created": "2026-09-05T07:40:04.875617781Z",
+  "Path": "/bin/sh",
+  "Args": [
+    "-c",
+    "touch /tmp/kurtosis-task.log \u0026\u0026 tail -F /tmp/kurtosis-task.log"
+  ],
+  "State": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 143,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:40:04.898963169Z",
+    "FinishedAt": "2026-09-05T07:40:05.088091934Z"
+  },
+  "Image": "sha256:16b80569968fb112fee59fdbaeda7a5fe9b3d534ba1cf212f33afe1d1089fe75",
+  "ResolvConfPath": "/var/lib/docker/containers/6e1b7cd1fc055f9b99faad11d5030ef813f17ecc8d4448140c90611a55af6290/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/6e1b7cd1fc055f9b99faad11d5030ef813f17ecc8d4448140c90611a55af6290/hostname",
+  "HostsPath": "/var/lib/docker/containers/6e1b7cd1fc055f9b99faad11d5030ef813f17ecc8d4448140c90611a55af6290/hosts",
+  "LogPath": "",
+  "Name": "/read-osaka-time--098fb61c2fce424b9ccef6d7da809039",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [
+      "files-artifact-expansion--fd0e0e925e4d47fa915095611881a49b--ea7358083e76487d908bb1000914d86c:/data"
+    ],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "fluentd",
+      "Config": {
+        "fluentd-address": "172.16.20.3:9713",
+        "fluentd-async": "true",
+        "labels": "com.kurtosistech.container-type,kurtosis_enclave_uuid,kurtosis_service_uuid,kurtosis_service_name"
+      }
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {},
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": true
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "6e1b7cd1fc055f9b99faad11d5030ef813f17ecc8d4448140c90611a55af6290",
+      "LowerDir": "/var/lib/docker/overlay2/0856282f3fba72365e352377180a31f891a5bffb612558dd7111a5a26a4a417a-init/diff:/var/lib/docker/overlay2/e66eb14c214d3b31e5bba5a0cacdaf94a6101e9efa87e422bdd7f54a6601e120/diff:/var/lib/docker/overlay2/9d3695de8c13cf83eaacd9f1bb533ae90e776730d9288cc3ee70d6c2f2da1023/diff",
+      "MergedDir": "/var/lib/docker/overlay2/0856282f3fba72365e352377180a31f891a5bffb612558dd7111a5a26a4a417a/merged",
+      "UpperDir": "/var/lib/docker/overlay2/0856282f3fba72365e352377180a31f891a5bffb612558dd7111a5a26a4a417a/diff",
+      "WorkDir": "/var/lib/docker/overlay2/0856282f3fba72365e352377180a31f891a5bffb612558dd7111a5a26a4a417a/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--fd0e0e925e4d47fa915095611881a49b--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--fd0e0e925e4d47fa915095611881a49b--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/data",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    }
+  ],
+  "Config": {
+    "Hostname": "6e1b7cd1fc05",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "Tty": false,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": null,
+    "Image": "badouralix/curl-jq:latest",
+    "Volumes": null,
+    "WorkingDir": "/",
+    "Entrypoint": [
+      "/bin/sh",
+      "-c",
+      "touch /tmp/kurtosis-task.log \u0026\u0026 tail -F /tmp/kurtosis-task.log"
+    ],
+    "OnBuild": null,
+    "Labels": {
+      "com.github.actions.event_name": "workflow_dispatch",
+      "com.github.actions.job": "buildx",
+      "com.github.actions.run_id": "28526107779",
+      "com.github.actions.run_url": "https://github.com/badouralix/dockerfiles/actions/runs/28526107779",
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "user-service",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.guid": "098fb61c2fce424b9ccef6d7da809039",
+      "com.kurtosistech.id": "read-osaka-time",
+      "com.kurtosistech.ports": "",
+      "com.kurtosistech.private-ip": "172.16.20.9",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c",
+      "kurtosis_service_name": "read-osaka-time",
+      "kurtosis_service_uuid": "098fb61c2fce424b9ccef6d7da809039",
+      "org.opencontainers.image.authors": "Ayaz BADOURALY",
+      "org.opencontainers.image.created": "2026-07-01T14:46:59.156Z",
+      "org.opencontainers.image.description": "Smallest docker image with curl and jq",
+      "org.opencontainers.image.documentation": "https://github.com/badouralix/dockerfiles/tree/bcc523c/curl-jq/README.md",
+      "org.opencontainers.image.revision": "bcc523ceda85e9235dbc70becd33c310d3fbf596",
+      "org.opencontainers.image.source": "https://github.com/badouralix/dockerfiles"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "",
+    "SandboxKey": "",
+    "Ports": {},
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "",
+    "Gateway": "",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "",
+    "IPPrefixLen": 0,
+    "IPv6Gateway": "",
+    "MacAddress": "",
+    "Networks": {
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {
+          "IPv4Address": "172.16.20.9"
+        },
+        "Links": null,
+        "Aliases": [
+          "read-osaka-time"
+        ],
+        "MacAddress": "",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "",
+        "Gateway": "",
+        "IPAddress": "",
+        "IPPrefixLen": 0,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "read-osaka-time--098fb61c2fce424b9ccef6d7da809039",
+          "read-osaka-time",
+          "6e1b7cd1fc05"
+        ]
+      }
+    }
+  }
+}

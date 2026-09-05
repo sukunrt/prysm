@@ -1,0 +1,271 @@
+{
+  "Id": "5a283549f14fdee01ddadf763914668f583addf1de04f1770bc0cc1b63d2c366",
+  "Created": "2026-09-05T07:39:59.535068958Z",
+  "Path": "/bin/sh",
+  "Args": [
+    "-c",
+    "touch /tmp/kurtosis-task.log \u0026\u0026 tail -F /tmp/kurtosis-task.log"
+  ],
+  "State": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 143,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:39:59.570183472Z",
+    "FinishedAt": "2026-09-05T07:40:03.267899427Z"
+  },
+  "Image": "sha256:514495a47c6af19dfcad63a5ef573e51566674531b7dccd06131a2ab4747d835",
+  "ResolvConfPath": "/var/lib/docker/containers/5a283549f14fdee01ddadf763914668f583addf1de04f1770bc0cc1b63d2c366/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/5a283549f14fdee01ddadf763914668f583addf1de04f1770bc0cc1b63d2c366/hostname",
+  "HostsPath": "/var/lib/docker/containers/5a283549f14fdee01ddadf763914668f583addf1de04f1770bc0cc1b63d2c366/hosts",
+  "LogPath": "",
+  "Name": "/run-generate-genesis--64efa43d43cc4bb3abe4d68cfe1155dd",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [
+      "files-artifact-expansion--1f56d1f28f484564a346d85ea85a37ce--ea7358083e76487d908bb1000914d86c:/opt"
+    ],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "fluentd",
+      "Config": {
+        "fluentd-address": "172.16.20.3:9713",
+        "fluentd-async": "true",
+        "labels": "com.kurtosistech.container-type,kurtosis_enclave_uuid,kurtosis_service_uuid,kurtosis_service_name"
+      }
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {},
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": true
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "5a283549f14fdee01ddadf763914668f583addf1de04f1770bc0cc1b63d2c366",
+      "LowerDir": "/var/lib/docker/overlay2/5dfa2bb417f2f741a8ac2c8d6c6cc33ea4b63c2b149a64c31db2538a40f70ac0-init/diff:/var/lib/docker/overlay2/4521eda15d4d998e5848fa5a597049d7bfe4c5c07e410d0306c37020a0ff5e2a/diff:/var/lib/docker/overlay2/cd9efb956d36d76941785cdd6ea328cfcd36104d6fc0dfe43d0675f5951c66ef/diff:/var/lib/docker/overlay2/0ab5c75cb3cdf7bb262255c21bcf1d7805ab1adf6ad32319343e2e5ab8511059/diff:/var/lib/docker/overlay2/cba901ab9f504b5e98469d575ae1f364bbb3adbfe18b52b07aced317e18d590a/diff:/var/lib/docker/overlay2/80aff1172b1790851c860b14f6f4723bea96f8c10da28ceccc630e45f919547f/diff:/var/lib/docker/overlay2/818f9fb6f90244da355ef3500c5efbf2993467ad9f5a8546d56e9cdf621e9f09/diff:/var/lib/docker/overlay2/3fa8e10b0ccc7f4cd46c02067df043e7328f6287103b39ff6a4a2b896616ab13/diff:/var/lib/docker/overlay2/14cd5684d0ff8802ca620c1077d0763f8aa4f7667e808a0845ee1996f40f9674/diff:/var/lib/docker/overlay2/5396084fe0b3aa3a799f013becb1113c683d23675fad15e37ccaad3e3455603d/diff:/var/lib/docker/overlay2/fded0b89a939a45868721035f9aef3b99aa869b263a2c8d280cd1495f6363502/diff:/var/lib/docker/overlay2/f850086b3279502876a08eec90e17c1f2d309c45253609c823a0a44da1330a79/diff:/var/lib/docker/overlay2/da7419f116d909cadab62e2af1f183280f93c69a9508a7a865ee1f75ec0591c1/diff:/var/lib/docker/overlay2/3aef065e309fc8153126ea301d353f6c9efc55c215729957a44ed83eb5d5f9c4/diff:/var/lib/docker/overlay2/5f597952e6f8e6b5312eb74d0b4f2da218fb4d3095b7f3f69cf0cc29b1fc5624/diff",
+      "MergedDir": "/var/lib/docker/overlay2/5dfa2bb417f2f741a8ac2c8d6c6cc33ea4b63c2b149a64c31db2538a40f70ac0/merged",
+      "UpperDir": "/var/lib/docker/overlay2/5dfa2bb417f2f741a8ac2c8d6c6cc33ea4b63c2b149a64c31db2538a40f70ac0/diff",
+      "WorkDir": "/var/lib/docker/overlay2/5dfa2bb417f2f741a8ac2c8d6c6cc33ea4b63c2b149a64c31db2538a40f70ac0/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--1f56d1f28f484564a346d85ea85a37ce--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--1f56d1f28f484564a346d85ea85a37ce--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/opt",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "3d5fb9ee766a7d777e1adcbe3627daab558b2d72eac1983d63715cb109b8299a",
+      "Source": "/var/lib/docker/volumes/3d5fb9ee766a7d777e1adcbe3627daab558b2d72eac1983d63715cb109b8299a/_data",
+      "Destination": "/config",
+      "Driver": "local",
+      "Mode": "",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "c8496e99e70975a17346a158c83e4f2ff3601a2baf495a1ac8592eed48a2f7a3",
+      "Source": "/var/lib/docker/volumes/c8496e99e70975a17346a158c83e4f2ff3601a2baf495a1ac8592eed48a2f7a3/_data",
+      "Destination": "/data",
+      "Driver": "local",
+      "Mode": "",
+      "RW": true,
+      "Propagation": ""
+    }
+  ],
+  "Config": {
+    "Hostname": "5a283549f14f",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "ExposedPorts": {
+      "8000/tcp": {}
+    },
+    "Tty": false,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "GOPROXY=https://goproxy.primary.production.platform.ethpandaops.io"
+    ],
+    "Cmd": null,
+    "Image": "ethpandaops/ethereum-genesis-generator:sukun-decoupled-consensus",
+    "Volumes": {
+      "/config": {},
+      "/data": {}
+    },
+    "WorkingDir": "/work",
+    "Entrypoint": [
+      "/bin/sh",
+      "-c",
+      "touch /tmp/kurtosis-task.log \u0026\u0026 tail -F /tmp/kurtosis-task.log"
+    ],
+    "OnBuild": null,
+    "Labels": {
+      "buildnum": "33",
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "user-service",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.guid": "64efa43d43cc4bb3abe4d68cfe1155dd",
+      "com.kurtosistech.id": "run-generate-genesis",
+      "com.kurtosistech.ports": "",
+      "com.kurtosistech.private-ip": "172.16.20.7",
+      "commit": "ceb8397",
+      "ethpandaops.io.commitRef": "decoupled",
+      "ethpandaops.io.repo": "sukunrt/ethereum-genesis-generator",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c",
+      "kurtosis_service_name": "run-generate-genesis",
+      "kurtosis_service_uuid": "64efa43d43cc4bb3abe4d68cfe1155dd",
+      "version": "decoupled"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "",
+    "SandboxKey": "",
+    "Ports": {},
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "",
+    "Gateway": "",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "",
+    "IPPrefixLen": 0,
+    "IPv6Gateway": "",
+    "MacAddress": "",
+    "Networks": {
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {
+          "IPv4Address": "172.16.20.7"
+        },
+        "Links": null,
+        "Aliases": [
+          "run-generate-genesis"
+        ],
+        "MacAddress": "",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "",
+        "Gateway": "",
+        "IPAddress": "",
+        "IPPrefixLen": 0,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "run-generate-genesis--64efa43d43cc4bb3abe4d68cfe1155dd",
+          "run-generate-genesis",
+          "5a283549f14f"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "Id": "e566296d693319de1b30b5884449087a3274a2fa5cedda61c2163737ef95fa4a",
+  "Created": "2026-09-05T07:39:50.365042467Z",
+  "Path": "/fluent-bit/bin/fluent-bit",
+  "Args": [
+    "/fluent-bit/bin/fluent-bit",
+    "-c",
+    "/fluent-bit/etc/fluent-bit.conf"
+  ],
+  "State": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 2037588,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:39:50.392262269Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Image": "sha256:003ce0104bc57c7311770705ecf9760ef556e30b74f7e73d38a81dbfc695d54e",
+  "ResolvConfPath": "/var/lib/docker/containers/e566296d693319de1b30b5884449087a3274a2fa5cedda61c2163737ef95fa4a/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/e566296d693319de1b30b5884449087a3274a2fa5cedda61c2163737ef95fa4a/hostname",
+  "HostsPath": "/var/lib/docker/containers/e566296d693319de1b30b5884449087a3274a2fa5cedda61c2163737ef95fa4a/hosts",
+  "LogPath": "/var/lib/docker/containers/e566296d693319de1b30b5884449087a3274a2fa5cedda61c2163737ef95fa4a/e566296d693319de1b30b5884449087a3274a2fa5cedda61c2163737ef95fa4a-json.log",
+  "Name": "/kurtosis-logs-collector--ea7358083e76487d908bb1000914d86c",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [
+      "kurtosis-logs-collector-vol--ea7358083e76487d908bb1000914d86c:/fluent-bit/etc"
+    ],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "json-file",
+      "Config": {}
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {},
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": false
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "e566296d693319de1b30b5884449087a3274a2fa5cedda61c2163737ef95fa4a",
+      "LowerDir": "/var/lib/docker/overlay2/2ab0755de2aea3a402b9f9e2d0799a28ef3dbdcd54532fa6dc783fadd352e8ee-init/diff:/var/lib/docker/overlay2/868158daea071ecbfba6ab811afdd49298f28da764d4f55fa64d5322271fef29/diff:/var/lib/docker/overlay2/7270132f799c4d2ff3f5b6350b6d11574360be9b7508c87249ee37dbfce3097f/diff:/var/lib/docker/overlay2/5bc1d29d78f65012253872f2d658e9604989a4161997a38998b2bb1603db832e/diff:/var/lib/docker/overlay2/ea67ca09761a8bee50737033f6de58aab516d07fd033ade1b105cdfd45eeb35e/diff:/var/lib/docker/overlay2/6ec9f20553fe2555f7dac10757d446dcf6b71ebf8ac7e83a15b3f10418415aa9/diff:/var/lib/docker/overlay2/6613607698ab21760a203ae31d941b55871ad8161af00340e956c10f3632a80b/diff:/var/lib/docker/overlay2/e4b7de63675a40cf53fd4fd1193d23c096c8fe46ad441da5878172c54bdc0ae2/diff:/var/lib/docker/overlay2/2412aaafe3c97fe0cc1b386caf2e2f2b9bf1dc7d3e391d281a64094707add906/diff:/var/lib/docker/overlay2/78a76b1f7503820b2039f62476347d326a215d2565edcf9ffcb7636e71907284/diff:/var/lib/docker/overlay2/cd81a651c577e898f34d066867f4bbd8f7f9f2c1f59f13b539060f935121efb8/diff:/var/lib/docker/overlay2/ca0528d90a5d4241405842211921ac6ca77e51879ef940a6e044c870df1adf47/diff:/var/lib/docker/overlay2/bfe984e5d26b72b8cb379623cb1f5af823a05418e4411fc4ee615008f1a02593/diff:/var/lib/docker/overlay2/16fe114d5b2a7aebfd31be73266c35cad147af60bb3b05ea2227935bf78fec38/diff:/var/lib/docker/overlay2/57e8cb49587cdb2f72e0b8289888d25c30edfcc6380707a3821b5664e4172157/diff:/var/lib/docker/overlay2/dc9a217b2209e00817fd642bfe624437f4e20aaa68ce5d2509e73641a17c7f99/diff:/var/lib/docker/overlay2/9074ee872e416728b533c8433682fac7e45754f18cc1fcf92beebc1412f17725/diff:/var/lib/docker/overlay2/16be79e1ccbffd80f174fb505138b6aeceaca4eb59d823fad4a596381cfdf97e/diff:/var/lib/docker/overlay2/03dcba7d1958bd186d30ae4b47bfa32cdc3312e497cc6ba6b7782587434d24ab/diff:/var/lib/docker/overlay2/df32c36fb9892d422ee3feaaf01e76896a022269c4880c4ccc77e37c6cff2c15/diff:/var/lib/docker/overlay2/3c36c1eef01350f0ac43cb8cbfdffcda8a835b3701248a7e3cf37ce65c25e92b/diff",
+      "MergedDir": "/var/lib/docker/overlay2/2ab0755de2aea3a402b9f9e2d0799a28ef3dbdcd54532fa6dc783fadd352e8ee/merged",
+      "UpperDir": "/var/lib/docker/overlay2/2ab0755de2aea3a402b9f9e2d0799a28ef3dbdcd54532fa6dc783fadd352e8ee/diff",
+      "WorkDir": "/var/lib/docker/overlay2/2ab0755de2aea3a402b9f9e2d0799a28ef3dbdcd54532fa6dc783fadd352e8ee/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [
+    {
+      "Type": "volume",
+      "Name": "kurtosis-logs-collector-vol--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/kurtosis-logs-collector-vol--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/fluent-bit/etc",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    }
+  ],
+  "Config": {
+    "Hostname": "e566296d6933",
+    "Domainname": "",
+    "User": "0",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "ExposedPorts": {
+      "2020/tcp": {}
+    },
+    "Tty": false,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt",
+      "FLUENT_BIT_VERSION=4.0.0"
+    ],
+    "Cmd": [
+      "/fluent-bit/bin/fluent-bit",
+      "-c",
+      "/fluent-bit/etc/fluent-bit.conf"
+    ],
+    "Image": "fluent/fluent-bit:4.0.0",
+    "Volumes": null,
+    "WorkingDir": "/",
+    "Entrypoint": [
+      "/fluent-bit/bin/fluent-bit"
+    ],
+    "OnBuild": null,
+    "Labels": {
+      "author": "Eduardo Silva \u003ceduardo.silva@chronosphere.io\u003e",
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "kurtosis-logs-collector",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.ports": "tcp:9713/TCP/http,http:9712/TCP/http",
+      "description": "Fluent Bit multi-architecture container image",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c",
+      "org.opencontainers.image.authors": "Eduardo Silva \u003ceduardo.silva@chronosphere.io\u003e",
+      "org.opencontainers.image.description": "Fluent Bit container image",
+      "org.opencontainers.image.documentation": "https://docs.fluentbit.io/",
+      "org.opencontainers.image.licenses": "Apache-2.0",
+      "org.opencontainers.image.source": "https://github.com/fluent/fluent-bit",
+      "org.opencontainers.image.title": "Fluent Bit",
+      "org.opencontainers.image.vendor": "Fluent Organization",
+      "org.opencontainers.image.version": "4.0.0",
+      "vendor": "Fluent Organization",
+      "version": "4.0.0"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "3344e4369dc0ebe2ae813e32868f4580208562aaefdfa3bf75854e79ef2a6ee7",
+    "SandboxKey": "/var/run/docker/netns/3344e4369dc0",
+    "Ports": {
+      "2020/tcp": null
+    },
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "fe0d257f6a3cd0c1a9d037b32cd16773752ec5c8edd18ca45856969f65be7633",
+    "Gateway": "172.17.0.1",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "172.17.0.5",
+    "IPPrefixLen": 16,
+    "IPv6Gateway": "",
+    "MacAddress": "ce:45:90:01:86:fb",
+    "Networks": {
+      "bridge": {
+        "IPAMConfig": null,
+        "Links": null,
+        "Aliases": null,
+        "MacAddress": "ce:45:90:01:86:fb",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "effd185bea985af77f74203f3809a3c4d3f0ce3b635d322ffe3db6a59b117b74",
+        "EndpointID": "fe0d257f6a3cd0c1a9d037b32cd16773752ec5c8edd18ca45856969f65be7633",
+        "Gateway": "172.17.0.1",
+        "IPAddress": "172.17.0.5",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": null
+      },
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {},
+        "Links": null,
+        "Aliases": null,
+        "MacAddress": "16:26:51:72:64:91",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "e2be54a9ea723acc3bf7d736bda54e97c967d411c47e4dbabaae9a4f6a5074d1",
+        "Gateway": "172.16.20.1",
+        "IPAddress": "172.16.20.3",
+        "IPPrefixLen": 22,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "kurtosis-logs-collector--ea7358083e76487d908bb1000914d86c",
+          "e566296d6933"
+        ]
+      }
+    }
+  }
+}

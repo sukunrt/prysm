@@ -1,0 +1,50 @@
+participants:
+  - el_type: geth
+    el_image: ethpandaops/geth:glamsterdam-devnet-8
+    cl_type: prysm
+    cl_image: ethpandaops/prysm-beacon-chain:sukun-decoupled-consensus
+    vc_type: prysm
+    vc_image: ethpandaops/prysm-validator:sukun-decoupled-consensus
+    vc_extra_params:
+      - --decoupled-ffg-vote-at-slot-start
+    use_separate_vc: true
+    supernode: true
+    count: 10
+    cl_extra_params:
+      - --goldfish-vote-ledger
+
+network_params:
+  network: kurtosis
+  network_id: "3151908"
+  preset: mainnet
+  seconds_per_slot: 12
+  slot_duration_ms: 12000
+  num_validator_keys_per_node: 13
+  genesis_gaslimit: 200000000
+  gas_limit: 200000000
+  genesis_delay: 180
+  deneb_fork_epoch: 0
+  electra_fork_epoch: 0
+  fulu_fork_epoch: 0
+  gloas_fork_epoch: 0
+  heze_fork_epoch: 0
+  bpo_1_epoch: 0
+  bpo_1_max_blobs: 21
+  bpo_1_target_blobs: 14
+  bpo_2_epoch: 18446744073709551615
+
+ethereum_genesis_generator_params:
+  image: ethpandaops/ethereum-genesis-generator:sukun-decoupled-consensus
+  extra_env:
+    SLOTS_PER_ROUND: 8
+    AVAILABLE_ATTESTATION_DUE_BPS_HEZE: 2500
+    TARGET_COMMITTEE_SIZE: 2500
+    ATTESTATION_SUBNET_COUNT: 6
+    SUBNETS_PER_NODE: 2
+    HEZE_FORK_VERSION: "0x90000000"
+    AGGREGATE_DUE_BPS_GLOAS: 6667
+    TARGET_AGGREGATORS_PER_COMMITTEE: 64
+
+additional_services: []
+wait_for_finalization: false
+global_log_level: info

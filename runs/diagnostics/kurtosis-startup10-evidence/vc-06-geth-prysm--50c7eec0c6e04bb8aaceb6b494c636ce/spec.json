@@ -1,0 +1,320 @@
+{
+  "Id": "edb09709074f15f73b5c298b31d319d83f1191da6aa1c6342ac747258721cfbe",
+  "Created": "2026-09-05T07:40:28.335386294Z",
+  "Path": "/entrypoint.sh",
+  "Args": [
+    "--accept-terms-of-use=true",
+    "--verbosity=info",
+    "--chain-config-file=/network-configs/config.yaml",
+    "--suggested-fee-recipient=0x8943545177806ED17B9F23F0a21ee5948eCaa776",
+    "--disable-monitoring=false",
+    "--monitoring-host=0.0.0.0",
+    "--monitoring-port=8080",
+    "--beacon-rpc-provider=cl-06-prysm-geth:4000",
+    "--wallet-dir=/validator-keys/prysm",
+    "--wallet-password-file=/prysm-password/prysm-password.txt",
+    "--suggested-gas-limit=200000000",
+    "--decoupled-ffg-vote-at-slot-start"
+  ],
+  "State": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 2046743,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:40:28.36821466Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Image": "sha256:63b06f420f099eb4b5425ef0e5ee6f8ce431ae9e534c4b505fd3b246df154643",
+  "ResolvConfPath": "/var/lib/docker/containers/edb09709074f15f73b5c298b31d319d83f1191da6aa1c6342ac747258721cfbe/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/edb09709074f15f73b5c298b31d319d83f1191da6aa1c6342ac747258721cfbe/hostname",
+  "HostsPath": "/var/lib/docker/containers/edb09709074f15f73b5c298b31d319d83f1191da6aa1c6342ac747258721cfbe/hosts",
+  "LogPath": "",
+  "Name": "/vc-06-geth-prysm--50c7eec0c6e04bb8aaceb6b494c636ce",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [
+      "files-artifact-expansion--09281419ceb741c5a4bca6e5ef196a60--ea7358083e76487d908bb1000914d86c:/prysm-password",
+      "files-artifact-expansion--ffaf40cf5e2a4d93ab14e1443135d8a8--ea7358083e76487d908bb1000914d86c:/network-configs",
+      "files-artifact-expansion--c1a511a2aa304a35988f1f5154588674--ea7358083e76487d908bb1000914d86c:/validator-keys"
+    ],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "fluentd",
+      "Config": {
+        "fluentd-address": "172.16.20.3:9713",
+        "fluentd-async": "true",
+        "labels": "com.kurtosistech.container-type,kurtosis_enclave_uuid,kurtosis_service_uuid,kurtosis_service_name"
+      }
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {
+      "8080/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ]
+    },
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": true
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "edb09709074f15f73b5c298b31d319d83f1191da6aa1c6342ac747258721cfbe",
+      "LowerDir": "/var/lib/docker/overlay2/99d91ca5fd180fe1dde4a8df8f5cec56fba874b59b48c8614bcf4d419fc7c7c5-init/diff:/var/lib/docker/overlay2/1511a3c48457ca164c60932d6c984dd81a10cc67abc58f36791da201106df5eb/diff:/var/lib/docker/overlay2/4bf32140d1586b8b7e29a78ad25d5786ae0e8a902b5fbedabb3bcd5b7ad31fde/diff:/var/lib/docker/overlay2/4afff82c0451af43862a1e3fb9ce7f363fedd0191e7b021d04eb463e7d54b1b5/diff:/var/lib/docker/overlay2/4ee16b960c45d0979e7b567b3c47246aede7d0a390915fc3fdae5b9acf975594/diff:/var/lib/docker/overlay2/30169820e18ad0c03768b8d99db576241baa3181ab51f2c2aaa4c2f6c6b52788/diff:/var/lib/docker/overlay2/ed6f6fb1475de14afec4ee97a76211743ab2232bb448eeacbf2e3dc0b51fa1ec/diff:/var/lib/docker/overlay2/45b5643966fa37608066c2e9c2988e96314f29a1e74a38f5be5e19245c9fd837/diff",
+      "MergedDir": "/var/lib/docker/overlay2/99d91ca5fd180fe1dde4a8df8f5cec56fba874b59b48c8614bcf4d419fc7c7c5/merged",
+      "UpperDir": "/var/lib/docker/overlay2/99d91ca5fd180fe1dde4a8df8f5cec56fba874b59b48c8614bcf4d419fc7c7c5/diff",
+      "WorkDir": "/var/lib/docker/overlay2/99d91ca5fd180fe1dde4a8df8f5cec56fba874b59b48c8614bcf4d419fc7c7c5/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--09281419ceb741c5a4bca6e5ef196a60--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--09281419ceb741c5a4bca6e5ef196a60--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/prysm-password",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--ffaf40cf5e2a4d93ab14e1443135d8a8--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--ffaf40cf5e2a4d93ab14e1443135d8a8--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/network-configs",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--c1a511a2aa304a35988f1f5154588674--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--c1a511a2aa304a35988f1f5154588674--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/validator-keys",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    }
+  ],
+  "Config": {
+    "Hostname": "edb09709074f",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": true,
+    "AttachStdout": true,
+    "AttachStderr": true,
+    "ExposedPorts": {
+      "8080/tcp": {}
+    },
+    "Tty": true,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "ENTRY=/app/cmd/validator/validator"
+    ],
+    "Cmd": [
+      "--accept-terms-of-use=true",
+      "--verbosity=info",
+      "--chain-config-file=/network-configs/config.yaml",
+      "--suggested-fee-recipient=0x8943545177806ED17B9F23F0a21ee5948eCaa776",
+      "--disable-monitoring=false",
+      "--monitoring-host=0.0.0.0",
+      "--monitoring-port=8080",
+      "--beacon-rpc-provider=cl-06-prysm-geth:4000",
+      "--wallet-dir=/validator-keys/prysm",
+      "--wallet-password-file=/prysm-password/prysm-password.txt",
+      "--suggested-gas-limit=200000000",
+      "--decoupled-ffg-vote-at-slot-start"
+    ],
+    "Image": "ethpandaops/prysm-validator:sukun-decoupled-consensus",
+    "Volumes": null,
+    "WorkingDir": "/app/cmd/validator/validator.runfiles/prysm",
+    "Entrypoint": [
+      "/entrypoint.sh"
+    ],
+    "OnBuild": null,
+    "Labels": {
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "user-service",
+      "com.kurtosistech.custom.ethereum-package.client": "prysm",
+      "com.kurtosistech.custom.ethereum-package.client-image": "ethpandaops-prysm-validator_sukun-decoupled-consensus",
+      "com.kurtosistech.custom.ethereum-package.client-language": "go",
+      "com.kurtosistech.custom.ethereum-package.client-type": "validator",
+      "com.kurtosistech.custom.ethereum-package.connected-client": "prysm",
+      "com.kurtosistech.custom.ethereum-package.node-index": "6",
+      "com.kurtosistech.custom.ethereum-package.sha256": "",
+      "com.kurtosistech.custom.ethereum-package.supernode": "True",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.guid": "50c7eec0c6e04bb8aaceb6b494c636ce",
+      "com.kurtosistech.id": "vc-06-geth-prysm",
+      "com.kurtosistech.ports": "metrics:8080/TCP/http",
+      "com.kurtosistech.private-ip": "172.16.20.39",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c",
+      "kurtosis_service_name": "vc-06-geth-prysm",
+      "kurtosis_service_uuid": "50c7eec0c6e04bb8aaceb6b494c636ce",
+      "org.opencontainers.image.created": "2026-08-17T09:02:45.677319+00:00",
+      "org.opencontainers.image.description": "The Ubuntu container image maintained by Canonical\n\nUbuntu is a Debian-based Linux operating system that runs from the desktop to the cloud, to all your internet connected things.\nIt is the world's most popular operating system across public clouds and OpenStack clouds.\nIt is the number one platform for containers; from Docker to Kubernetes to LXD, Ubuntu can run your containers at scale.\nFast, secure and simple, Ubuntu powers millions of PCs worldwide.\n",
+      "org.opencontainers.image.title": "ubuntu",
+      "org.opencontainers.image.version": "26.04",
+      "traefik.enable": "true",
+      "traefik.http.routers.ea7358083e76-50c7eec0c6e0-8080.rule": "HostRegexp(`{^name:8080-50c7eec0c6e0-ea7358083e76-?.*$}`)",
+      "traefik.http.routers.ea7358083e76-50c7eec0c6e0-8080.service": "ea7358083e76-50c7eec0c6e0-8080",
+      "traefik.http.services.ea7358083e76-50c7eec0c6e0-8080.loadbalancer.server.port": "8080"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "375203de5cbb063f393ef9f4397b2c1b4235a8572b0dfec31e5f3320832a5354",
+    "SandboxKey": "/var/run/docker/netns/375203de5cbb",
+    "Ports": {
+      "8080/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34352"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34352"
+        }
+      ]
+    },
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "",
+    "Gateway": "",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "",
+    "IPPrefixLen": 0,
+    "IPv6Gateway": "",
+    "MacAddress": "",
+    "Networks": {
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {
+          "IPv4Address": "172.16.20.39"
+        },
+        "Links": null,
+        "Aliases": [
+          "vc-06-geth-prysm"
+        ],
+        "MacAddress": "e6:cd:d2:2c:b2:73",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "990b7631ff5ccf28aa0a65884fe1dd5c444e788ba79f13762a29e3b069098cc2",
+        "Gateway": "172.16.20.1",
+        "IPAddress": "172.16.20.39",
+        "IPPrefixLen": 22,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "vc-06-geth-prysm--50c7eec0c6e04bb8aaceb6b494c636ce",
+          "vc-06-geth-prysm",
+          "edb09709074f"
+        ]
+      }
+    }
+  }
+}

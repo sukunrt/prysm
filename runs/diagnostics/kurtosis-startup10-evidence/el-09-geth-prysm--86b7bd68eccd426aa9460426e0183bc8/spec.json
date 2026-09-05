@@ -1,0 +1,360 @@
+{
+  "Id": "6e53b0475c6295e295208ce738b590867ab61600e696659e9ba48060dbaac369",
+  "Created": "2026-09-05T07:40:08.967140638Z",
+  "Path": "sh",
+  "Args": [
+    "-c",
+    "geth  --override.genesis=/network-configs/genesis.json --verbosity=3 --datadir=/data/geth/execution-data --http --http.addr=0.0.0.0 --http.port=8545 --http.vhosts=* --http.corsdomain=* --http.api=admin,engine,net,eth,web3,debug,txpool --ws --ws.addr=0.0.0.0 --ws.port=8546 --ws.api=admin,engine,net,eth,web3,debug,txpool --ws.origins=* --nat=extip:172.16.20.19 --authrpc.port=8551 --authrpc.addr=0.0.0.0 --authrpc.vhosts=* --authrpc.jwtsecret=/jwt/jwtsecret --syncmode=full --rpc.allow-unprotected-txs --metrics --metrics.addr=0.0.0.0 --metrics.port=9001 --discovery.port=30303 --port=30303 --discovery.v4=false --discovery.v5=true --miner.gasprice=1 --miner.gaslimit=200000000 --bootnodes=enr:-KO4QL1l6-IF9ePOwxs-4iR4Er8cBLdQ1_CFFRs6MQs_zt3SGifHqjbsaFMkl-DUgc4KMozr4Ctjnx_R6-Ixv4vfiUGGAaBwgqjPg2V0aMfGhO2LuiWAgmlkgnY0gmlwhKwQFAqJc2VjcDI1NmsxoQOftCxH9tqyAvSERlzOzgZ3ozzDtqP7Ou-zRMnRa5fBTYRzbmFwwIN0Y3CCdl-DdWRwgnZf"
+  ],
+  "State": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 2041702,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:40:09.024089941Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Image": "sha256:41048bd1ec009a5c0fca405730902d8904af15db0424c88d09bb91f0187205cc",
+  "ResolvConfPath": "/var/lib/docker/containers/6e53b0475c6295e295208ce738b590867ab61600e696659e9ba48060dbaac369/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/6e53b0475c6295e295208ce738b590867ab61600e696659e9ba48060dbaac369/hostname",
+  "HostsPath": "/var/lib/docker/containers/6e53b0475c6295e295208ce738b590867ab61600e696659e9ba48060dbaac369/hosts",
+  "LogPath": "",
+  "Name": "/el-09-geth-prysm--86b7bd68eccd426aa9460426e0183bc8",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [
+      "files-artifact-expansion--eabffcbad9f24fb497a3b48952d07c08--ea7358083e76487d908bb1000914d86c:/jwt",
+      "files-artifact-expansion--0f674bb1f1a44cd8aeaf0ce8f25634db--ea7358083e76487d908bb1000914d86c:/network-configs"
+    ],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "fluentd",
+      "Config": {
+        "fluentd-address": "172.16.20.3:9713",
+        "fluentd-async": "true",
+        "labels": "com.kurtosistech.container-type,kurtosis_enclave_uuid,kurtosis_service_uuid,kurtosis_service_name"
+      }
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {
+      "30303/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ],
+      "8545/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ],
+      "8546/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ],
+      "8551/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ],
+      "9001/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ]
+    },
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": true
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "6e53b0475c6295e295208ce738b590867ab61600e696659e9ba48060dbaac369",
+      "LowerDir": "/var/lib/docker/overlay2/b2c11cc8ab581a4887706d92d01a622e82be16bab72cd6e6c4ee7f01cf404915-init/diff:/var/lib/docker/overlay2/faa68e8f82cdbedb016b03677c1b37ee1db0e1ac8c04924dbbea75cec95a8e1c/diff:/var/lib/docker/overlay2/7a23889786fab7c9e6f2d40516ca15cf431212d1cf10ab5c8fae31c8129b76d4/diff:/var/lib/docker/overlay2/9d3695de8c13cf83eaacd9f1bb533ae90e776730d9288cc3ee70d6c2f2da1023/diff",
+      "MergedDir": "/var/lib/docker/overlay2/b2c11cc8ab581a4887706d92d01a622e82be16bab72cd6e6c4ee7f01cf404915/merged",
+      "UpperDir": "/var/lib/docker/overlay2/b2c11cc8ab581a4887706d92d01a622e82be16bab72cd6e6c4ee7f01cf404915/diff",
+      "WorkDir": "/var/lib/docker/overlay2/b2c11cc8ab581a4887706d92d01a622e82be16bab72cd6e6c4ee7f01cf404915/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--0f674bb1f1a44cd8aeaf0ce8f25634db--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--0f674bb1f1a44cd8aeaf0ce8f25634db--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/network-configs",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--eabffcbad9f24fb497a3b48952d07c08--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--eabffcbad9f24fb497a3b48952d07c08--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/jwt",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    }
+  ],
+  "Config": {
+    "Hostname": "6e53b0475c62",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "ExposedPorts": {
+      "30303/tcp": {},
+      "30303/udp": {},
+      "8545/tcp": {},
+      "8546/tcp": {},
+      "8551/tcp": {},
+      "9001/tcp": {}
+    },
+    "Tty": false,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "GOPROXY=https://goproxy.primary.production.platform.ethpandaops.io"
+    ],
+    "Cmd": [
+      "geth  --override.genesis=/network-configs/genesis.json --verbosity=3 --datadir=/data/geth/execution-data --http --http.addr=0.0.0.0 --http.port=8545 --http.vhosts=* --http.corsdomain=* --http.api=admin,engine,net,eth,web3,debug,txpool --ws --ws.addr=0.0.0.0 --ws.port=8546 --ws.api=admin,engine,net,eth,web3,debug,txpool --ws.origins=* --nat=extip:172.16.20.19 --authrpc.port=8551 --authrpc.addr=0.0.0.0 --authrpc.vhosts=* --authrpc.jwtsecret=/jwt/jwtsecret --syncmode=full --rpc.allow-unprotected-txs --metrics --metrics.addr=0.0.0.0 --metrics.port=9001 --discovery.port=30303 --port=30303 --discovery.v4=false --discovery.v5=true --miner.gasprice=1 --miner.gaslimit=200000000 --bootnodes=enr:-KO4QL1l6-IF9ePOwxs-4iR4Er8cBLdQ1_CFFRs6MQs_zt3SGifHqjbsaFMkl-DUgc4KMozr4Ctjnx_R6-Ixv4vfiUGGAaBwgqjPg2V0aMfGhO2LuiWAgmlkgnY0gmlwhKwQFAqJc2VjcDI1NmsxoQOftCxH9tqyAvSERlzOzgZ3ozzDtqP7Ou-zRMnRa5fBTYRzbmFwwIN0Y3CCdl-DdWRwgnZf"
+    ],
+    "Image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "Volumes": null,
+    "WorkingDir": "/",
+    "Entrypoint": [
+      "sh",
+      "-c"
+    ],
+    "OnBuild": null,
+    "Labels": {
+      "buildnum": "28011",
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "user-service",
+      "com.kurtosistech.custom.ethereum-package.client": "geth",
+      "com.kurtosistech.custom.ethereum-package.client-image": "ethpandaops-geth_glamsterdam-devnet-8",
+      "com.kurtosistech.custom.ethereum-package.client-language": "go",
+      "com.kurtosistech.custom.ethereum-package.client-type": "execution",
+      "com.kurtosistech.custom.ethereum-package.connected-client": "prysm",
+      "com.kurtosistech.custom.ethereum-package.node-index": "9",
+      "com.kurtosistech.custom.ethereum-package.sha256": "",
+      "com.kurtosistech.custom.ethereum-package.supernode": "True",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.guid": "86b7bd68eccd426aa9460426e0183bc8",
+      "com.kurtosistech.id": "el-09-geth-prysm",
+      "com.kurtosistech.ports": "tcp-discovery:30303/TCP,udp-discovery:30303/UDP,engine-rpc:8551/TCP,rpc:8545/TCP,ws:8546/TCP,metrics:9001/TCP/http",
+      "com.kurtosistech.private-ip": "172.16.20.19",
+      "commit": "366048e",
+      "ethpandaops.io.commitRef": "glamsterdam-devnet-8",
+      "ethpandaops.io.repo": "ethereum/go-ethereum",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c",
+      "kurtosis_service_name": "el-09-geth-prysm",
+      "kurtosis_service_uuid": "86b7bd68eccd426aa9460426e0183bc8",
+      "traefik.enable": "true",
+      "traefik.http.routers.ea7358083e76-86b7bd68eccd-9001.rule": "HostRegexp(`{^name:9001-86b7bd68eccd-ea7358083e76-?.*$}`)",
+      "traefik.http.routers.ea7358083e76-86b7bd68eccd-9001.service": "ea7358083e76-86b7bd68eccd-9001",
+      "traefik.http.services.ea7358083e76-86b7bd68eccd-9001.loadbalancer.server.port": "9001",
+      "version": "glamsterdam-devnet-8"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "12af3a4437467eb5edfc043551bb7cbbbd9eee87578653958aaed2f24b064dfa",
+    "SandboxKey": "/var/run/docker/netns/12af3a443746",
+    "Ports": {
+      "30303/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34286"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34286"
+        }
+      ],
+      "30303/udp": null,
+      "8545/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34282"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34282"
+        }
+      ],
+      "8546/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34283"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34283"
+        }
+      ],
+      "8551/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34284"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34284"
+        }
+      ],
+      "9001/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34285"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34285"
+        }
+      ]
+    },
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "",
+    "Gateway": "",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "",
+    "IPPrefixLen": 0,
+    "IPv6Gateway": "",
+    "MacAddress": "",
+    "Networks": {
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {
+          "IPv4Address": "172.16.20.19"
+        },
+        "Links": null,
+        "Aliases": [
+          "el-09-geth-prysm"
+        ],
+        "MacAddress": "56:fe:9c:80:a7:fd",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "e55d3d4be4242422080c634acfcfc8ba8081a695f21d1ff990e50378ddf419fb",
+        "Gateway": "172.16.20.1",
+        "IPAddress": "172.16.20.19",
+        "IPPrefixLen": 22,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "el-09-geth-prysm--86b7bd68eccd426aa9460426e0183bc8",
+          "el-09-geth-prysm",
+          "6e53b0475c62"
+        ]
+      }
+    }
+  }
+}

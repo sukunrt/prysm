@@ -1,0 +1,364 @@
+{
+  "Id": "15c2d47e29269edc06b701c336e590421a5b2079dadfd0d3b8a9713be2ad5046",
+  "Created": "2026-09-05T07:40:15.113737169Z",
+  "Path": "sh",
+  "Args": [
+    "-c",
+    "exec /beacon-chain --accept-terms-of-use=true --datadir=/data/prysm/beacon-data/ --rpc-host=0.0.0.0 --rpc-port=4000 --http-host=0.0.0.0 --http-cors-domain=* --http-port=3500 --p2p-host-ip=172.16.20.22 --p2p-tcp-port=13000 --p2p-udp-port=12000 --p2p-quic-port=13000 --p2p-colocation-whitelist=0.0.0.0/0,::/0 --min-sync-peers=0 --verbosity=info --slots-per-archive-point=32 --suggested-fee-recipient=0x8943545177806ED17B9F23F0a21ee5948eCaa776 --disable-monitoring=false --monitoring-host=0.0.0.0 --monitoring-port=8080 --pprof --pprofaddr=0.0.0.0 --pprofport=6060 --execution-endpoint=http://el-07-geth-prysm:8551 --jwt-secret=/jwt/jwtsecret --subscribe-all-data-subnets=true --p2p-static-id=true --chain-config-file=/network-configs/config.yaml --genesis-state=/network-configs/genesis.ssz --contract-deployment-block=0 --bootstrap-node=enr:-Nm4QN8E3X_bhJTIPR8m56ZuWvVPcjcJkrLwKBXpHQaBLyS2UJrfs_C09-9w2a63WSKOCZLrwfvSANnC9tz1lABUccaGAaBwgse1h2F0dG5ldHOIGAAAAAAAAACDY2djgYCEZXRoMpCAyeKnkAAAAP__________gmlkgnY0gmlwhKwQFBSDbmZkhAAAAACEcXVpY4IyyIlzZWNwMjU2azGhAp_dTaWf9a-hxrFBD4Xp7t_BWt0MVHoZeWf44weh5YMwiHN5bmNuZXRzAIN0Y3CCMsiDdWRwgi7g --goldfish-vote-ledger"
+  ],
+  "State": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 2043144,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:40:15.147517468Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Image": "sha256:57ebb55e288f7456cf1201d00ac43ef42f6feb6522d405dbbb9a4c2ccf3d8b1f",
+  "ResolvConfPath": "/var/lib/docker/containers/15c2d47e29269edc06b701c336e590421a5b2079dadfd0d3b8a9713be2ad5046/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/15c2d47e29269edc06b701c336e590421a5b2079dadfd0d3b8a9713be2ad5046/hostname",
+  "HostsPath": "/var/lib/docker/containers/15c2d47e29269edc06b701c336e590421a5b2079dadfd0d3b8a9713be2ad5046/hosts",
+  "LogPath": "",
+  "Name": "/cl-07-prysm-geth--3ffd253e81894739bc9533c2288867cd",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [
+      "files-artifact-expansion--bf0cf7596b8c4b7383c32d65ba2f34df--ea7358083e76487d908bb1000914d86c:/network-configs",
+      "files-artifact-expansion--438f4632ce3e452f8758e27d86882a3f--ea7358083e76487d908bb1000914d86c:/jwt"
+    ],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "fluentd",
+      "Config": {
+        "fluentd-address": "172.16.20.3:9713",
+        "fluentd-async": "true",
+        "labels": "com.kurtosistech.container-type,kurtosis_enclave_uuid,kurtosis_service_uuid,kurtosis_service_name"
+      }
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {
+      "13000/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ],
+      "3500/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ],
+      "4000/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ],
+      "6060/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ],
+      "8080/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ]
+    },
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": true
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "15c2d47e29269edc06b701c336e590421a5b2079dadfd0d3b8a9713be2ad5046",
+      "LowerDir": "/var/lib/docker/overlay2/02eba31a6de8c929835143b5b9ac87898e908b5d40db21d08ae9ba6febf06113-init/diff:/var/lib/docker/overlay2/33c4b7f0044c75d301937ec37e7324509db557d595240ba16a9c50857c34d9f3/diff:/var/lib/docker/overlay2/f71b9095efc9e5f6887f0cb1ead8f1dd1f7356115a2147e50bbdbd7caac3d167/diff:/var/lib/docker/overlay2/479a58d21edb6ebb211da5ca46f62d92545891eabdff73413c3efd1363947a73/diff:/var/lib/docker/overlay2/f9bd89aa9932c828f94be555fd41e42ffd26f260fc22172614ae05b440ef5257/diff:/var/lib/docker/overlay2/a90ac507562741af420c7d8cf4f07072383f900a076e08a8b5287966ee520482/diff:/var/lib/docker/overlay2/ed6f6fb1475de14afec4ee97a76211743ab2232bb448eeacbf2e3dc0b51fa1ec/diff:/var/lib/docker/overlay2/45b5643966fa37608066c2e9c2988e96314f29a1e74a38f5be5e19245c9fd837/diff",
+      "MergedDir": "/var/lib/docker/overlay2/02eba31a6de8c929835143b5b9ac87898e908b5d40db21d08ae9ba6febf06113/merged",
+      "UpperDir": "/var/lib/docker/overlay2/02eba31a6de8c929835143b5b9ac87898e908b5d40db21d08ae9ba6febf06113/diff",
+      "WorkDir": "/var/lib/docker/overlay2/02eba31a6de8c929835143b5b9ac87898e908b5d40db21d08ae9ba6febf06113/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--438f4632ce3e452f8758e27d86882a3f--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--438f4632ce3e452f8758e27d86882a3f--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/jwt",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--bf0cf7596b8c4b7383c32d65ba2f34df--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--bf0cf7596b8c4b7383c32d65ba2f34df--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/network-configs",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    }
+  ],
+  "Config": {
+    "Hostname": "15c2d47e2926",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": true,
+    "AttachStdout": true,
+    "AttachStderr": true,
+    "ExposedPorts": {
+      "12000/udp": {},
+      "13000/tcp": {},
+      "13000/udp": {},
+      "3500/tcp": {},
+      "4000/tcp": {},
+      "6060/tcp": {},
+      "8080/tcp": {}
+    },
+    "Tty": true,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "ENTRY=/app/cmd/beacon-chain/beacon-chain"
+    ],
+    "Cmd": [
+      "exec /beacon-chain --accept-terms-of-use=true --datadir=/data/prysm/beacon-data/ --rpc-host=0.0.0.0 --rpc-port=4000 --http-host=0.0.0.0 --http-cors-domain=* --http-port=3500 --p2p-host-ip=172.16.20.22 --p2p-tcp-port=13000 --p2p-udp-port=12000 --p2p-quic-port=13000 --p2p-colocation-whitelist=0.0.0.0/0,::/0 --min-sync-peers=0 --verbosity=info --slots-per-archive-point=32 --suggested-fee-recipient=0x8943545177806ED17B9F23F0a21ee5948eCaa776 --disable-monitoring=false --monitoring-host=0.0.0.0 --monitoring-port=8080 --pprof --pprofaddr=0.0.0.0 --pprofport=6060 --execution-endpoint=http://el-07-geth-prysm:8551 --jwt-secret=/jwt/jwtsecret --subscribe-all-data-subnets=true --p2p-static-id=true --chain-config-file=/network-configs/config.yaml --genesis-state=/network-configs/genesis.ssz --contract-deployment-block=0 --bootstrap-node=enr:-Nm4QN8E3X_bhJTIPR8m56ZuWvVPcjcJkrLwKBXpHQaBLyS2UJrfs_C09-9w2a63WSKOCZLrwfvSANnC9tz1lABUccaGAaBwgse1h2F0dG5ldHOIGAAAAAAAAACDY2djgYCEZXRoMpCAyeKnkAAAAP__________gmlkgnY0gmlwhKwQFBSDbmZkhAAAAACEcXVpY4IyyIlzZWNwMjU2azGhAp_dTaWf9a-hxrFBD4Xp7t_BWt0MVHoZeWf44weh5YMwiHN5bmNuZXRzAIN0Y3CCMsiDdWRwgi7g --goldfish-vote-ledger"
+    ],
+    "Image": "ethpandaops/prysm-beacon-chain:sukun-decoupled-consensus",
+    "Volumes": null,
+    "WorkingDir": "/app/cmd/beacon-chain/beacon-chain.runfiles/prysm",
+    "Entrypoint": [
+      "sh",
+      "-c"
+    ],
+    "OnBuild": null,
+    "Labels": {
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "user-service",
+      "com.kurtosistech.custom.ethereum-package.client": "prysm",
+      "com.kurtosistech.custom.ethereum-package.client-image": "ethpandaops-prysm-beacon-chain_sukun-decoupled-consensus",
+      "com.kurtosistech.custom.ethereum-package.client-language": "go",
+      "com.kurtosistech.custom.ethereum-package.client-type": "beacon",
+      "com.kurtosistech.custom.ethereum-package.connected-client": "geth",
+      "com.kurtosistech.custom.ethereum-package.node-index": "7",
+      "com.kurtosistech.custom.ethereum-package.sha256": "",
+      "com.kurtosistech.custom.ethereum-package.supernode": "True",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.guid": "3ffd253e81894739bc9533c2288867cd",
+      "com.kurtosistech.id": "cl-07-prysm-geth",
+      "com.kurtosistech.ports": "rpc:4000/TCP,profiling:6060/TCP,tcp-discovery:13000/TCP,udp-discovery:12000/UDP,http:3500/TCP/http,metrics:8080/TCP/http,quic-discovery:13000/UDP",
+      "com.kurtosistech.private-ip": "172.16.20.22",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c",
+      "kurtosis_service_name": "cl-07-prysm-geth",
+      "kurtosis_service_uuid": "3ffd253e81894739bc9533c2288867cd",
+      "org.opencontainers.image.created": "2026-08-17T09:02:45.677319+00:00",
+      "org.opencontainers.image.description": "The Ubuntu container image maintained by Canonical\n\nUbuntu is a Debian-based Linux operating system that runs from the desktop to the cloud, to all your internet connected things.\nIt is the world's most popular operating system across public clouds and OpenStack clouds.\nIt is the number one platform for containers; from Docker to Kubernetes to LXD, Ubuntu can run your containers at scale.\nFast, secure and simple, Ubuntu powers millions of PCs worldwide.\n",
+      "org.opencontainers.image.title": "ubuntu",
+      "org.opencontainers.image.version": "26.04",
+      "traefik.enable": "true",
+      "traefik.http.routers.ea7358083e76-3ffd253e8189-3500.rule": "HostRegexp(`{^name:3500-3ffd253e8189-ea7358083e76-?.*$}`)",
+      "traefik.http.routers.ea7358083e76-3ffd253e8189-3500.service": "ea7358083e76-3ffd253e8189-3500",
+      "traefik.http.routers.ea7358083e76-3ffd253e8189-8080.rule": "HostRegexp(`{^name:8080-3ffd253e8189-ea7358083e76-?.*$}`)",
+      "traefik.http.routers.ea7358083e76-3ffd253e8189-8080.service": "ea7358083e76-3ffd253e8189-8080",
+      "traefik.http.services.ea7358083e76-3ffd253e8189-3500.loadbalancer.server.port": "3500",
+      "traefik.http.services.ea7358083e76-3ffd253e8189-8080.loadbalancer.server.port": "8080"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "3d2aff4accdb7d04db92887646c5db74c4073c87cd54641601b83c2b077ed255",
+    "SandboxKey": "/var/run/docker/netns/3d2aff4accdb",
+    "Ports": {
+      "12000/udp": null,
+      "13000/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34306"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34306"
+        }
+      ],
+      "13000/udp": null,
+      "3500/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34302"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34302"
+        }
+      ],
+      "4000/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34303"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34303"
+        }
+      ],
+      "6060/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34304"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34304"
+        }
+      ],
+      "8080/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34305"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34305"
+        }
+      ]
+    },
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "",
+    "Gateway": "",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "",
+    "IPPrefixLen": 0,
+    "IPv6Gateway": "",
+    "MacAddress": "",
+    "Networks": {
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {
+          "IPv4Address": "172.16.20.22"
+        },
+        "Links": null,
+        "Aliases": [
+          "cl-07-prysm-geth"
+        ],
+        "MacAddress": "56:1b:2c:57:fc:6c",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "a170141924e53f9826a6804ed7ae3fe6eb4fe68e57b83b3d2fbaa12f94435fcd",
+        "Gateway": "172.16.20.1",
+        "IPAddress": "172.16.20.22",
+        "IPPrefixLen": 22,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "cl-07-prysm-geth--3ffd253e81894739bc9533c2288867cd",
+          "cl-07-prysm-geth",
+          "15c2d47e2926"
+        ]
+      }
+    }
+  }
+}

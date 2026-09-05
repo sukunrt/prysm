@@ -1,0 +1,299 @@
+{
+  "Id": "faf2ccb3babf38127af07ba9a1de0bfe45a9baa4ada9068e9364be25c9d154a0",
+  "Created": "2026-09-05T07:39:50.689205569Z",
+  "Path": "/bin/sh",
+  "Args": [
+    "-c",
+    "./api-container"
+  ],
+  "State": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 2037660,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:39:50.721754437Z",
+    "FinishedAt": "0001-01-01T00:00:00Z"
+  },
+  "Image": "sha256:62f4012c379b7129e8e6090806e67c1c2bc8cca1c90d4235dfe1db2fe70ada89",
+  "ResolvConfPath": "/var/lib/docker/containers/faf2ccb3babf38127af07ba9a1de0bfe45a9baa4ada9068e9364be25c9d154a0/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/faf2ccb3babf38127af07ba9a1de0bfe45a9baa4ada9068e9364be25c9d154a0/hostname",
+  "HostsPath": "/var/lib/docker/containers/faf2ccb3babf38127af07ba9a1de0bfe45a9baa4ada9068e9364be25c9d154a0/hosts",
+  "LogPath": "/var/lib/docker/containers/faf2ccb3babf38127af07ba9a1de0bfe45a9baa4ada9068e9364be25c9d154a0/faf2ccb3babf38127af07ba9a1de0bfe45a9baa4ada9068e9364be25c9d154a0-json.log",
+  "Name": "/kurtosis-api--ea7358083e76487d908bb1000914d86c",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [
+      "/var/run/docker.sock:/var/run/docker.sock",
+      "ea7358083e76487d908bb1000914d86c:/kurtosis-data",
+      "kurtosis-github-auth-storage:/kurtosis-data/github-auth/",
+      "kurtosis-docker-config-storage:/root/.docker/"
+    ],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "json-file",
+      "Config": {}
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {
+      "7443/tcp": [
+        {
+          "HostIp": "",
+          "HostPort": ""
+        }
+      ]
+    },
+    "RestartPolicy": {
+      "Name": "on-failure",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": false
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "faf2ccb3babf38127af07ba9a1de0bfe45a9baa4ada9068e9364be25c9d154a0",
+      "LowerDir": "/var/lib/docker/overlay2/65a6af56add237fe371d53424d9a4a632ed9e9633d9407504210f4df0e58202a-init/diff:/var/lib/docker/overlay2/3c100651e2a5478191938c430fc9c3b7a4ba9497a455eb516e4fdeb532c53f01/diff:/var/lib/docker/overlay2/c79b135609e8387b0edb334ce1f45e0c8438e9439cfd28a3af9ca94f827ca7a8/diff:/var/lib/docker/overlay2/ccf24295c32fa004b792fdef07ce176fa05b238a2cdfce5a9c9ef79609584550/diff:/var/lib/docker/overlay2/86ecfad00f2bfa7fb71b323190d8785d785df0e42a0825b391478b06c197bf83/diff:/var/lib/docker/overlay2/3620be798f3a567315e54da526735bfe2dda8a422c413c72a877c3eaa99143a5/diff",
+      "MergedDir": "/var/lib/docker/overlay2/65a6af56add237fe371d53424d9a4a632ed9e9633d9407504210f4df0e58202a/merged",
+      "UpperDir": "/var/lib/docker/overlay2/65a6af56add237fe371d53424d9a4a632ed9e9633d9407504210f4df0e58202a/diff",
+      "WorkDir": "/var/lib/docker/overlay2/65a6af56add237fe371d53424d9a4a632ed9e9633d9407504210f4df0e58202a/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [
+    {
+      "Type": "bind",
+      "Source": "/var/run/docker.sock",
+      "Destination": "/var/run/docker.sock",
+      "Mode": "",
+      "RW": true,
+      "Propagation": "rprivate"
+    },
+    {
+      "Type": "volume",
+      "Name": "ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/kurtosis-data",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "kurtosis-github-auth-storage",
+      "Source": "/var/lib/docker/volumes/kurtosis-github-auth-storage/_data",
+      "Destination": "/kurtosis-data/github-auth",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "kurtosis-docker-config-storage",
+      "Source": "/var/lib/docker/volumes/kurtosis-docker-config-storage/_data",
+      "Destination": "/root/.docker",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    }
+  ],
+  "Config": {
+    "Hostname": "faf2ccb3babf",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "ExposedPorts": {
+      "7443/tcp": {}
+    },
+    "Tty": false,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "OWN_IP_ADDRESS=172.16.20.4",
+      "SERIALIZED_ARGS={\"version\":\"1.18.1\",\"logLevel\":\"debug\",\"grpcListenPortNum\":7443,\"enclaveUuid\":\"ea7358083e76487d908bb1000914d86c\",\"enclaveDataVolume\":\"/kurtosis-data\",\"kurtosisBackendType\":\"docker\",\"kurtosisBackendConfig\":{},\"enclaveEnvVars\":\"{}\",\"isProductionEnclave\":false,\"metricsUserID\":\"4d426352b1e407a1a5dcb7cc83da652dba1eff4309bb02cfccc2f8d3a40a5712\",\"didUserAcceptSendingMetrics\":true,\"is_ci\":false,\"cloud_user_id\":\"\",\"cloud_instance_id\":\"\"}",
+      "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ],
+    "Cmd": [
+      "/bin/sh",
+      "-c",
+      "./api-container"
+    ],
+    "Image": "kurtosistech/core:1.18.1",
+    "Volumes": null,
+    "WorkingDir": "/run",
+    "Entrypoint": null,
+    "OnBuild": null,
+    "Labels": {
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "api-container",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.ports": "grpc:7443/TCP/http",
+      "com.kurtosistech.private-ip": "172.16.20.4",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "006c5def9fd4522bafbdefa742b7e582f96ff99dfa57e4a5732e1fbf50b5ea66",
+    "SandboxKey": "/var/run/docker/netns/006c5def9fd4",
+    "Ports": {
+      "7443/tcp": [
+        {
+          "HostIp": "0.0.0.0",
+          "HostPort": "34246"
+        },
+        {
+          "HostIp": "::",
+          "HostPort": "34246"
+        }
+      ]
+    },
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "053a350bdc2bfe2840bf346adf7e60304f7a8bebf712978c96c7e43668f47814",
+    "Gateway": "172.17.0.1",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "172.17.0.6",
+    "IPPrefixLen": 16,
+    "IPv6Gateway": "",
+    "MacAddress": "42:6d:4a:26:fe:ab",
+    "Networks": {
+      "bridge": {
+        "IPAMConfig": null,
+        "Links": null,
+        "Aliases": null,
+        "MacAddress": "42:6d:4a:26:fe:ab",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "effd185bea985af77f74203f3809a3c4d3f0ce3b635d322ffe3db6a59b117b74",
+        "EndpointID": "053a350bdc2bfe2840bf346adf7e60304f7a8bebf712978c96c7e43668f47814",
+        "Gateway": "172.17.0.1",
+        "IPAddress": "172.17.0.6",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": null
+      },
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {
+          "IPv4Address": "172.16.20.4"
+        },
+        "Links": null,
+        "Aliases": null,
+        "MacAddress": "a2:91:5f:a5:22:e5",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "5334a415f388f6008fbc7f9296c71f7df6367bf0e0d4fe4831078f5eeecd5e7e",
+        "Gateway": "172.16.20.1",
+        "IPAddress": "172.16.20.4",
+        "IPPrefixLen": 22,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "kurtosis-api--ea7358083e76487d908bb1000914d86c",
+          "faf2ccb3babf"
+        ]
+      }
+    }
+  }
+}

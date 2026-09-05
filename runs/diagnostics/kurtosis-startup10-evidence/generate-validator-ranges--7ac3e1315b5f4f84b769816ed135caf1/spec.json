@@ -1,0 +1,282 @@
+{
+  "Id": "d0aee861d5ddea6b9111c87dc23654630445335c9b4a514eecad3f064f808358",
+  "Created": "2026-09-05T07:40:31.116796965Z",
+  "Path": "/bin/sh",
+  "Args": [
+    "-c",
+    "touch /tmp/kurtosis-task.log \u0026\u0026 tail -F /tmp/kurtosis-task.log"
+  ],
+  "State": {
+    "Status": "exited",
+    "Running": false,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 0,
+    "ExitCode": 143,
+    "Error": "",
+    "StartedAt": "2026-09-05T07:40:31.156004732Z",
+    "FinishedAt": "2026-09-05T07:40:31.420764928Z"
+  },
+  "Image": "sha256:514495a47c6af19dfcad63a5ef573e51566674531b7dccd06131a2ab4747d835",
+  "ResolvConfPath": "/var/lib/docker/containers/d0aee861d5ddea6b9111c87dc23654630445335c9b4a514eecad3f064f808358/resolv.conf",
+  "HostnamePath": "/var/lib/docker/containers/d0aee861d5ddea6b9111c87dc23654630445335c9b4a514eecad3f064f808358/hostname",
+  "HostsPath": "/var/lib/docker/containers/d0aee861d5ddea6b9111c87dc23654630445335c9b4a514eecad3f064f808358/hosts",
+  "LogPath": "",
+  "Name": "/generate-validator-ranges--7ac3e1315b5f4f84b769816ed135caf1",
+  "RestartCount": 0,
+  "Driver": "overlay2",
+  "Platform": "linux",
+  "MountLabel": "",
+  "ProcessLabel": "",
+  "AppArmorProfile": "",
+  "ExecIDs": null,
+  "HostConfig": {
+    "Binds": [
+      "files-artifact-expansion--f0304f00c3cd430bb0c4735fd54306b4--ea7358083e76487d908bb1000914d86c:/input",
+      "files-artifact-expansion--9a551d98607b4bcaaa48a843ac6f5d88--ea7358083e76487d908bb1000914d86c:/genesis"
+    ],
+    "ContainerIDFile": "",
+    "LogConfig": {
+      "Type": "fluentd",
+      "Config": {
+        "fluentd-address": "172.16.20.3:9713",
+        "fluentd-async": "true",
+        "labels": "com.kurtosistech.container-type,kurtosis_enclave_uuid,kurtosis_service_uuid,kurtosis_service_name"
+      }
+    },
+    "NetworkMode": "bridge",
+    "PortBindings": {},
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    },
+    "AutoRemove": false,
+    "VolumeDriver": "",
+    "VolumesFrom": null,
+    "ConsoleSize": [
+      0,
+      0
+    ],
+    "CapAdd": null,
+    "CapDrop": null,
+    "CgroupnsMode": "private",
+    "Dns": null,
+    "DnsOptions": null,
+    "DnsSearch": null,
+    "ExtraHosts": [],
+    "GroupAdd": null,
+    "IpcMode": "private",
+    "Cgroup": "",
+    "Links": null,
+    "OomScoreAdj": 0,
+    "PidMode": "",
+    "Privileged": false,
+    "PublishAllPorts": false,
+    "ReadonlyRootfs": false,
+    "SecurityOpt": [],
+    "UTSMode": "",
+    "UsernsMode": "",
+    "ShmSize": 67108864,
+    "Runtime": "runc",
+    "Isolation": "",
+    "CpuShares": 0,
+    "Memory": 0,
+    "NanoCpus": 0,
+    "CgroupParent": "",
+    "BlkioWeight": 0,
+    "BlkioWeightDevice": null,
+    "BlkioDeviceReadBps": null,
+    "BlkioDeviceWriteBps": null,
+    "BlkioDeviceReadIOps": null,
+    "BlkioDeviceWriteIOps": null,
+    "CpuPeriod": 0,
+    "CpuQuota": 0,
+    "CpuRealtimePeriod": 0,
+    "CpuRealtimeRuntime": 0,
+    "CpusetCpus": "",
+    "CpusetMems": "",
+    "Devices": null,
+    "DeviceCgroupRules": null,
+    "DeviceRequests": null,
+    "MemoryReservation": 0,
+    "MemorySwap": 0,
+    "MemorySwappiness": null,
+    "OomKillDisable": null,
+    "PidsLimit": null,
+    "Ulimits": null,
+    "CpuCount": 0,
+    "CpuPercent": 0,
+    "IOMaximumIOps": 0,
+    "IOMaximumBandwidth": 0,
+    "MaskedPaths": [
+      "/proc/acpi",
+      "/proc/asound",
+      "/proc/interrupts",
+      "/proc/kcore",
+      "/proc/keys",
+      "/proc/latency_stats",
+      "/proc/sched_debug",
+      "/proc/scsi",
+      "/proc/timer_list",
+      "/proc/timer_stats",
+      "/sys/devices/virtual/powercap",
+      "/sys/firmware"
+    ],
+    "ReadonlyPaths": [
+      "/proc/bus",
+      "/proc/fs",
+      "/proc/irq",
+      "/proc/sys",
+      "/proc/sysrq-trigger"
+    ],
+    "Init": true
+  },
+  "GraphDriver": {
+    "Data": {
+      "ID": "d0aee861d5ddea6b9111c87dc23654630445335c9b4a514eecad3f064f808358",
+      "LowerDir": "/var/lib/docker/overlay2/e925fa2df4bb27ed7ee2f323132e1034a66f7048cbcd613d7e6342bcef15c507-init/diff:/var/lib/docker/overlay2/4521eda15d4d998e5848fa5a597049d7bfe4c5c07e410d0306c37020a0ff5e2a/diff:/var/lib/docker/overlay2/cd9efb956d36d76941785cdd6ea328cfcd36104d6fc0dfe43d0675f5951c66ef/diff:/var/lib/docker/overlay2/0ab5c75cb3cdf7bb262255c21bcf1d7805ab1adf6ad32319343e2e5ab8511059/diff:/var/lib/docker/overlay2/cba901ab9f504b5e98469d575ae1f364bbb3adbfe18b52b07aced317e18d590a/diff:/var/lib/docker/overlay2/80aff1172b1790851c860b14f6f4723bea96f8c10da28ceccc630e45f919547f/diff:/var/lib/docker/overlay2/818f9fb6f90244da355ef3500c5efbf2993467ad9f5a8546d56e9cdf621e9f09/diff:/var/lib/docker/overlay2/3fa8e10b0ccc7f4cd46c02067df043e7328f6287103b39ff6a4a2b896616ab13/diff:/var/lib/docker/overlay2/14cd5684d0ff8802ca620c1077d0763f8aa4f7667e808a0845ee1996f40f9674/diff:/var/lib/docker/overlay2/5396084fe0b3aa3a799f013becb1113c683d23675fad15e37ccaad3e3455603d/diff:/var/lib/docker/overlay2/fded0b89a939a45868721035f9aef3b99aa869b263a2c8d280cd1495f6363502/diff:/var/lib/docker/overlay2/f850086b3279502876a08eec90e17c1f2d309c45253609c823a0a44da1330a79/diff:/var/lib/docker/overlay2/da7419f116d909cadab62e2af1f183280f93c69a9508a7a865ee1f75ec0591c1/diff:/var/lib/docker/overlay2/3aef065e309fc8153126ea301d353f6c9efc55c215729957a44ed83eb5d5f9c4/diff:/var/lib/docker/overlay2/5f597952e6f8e6b5312eb74d0b4f2da218fb4d3095b7f3f69cf0cc29b1fc5624/diff",
+      "MergedDir": "/var/lib/docker/overlay2/e925fa2df4bb27ed7ee2f323132e1034a66f7048cbcd613d7e6342bcef15c507/merged",
+      "UpperDir": "/var/lib/docker/overlay2/e925fa2df4bb27ed7ee2f323132e1034a66f7048cbcd613d7e6342bcef15c507/diff",
+      "WorkDir": "/var/lib/docker/overlay2/e925fa2df4bb27ed7ee2f323132e1034a66f7048cbcd613d7e6342bcef15c507/work"
+    },
+    "Name": "overlay2"
+  },
+  "Mounts": [
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--f0304f00c3cd430bb0c4735fd54306b4--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--f0304f00c3cd430bb0c4735fd54306b4--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/input",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "files-artifact-expansion--9a551d98607b4bcaaa48a843ac6f5d88--ea7358083e76487d908bb1000914d86c",
+      "Source": "/var/lib/docker/volumes/files-artifact-expansion--9a551d98607b4bcaaa48a843ac6f5d88--ea7358083e76487d908bb1000914d86c/_data",
+      "Destination": "/genesis",
+      "Driver": "local",
+      "Mode": "z",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "bd4a0e3e6ccde1fda50ea9a51a0b67e6d977b397cbd6888c36c4b4eb47c8962c",
+      "Source": "/var/lib/docker/volumes/bd4a0e3e6ccde1fda50ea9a51a0b67e6d977b397cbd6888c36c4b4eb47c8962c/_data",
+      "Destination": "/config",
+      "Driver": "local",
+      "Mode": "",
+      "RW": true,
+      "Propagation": ""
+    },
+    {
+      "Type": "volume",
+      "Name": "efdc3d56661ad985da898f3f02337e8ca0e1bbb90b3ae8f61e137ff6df7f16a9",
+      "Source": "/var/lib/docker/volumes/efdc3d56661ad985da898f3f02337e8ca0e1bbb90b3ae8f61e137ff6df7f16a9/_data",
+      "Destination": "/data",
+      "Driver": "local",
+      "Mode": "",
+      "RW": true,
+      "Propagation": ""
+    }
+  ],
+  "Config": {
+    "Hostname": "d0aee861d5dd",
+    "Domainname": "",
+    "User": "",
+    "AttachStdin": false,
+    "AttachStdout": false,
+    "AttachStderr": false,
+    "ExposedPorts": {
+      "8000/tcp": {}
+    },
+    "Tty": false,
+    "OpenStdin": true,
+    "StdinOnce": false,
+    "Env": [
+      "PATH=/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "GOPROXY=https://goproxy.primary.production.platform.ethpandaops.io"
+    ],
+    "Cmd": null,
+    "Image": "ethpandaops/ethereum-genesis-generator:sukun-decoupled-consensus",
+    "Volumes": {
+      "/config": {},
+      "/data": {}
+    },
+    "WorkingDir": "/work",
+    "Entrypoint": [
+      "/bin/sh",
+      "-c",
+      "touch /tmp/kurtosis-task.log \u0026\u0026 tail -F /tmp/kurtosis-task.log"
+    ],
+    "OnBuild": null,
+    "Labels": {
+      "buildnum": "33",
+      "com.kurtosistech.app-id": "kurtosis",
+      "com.kurtosistech.container-type": "user-service",
+      "com.kurtosistech.enclave-id": "ea7358083e76487d908bb1000914d86c",
+      "com.kurtosistech.guid": "7ac3e1315b5f4f84b769816ed135caf1",
+      "com.kurtosistech.id": "generate-validator-ranges",
+      "com.kurtosistech.ports": "",
+      "com.kurtosistech.private-ip": "172.16.20.40",
+      "commit": "ceb8397",
+      "ethpandaops.io.commitRef": "decoupled",
+      "ethpandaops.io.repo": "sukunrt/ethereum-genesis-generator",
+      "kurtosis_enclave_uuid": "ea7358083e76487d908bb1000914d86c",
+      "kurtosis_service_name": "generate-validator-ranges",
+      "kurtosis_service_uuid": "7ac3e1315b5f4f84b769816ed135caf1",
+      "version": "decoupled"
+    }
+  },
+  "NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "",
+    "SandboxKey": "",
+    "Ports": {},
+    "HairpinMode": false,
+    "LinkLocalIPv6Address": "",
+    "LinkLocalIPv6PrefixLen": 0,
+    "SecondaryIPAddresses": null,
+    "SecondaryIPv6Addresses": null,
+    "EndpointID": "",
+    "Gateway": "",
+    "GlobalIPv6Address": "",
+    "GlobalIPv6PrefixLen": 0,
+    "IPAddress": "",
+    "IPPrefixLen": 0,
+    "IPv6Gateway": "",
+    "MacAddress": "",
+    "Networks": {
+      "kt-diag-startup10-20260905": {
+        "IPAMConfig": {
+          "IPv4Address": "172.16.20.40"
+        },
+        "Links": null,
+        "Aliases": [
+          "generate-validator-ranges"
+        ],
+        "MacAddress": "",
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "21102b35e94705b52ec1c218cfec5a2fe76061a50d9a1dd266b8ce18f2d648c8",
+        "EndpointID": "",
+        "Gateway": "",
+        "IPAddress": "",
+        "IPPrefixLen": 0,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "generate-validator-ranges--7ac3e1315b5f4f84b769816ed135caf1",
+          "generate-validator-ranges",
+          "d0aee861d5dd"
+        ]
+      }
+    }
+  }
+}

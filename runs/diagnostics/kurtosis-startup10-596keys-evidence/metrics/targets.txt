@@ -1,0 +1,10 @@
+cl-01-prysm-geth 127.0.0.1:34411
+cl-02-prysm-geth 127.0.0.1:34456
+cl-03-prysm-geth 127.0.0.1:34436
+cl-04-prysm-geth 127.0.0.1:34421
+cl-05-prysm-geth 127.0.0.1:34441
+cl-06-prysm-geth 127.0.0.1:34431
+cl-07-prysm-geth 127.0.0.1:34416
+cl-08-prysm-geth 127.0.0.1:34426
+cl-09-prysm-geth 127.0.0.1:34446
+cl-10-prysm-geth 127.0.0.1:34451
