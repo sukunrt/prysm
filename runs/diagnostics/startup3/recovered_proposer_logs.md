@@ -267,23 +267,40 @@ aggregate selection/remaining attestations through 24.016
 of that burst because it protects only domain requests. This supports a
 BN-wide servicing, scheduling, or shared-lock stall, while leaving the
 RANDAO request's own division between VC lock wait and BN RPC unresolved.
-The BN log is silent between its 12.117 slot tick/reorg and 26.891 next reorg
-(`beacon.log:516–519`), so strong evidence of a process-wide delay but not a
-stage timer. Absence of a successful `RolesAt` log also means its completion
-time is unbounded; no preflight *error* is not proof that preflight was fast.
+There is a blockchain-progress logging gap between the 12.117 reorg and
+26.891 next reorg (`beacon.log:516–519`), not complete BN silence: the execution
+subsystem logs at 15.022. Its adjacent execution polls at 14.773 and 28.755
+are consistent with the normal approximately 14-second cadence, so their
+absence during the final seconds of slot 1 is not evidence of a missed poll.
+See [`round2-engine-timeline.md`](round2-engine-timeline.md).
 
-### Round2 summary-log discrepancy
+The slot-1 payload-attestation `NotFound` skip at 21.915
+(`validator.log:686`) supplies an upper bound on preflight completion:
+`RolesAt` had returned, a payload-attestation role had been dispatched, and
+one BN response had reached that role. It does not timestamp the proposer
+goroutine or its RANDAO call, and does not imply that preflight was fast or
+that all BN requests were responsive. Unlike slots 2 and 3, slot 1 therefore
+did not exhaust its entire slot inside `RolesAt`.
+
+The further source/role audit is documented in
+[`round2-slot1-duty-audit.md`](round2-slot1-duty-audit.md). Ordinary slot-1
+attester, PTC, and sync-message duties fail before requesting their own domain
+data; however, the detached subnet-subscription job can call `domainData`
+outside the slot waitgroup and deadline. A background domain-lock holder,
+proposer scheduling delay, and its own RPC servicing/transport delay remain
+distinct historical possibilities. The shared deadline burst alone does not
+locate the delay in the BN rather than the VC's transport or scheduler.
+
+### Round2 summary-log absence: resolved by exact source comparison
 
 The recovered node169 archive is continuous from startup through shutdown and
 contains ordinary INFO logs (including `PM0280` graffiti), but no `Goldfish
 votes`, `FFG votes`, or `purpose=goldfish-summary` line; the same search is
-empty for recovered round2 nodes 191 and 22. This is unlike round1 nodes 81
-and 124, which emit the Goldfish line at each early boundary. Source says
-`SummaryActive` is true at or after the Heze fork and `NewSlot` emits the
-Goldfish summary (`decoupled/vote_ledger.go:104–107`,
-`beacon-chain/forkchoice/doubly-linked-tree/on_tick.go:32–39`). Because other
-INFO lines and the full time range survived, the archives provide no evidence
-for an external log-level filter selectively removing these messages. The
-runtime/configuration or built-source discrepancy remains unexplained, so
-absence of the round2 summary lines is not used as evidence that no votes or
-no slot ticks occurred.
+empty for recovered round2 nodes 191 and 22. The exact round-2 revision
+`0280403c70d88967f49d2d4c730f4c5417dabdf5` deletes `ffg_summary.go`, removes
+`countFFGVote`, and removes the Goldfish INFO summary from `goldfishNewSlot`.
+The prior comparison with round-1 summary code was therefore inapplicable.
+This is expected logging behavior, not an unexplained runtime discrepancy,
+an external filter, or evidence of zero FFG votes. The per-vote ledger remains
+flag dependent. See [`round2-source-audit.md`](round2-source-audit.md) for the
+exact revision comparison and the unchanged genesis-scan and lock operations.
