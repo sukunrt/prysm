@@ -3,6 +3,8 @@ package transition_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"testing"
 	"time"
@@ -10,6 +12,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/cache"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/transition"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
+	state_native "github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
@@ -209,4 +212,128 @@ func BenchmarkGenesis120KEpochOneDuties(b *testing.B) {
 			require.NoError(b, <-epochDone)
 		}
 	})
+}
+
+// BenchmarkGenesis120KProposalSlotPreparation measures the exact skipped-slot
+// transition shape used by getParentState for the startup proposer slots. The
+// fanout case shares the production SkipSlotCache key and therefore includes
+// its in-progress serialization; it is a diagnostic total, not a simulation of
+// the historical gossip mix.
+func BenchmarkGenesis120KProposalSlotPreparation(b *testing.B) {
+	params.SetupTestConfigCleanup(b)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerRound = 8
+	cfg.GloasForkEpoch = 0
+	cfg.HezeForkEpoch = 0
+	params.OverrideBeaconConfig(cfg)
+
+	dirty := genesis120KState(b)
+	warm := dirty.Copy()
+	_, err := warm.HashTreeRoot(b.Context())
+	require.NoError(b, err)
+
+	for _, fixture := range []struct {
+		name string
+		st   state.BeaconState
+	}{
+		{name: "merkle_dirty", st: dirty},
+		{name: "merkle_warm", st: warm},
+	} {
+		for _, target := range []primitives.Slot{5, 8, 10, 13, 14} {
+			for _, concurrency := range []int{1, 64} {
+				b.Run(fmt.Sprintf("%s/slot_%d/requests_%d", fixture.name, target, concurrency), func(b *testing.B) {
+					b.ReportAllocs()
+					for b.Loop() {
+						transition.SkipSlotCache = cache.NewSkipSlotCache()
+						start := make(chan struct{})
+						errs := make(chan error, concurrency)
+						var wg sync.WaitGroup
+						wg.Add(concurrency)
+						for range concurrency {
+							go func() {
+								defer wg.Done()
+								<-start
+								_, err := transition.ProcessSlots(context.Background(), fixture.st.Copy(), target)
+								errs <- err
+							}()
+						}
+						close(start)
+						wg.Wait()
+						close(errs)
+						for err := range errs {
+							require.NoError(b, err)
+						}
+					}
+				})
+			}
+		}
+	}
+}
+
+// BenchmarkRetainedGenesisProposalSlotPreparation repeats the slot-13 probe
+// against a retained, generated genesis rather than the synthetic zero-pubkey
+// fixture. Set PRYSM_STARTUP_REAL_GENESIS_SSZ to override the retained path.
+// Its sibling config.yaml is loaded before decoding because SSZ list limits are
+// chain-config dependent. The benchmark skips when either artifact is absent.
+func BenchmarkRetainedGenesisProposalSlotPreparation(b *testing.B) {
+	genesisPath := os.Getenv("PRYSM_STARTUP_REAL_GENESIS_SSZ")
+	if genesisPath == "" {
+		genesisPath = "/tmp/prysm-startup3-wire-h/bundle/network-configs/genesis.ssz"
+	}
+	configPath := filepath.Join(filepath.Dir(genesisPath), "config.yaml")
+	if _, err := os.Stat(genesisPath); err != nil {
+		b.Skipf("retained genesis unavailable: %v", err)
+	}
+	if _, err := os.Stat(configPath); err != nil {
+		b.Skipf("retained chain config unavailable: %v", err)
+	}
+	params.SetupTestConfigCleanup(b)
+	require.NoError(b, params.LoadChainConfigFile(configPath, nil))
+	require.Equal(b, primitives.Slot(4), params.BeaconConfig().SlotsPerRound)
+	require.Equal(b, primitives.Epoch(0), params.BeaconConfig().HezeForkEpoch)
+	raw, err := os.ReadFile(genesisPath)
+	require.NoError(b, err)
+	pb := &ethpb.BeaconStateHeze{}
+	require.NoError(b, pb.UnmarshalSSZ(raw))
+	retained, err := state_native.InitializeFromProtoUnsafeHeze(pb)
+	require.NoError(b, err)
+	require.Equal(b, genesisDiagnosticValidatorCount, retained.NumValidators())
+
+	warm := retained.Copy()
+	_, err = warm.HashTreeRoot(b.Context())
+	require.NoError(b, err)
+	for _, fixture := range []struct {
+		name string
+		st   state.BeaconState
+	}{
+		{name: "merkle_dirty", st: retained},
+		{name: "merkle_warm", st: warm},
+	} {
+		for _, concurrency := range []int{1, 4} {
+			b.Run(fmt.Sprintf("%s/slot_13/requests_%d", fixture.name, concurrency), func(b *testing.B) {
+				b.ReportAllocs()
+				for b.Loop() {
+					transition.SkipSlotCache = cache.NewSkipSlotCache()
+					start := make(chan struct{})
+					errs := make(chan error, concurrency)
+					var wg sync.WaitGroup
+					wg.Add(concurrency)
+					for range concurrency {
+						go func() {
+							defer wg.Done()
+							<-start
+							_, err := transition.ProcessSlots(context.Background(), fixture.st.Copy(), 13)
+							errs <- err
+						}()
+					}
+					close(start)
+					wg.Wait()
+					close(errs)
+					for err := range errs {
+						require.NoError(b, err)
+					}
+				}
+			})
+		}
+	}
 }

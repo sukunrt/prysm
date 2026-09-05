@@ -1,0 +1,18 @@
+slot	outcome	owner_node	owner_pubkey	importing_node_count	raw_import_event_count	root_count	roots	earliest_import_time	earliest_import_node	earliest_import_anchor
+0	genesis			0	0	0				
+1	no_import_observed	169	0xa7120c370e8c	0	0	0				
+2	no_import_observed	191	0xaf089d24fea6	0	0	0				
+3	no_import_observed	22	0xa4a9ccf01138	0	0	0				
+4	no_import_observed	91	0xb1b3d89c62f5	0	0	0				
+5	no_import_observed	118	0xa0b75a40344e	0	0	0				
+6	no_import_observed	83	0x989ab25f870c	0	0	0				
+7	no_import_observed	144	0xb3dcff8d6129	0	0	0				
+8	no_import_observed	19	0x8736ff704680	0	0	0				
+9	no_import_observed	107	0xb3467ad53274	0	0	0				
+10	no_import_observed	35	0xa7b6c30e5bbe	0	0	0				
+11	no_import_observed	117	0xa61c6d4cd99b	0	0	0				
+12	no_import_observed	14	0x88d47493db4d	0	0	0				
+13	no_import_observed	20	0x8147108c9e32	0	0	0				
+14	no_import_observed	85	0x9695b49b1c8b	0	0	0				
+15	import_observed	32	0xb8046a792d6f	1000	1000	1	0x68564190...:1000	2026-09-05T01:33:01.591600+00:00	331	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-331.tar.gz::beacon.log:404
+16	import_observed	76	0x801b58c728f8	1000	1000	1	0x4b07a2a4...:1000	2026-09-05T01:33:13.923885+00:00	19	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-19.tar.gz::beacon.log:599
