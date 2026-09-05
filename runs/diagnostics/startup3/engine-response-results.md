@@ -33,13 +33,16 @@ observed its 300 ms deadline about 1.478 seconds late. The next diagnostic read
 used JSON-RPC ID 95 and succeeded in 2.422 ms, which also rules out a persistent
 unknown-payload or EL availability failure.
 
-The exact boundary remains important. rpc-snooper measures through copying the
-upstream body into Go's `http.ResponseWriter`; it does not provide a wire
-timestamp proving downstream flush or BN receipt. G therefore localizes the
-stall after the proxy obtained the EL result and before the BN's first-byte
-callback, but cannot divide it between proxy handler completion/flush and BN
-transport-goroutine scheduling. It directly rules out slow payload building
-and a response-body-decode-only delay for this occurrence.
+G alone left an important boundary open. rpc-snooper measures through copying
+the upstream body into Go's `http.ResponseWriter`; it does not provide a wire
+timestamp proving downstream flush or BN receipt. Run H subsequently closed
+that boundary with packet capture and Go runtime tracing. In three independent
+timeouts, the response reached and was acknowledged by the BN promptly, and
+the `net/http` read-loop goroutine became runnable, but did not run for
+324.928, 682.406, and 412.901 ms. Once scheduled, each reached the
+`GotFirstResponseByte` callback in tens of microseconds. The detailed packet,
+netpoll, and scheduler correlation is in
+[`wire-causation-results.md`](wire-causation-results.md).
 
 ## CPU and GC context
 
@@ -56,11 +59,10 @@ retention bound. Those measurements exclude a 1.77-second GC pause in G.
 
 ## Causal conclusion
 
-G is strong local evidence that genesis FFG scan pressure can starve the final
-execution-response path long enough for a fast, successful EL response to miss
-Prysm's 300 ms deadline. It reproduces the essential round1 node81 shape and
-provides a concrete mechanism for that terminal timeout. It is one synthetic
-cached-payload read, not a real proposal, and the historical archive has no
-packet trace or client `httptrace`; applying the exact proxy-to-BN stage to
-node81 therefore remains a causal inference rather than direct historical
-proof.
+G first reproduced the essential round1 node81 shape; H then directly proved
+the local mechanism: under the reproduced genesis-FFG pressure, a fast,
+successful EL response can miss Prysm's 300 ms deadline because its already
+runnable BN HTTP read loop is not scheduled. These are synthetic cached-payload
+reads rather than real proposals. The historical archive has neither packet
+capture nor runtime trace, so applying that exact final stage to node81 remains
+a strong causal inference, not direct historical proof.

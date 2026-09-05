@@ -159,10 +159,15 @@ a healthy reached path. A later engine-probe run did reproduce the missing
 shape once in 59 diagnostic reads: the proxy obtained and copied a complete
 HTTP 200 result in 0 ms, while the BN observed its first response byte 1.774
 seconds after writing the request and returned its nominal 300 ms timeout after
-1.778 seconds. That run and its endpoint boundary are documented in
-[`engine-response-results.md`](engine-response-results.md). It strongly
-supports the same CPU-pressure mechanism for node81, but the historical logs
-still lack packet-level or client-trace proof of the exact final-leg stage.
+1.778 seconds. Run H then combined packet capture with Go runtime trace for
+three more local timeouts: each response reached the BN and woke its HTTP read
+loop promptly, but the runnable goroutine waited 324.928, 682.406, or 412.901
+ms to run. The reproduction evidence is documented in
+[`engine-response-results.md`](engine-response-results.md) and
+[`wire-causation-results.md`](wire-causation-results.md). This disambiguates
+the local EL/proxy/network boundary and strongly supports the same BN scheduler
+mechanism for node81, but the historical logs still lack packet and runtime
+evidence proving that exact stage in the historical request.
 
 The direct terminal mechanisms differ: two round1 proposals reached block
 construction, while round1 slot3 and every recovered round2 proposal reported

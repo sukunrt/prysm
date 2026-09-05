@@ -91,6 +91,7 @@ def run(plan, args):
         fail("this diagnostic requires slots_per_round=4 in config.yaml")
     ledger = args.get("ledger", False)
     genesis_count_ablation = args.get("genesis_count_ablation", False)
+    genesis_count_ablation_bn3 = args.get("genesis_count_ablation_bn3", False)
     engine_snooper = args.get("engine_snooper", False)
     startup_engine_probe = args.get("startup_engine_probe", False)
     bn_env = {"GOMAXPROCS": "4", "PRYSM_STARTUP_DIAGNOSTIC": "1"}
@@ -181,9 +182,12 @@ def run(plan, args):
         node_env = bn_env
         if index == 3 and engine_snooper:
             execution_endpoint = "http://snooper-engine-3:8561"
-        if index == 3 and startup_engine_probe:
+        if index == 3 and (startup_engine_probe or genesis_count_ablation_bn3):
             node_env = dict(bn_env)
+        if index == 3 and startup_engine_probe:
             node_env["PRYSM_STARTUP_ENGINE_PROBE"] = "1"
+        if index == 3 and genesis_count_ablation_bn3:
+            node_env["PRYSM_DIAGNOSTIC_GENESIS_COUNT_ABLATION"] = "1"
         plan.add_service(
             name="bn-{0}".format(index),
             config=ServiceConfig(

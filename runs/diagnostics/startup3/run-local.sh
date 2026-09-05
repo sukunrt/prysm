@@ -1,18 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
-probe=true; engine=false; start_offset=-400ms; per_slot=15000
+probe=true; engine=false; count_ablation=false; count_ablation_bn3=false; start_offset=-400ms; per_slot=15000; genesis_delay=300
 while [[ ${1:-} == --* ]]; do case $1 in
   --no-probe) probe=false; shift;; --engine-probe) engine=true; shift;;
-  --start-offset) start_offset=${2:?}; shift 2;; --per-slot) per_slot=${2:?}; shift 2;; *) exit 2;; esac; done
-[[ $# -eq 1 ]] || { echo "usage: $0 [--no-probe] [--engine-probe] [--start-offset DURATION] [--per-slot N] <private-output-root>" >&2; exit 2; }
+  --count-ablation) count_ablation=true; shift;;
+  --count-ablation-bn3) count_ablation_bn3=true; shift;;
+  --start-offset) start_offset=${2:?}; shift 2;; --per-slot) per_slot=${2:?}; shift 2;;
+  --genesis-delay) genesis_delay=${2:?}; shift 2;; *) exit 2;; esac; done
+[[ $# -eq 1 ]] || { echo "usage: $0 [--no-probe] [--engine-probe] [--count-ablation] [--count-ablation-bn3] [--start-offset DURATION] [--per-slot N] [--genesis-delay SECONDS] <private-output-root>" >&2; exit 2; }
+[[ $genesis_delay =~ ^[0-9]+$ ]] && (( genesis_delay >= 120 )) || { echo "genesis delay must be an integer of at least 120 seconds" >&2; exit 2; }
 out=$1; [[ ! -e $out ]] || { echo "output exists" >&2; exit 1; }
 base=$(cd "$(dirname "$0")" && pwd); name="startup3-$(date -u +%Y%m%dT%H%SZ)-$$"
 mkdir -m 700 "$out" "$out/results"
-python3 "$base/prepare_bundle.py" --output "$out/bundle" --genesis-delay 300 >"$out/bundle-ready.json"
+python3 "$base/prepare_bundle.py" --output "$out/bundle" --genesis-delay "$genesis_delay" >"$out/bundle-ready.json"
 genesis=$(python3 -c 'import json,sys; xs=[json.loads(x) for x in open(sys.argv[1])]; print([x for x in xs if x.get("event")=="bundle_prepared"][-1]["genesis_unix"])' "$out/bundle-ready.json")
 (( genesis - $(date +%s) >= 75 )) || { echo "under 75 seconds to genesis" >&2; exit 1; }
 cp "$base/kurtosis/main.star" "$base/kurtosis/kurtosis.yml" "$base/kurtosis/Dockerfile.snooper" "$out/bundle/"
-args=$(python3 -c 'import json,sys;print(json.dumps({"bundle_path":".","slots_per_round":4,"ledger":False,"engine_snooper":sys.argv[1]=="true","startup_engine_probe":sys.argv[1]=="true"}))' "$engine")
+args=$(python3 -c 'import json,sys;print(json.dumps({"bundle_path":".","slots_per_round":4,"ledger":False,"engine_snooper":sys.argv[1]=="true","startup_engine_probe":sys.argv[1]=="true","genesis_count_ablation":sys.argv[2]=="true","genesis_count_ablation_bn3":sys.argv[3]=="true"}))' "$engine" "$count_ablation" "$count_ablation_bn3")
 kurtosis run --enclave "$name" --verbosity brief --image-download missing --show-enclave-inspect=false "$out/bundle" "$args" >"$out/kurtosis-run.log" 2>&1
 uuid=$(kurtosis enclave ls --full-uuids | awk -v n="$name" '$0 ~ n {print $1;exit}')
 [[ -n $uuid ]] || { echo "enclave UUID not found" >&2; exit 1; }
