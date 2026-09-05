@@ -5,11 +5,17 @@ participants. Round1 ran `a1679c9fd82a47b3cea16ca65c84d2c4d4501fcb`;
 round2 ran the older `0280403c70d88967f49d2d4c730f4c5417dabdf5`.
 No production fix has been applied. Diagnostics live in jj change `novuklnx`.
 
-Status: the observed round1 slot-1 failure mechanism is established, but the
-underlying cause of its multi-second pre-build latency is **not yet proven**.
+Status update: a deterministic startup validation bottleneck has now been
+identified in both historical revisions and reproduced: every FFG single
+validated against the slot-0 checkpoint scans all 120,000 validators because
+`ActiveValidatorCount` deliberately bypasses its cache for slot-0 states.
+See **[genesis_ffg_root_cause.md](genesis_ffg_root_cause.md)** for the corrected
+causal analysis, traversal proof, timings, profile, and safe fix scope.
+The earlier full-gossip benchmark below incorrectly supplied a slot-1 target
+state, bypassing this bug; its fast result does not clear startup validation.
 The other five early proposer attempts are outside the saved validator-log
-sample. Diagnostic mechanisms and fast local benchmarks must not be presented
-as a complete root cause for all six missed proposals.
+sample, so their individual call stacks/timings remain unreconstructable.
+The following sections retain the earlier investigation and its limitations.
 
 Deployment clarification from the user: one node per machine, 800 machines
 limited to 20 Mbps outbound / 50 Mbps inbound and 200 unlimited; otherwise

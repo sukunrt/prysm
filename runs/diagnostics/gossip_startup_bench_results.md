@@ -1,5 +1,12 @@
 # Startup FFG gossip validation probe
 
+Superseded for startup root-cause purposes by
+[genesis_ffg_root_cause.md](genesis_ffg_root_cause.md). The fixture below uses
+a slot-1 target state, whereas real round-0 gossip uses the slot-0 checkpoint.
+That difference bypasses the repeated full-registry `ActiveValidatorCount`
+scan. The measured component timings remain valid for their stated inputs,
+but the fast full-validation result does not clear genesis gossip validation.
+
 Command:
 
 ```text

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"iter"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -47,7 +48,7 @@ type gossipDiagnosticFixture struct {
 	electraAtts []eth.Att
 }
 
-func newGossipDiagnosticFixture(b *testing.B, registrySize, messages int, makeElectra bool) *gossipDiagnosticFixture {
+func newGossipDiagnosticFixture(b testing.TB, registrySize, messages int, makeElectra bool) *gossipDiagnosticFixture {
 	b.Helper()
 	helpers.ClearCache()
 	validators := make([]*eth.Validator, registrySize)
@@ -136,6 +137,180 @@ func newGossipDiagnosticFixture(b *testing.B, registrySize, messages int, makeEl
 		}
 	}
 	return &gossipDiagnosticFixture{state: st, committees: committees, atts: atts, singles: singles, electraAtts: electraAtts}
+}
+
+type validatorSequenceCountingState struct {
+	state.BeaconState
+	calls   atomic.Uint64
+	entries atomic.Uint64
+}
+
+func (s *validatorSequenceCountingState) ValidatorsReadOnlySeq() iter.Seq2[primitives.ValidatorIndex, state.ReadOnlyValidator] {
+	s.calls.Add(1)
+	seq := s.BeaconState.ValidatorsReadOnlySeq()
+	return func(yield func(primitives.ValidatorIndex, state.ReadOnlyValidator) bool) {
+		for index, validator := range seq {
+			s.entries.Add(1)
+			if !yield(index, validator) {
+				return
+			}
+		}
+	}
+}
+
+func TestGossipStartupActiveValidatorCountSlotZeroCacheBypass(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.HezeForkEpoch = 0
+	cfg.GloasForkEpoch = 0
+	cfg.SlotsPerRound = 8
+	cfg.TargetCommitteeSize = 2500
+	cfg.MaxCommitteesPerSlot = 6
+	params.OverrideBeaconConfig(cfg)
+
+	fixture := newGossipDiagnosticFixture(t, gossipDiagnosticRegistrySize, 3, true)
+	atts := make([]eth.Att, len(fixture.singles))
+	for i, original := range fixture.singles {
+		single := *original
+		data := *original.Data
+		data.Slot = primitives.Slot(i + 1)
+		single.Data = &data
+		atts[i] = &single
+	}
+	require.NoError(t, fixture.state.SetSlot(0))
+	genesis := &validatorSequenceCountingState{BeaconState: fixture.state}
+	service := &Service{}
+	for _, att := range atts {
+		_, count, result, err := service.validateCommitteeIndexAndCount(t.Context(), att, genesis)
+		require.NoError(t, err)
+		require.Equal(t, uint8(pubsub.ValidationAccept), uint8(result))
+		require.Equal(t, uint64(gossipDiagnosticRegistrySize), count)
+	}
+	require.Equal(t, uint64(len(atts)), genesis.calls.Load())
+	require.Equal(t, uint64(len(atts)*gossipDiagnosticRegistrySize), genesis.entries.Load())
+
+	slotOneState := fixture.state.Copy()
+	require.NoError(t, slotOneState.SetSlot(1))
+	slotOne := &validatorSequenceCountingState{BeaconState: slotOneState}
+	for _, att := range atts {
+		_, count, result, err := service.validateCommitteeIndexAndCount(t.Context(), att, slotOne)
+		require.NoError(t, err)
+		require.Equal(t, uint8(pubsub.ValidationAccept), uint8(result))
+		require.Equal(t, uint64(gossipDiagnosticRegistrySize), count)
+	}
+	require.Equal(t, uint64(0), slotOne.calls.Load())
+	require.Equal(t, uint64(0), slotOne.entries.Load())
+}
+
+func BenchmarkGossipStartupActiveValidatorCountSlotCache(b *testing.B) {
+	params.SetupTestConfigCleanup(b)
+	cfg := params.BeaconConfig().Copy()
+	cfg.HezeForkEpoch = 0
+	cfg.GloasForkEpoch = 0
+	cfg.SlotsPerRound = 8
+	cfg.TargetCommitteeSize = 2500
+	cfg.MaxCommitteesPerSlot = 6
+	params.OverrideBeaconConfig(cfg)
+
+	fixture := newGossipDiagnosticFixture(b, gossipDiagnosticRegistrySize, 1, false)
+	service := &Service{}
+	for _, slot := range []primitives.Slot{0, 1} {
+		st := fixture.state.Copy()
+		require.NoError(b, st.SetSlot(slot))
+		validate := func(b *testing.B) {
+			_, count, result, err := service.validateCommitteeIndexAndCount(context.Background(), fixture.atts[0], st)
+			if err != nil || result != pubsub.ValidationAccept || count != gossipDiagnosticRegistrySize {
+				b.Fatalf("validate committee: count=%d result=%v err=%v", count, result, err)
+			}
+		}
+		b.Run(fmt.Sprintf("state_slot_%d/serial", slot), func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				validate(b)
+			}
+		})
+		b.Run(fmt.Sprintf("state_slot_%d/parallel", slot), func(b *testing.B) {
+			b.ReportAllocs()
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					validate(b)
+				}
+			})
+		})
+	}
+}
+
+// BenchmarkGossipStartupValidatorScanCopyContention measures scheduler delay and
+// state-copy latency while one pubsub topic's maximum active validators scan.
+// It does not reproduce the rest of block proposal preparation.
+func BenchmarkGossipStartupValidatorScanCopyContention(b *testing.B) {
+	params.SetupTestConfigCleanup(b)
+	cfg := params.BeaconConfig().Copy()
+	cfg.HezeForkEpoch = 0
+	cfg.GloasForkEpoch = 0
+	cfg.SlotsPerRound = 8
+	cfg.TargetCommitteeSize = 2500
+	cfg.MaxCommitteesPerSlot = 6
+	params.OverrideBeaconConfig(cfg)
+
+	const scans = 1024
+	fixture := newGossipDiagnosticFixture(b, gossipDiagnosticRegistrySize, 1, false)
+	for _, slot := range []primitives.Slot{0, 1} {
+		b.Run(fmt.Sprintf("state_slot_%d", slot), func(b *testing.B) {
+			st := fixture.state.Copy()
+			require.NoError(b, st.SetSlot(slot))
+			var dispatchWait time.Duration
+			var copyDuration time.Duration
+			b.ReportAllocs()
+			for range b.N {
+				b.StopTimer()
+				gate := make(chan struct{})
+				var ready sync.WaitGroup
+				ready.Add(scans + 1)
+				var complete sync.WaitGroup
+				complete.Add(scans + 1)
+				var completed atomic.Uint64
+				var failed atomic.Bool
+				for range scans {
+					go func() {
+						defer complete.Done()
+						ready.Done()
+						<-gate
+						count, err := helpers.ActiveValidatorCount(context.Background(), st, 0)
+						if err != nil || count != gossipDiagnosticRegistrySize {
+							failed.Store(true)
+						}
+						completed.Add(1)
+					}()
+				}
+				probeEntered := make(chan time.Time, 1)
+				probeFinished := make(chan time.Time, 1)
+				go func() {
+					defer complete.Done()
+					ready.Done()
+					<-gate
+					entered := time.Now()
+					probeEntered <- entered
+					_ = st.Copy()
+					probeFinished <- time.Now()
+				}()
+				ready.Wait()
+				released := time.Now()
+				b.StartTimer()
+				close(gate)
+				entered := <-probeEntered
+				finished := <-probeFinished
+				complete.Wait()
+				b.StopTimer()
+				dispatchWait = entered.Sub(released)
+				copyDuration = finished.Sub(entered)
+				require.Equal(b, uint64(scans), completed.Load())
+				require.Equal(b, false, failed.Load())
+			}
+			b.ReportMetric(float64(dispatchWait.Nanoseconds()), "probe-dispatch-wait-ns")
+			b.ReportMetric(float64(copyDuration.Nanoseconds()), "probe-copy-ns")
+		})
+	}
 }
 
 func BenchmarkGossipStartupValidation(b *testing.B) {
@@ -279,6 +454,18 @@ func BenchmarkGossipStartupLegacyPool(b *testing.B) {
 // database presence checks, the production verifier routine and legacy pool
 // subscriber. Chain and fork-choice answers remain mocked.
 func BenchmarkGossipStartupFullValidation(b *testing.B) {
+	benchmarkGossipStartupFullValidation(b, 15_000, 1)
+}
+
+func BenchmarkGossipStartupFullValidationStateSlot(b *testing.B) {
+	for _, slot := range []primitives.Slot{0, 1} {
+		b.Run(fmt.Sprintf("state_slot_%d", slot), func(b *testing.B) {
+			benchmarkGossipStartupFullValidation(b, 1000, slot)
+		})
+	}
+}
+
+func benchmarkGossipStartupFullValidation(b *testing.B, messages int, stateSlot primitives.Slot) {
 	params.SetupTestConfigCleanup(b)
 	cfg := params.BeaconConfig().Copy()
 	cfg.HezeForkEpoch = 0
@@ -288,8 +475,8 @@ func BenchmarkGossipStartupFullValidation(b *testing.B) {
 	cfg.MaxCommitteesPerSlot = 6
 	params.OverrideBeaconConfig(cfg)
 
-	const messages = 15_000
 	fixture := newGossipDiagnosticFixture(b, gossipDiagnosticRegistrySize, messages, true)
+	require.NoError(b, fixture.state.SetSlot(stateSlot))
 	database := dbtest.SetupDB(b)
 	root := [32]byte{}
 	require.NoError(b, database.SaveState(b.Context(), fixture.state, root))
