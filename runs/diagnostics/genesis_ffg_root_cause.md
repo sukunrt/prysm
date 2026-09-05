@@ -1,5 +1,11 @@
 # Genesis FFG validation amplification: slots 1–3
 
+> **Recovered-log update:** the proposer owners and terminal VC failures for
+> all six early slots are now available in
+> [Recovered proposer logs](startup3/recovered_proposer_logs.md). Statements
+> below that only round1 node3 was available are superseded by that evidence;
+> the benchmark and source findings remain unchanged.
+
 No production fix applied. New diagnostic-only jj change: `lqxvxsvy`, child
 of `novuklnx`. GPT-5.6 Sol authored the diagnostic Go code. These are local
 unit tests and microbenchmarks, not another network simulation.
