@@ -41,7 +41,9 @@ def _geth_cmd(index):
     ]
 
 
-def _beacon_cmd(index, bootstrap_enr, ledger):
+def _beacon_cmd(index, bootstrap_enr, ledger, execution_endpoint = ""):
+    if execution_endpoint == "":
+        execution_endpoint = "http://el-{0}:8551".format(index)
     cmd = [
         "--accept-terms-of-use=true",
         "--datadir=/data/prysm/beacon",
@@ -65,7 +67,7 @@ def _beacon_cmd(index, bootstrap_enr, ledger):
         "--pprof",
         "--pprofaddr=0.0.0.0",
         "--pprofport=6060",
-        "--execution-endpoint=http://el-{0}:8551".format(index),
+        "--execution-endpoint=" + execution_endpoint,
         "--jwt-secret=/bundle/jwt/jwtsecret",
         "--subscribe-all-data-subnets=true",
         "--subscribe-all-subnets",
@@ -89,6 +91,8 @@ def run(plan, args):
         fail("this diagnostic requires slots_per_round=4 in config.yaml")
     ledger = args.get("ledger", False)
     genesis_count_ablation = args.get("genesis_count_ablation", False)
+    engine_snooper = args.get("engine_snooper", False)
+    startup_engine_probe = args.get("startup_engine_probe", False)
     bn_env = {"GOMAXPROCS": "4", "PRYSM_STARTUP_DIAGNOSTIC": "1"}
     if genesis_count_ablation:
         # Understood only by the local diagnostic image. This deliberately
@@ -127,6 +131,23 @@ def run(plan, args):
             ),
         )
 
+    if engine_snooper:
+        plan.add_service(
+            name="snooper-engine-3",
+            config=ServiceConfig(
+                image="ethpandaops/rpc-snooper:v0.0.21",
+                cmd=[
+                    "--bind-address=0.0.0.0",
+                    "--port=8561",
+                    "--no-api",
+                    "--jwt-secret=/bundle/jwt/jwtsecret",
+                    "http://el-3:8551",
+                ],
+                ports=_ports([("engine", 8561, "TCP", "http")]),
+                files=mounts,
+            ),
+        )
+
     plan.add_service(
         name="bn-1",
         config=ServiceConfig(
@@ -156,13 +177,20 @@ def run(plan, args):
     )
     bootstrap_enr = identity["extract.enr"]
     for index in range(2, 4):
+        execution_endpoint = ""
+        node_env = bn_env
+        if index == 3 and engine_snooper:
+            execution_endpoint = "http://snooper-engine-3:8561"
+        if index == 3 and startup_engine_probe:
+            node_env = dict(bn_env)
+            node_env["PRYSM_STARTUP_ENGINE_PROBE"] = "1"
         plan.add_service(
             name="bn-{0}".format(index),
             config=ServiceConfig(
                 image="prysm-beacon-chain:startup-repro",
-                cmd=_beacon_cmd(index, bootstrap_enr, ledger),
+                cmd=_beacon_cmd(index, bootstrap_enr, ledger, execution_endpoint),
                 private_ip_address_placeholder="KURTOSIS_IP_ADDR_PLACEHOLDER",
-                env_vars=bn_env,
+                env_vars=node_env,
                 ports=bn_ports,
                 files=mounts,
             ),

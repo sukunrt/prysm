@@ -127,11 +127,42 @@ serialization because the multilock precedes the cache lookup.
 
 The round1 node81 snooper logged the slot-2 `engine_getPayloadV6` response in
 3 ms with a 2,060-byte body (`snooper-engine.log:14906–14917`). The snooper
-implementation is not present in these artifacts, so that duration cannot be
-claimed to include complete downstream body delivery to the BN. It rules out
-a slow EL payload calculation much more directly than it rules out proxy
-flush, runtime scheduling, body read, or decoding before the BN's 300 ms
-client deadline.
+identifies itself as rpc-snooper v0.0.21 at git `e3bb3cb`. In that exact source,
+the duration ends after `io.Copy` has copied the upstream body into Go's
+`http.ResponseWriter`; it does not prove that the buffered response reached or
+was decoded by the BN (`snooper/proxycall.go:227–238`). Deferred request and
+response logging starts goroutines and does not synchronously delay handler
+return (`snooper/logging.go:130–163`), so there is no deterministic logging
+tail that explains the timeout. The observation rules out slow EL payload
+calculation much more directly than it rules out proxy flush, runtime
+scheduling, body read, or decoding before the BN's 300 ms client deadline.
+
+The exact go-ethereum v1.17.5 HTTP RPC path also has a cancellation race worth
+distinguishing from an EL error. `sendHTTP` decodes the JSON-RPC envelope and
+queues it on a buffered response channel before `CallContext` selects between
+that channel and `ctx.Done()` (`rpc/http.go:189–203`, `rpc/client.go:146–159,
+345–360`). If the deadline becomes ready before that select runs, the select
+may return the context error even though the envelope is already queued. This
+is a source-supported candidate, not proof that node81 took that path. Prysm
+maps an error to the literal `timeout from http.Client` only when the error
+implements `Timeout() == true`; arbitrary or unknown EL errors instead retain
+their JSON-RPC error or are wrapped as unexpected responses
+(`beacon-chain/execution/jsonrpc_error.go:34–53,96–107`).
+
+The instrumented E1 reproduction did not reproduce node81's final-leg
+failure. Its only transported `GetPayload` completed in 2.625 ms: request write
+at 14:04:21.149425828, first response byte at 14:04:21.150422352, and complete
+RPC return at 14:04:21.150726845. Slots 2 and 3 failed before an execution
+request was transported; slot 3's already-canceled call returned in 0.493 ms
+without `GetConn`, `WroteRequest`, or first-byte events. E1 therefore confirms
+a healthy reached path. A later engine-probe run did reproduce the missing
+shape once in 59 diagnostic reads: the proxy obtained and copied a complete
+HTTP 200 result in 0 ms, while the BN observed its first response byte 1.774
+seconds after writing the request and returned its nominal 300 ms timeout after
+1.778 seconds. That run and its endpoint boundary are documented in
+[`engine-response-results.md`](engine-response-results.md). It strongly
+supports the same CPU-pressure mechanism for node81, but the historical logs
+still lack packet-level or client-trace proof of the exact final-leg stage.
 
 The direct terminal mechanisms differ: two round1 proposals reached block
 construction, while round1 slot3 and every recovered round2 proposal reported
@@ -158,6 +189,17 @@ behind another VC domain-cache miss. The source-root/domain-cache mutex path is
 being audited separately; no causal share is assigned to it here.
 
 ### Sync-committee preflight lock audit
+
+The E1 early-gossip reproduction now supplies the missing stage timing; see
+[`early-gossip-results.md`](early-gossip-results.md).  A real slot-1 VC
+sync-index request hit the warm sync-head cache after 8.887 ms but did not
+return for another approximately 4.795 seconds, with the remainder occurring
+inside the deferred `async.MultiLock` unlock/cleanup path.  Concurrent
+goroutine profiles place 1,583 goroutines in `async.Clean` and later 1,513 in
+`async.(*Lock).Lock`.  This proves cross-key contention through the global
+multilock manager in the reproduction.  It reproduced a 5.244-second total
+preflight, not the historical full-slot timeout, and does not settle round2
+node169 or the historical execution response path.
 
 The synchronous `RolesAt` preflight collects every sync-committee key and
 calls `SyncCommitteeAggregators` before `performRoles` dispatches any proposer
@@ -198,6 +240,32 @@ not directly explain that slot. Its RANDAO request can still have waited on the
 VC-global `domainDataLock` behind another cache miss, or on the BN RPC/runtime
 path, but the available log has no boundary timestamp that divides those
 alternatives.
+
+The two summary lines must not be interchanged when applying this evidence.
+`FFG votes` counts accepted beacon-attestation gossip by slot and subnet
+immediately before the validator returns `ValidationAccept`
+(`beacon-chain/sync/validate_beacon_attestation.go:240–246`,
+`beacon-chain/sync/ffg_summary.go:18–29,105–119`). `Goldfish votes` instead
+reports the fork-choice store's available-attestation voters and seats
+(`beacon-chain/forkchoice/doubly-linked-tree/goldfish.go:215–229`). Therefore
+a zero Goldfish summary bounds available-attestation head votes only; it says
+nothing about how many FFG beacon attestations completed validation. E1's
+15,000 `FFG votes` and zero `Goldfish votes` per loaded slot are the expected
+combination because its source sent only the former message family.
+
+Node169 does provide a broader process-level discriminant. At the slot-1
+deadline, independent RPC families fail in the same 15 ms burst: payload
+attestation data at 24.001, attestation data and sync-message head root at
+24.002, proposer RANDAO at 24.002452, sync-subcommittee index at 24.006, and
+aggregate selection/remaining attestations through 24.016
+(`validator.log:687–737`). The VC `domainDataLock` cannot be the common cause
+of that burst because it protects only domain requests. This supports a
+BN-wide servicing, scheduling, or shared-lock stall, while leaving the
+RANDAO request's own division between VC lock wait and BN RPC unresolved.
+The BN log is silent between its 12.117 slot tick/reorg and 26.891 next reorg
+(`beacon.log:516–519`), so strong evidence of a process-wide delay but not a
+stage timer. Absence of a successful `RolesAt` log also means its completion
+time is unbounded; no preflight *error* is not proof that preflight was fast.
 
 ### Round2 summary-log discrepancy
 

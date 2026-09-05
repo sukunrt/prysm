@@ -1,0 +1,5 @@
+FROM debian:bookworm-slim
+
+COPY rpc-snooper /rpc-snooper
+
+ENTRYPOINT ["/rpc-snooper"]

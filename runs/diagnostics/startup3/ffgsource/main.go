@@ -34,7 +34,7 @@ const workers = 64
 type options struct {
 	genesis, config, mnemonic, endpoint, slots, exclude string
 	perSlot                                             int
-	spread                                              time.Duration
+	spread, startOffset                                 time.Duration
 }
 
 type prepared struct {
@@ -75,6 +75,7 @@ func main() {
 	flag.StringVar(&o.exclude, "exclude-selection", "", "optional proposerkeys selection JSON")
 	flag.IntVar(&o.perSlot, "per-slot", 2500, "votes prepared per slot")
 	flag.DurationVar(&o.spread, "spread", 2*time.Second, "submission spread from each slot start")
+	flag.DurationVar(&o.startOffset, "start-offset", 0, "offset from each slot start for the first submission")
 	flag.Parse()
 	if o.genesis == "" || o.config == "" || o.mnemonic == "" || o.perSlot <= 0 || o.spread < 0 {
 		fatalf("-genesis, -config, -mnemonic-file and positive -per-slot are required")
@@ -84,6 +85,12 @@ func main() {
 	st, err := loadState(o.config, o.genesis)
 	if err != nil {
 		fatalf("load genesis: %v", err)
+	}
+	if o.startOffset < -400*time.Millisecond || o.startOffset > time.Second {
+		fatalf("-start-offset must be between -400ms and 1s")
+	}
+	if o.startOffset < 0 && -o.startOffset > params.BeaconConfig().MaximumGossipClockDisparityDuration() {
+		fatalf("early -start-offset exceeds configured MAXIMUM_GOSSIP_CLOCK_DISPARITY")
 	}
 	wantedSlots, err := parseSlots(o.slots)
 	if err != nil {
@@ -117,7 +124,7 @@ func main() {
 	}
 	defer conn.Close()
 	client := ethpb.NewBeaconNodeValidatorClient(conn)
-	results := submit(context.Background(), client, votes, genesisTime, o.spread)
+	results := submit(context.Background(), client, votes, genesisTime, o.spread, o.startOffset)
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(summary{Prepared: len(votes), PreparationMS: prepDuration.Milliseconds(), GenesisUnix: uint64(st.GenesisTime().Unix()), Results: results}); err != nil {
@@ -280,7 +287,7 @@ func prepareVotes(ctx context.Context, st state.BeaconState, wanted []primitives
 	return votes, nil
 }
 
-func submit(ctx context.Context, client ethpb.BeaconNodeValidatorClient, votes []prepared, genesis time.Time, spread time.Duration) []slotResult {
+func submit(ctx context.Context, client ethpb.BeaconNodeValidatorClient, votes []prepared, genesis time.Time, spread, startOffset time.Duration) []slotResult {
 	bySlot := make(map[primitives.Slot][]*ethpb.SingleAttestation)
 	for _, vote := range votes {
 		bySlot[vote.slot] = append(bySlot[vote.slot], vote.att)
@@ -303,7 +310,8 @@ func submit(ctx context.Context, client ethpb.BeaconNodeValidatorClient, votes [
 				results[resultIndex] = slotResult{Slot: uint64(slot), Planned: len(atts), Errors: len(atts)}
 				return
 			}
-			if wait := time.Until(start); wait > 0 {
+			firstDue := start.Add(startOffset)
+			if wait := time.Until(firstDue); wait > 0 {
 				time.Sleep(wait)
 			}
 			jobs := make(chan *ethpb.SingleAttestation)
@@ -337,7 +345,7 @@ func submit(ctx context.Context, client ethpb.BeaconNodeValidatorClient, votes [
 				}()
 			}
 			for i, att := range atts {
-				due := start.Add(time.Duration(i) * spread / time.Duration(len(atts)))
+				due := firstDue.Add(time.Duration(i) * spread / time.Duration(len(atts)))
 				if wait := time.Until(due); wait > 0 {
 					time.Sleep(wait)
 				}
