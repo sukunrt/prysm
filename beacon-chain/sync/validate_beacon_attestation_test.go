@@ -1004,7 +1004,7 @@ func TestService_validateAvailableAttestation(t *testing.T) {
 	validBlockRoot, err := blk.Block.HashTreeRoot()
 	require.NoError(t, err)
 
-	validatorCount := decoupled.CommitteeValidatorCount()
+	validatorCount := decoupled.TotalValidatorCount()
 	savedState, keys := util.DeterministicGenesisState(t, validatorCount)
 	require.NoError(t, savedState.SetSlot(currentSlot))
 	require.NoError(t, db.SaveState(ctx, savedState, validBlockRoot))

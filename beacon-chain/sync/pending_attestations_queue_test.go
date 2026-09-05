@@ -1063,7 +1063,7 @@ func availableVote(
 ) *ethpb.AvailableAttestation {
 	t.Helper()
 	bits := bitfield.NewBitvector512()
-	seats := decoupled.AvailableAttestationSeats(slot, idx, decoupled.CommitteeValidatorCount())
+	seats := decoupled.AvailableAttestationSeats(slot, idx, decoupled.TotalValidatorCount())
 	for _, seat := range seats {
 		bits.SetBitAt(seat, true)
 	}
@@ -1099,7 +1099,7 @@ func TestProcessPendingAtts_AvailableAttestationReplayed(t *testing.T) {
 	root, err := blk.Block.HashTreeRoot()
 	require.NoError(t, err)
 
-	st, keys := util.DeterministicGenesisState(t, decoupled.CommitteeValidatorCount())
+	st, keys := util.DeterministicGenesisState(t, decoupled.TotalValidatorCount())
 	require.NoError(t, st.SetSlot(slot))
 	require.NoError(t, db.SaveState(ctx, st, root))
 
@@ -1158,7 +1158,7 @@ func TestProcessPendingAtts_AvailableAttestationQueuedDuringDrain(t *testing.T) 
 	root, err := blk.Block.HashTreeRoot()
 	require.NoError(t, err)
 
-	st, keys := util.DeterministicGenesisState(t, decoupled.CommitteeValidatorCount())
+	st, keys := util.DeterministicGenesisState(t, decoupled.TotalValidatorCount())
 	require.NoError(t, st.SetSlot(slot))
 	require.NoError(t, db.SaveState(ctx, st, root))
 
@@ -1232,7 +1232,7 @@ func TestDrainPendingAttsRoutine_DrainsOnBlockProcessed(t *testing.T) {
 	root, err := blk.Block.HashTreeRoot()
 	require.NoError(t, err)
 
-	st, keys := util.DeterministicGenesisState(t, decoupled.CommitteeValidatorCount())
+	st, keys := util.DeterministicGenesisState(t, decoupled.TotalValidatorCount())
 	require.NoError(t, st.SetSlot(slot))
 	require.NoError(t, db.SaveState(ctx, st, root))
 

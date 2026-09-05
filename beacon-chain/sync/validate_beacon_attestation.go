@@ -367,7 +367,7 @@ func (s *Service) validateUnaggregatedAvailableAttWithState(
 	// The publisher resolves its seats against the genesis validator count, so
 	// the check has to use the same number: the live registry grows with every
 	// deposit and would name a different signer.
-	validatorCount := decoupled.CommitteeValidatorCount()
+	validatorCount := decoupled.TotalValidatorCount()
 	validatorIndices := decoupled.AvailableAttestationSeatsToValidatorIndices(a.Data.Slot, a.AggregationBits.BitIndices(), validatorCount)
 	if len(validatorIndices) != 1 {
 		return pubsub.ValidationReject, errors.New("invalid available attestation seats")

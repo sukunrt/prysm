@@ -12,15 +12,12 @@ import (
 )
 
 func TestAvailableAttestationSeats(t *testing.T) {
-	for _, validatorCount := range []uint64{100, 512, 2048} {
+	for _, validatorCount := range []uint64{1, 100, 512, 1000, 2048} {
 		t.Run(fmt.Sprintf("validatorCount-%d", validatorCount), func(t *testing.T) {
 			for _, slot := range []primitives.Slot{0, 1, 100} {
 				seatOwners := make(map[uint64]uint64)
 				for idx := range validatorCount {
 					seats := AvailableAttestationSeats(slot, primitives.ValidatorIndex(idx), validatorCount)
-					if validatorCount <= AvailableAttestationCommitteeSize {
-						require.Equal(t, true, len(seats) > 0, "validator %d has no seats", idx)
-					}
 					for _, s := range seats {
 						require.Equal(t, true, s < AvailableAttestationCommitteeSize, "seat %d out of range", s)
 						owner, taken := seatOwners[s]
@@ -35,7 +32,7 @@ func TestAvailableAttestationSeats(t *testing.T) {
 }
 
 func TestAvailableAttestationSeatRoundTrip(t *testing.T) {
-	for _, validatorCount := range []uint64{100, 512, 2048} {
+	for _, validatorCount := range []uint64{1, 100, 512, 1000, 2048} {
 		t.Run(fmt.Sprintf("validatorCount-%d", validatorCount), func(t *testing.T) {
 			for _, slot := range []primitives.Slot{0, 1, 100} {
 				for v := range validatorCount {
@@ -58,7 +55,7 @@ func TestAvailableAttestationSeatRoundTrip(t *testing.T) {
 }
 
 func TestAvailableAttestationSeatMultiple(t *testing.T) {
-	for _, validatorCount := range []uint64{100, 512, 2048} {
+	for _, validatorCount := range []uint64{1, 100, 512, 1000, 2048} {
 		t.Run(fmt.Sprintf("validatorCount-%d", validatorCount), func(t *testing.T) {
 			for _, slot := range []primitives.Slot{0, 1, 100} {
 				rs := rand.NewPCG(0, 1)
@@ -93,5 +90,42 @@ func TestAvailableAttestationSeats_IndexOutsideTheCommittee(t *testing.T) {
 	const validatorCount = 256
 	require.Equal(t, 0, len(AvailableAttestationSeats(3, validatorCount, validatorCount)))
 	require.Equal(t, 0, len(AvailableAttestationSeats(3, validatorCount+7, validatorCount)))
-	require.Equal(t, true, len(AvailableAttestationSeats(3, validatorCount-1, validatorCount)) > 0)
+}
+
+func TestAvailableAttestationSeats_NotInValidatorOrder(t *testing.T) {
+	const validatorCount = uint64(1000)
+	for _, slot := range []primitives.Slot{0, 1, 100} {
+		t.Run(fmt.Sprintf("slot-%d", slot), func(t *testing.T) {
+			owners := make([]primitives.ValidatorIndex, AvailableAttestationCommitteeSize)
+			for seat := range owners {
+				indices := AvailableAttestationSeatsToValidatorIndices(slot, []int{seat}, validatorCount)
+				require.Equal(t, 1, len(indices), "seat %d must have one owner", seat)
+				require.Equal(t, true, uint64(indices[0]) < validatorCount, "seat %d has an invalid owner", seat)
+				owners[seat] = indices[0]
+			}
+			require.Equal(t, false, slices.IsSorted(owners), "seat owners follow validator index order")
+
+			consecutive := true
+			for i := 1; i < len(owners); i++ {
+				if uint64(owners[i]) != (uint64(owners[i-1])+1)%validatorCount {
+					consecutive = false
+					break
+				}
+			}
+			require.Equal(t, false, consecutive, "seat owners form a consecutive run, including wraparound")
+		})
+	}
+}
+
+func TestAvailableAttestationSeats_ZeroValidators(t *testing.T) {
+	require.Equal(t, 0, len(AvailableAttestationSeats(0, 0, 0)))
+	require.Equal(t, 0, len(AvailableAttestationSeatsToValidatorIndices(0, []int{0}, 0)))
+}
+
+func TestAvailableAttestationSeatsToValidatorIndices_InvalidSeats(t *testing.T) {
+	for _, seats := range [][]int{{-1}, {AvailableAttestationCommitteeSize}, {0, -1}, {0, AvailableAttestationCommitteeSize}} {
+		t.Run(fmt.Sprint(seats), func(t *testing.T) {
+			require.Equal(t, 0, len(AvailableAttestationSeatsToValidatorIndices(0, seats, 1000)))
+		})
+	}
 }

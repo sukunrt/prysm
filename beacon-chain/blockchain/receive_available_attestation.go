@@ -34,7 +34,7 @@ func (s *Service) ReceiveAvailableAttestation(
 		return errors.New("available attestation has no seats")
 	}
 	indices := decoupled.AvailableAttestationSeatsToValidatorIndices(
-		att.Data.Slot, att.AggregationBits.BitIndices(), decoupled.CommitteeValidatorCount())
+		att.Data.Slot, att.AggregationBits.BitIndices(), decoupled.TotalValidatorCount())
 	if len(indices) != 1 {
 		return errors.New("available attestation does not have exactly one signer")
 	}

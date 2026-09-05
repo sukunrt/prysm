@@ -629,7 +629,7 @@ func (v *validator) RolesAt(ctx context.Context, slot primitives.Slot) (map[[fie
 
 		if duty.Status == ethpb.ValidatorStatus_ACTIVE &&
 			slots.ToEpoch(slot) >= params.BeaconConfig().HezeForkEpoch {
-			n := decoupled.CommitteeValidatorCount()
+			n := decoupled.TotalValidatorCount()
 			seats := decoupled.AvailableAttestationSeats(slot, duty.ValidatorIndex, n)
 			if len(seats) > 0 {
 				roles = append(roles, iface.RoleAvailableAttester)

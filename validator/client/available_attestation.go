@@ -98,7 +98,7 @@ func (v *validator) SubmitAvailableAttestation(
 		return
 	}
 
-	seats := decoupled.AvailableAttestationSeats(slot, st.index, decoupled.CommitteeValidatorCount())
+	seats := decoupled.AvailableAttestationSeats(slot, st.index, decoupled.TotalValidatorCount())
 	if len(seats) == 0 {
 		log.Error("validator not scheduled for duty!")
 		return

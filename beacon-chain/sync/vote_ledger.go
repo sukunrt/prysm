@@ -81,7 +81,7 @@ func recordVote(
 		fields["reason"] = reason
 	}
 	indices := decoupled.AvailableAttestationSeatsToValidatorIndices(
-		slot, att.AggregationBits.BitIndices(), decoupled.CommitteeValidatorCount())
+		slot, att.AggregationBits.BitIndices(), decoupled.TotalValidatorCount())
 	if len(indices) == 1 {
 		fields["validator"] = indices[0]
 	}

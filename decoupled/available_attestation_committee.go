@@ -3,10 +3,13 @@ package decoupled
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"math/rand/v2"
 	"slices"
 
+	"github.com/OffchainLabs/prysm/v7/cache/lru"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	hlru "github.com/hashicorp/golang-lru"
 )
 
 const (
@@ -15,53 +18,99 @@ const (
 )
 
 var AvailableAttDomain []byte
+var committeeCache *hlru.Cache
 
 func init() {
 	var ad = sha256.Sum256([]byte(domain))
 	AvailableAttDomain = ad[:]
+	committeeCache = lru.New(128)
 }
 
-func offset(slot primitives.Slot, validatorCount uint64) uint64 {
+func updateCacheAndGetCommittee(slot primitives.Slot, validatorCount uint64) availableAttestationCommittee {
+	key := lruKey{Slot: slot, ValidatorCount: validatorCount}
+	aac, ok := committeeCache.Get(key)
+	if ok {
+		return aac.(availableAttestationCommittee)
+	}
+
+	sd := seed(slot, validatorCount)
+	r := rand.New(rand.NewChaCha8(sd))
+	validatorSeats := make([]primitives.ValidatorIndex, AvailableAttestationCommitteeSize)
+	for i := range len(validatorSeats) {
+		validatorSeats[i] = primitives.ValidatorIndex(r.Uint64N(validatorCount))
+	}
+	ac := availableAttestationCommittee{
+		slot:            slot,
+		validatorCount:  validatorCount,
+		seed:            sd,
+		validatorToSeat: map[primitives.ValidatorIndex][]uint64{},
+		seatToValidator: map[uint64]primitives.ValidatorIndex{},
+	}
+	for s, v := range validatorSeats {
+		ac.validatorToSeat[v] = append(ac.validatorToSeat[v], uint64(s))
+		ac.seatToValidator[uint64(s)] = v
+	}
+	committeeCache.Add(key, ac)
+	return ac
+}
+
+func seed(slot primitives.Slot, validatorCount uint64) [32]byte {
 	h := sha256.New()
 	h.Write([]byte(domain))
 	h.Write(binary.BigEndian.AppendUint64(nil, uint64(slot)))
-	sm := h.Sum(nil)
-	return (binary.BigEndian.Uint64(sm[:8]) % validatorCount)
+	h.Write(binary.BigEndian.AppendUint64(nil, uint64(validatorCount)))
+	var seed [32]byte
+	h.Sum(seed[:0])
+	return seed
 }
 
-// CommitteeValidatorCount is the electorate the mock available committee is
-// drawn from: the genesis validator set, not the live registry. The publisher
-// and every receiver must resolve seats against the same number, and the
-// registry grows whenever a deposit is processed.
-func CommitteeValidatorCount() uint64 {
+// TotalValidatorCount is the total validator count from which the committee is chosen
+func TotalValidatorCount() uint64 {
 	return params.BeaconConfig().MinGenesisActiveValidatorCount
 }
 
 func AvailableAttestationSeats(slot primitives.Slot, index primitives.ValidatorIndex, validatorCount uint64) []uint64 {
-	if uint64(index) >= validatorCount {
+	if uint64(index) >= validatorCount || validatorCount == 0 {
 		// A validator that joined after genesis is outside the mock committee.
 		// Without this it would wrap onto another validator's seats and its
 		// signature would be checked against the wrong public key.
 		return nil
 	}
-	off := offset(slot, validatorCount)
-	st := (uint64(index) + validatorCount - off) % validatorCount
-	var seats []uint64
-	for pos := st; pos < AvailableAttestationCommitteeSize; pos += validatorCount {
-		seats = append(seats, pos)
-	}
-	return seats
+	ac := updateCacheAndGetCommittee(slot, validatorCount)
+	return slices.Clone(ac.validatorToSeat[index])
 }
 
 func AvailableAttestationSeatsToValidatorIndices(slot primitives.Slot, seats []int, validatorCount uint64) []primitives.ValidatorIndex {
-	off := offset(slot, validatorCount)
-	var validatorIndices []primitives.ValidatorIndex
+	if validatorCount == 0 {
+		return nil
+	}
+	ac := updateCacheAndGetCommittee(slot, validatorCount)
+
+	validatorIndices := make([]primitives.ValidatorIndex, 0, len(seats))
 	for _, s := range seats {
-		vi := primitives.ValidatorIndex((uint64(s) + off) % validatorCount)
-		validatorIndices = append(validatorIndices, vi)
+		if s < 0 || s >= AvailableAttestationCommitteeSize {
+			return nil
+		}
+		ss := uint64(s)
+		v, ok := ac.seatToValidator[ss]
+		if !ok {
+			continue
+		}
+		validatorIndices = append(validatorIndices, v)
 	}
 	slices.Sort(validatorIndices)
-	validatorIndices = slices.Compact(validatorIndices)
+	return slices.Compact(validatorIndices)
+}
 
-	return validatorIndices
+type lruKey struct {
+	Slot           primitives.Slot
+	ValidatorCount uint64
+}
+
+type availableAttestationCommittee struct {
+	slot            primitives.Slot
+	validatorCount  uint64
+	seed            [32]byte
+	validatorToSeat map[primitives.ValidatorIndex][]uint64
+	seatToValidator map[uint64]primitives.ValidatorIndex
 }
