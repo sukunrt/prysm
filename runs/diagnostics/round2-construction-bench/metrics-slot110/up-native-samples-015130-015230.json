@@ -1,0 +1,413 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "execution",
+          "instance": "glamsterdam-devnet-10-prysm-geth-1",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "168.144.189.104",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573117.479,
+            "1"
+          ],
+          [
+            1788573147.479,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-10-prysm-geth-1",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "168.144.189.104",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573102.417,
+            "1"
+          ],
+          [
+            1788573132.417,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "exporter",
+          "instance": "glamsterdam-devnet-10-prysm-nethermind-61",
+          "consensus_client": "prysm",
+          "execution_client": "nethermind",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "159.223.42.41",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573103.849,
+            "1"
+          ],
+          [
+            1788573133.849,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "prometheus",
+          "instance": "glamsterdam-devnet-10-prysm-nethermind-61",
+          "consensus_client": "prysm",
+          "execution_client": "nethermind",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "159.223.42.41",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573100.922,
+            "1"
+          ],
+          [
+            1788573130.922,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "prometheus",
+          "instance": "glamsterdam-devnet-10-prysm-geth-1",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "168.144.189.104",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573096.806,
+            "1"
+          ],
+          [
+            1788573126.806,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "execution",
+          "instance": "glamsterdam-devnet-10-prysm-nethermind-61",
+          "consensus_client": "prysm",
+          "execution_client": "nethermind",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "159.223.42.41",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573106.259,
+            "0"
+          ],
+          [
+            1788573136.259,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-10-prysm-geth-83",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "104.131.160.79",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573103.319,
+            "1"
+          ],
+          [
+            1788573133.319,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-10-prysm-nethermind-61",
+          "consensus_client": "prysm",
+          "execution_client": "nethermind",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "159.223.42.41",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573099.563,
+            "1"
+          ],
+          [
+            1788573129.563,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "execution",
+          "instance": "glamsterdam-devnet-10-prysm-geth-83",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "104.131.160.79",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573095.803,
+            "1"
+          ],
+          [
+            1788573125.803,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "exporter",
+          "instance": "glamsterdam-devnet-10-prysm-geth-1",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "168.144.189.104",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573093.602,
+            "1"
+          ],
+          [
+            1788573123.602,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "node",
+          "instance": "glamsterdam-devnet-10-prysm-geth-83",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "104.131.160.79",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573096.358,
+            "1"
+          ],
+          [
+            1788573126.358,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "node",
+          "instance": "glamsterdam-devnet-10-prysm-nethermind-61",
+          "consensus_client": "prysm",
+          "execution_client": "nethermind",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "159.223.42.41",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573103.542,
+            "1"
+          ],
+          [
+            1788573133.542,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "exporter",
+          "instance": "glamsterdam-devnet-10-prysm-geth-83",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "104.131.160.79",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573118.018,
+            "1"
+          ],
+          [
+            1788573148.026,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "prometheus",
+          "instance": "glamsterdam-devnet-10-prysm-geth-83",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "104.131.160.79",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "False",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573096.005,
+            "1"
+          ],
+          [
+            1788573126.005,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "job": "node",
+          "instance": "glamsterdam-devnet-10-prysm-geth-1",
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "ingress_user": "glamsterdam-devnet-10",
+          "ip_address": "168.144.189.104",
+          "network": "glamsterdam-devnet-10",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-10",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573105.218,
+            "1"
+          ],
+          [
+            1788573135.218,
+            "1"
+          ]
+        ]
+      }
+    ]
+  }
+}

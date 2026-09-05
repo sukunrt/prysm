@@ -1,0 +1,44 @@
+File: validator.test
+Build ID: 83ab6be436a0779c40b98cac63077114de5934ad
+Type: cpu
+Time: 2026-09-08 21:29:42 IST
+Duration: 35.23s, Total samples = 49.73s (141.17%)
+Active filters:
+   focus=AggregateUnaggregatedAttestations
+   show_from=AggregateUnaggregatedAttestations
+Showing nodes accounting for 4.32s, 8.69% of 49.73s total
+Dropped 40 nodes (cum <= 0.25s)
+      flat  flat%   sum%        cum   cum%
+     3.40s  6.84%  6.84%      3.85s  7.74%  github.com/OffchainLabs/go-bitfield.Bitlist.Contains
+     0.45s   0.9%  7.74%      0.45s   0.9%  github.com/OffchainLabs/go-bitfield.Bitlist.Len (inline)
+     0.15s   0.3%  8.04%      4.09s  8.22%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).insertSeenBit
+     0.08s  0.16%  8.20%      0.08s  0.16%  runtime.memmove
+     0.07s  0.14%  8.35%      0.14s  0.28%  runtime.mallocgcSmallNoscan
+     0.03s  0.06%  8.41%      0.04s  0.08%  github.com/OffchainLabs/methodical-ssz/ssz.parseBitlist
+     0.03s  0.06%  8.47%      0.03s  0.06%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).GetAggregationBits
+     0.02s  0.04%  8.51%      0.07s  0.14%  github.com/OffchainLabs/methodical-ssz/ssz.merkleizeChunks
+     0.02s  0.04%  8.55%      0.20s   0.4%  github.com/OffchainLabs/methodical-ssz/ssz.merkleizeInput
+     0.02s  0.04%  8.59%      0.18s  0.36%  runtime.mallocgc
+     0.01s  0.02%  8.61%      0.14s  0.28%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).Merkleize
+     0.01s  0.02%  8.63%      0.09s  0.18%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).PutBytes
+     0.01s  0.02%  8.65%      0.10s   0.2%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).UnaggregatedAttestations
+     0.01s  0.02%  8.67%      0.17s  0.34%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationData).HashTreeRootWith
+     0.01s  0.02%  8.69%      0.06s  0.12%  runtime.growslice
+         0     0%  8.69%      0.06s  0.12%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).AppendBytes32 (inline)
+         0     0%  8.69%      0.08s  0.16%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).MerkleizeWithMixin
+         0     0%  8.69%      0.12s  0.24%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).PutBitlist
+         0     0%  8.69%      4.50s  9.05%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).AggregateUnaggregatedAttestations
+         0     0%  8.69%      4.22s  8.49%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).DeleteUnaggregatedAttestation
+         0     0%  8.69%      4.40s  8.85%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).aggregateUnaggregatedAtts
+         0     0%  8.69%      0.05s   0.1%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).hasSeenBit
+         0     0%  8.69%      0.09s  0.18%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationData).HashTreeRoot
+         0     0%  8.69%      0.03s  0.06%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).Clone
+         0     0%  8.69%      0.03s  0.06%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).Copy
+         0     0%  8.69%      0.25s   0.5%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).HashTreeRoot
+         0     0%  8.69%      0.25s   0.5%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).HashTreeRootWith
+         0     0%  8.69%      0.04s  0.08%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*Checkpoint).HashTreeRootWith
+         0     0%  8.69%      0.40s   0.8%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation.NewId
+         0     0%  8.69%      0.04s  0.08%  runtime.(*mcache).nextFree
+         0     0%  8.69%      0.03s  0.06%  runtime.(*mcache).refill
+         0     0%  8.69%      0.04s  0.08%  runtime.makeslice
+         0     0%  8.69%      0.10s   0.2%  runtime.newobject

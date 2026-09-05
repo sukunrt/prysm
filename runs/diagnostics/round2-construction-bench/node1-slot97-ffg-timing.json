@@ -1,0 +1,1779 @@
+{
+  "gossip_validation_entries": {
+    "arrivedMs_cumulative": {
+      "le_1000ms": {
+        "row_count": 6021,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 6021,
+        "unique_validators": 6021
+      },
+      "le_100ms": {
+        "row_count": 102,
+        "unique_dataRoots": 5,
+        "unique_validator_dataRoot_committee": 102,
+        "unique_validators": 102
+      },
+      "le_200ms": {
+        "row_count": 708,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 708,
+        "unique_validators": 708
+      },
+      "le_25ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_3645ms": {
+        "row_count": 14355,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 14355,
+        "unique_validators": 14355
+      },
+      "le_500ms": {
+        "row_count": 2428,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 2428,
+        "unique_validators": 2428
+      },
+      "le_50ms": {
+        "row_count": 20,
+        "unique_dataRoots": 5,
+        "unique_validator_dataRoot_committee": 20,
+        "unique_validators": 20
+      }
+    },
+    "arrivedMs_max": 3489,
+    "arrivedMs_min": 30,
+    "emitted_offset_ms_max": 3532.503,
+    "emitted_offset_ms_min": 37.32,
+    "first_by_arrivedMs": [
+      {
+        "arrivedMs": 30,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 37.32,
+        "line": 1121954,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.037320Z",
+        "validator": 31761
+      },
+      {
+        "arrivedMs": 32,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.844,
+        "line": 1121960,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043844Z",
+        "validator": 77460
+      },
+      {
+        "arrivedMs": 32,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.141,
+        "line": 1121961,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044141Z",
+        "validator": 77750
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 41.833,
+        "line": 1121955,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.041833Z",
+        "validator": 32186
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 41.967,
+        "line": 1121956,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.041967Z",
+        "validator": 31940
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.089,
+        "line": 1121957,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043089Z",
+        "validator": 32281
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.173,
+        "line": 1121963,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044173Z",
+        "validator": 32116
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 43.108,
+        "line": 1121958,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043108Z",
+        "validator": 104111
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.225,
+        "line": 1121959,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043225Z",
+        "validator": 31883
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 44.168,
+        "line": 1121962,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044168Z",
+        "validator": 77381
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.797,
+        "line": 1121964,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044797Z",
+        "validator": 31809
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.841,
+        "line": 1121965,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044841Z",
+        "validator": 104249
+      },
+      {
+        "arrivedMs": 41,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 0,
+        "dataRoot": "0xd9844caa13048c255bcb43c871d063678de28e0dbc0ae0f74cc2cc74bddc9b",
+        "emitted_offset_ms": 45.832,
+        "line": 1121966,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.045832Z",
+        "validator": 2338
+      },
+      {
+        "arrivedMs": 42,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 51.928,
+        "line": 1121968,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.051928Z",
+        "validator": 2078
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 53.202,
+        "line": 1121969,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053202Z",
+        "validator": 79327
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 53.224,
+        "line": 1121970,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053224Z",
+        "validator": 104386
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 53.228,
+        "line": 1121971,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053228Z",
+        "validator": 2284
+      },
+      {
+        "arrivedMs": 46,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 51.588,
+        "line": 1121967,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.051588Z",
+        "validator": 1881
+      },
+      {
+        "arrivedMs": 48,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 56.4,
+        "line": 1121973,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.056400Z",
+        "validator": 79353
+      },
+      {
+        "arrivedMs": 49,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 56.417,
+        "line": 1121974,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.056417Z",
+        "validator": 32270
+      }
+    ],
+    "first_by_outer_emission": [
+      {
+        "arrivedMs": 30,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 37.32,
+        "line": 1121954,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.037320Z",
+        "validator": 31761
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 41.833,
+        "line": 1121955,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.041833Z",
+        "validator": 32186
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 41.967,
+        "line": 1121956,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.041967Z",
+        "validator": 31940
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.089,
+        "line": 1121957,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043089Z",
+        "validator": 32281
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 43.108,
+        "line": 1121958,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043108Z",
+        "validator": 104111
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.225,
+        "line": 1121959,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043225Z",
+        "validator": 31883
+      },
+      {
+        "arrivedMs": 32,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.844,
+        "line": 1121960,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043844Z",
+        "validator": 77460
+      },
+      {
+        "arrivedMs": 32,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.141,
+        "line": 1121961,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044141Z",
+        "validator": 77750
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 44.168,
+        "line": 1121962,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044168Z",
+        "validator": 77381
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.173,
+        "line": 1121963,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044173Z",
+        "validator": 32116
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.797,
+        "line": 1121964,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044797Z",
+        "validator": 31809
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.841,
+        "line": 1121965,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044841Z",
+        "validator": 104249
+      },
+      {
+        "arrivedMs": 41,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 0,
+        "dataRoot": "0xd9844caa13048c255bcb43c871d063678de28e0dbc0ae0f74cc2cc74bddc9b",
+        "emitted_offset_ms": 45.832,
+        "line": 1121966,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.045832Z",
+        "validator": 2338
+      },
+      {
+        "arrivedMs": 46,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 51.588,
+        "line": 1121967,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.051588Z",
+        "validator": 1881
+      },
+      {
+        "arrivedMs": 42,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 51.928,
+        "line": 1121968,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.051928Z",
+        "validator": 2078
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 53.202,
+        "line": 1121969,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053202Z",
+        "validator": 79327
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 53.224,
+        "line": 1121970,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053224Z",
+        "validator": 104386
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 53.228,
+        "line": 1121971,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053228Z",
+        "validator": 2284
+      },
+      {
+        "arrivedMs": 51,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 56.244,
+        "line": 1121972,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.056244Z",
+        "validator": 77438
+      },
+      {
+        "arrivedMs": 48,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 56.4,
+        "line": 1121973,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.056400Z",
+        "validator": 79353
+      }
+    ],
+    "outer_emitted_offset_cumulative": {
+      "le_1000ms": {
+        "row_count": 4330,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 4330,
+        "unique_validators": 4330
+      },
+      "le_100ms": {
+        "row_count": 102,
+        "unique_dataRoots": 5,
+        "unique_validator_dataRoot_committee": 102,
+        "unique_validators": 102
+      },
+      "le_200ms": {
+        "row_count": 487,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 487,
+        "unique_validators": 487
+      },
+      "le_25ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_3645ms": {
+        "row_count": 14355,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 14355,
+        "unique_validators": 14355
+      },
+      "le_500ms": {
+        "row_count": 1791,
+        "unique_dataRoots": 8,
+        "unique_validator_dataRoot_committee": 1791,
+        "unique_validators": 1791
+      },
+      "le_50ms": {
+        "row_count": 13,
+        "unique_dataRoots": 3,
+        "unique_validator_dataRoot_committee": 13,
+        "unique_validators": 13
+      }
+    },
+    "row_count": 14355,
+    "unique_committees": 6,
+    "unique_dataRoots": 12,
+    "unique_validators": 14355
+  },
+  "local_submission_ledger_rows": {
+    "arrivedMs_cumulative": {
+      "le_1000ms": {
+        "row_count": 71,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 71,
+        "unique_validators": 71
+      },
+      "le_100ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_200ms": {
+        "row_count": 33,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 33,
+        "unique_validators": 33
+      },
+      "le_25ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_3645ms": {
+        "row_count": 71,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 71,
+        "unique_validators": 71
+      },
+      "le_500ms": {
+        "row_count": 71,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 71,
+        "unique_validators": 71
+      },
+      "le_50ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      }
+    },
+    "arrivedMs_max": 261,
+    "arrivedMs_min": 108,
+    "emitted_offset_ms_max": 266.728,
+    "emitted_offset_ms_min": 110.229,
+    "first_by_arrivedMs": [
+      {
+        "arrivedMs": 108,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 1,
+        "dataRoot": "0x444c664eae68352ac0cf67b130d4b6394844ee6ccb43349e36ae301f151fe4",
+        "emitted_offset_ms": 110.229,
+        "line": 1122057,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.110229Z",
+        "validator": 340
+      },
+      {
+        "arrivedMs": 110,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 110.511,
+        "line": 1122058,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.110511Z",
+        "validator": 465
+      },
+      {
+        "arrivedMs": 110,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 110.912,
+        "line": 1122059,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.110912Z",
+        "validator": 323
+      },
+      {
+        "arrivedMs": 112,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 112.379,
+        "line": 1122060,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.112379Z",
+        "validator": 14
+      },
+      {
+        "arrivedMs": 113,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 113.265,
+        "line": 1122061,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.113265Z",
+        "validator": 146
+      },
+      {
+        "arrivedMs": 113,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 1,
+        "dataRoot": "0x444c664eae68352ac0cf67b130d4b6394844ee6ccb43349e36ae301f151fe4",
+        "emitted_offset_ms": 113.83,
+        "line": 1122062,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.113830Z",
+        "validator": 331
+      },
+      {
+        "arrivedMs": 114,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 114.832,
+        "line": 1122063,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.114832Z",
+        "validator": 53
+      },
+      {
+        "arrivedMs": 114,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 115.215,
+        "line": 1122064,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.115215Z",
+        "validator": 102
+      },
+      {
+        "arrivedMs": 115,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 115.229,
+        "line": 1122065,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.115229Z",
+        "validator": 554
+      },
+      {
+        "arrivedMs": 115,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 0,
+        "dataRoot": "0xd9844caa13048c255bcb43c871d063678de28e0dbc0ae0f74cc2cc74bddc9b",
+        "emitted_offset_ms": 115.869,
+        "line": 1122066,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.115869Z",
+        "validator": 562
+      },
+      {
+        "arrivedMs": 116,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 1,
+        "dataRoot": "0x444c664eae68352ac0cf67b130d4b6394844ee6ccb43349e36ae301f151fe4",
+        "emitted_offset_ms": 116.462,
+        "line": 1122067,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.116462Z",
+        "validator": 284
+      },
+      {
+        "arrivedMs": 117,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 117.213,
+        "line": 1122068,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.117213Z",
+        "validator": 510
+      },
+      {
+        "arrivedMs": 117,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 117.369,
+        "line": 1122069,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.117369Z",
+        "validator": 344
+      },
+      {
+        "arrivedMs": 117,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 0,
+        "dataRoot": "0xd9844caa13048c255bcb43c871d063678de28e0dbc0ae0f74cc2cc74bddc9b",
+        "emitted_offset_ms": 119.809,
+        "line": 1122070,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.119809Z",
+        "validator": 525
+      },
+      {
+        "arrivedMs": 118,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 120.087,
+        "line": 1122071,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120087Z",
+        "validator": 377
+      },
+      {
+        "arrivedMs": 118,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 120.918,
+        "line": 1122072,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120918Z",
+        "validator": 547
+      },
+      {
+        "arrivedMs": 118,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 120.941,
+        "line": 1122073,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120941Z",
+        "validator": 66
+      },
+      {
+        "arrivedMs": 118,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 120.945,
+        "line": 1122074,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120945Z",
+        "validator": 537
+      },
+      {
+        "arrivedMs": 119,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 1,
+        "dataRoot": "0x444c664eae68352ac0cf67b130d4b6394844ee6ccb43349e36ae301f151fe4",
+        "emitted_offset_ms": 120.948,
+        "line": 1122075,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120948Z",
+        "validator": 480
+      },
+      {
+        "arrivedMs": 119,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 120.96,
+        "line": 1122076,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120960Z",
+        "validator": 143
+      }
+    ],
+    "first_by_outer_emission": [
+      {
+        "arrivedMs": 108,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 1,
+        "dataRoot": "0x444c664eae68352ac0cf67b130d4b6394844ee6ccb43349e36ae301f151fe4",
+        "emitted_offset_ms": 110.229,
+        "line": 1122057,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.110229Z",
+        "validator": 340
+      },
+      {
+        "arrivedMs": 110,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 110.511,
+        "line": 1122058,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.110511Z",
+        "validator": 465
+      },
+      {
+        "arrivedMs": 110,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 110.912,
+        "line": 1122059,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.110912Z",
+        "validator": 323
+      },
+      {
+        "arrivedMs": 112,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 112.379,
+        "line": 1122060,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.112379Z",
+        "validator": 14
+      },
+      {
+        "arrivedMs": 113,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 113.265,
+        "line": 1122061,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.113265Z",
+        "validator": 146
+      },
+      {
+        "arrivedMs": 113,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 1,
+        "dataRoot": "0x444c664eae68352ac0cf67b130d4b6394844ee6ccb43349e36ae301f151fe4",
+        "emitted_offset_ms": 113.83,
+        "line": 1122062,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.113830Z",
+        "validator": 331
+      },
+      {
+        "arrivedMs": 114,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 114.832,
+        "line": 1122063,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.114832Z",
+        "validator": 53
+      },
+      {
+        "arrivedMs": 114,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 115.215,
+        "line": 1122064,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.115215Z",
+        "validator": 102
+      },
+      {
+        "arrivedMs": 115,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 115.229,
+        "line": 1122065,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.115229Z",
+        "validator": 554
+      },
+      {
+        "arrivedMs": 115,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 0,
+        "dataRoot": "0xd9844caa13048c255bcb43c871d063678de28e0dbc0ae0f74cc2cc74bddc9b",
+        "emitted_offset_ms": 115.869,
+        "line": 1122066,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.115869Z",
+        "validator": 562
+      },
+      {
+        "arrivedMs": 116,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 1,
+        "dataRoot": "0x444c664eae68352ac0cf67b130d4b6394844ee6ccb43349e36ae301f151fe4",
+        "emitted_offset_ms": 116.462,
+        "line": 1122067,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.116462Z",
+        "validator": 284
+      },
+      {
+        "arrivedMs": 117,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 117.213,
+        "line": 1122068,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.117213Z",
+        "validator": 510
+      },
+      {
+        "arrivedMs": 117,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 117.369,
+        "line": 1122069,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.117369Z",
+        "validator": 344
+      },
+      {
+        "arrivedMs": 117,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 0,
+        "dataRoot": "0xd9844caa13048c255bcb43c871d063678de28e0dbc0ae0f74cc2cc74bddc9b",
+        "emitted_offset_ms": 119.809,
+        "line": 1122070,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.119809Z",
+        "validator": 525
+      },
+      {
+        "arrivedMs": 118,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 120.087,
+        "line": 1122071,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120087Z",
+        "validator": 377
+      },
+      {
+        "arrivedMs": 118,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 120.918,
+        "line": 1122072,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120918Z",
+        "validator": 547
+      },
+      {
+        "arrivedMs": 118,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 120.941,
+        "line": 1122073,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120941Z",
+        "validator": 66
+      },
+      {
+        "arrivedMs": 118,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 120.945,
+        "line": 1122074,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120945Z",
+        "validator": 537
+      },
+      {
+        "arrivedMs": 119,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 1,
+        "dataRoot": "0x444c664eae68352ac0cf67b130d4b6394844ee6ccb43349e36ae301f151fe4",
+        "emitted_offset_ms": 120.948,
+        "line": 1122075,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120948Z",
+        "validator": 480
+      },
+      {
+        "arrivedMs": 119,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 120.96,
+        "line": 1122076,
+        "outcome": "local",
+        "outer_timestamp": "2026-09-05T01:49:24.120960Z",
+        "validator": 143
+      }
+    ],
+    "outer_emitted_offset_cumulative": {
+      "le_1000ms": {
+        "row_count": 71,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 71,
+        "unique_validators": 71
+      },
+      "le_100ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_200ms": {
+        "row_count": 33,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 33,
+        "unique_validators": 33
+      },
+      "le_25ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_3645ms": {
+        "row_count": 71,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 71,
+        "unique_validators": 71
+      },
+      "le_500ms": {
+        "row_count": 71,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 71,
+        "unique_validators": 71
+      },
+      "le_50ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      }
+    },
+    "row_count": 71,
+    "unique_committees": 6,
+    "unique_dataRoots": 6,
+    "unique_validators": 71
+  },
+  "parse_accounting": {
+    "candidate_vote_lines": 14426,
+    "malformed_or_missing": {},
+    "parsed_rows": 14426,
+    "unparsed_candidate_lines": 0,
+    "wrong_slot_after_parse": 0
+  },
+  "scope": {
+    "attSlot": 97,
+    "input": "runs/round2/prysm-geth-1/beacon.log",
+    "input_sha256": "fc3836a9ebe0399ddb0e6e4fc23671d5e04d4edc665cd5253c89332edd4c2fbf",
+    "input_size_bytes": 1336022480,
+    "limitations": [
+      "arrivedMs is validation entry for outcome=gossip",
+      "arrivedMs is local submission/log time for outcome=local, not gossip validation entry",
+      "outer_timestamp is the log emission prefix",
+      "ledger emission does not establish completed subscriber insertion or proposal-pool membership",
+      "this is node 1 only; unique-validator counts are observer-local"
+    ],
+    "physical_lf_records_scanned": 2857343,
+    "slot_start_utc": "2026-09-05T01:49:24Z",
+    "threshold_semantics": "cumulative and inclusive (offset <= threshold)"
+  },
+  "single_votes": {
+    "arrivedMs_cumulative": {
+      "le_1000ms": {
+        "row_count": 6092,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 6092,
+        "unique_validators": 6092
+      },
+      "le_100ms": {
+        "row_count": 102,
+        "unique_dataRoots": 5,
+        "unique_validator_dataRoot_committee": 102,
+        "unique_validators": 102
+      },
+      "le_200ms": {
+        "row_count": 741,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 741,
+        "unique_validators": 741
+      },
+      "le_25ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_3645ms": {
+        "row_count": 14426,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 14426,
+        "unique_validators": 14426
+      },
+      "le_500ms": {
+        "row_count": 2499,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 2499,
+        "unique_validators": 2499
+      },
+      "le_50ms": {
+        "row_count": 20,
+        "unique_dataRoots": 5,
+        "unique_validator_dataRoot_committee": 20,
+        "unique_validators": 20
+      }
+    },
+    "arrivedMs_max": 3489,
+    "arrivedMs_min": 30,
+    "dataRoot_committee_groups": [
+      {
+        "arrivedMs_max": 2194,
+        "arrivedMs_min": 412,
+        "committeeIndex": 1,
+        "dataRoot": "0x034eae65920603f123608e9292dede9e585c5cb2e95a9d735af62b005c03f5",
+        "emitted_offset_ms_max": 2533.308,
+        "emitted_offset_ms_min": 612.727,
+        "row_count": 9,
+        "unique_validators": 9
+      },
+      {
+        "arrivedMs_max": 1382,
+        "arrivedMs_min": 293,
+        "committeeIndex": 0,
+        "dataRoot": "0x1ffddb4174a9e676fed899fa8714b76cbc5e3dcdf53b07a0d7e6669eda10ab",
+        "emitted_offset_ms_max": 1560.379,
+        "emitted_offset_ms_min": 465.548,
+        "row_count": 15,
+        "unique_validators": 15
+      },
+      {
+        "arrivedMs_max": 3489,
+        "arrivedMs_min": 44,
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms_max": 3532.503,
+        "emitted_offset_ms_min": 53.224,
+        "row_count": 2484,
+        "unique_validators": 2484
+      },
+      {
+        "arrivedMs_max": 2771,
+        "arrivedMs_min": 108,
+        "committeeIndex": 1,
+        "dataRoot": "0x444c664eae68352ac0cf67b130d4b6394844ee6ccb43349e36ae301f151fe4",
+        "emitted_offset_ms_max": 3091.499,
+        "emitted_offset_ms_min": 110.229,
+        "row_count": 1917,
+        "unique_validators": 1917
+      },
+      {
+        "arrivedMs_max": 2649,
+        "arrivedMs_min": 32,
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms_max": 3075.798,
+        "emitted_offset_ms_min": 41.833,
+        "row_count": 2485,
+        "unique_validators": 2485
+      },
+      {
+        "arrivedMs_max": 1988,
+        "arrivedMs_min": 44,
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms_max": 2435.18,
+        "emitted_offset_ms_min": 53.202,
+        "row_count": 2491,
+        "unique_validators": 2491
+      },
+      {
+        "arrivedMs_max": 600,
+        "arrivedMs_min": 324,
+        "committeeIndex": 2,
+        "dataRoot": "0x84fcfa4e8f439368b79adee8856f2f8d4a732782abd50056cb19bb9e978a63",
+        "emitted_offset_ms_max": 911.639,
+        "emitted_offset_ms_min": 528.233,
+        "row_count": 8,
+        "unique_validators": 8
+      },
+      {
+        "arrivedMs_max": 2630,
+        "arrivedMs_min": 481,
+        "committeeIndex": 3,
+        "dataRoot": "0x95d511123d304e67e86ba052c966541c756959a025c294e6027c63c4586645",
+        "emitted_offset_ms_max": 3047.251,
+        "emitted_offset_ms_min": 648.824,
+        "row_count": 15,
+        "unique_validators": 15
+      },
+      {
+        "arrivedMs_max": 2234,
+        "arrivedMs_min": 30,
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms_max": 2715.419,
+        "emitted_offset_ms_min": 37.32,
+        "row_count": 2492,
+        "unique_validators": 2492
+      },
+      {
+        "arrivedMs_max": 1958,
+        "arrivedMs_min": 278,
+        "committeeIndex": 5,
+        "dataRoot": "0xab63e5bb8c04f1a37118347e626bb65e3cfec289e533d54940c2346135f246",
+        "emitted_offset_ms_max": 2374.667,
+        "emitted_offset_ms_min": 430.0,
+        "row_count": 9,
+        "unique_validators": 9
+      },
+      {
+        "arrivedMs_max": 3489,
+        "arrivedMs_min": 412,
+        "committeeIndex": 4,
+        "dataRoot": "0xce09a75578002af6066d88b71a6ffca2c753c9b16c073bf022d1d610adb70b",
+        "emitted_offset_ms_max": 3531.907,
+        "emitted_offset_ms_min": 612.842,
+        "row_count": 16,
+        "unique_validators": 16
+      },
+      {
+        "arrivedMs_max": 3151,
+        "arrivedMs_min": 41,
+        "committeeIndex": 0,
+        "dataRoot": "0xd9844caa13048c255bcb43c871d063678de28e0dbc0ae0f74cc2cc74bddc9b",
+        "emitted_offset_ms_max": 3438.827,
+        "emitted_offset_ms_min": 45.832,
+        "row_count": 2485,
+        "unique_validators": 2485
+      }
+    ],
+    "duplicate_tuple_rows": 0,
+    "emitted_offset_ms_max": 3532.503,
+    "emitted_offset_ms_min": 37.32,
+    "first_by_arrivedMs": [
+      {
+        "arrivedMs": 30,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 37.32,
+        "line": 1121954,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.037320Z",
+        "validator": 31761
+      },
+      {
+        "arrivedMs": 32,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.844,
+        "line": 1121960,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043844Z",
+        "validator": 77460
+      },
+      {
+        "arrivedMs": 32,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.141,
+        "line": 1121961,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044141Z",
+        "validator": 77750
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 41.833,
+        "line": 1121955,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.041833Z",
+        "validator": 32186
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 41.967,
+        "line": 1121956,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.041967Z",
+        "validator": 31940
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.089,
+        "line": 1121957,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043089Z",
+        "validator": 32281
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.173,
+        "line": 1121963,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044173Z",
+        "validator": 32116
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 43.108,
+        "line": 1121958,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043108Z",
+        "validator": 104111
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.225,
+        "line": 1121959,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043225Z",
+        "validator": 31883
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 44.168,
+        "line": 1121962,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044168Z",
+        "validator": 77381
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.797,
+        "line": 1121964,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044797Z",
+        "validator": 31809
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.841,
+        "line": 1121965,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044841Z",
+        "validator": 104249
+      },
+      {
+        "arrivedMs": 41,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 0,
+        "dataRoot": "0xd9844caa13048c255bcb43c871d063678de28e0dbc0ae0f74cc2cc74bddc9b",
+        "emitted_offset_ms": 45.832,
+        "line": 1121966,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.045832Z",
+        "validator": 2338
+      },
+      {
+        "arrivedMs": 42,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 51.928,
+        "line": 1121968,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.051928Z",
+        "validator": 2078
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 53.202,
+        "line": 1121969,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053202Z",
+        "validator": 79327
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 53.224,
+        "line": 1121970,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053224Z",
+        "validator": 104386
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 53.228,
+        "line": 1121971,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053228Z",
+        "validator": 2284
+      },
+      {
+        "arrivedMs": 46,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 51.588,
+        "line": 1121967,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.051588Z",
+        "validator": 1881
+      },
+      {
+        "arrivedMs": 48,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 56.4,
+        "line": 1121973,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.056400Z",
+        "validator": 79353
+      },
+      {
+        "arrivedMs": 49,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 56.417,
+        "line": 1121974,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.056417Z",
+        "validator": 32270
+      }
+    ],
+    "first_by_outer_emission": [
+      {
+        "arrivedMs": 30,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 37.32,
+        "line": 1121954,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.037320Z",
+        "validator": 31761
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 41.833,
+        "line": 1121955,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.041833Z",
+        "validator": 32186
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 41.967,
+        "line": 1121956,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.041967Z",
+        "validator": 31940
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.089,
+        "line": 1121957,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043089Z",
+        "validator": 32281
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 43.108,
+        "line": 1121958,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043108Z",
+        "validator": 104111
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.225,
+        "line": 1121959,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043225Z",
+        "validator": 31883
+      },
+      {
+        "arrivedMs": 32,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 43.844,
+        "line": 1121960,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.043844Z",
+        "validator": 77460
+      },
+      {
+        "arrivedMs": 32,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.141,
+        "line": 1121961,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044141Z",
+        "validator": 77750
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 44.168,
+        "line": 1121962,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044168Z",
+        "validator": 77381
+      },
+      {
+        "arrivedMs": 35,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.173,
+        "line": 1121963,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044173Z",
+        "validator": 32116
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.797,
+        "line": 1121964,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044797Z",
+        "validator": 31809
+      },
+      {
+        "arrivedMs": 36,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 44.841,
+        "line": 1121965,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.044841Z",
+        "validator": 104249
+      },
+      {
+        "arrivedMs": 41,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 0,
+        "dataRoot": "0xd9844caa13048c255bcb43c871d063678de28e0dbc0ae0f74cc2cc74bddc9b",
+        "emitted_offset_ms": 45.832,
+        "line": 1121966,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.045832Z",
+        "validator": 2338
+      },
+      {
+        "arrivedMs": 46,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 51.588,
+        "line": 1121967,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.051588Z",
+        "validator": 1881
+      },
+      {
+        "arrivedMs": 42,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 51.928,
+        "line": 1121968,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.051928Z",
+        "validator": 2078
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 5,
+        "dataRoot": "0x603253b69fa69d2e0ac6a91c745bbecd124edae6b48ccefb4ba2a2168e97fe",
+        "emitted_offset_ms": 53.202,
+        "line": 1121969,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053202Z",
+        "validator": 79327
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 53.224,
+        "line": 1121970,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053224Z",
+        "validator": 104386
+      },
+      {
+        "arrivedMs": 44,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 3,
+        "dataRoot": "0x49b828f98ca5a2e6394eb2352d9afb8ac9785103f259ff3e312410b3ab0c74",
+        "emitted_offset_ms": 53.228,
+        "line": 1121971,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.053228Z",
+        "validator": 2284
+      },
+      {
+        "arrivedMs": 51,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 4,
+        "dataRoot": "0x342e7e21aa157cc9ba1e2765bdc44e02919525469f8fc13fc22bc6ac1ade35",
+        "emitted_offset_ms": 56.244,
+        "line": 1121972,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.056244Z",
+        "validator": 77438
+      },
+      {
+        "arrivedMs": 48,
+        "blockRoot": "0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237",
+        "committeeIndex": 2,
+        "dataRoot": "0xaa7200a6ae8b4f09379a084ceaef99241ad51f620a3f77eed2d2ca61747adf",
+        "emitted_offset_ms": 56.4,
+        "line": 1121973,
+        "outcome": "gossip",
+        "outer_timestamp": "2026-09-05T01:49:24.056400Z",
+        "validator": 79353
+      }
+    ],
+    "outcomes": {
+      "gossip": 14355,
+      "local": 71
+    },
+    "outer_emitted_offset_cumulative": {
+      "le_1000ms": {
+        "row_count": 4401,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 4401,
+        "unique_validators": 4401
+      },
+      "le_100ms": {
+        "row_count": 102,
+        "unique_dataRoots": 5,
+        "unique_validator_dataRoot_committee": 102,
+        "unique_validators": 102
+      },
+      "le_200ms": {
+        "row_count": 520,
+        "unique_dataRoots": 6,
+        "unique_validator_dataRoot_committee": 520,
+        "unique_validators": 520
+      },
+      "le_25ms": {
+        "row_count": 0,
+        "unique_dataRoots": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_3645ms": {
+        "row_count": 14426,
+        "unique_dataRoots": 12,
+        "unique_validator_dataRoot_committee": 14426,
+        "unique_validators": 14426
+      },
+      "le_500ms": {
+        "row_count": 1862,
+        "unique_dataRoots": 8,
+        "unique_validator_dataRoot_committee": 1862,
+        "unique_validators": 1862
+      },
+      "le_50ms": {
+        "row_count": 13,
+        "unique_dataRoots": 3,
+        "unique_validator_dataRoot_committee": 13,
+        "unique_validators": 13
+      }
+    },
+    "row_count": 14426,
+    "unique_committees": 6,
+    "unique_dataRoots": 12,
+    "unique_validator_dataRoot_committee": 14426,
+    "unique_validators": 14426
+  }
+}

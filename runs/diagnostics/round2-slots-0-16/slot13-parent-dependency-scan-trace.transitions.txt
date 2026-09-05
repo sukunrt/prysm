@@ -1,0 +1,90 @@
+Focused events from:
+
+  go tool trace -d=parsed /tmp/slot13-parent-dependency-scan.trace
+
+Raw trace SHA-256:
+
+  51a1f5ce0c964f23c06f1706c86437f762ff7168921df09fe3df1b24bda8f165
+
+Parent probe goroutine: G4464
+
+M=2994685 P=0 G=4464 RegionBegin Time=263672952110720 Task=0 Type="slot13-parent-dependency-probe"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticSlot13ParentDependencyChainUnderCheckpointCountLoad.func7
+		beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:612
+
+M=2994685 P=0 G=4464 RegionBegin Time=263672952132224 Task=0 Type="slot13-parent-update-head"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticSlot13ParentDependencyChainUnderCheckpointCountLoad.func7.2.2
+		beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:618
+
+M=2994685 P=0 G=4464 StateTransition Time=263672952134848 GoID=4464 Running->Waiting Reason="sync"
+TransitionStack=
+	sync.(*RWMutex).Lock
+		sync/rwmutex.go:155
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).UpdateHead
+		beacon-chain/blockchain/receive_attestation.go:127
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticSlot13ParentDependencyChainUnderCheckpointCountLoad.func7.2.2.1
+		beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:619
+
+Reader G6094 was already inside AttestationTargetState and retained the
+fork-choice RLock while waiting for the checkpoint-key multilock:
+
+M=2994681 P=1 G=6094 StateTransition Time=263672952134144 GoID=6094 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv2
+		runtime/chan.go:514
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock
+		async/multilock.go:44
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState
+		beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState
+		beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticSlot13ParentDependencyChainUnderCheckpointCountLoad.func4
+		beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:539
+
+Checkpoint worker G7865 hands the same checkpoint-key channel to G6094:
+
+M=2994679 P=3 G=7865 StateTransition Time=263679796806784 GoID=6094 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1
+		runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock
+		async/multilock.go:61
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState
+		beacon-chain/blockchain/process_attestation_helpers.go:120
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState
+		beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticSlot13ParentDependencyChainUnderCheckpointCountLoad.func4
+		beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:539
+
+G6094 becomes scheduled, returns from AttestationTargetState, and its RUnlock
+wakes the waiting UpdateHead writer G4464:
+
+M=2994681 P=1 G=-1 StateTransition Time=263679799782592 GoID=6094 Runnable->Running Reason=""
+
+M=2994681 P=1 G=6094 StateTransition Time=263679799790272 GoID=4464 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).RUnlock
+		sync/rwmutex.go:122
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState
+		beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticSlot13ParentDependencyChainUnderCheckpointCountLoad.func4
+		beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:539
+
+M=2994684 P=0 G=-1 StateTransition Time=263679800537280 GoID=4464 Runnable->Running Reason=""
+
+M=2994681 P=1 G=4464 RegionEnd Time=263679823113280 Task=0 Type="slot13-parent-update-head"
+
+M=2994686 P=0 G=4464 RegionEnd Time=263679847465728 Task=0 Type="slot13-parent-dependency-probe"
+
+Derived monotonic intervals:
+
+  UpdateHead region:             6.870981056 s
+  fork-choice RWMutex wait:      6.847655424 s (99.660520%)
+  writer runnable before run:    0.000747008 s
+  elapsed after first scheduling: 0.022576000 s
+    running:                       0.022434688 s
+    later Waiting (preempted):     0.000032704 s
+    later Runnable:                0.000108608 s
+  final reader key-channel wait: 6.844672640 s

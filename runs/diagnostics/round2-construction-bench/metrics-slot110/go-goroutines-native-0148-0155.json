@@ -1,0 +1,83 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {
+          "__name__": "go_goroutines",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788572882.46,
+            "882"
+          ],
+          [
+            1788572912.46,
+            "850"
+          ],
+          [
+            1788572942.46,
+            "847"
+          ],
+          [
+            1788572972.46,
+            "850"
+          ],
+          [
+            1788573002.46,
+            "3821"
+          ],
+          [
+            1788573032.46,
+            "850"
+          ],
+          [
+            1788573062.46,
+            "849"
+          ],
+          [
+            1788573092.46,
+            "851"
+          ],
+          [
+            1788573122.46,
+            "15438"
+          ],
+          [
+            1788573152.46,
+            "870"
+          ],
+          [
+            1788573182.46,
+            "870"
+          ],
+          [
+            1788573212.46,
+            "870"
+          ],
+          [
+            1788573242.46,
+            "870"
+          ],
+          [
+            1788573272.46,
+            "872"
+          ]
+        ]
+      }
+    ]
+  }
+}

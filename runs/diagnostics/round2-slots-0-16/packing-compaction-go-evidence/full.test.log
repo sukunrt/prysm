@@ -1,0 +1,17 @@
+=== RUN   TestDiagnosticHistoricalPackingCompaction
+    packing_compaction_diagnostic_test.go:240: PACKING_DATA_ROOT slot=4 committee=5 target_round=0 ssz_data_root=fc76081183fea649c92f349c4fceac1297923d3d9c94336fa56299809b09ef98 full_electra_grouping_root=47af105c327435d258e6a435c00311591bc93afc8558a6773b6d833bdab34802 observer400=0xaf105c327435d258e6a435c00311591bc93afc8558a6773b6d833bdab34802
+    packing_compaction_diagnostic_test.go:240: PACKING_DATA_ROOT slot=8 committee=5 target_round=1 ssz_data_root=481332fe1ff3a0399fd2fb4ee24ef73acf985aaceeaf859aaab34bf37d93d808 full_electra_grouping_root=ec3fb84d64e264f1396d72654b6e72a0a12db7831639fcbe07de6efd95bdd552 observer400=0x3fb84d64e264f1396d72654b6e72a0a12db7831639fcbe07de6efd95bdd552
+    packing_compaction_diagnostic_test.go:240: PACKING_CONFIG target_committee_size=2500 configured_max_committees_per_slot=64 configured_max_validators_per_committee=2048 computed_committees_per_slot=6
+    packing_compaction_diagnostic_test.go:241: PACKING_FIXTURE validators=120000 block_slot=14 attestation_slot=7 committees=6 singles=15000 elapsed=5.54621628s
+    packing_compaction_diagnostic_test.go:252: PACKING_COMPACTION elapsed=1.622792304s raw_unaggregated=15000 raw_aggregated=0 compact_unaggregated=0 compact_aggregated=6
+    packing_compaction_diagnostic_test.go:274: PACKING_UNCANCELED arm=raw elapsed=5.11234996s outputs=1 coverage=15000 signatures_valid=true
+    packing_compaction_diagnostic_test.go:274: PACKING_UNCANCELED arm=compact elapsed=1.069273ms outputs=1 coverage=15000 signatures_valid=true
+    packing_compaction_diagnostic_test.go:281: PACKING_POOL_AFTER_UNCANCELED raw_unaggregated=15000 raw_aggregated=0 compact_unaggregated=0 compact_aggregated=6
+time="2026-09-06T16:31:07+05:30" level=warning msg="Not connected to eth1 node, skip pending deposit insertion" package=beacon-chain/rpc/prysm/v1alpha1/validator
+    packing_compaction_diagnostic_test.go:309: PACKING_DEADLINE arm=raw budget=300ms elapsed=5.139071165s deposits=0 outputs=0 err=context deadline exceeded bare_deadline=true
+time="2026-09-06T16:31:12+05:30" level=warning msg="Not connected to eth1 node, skip pending deposit insertion" package=beacon-chain/rpc/prysm/v1alpha1/validator
+    packing_compaction_diagnostic_test.go:309: PACKING_DEADLINE arm=compact budget=300ms elapsed=1.19588ms deposits=0 outputs=1 err=<nil> bare_deadline=false
+time="2026-09-06T16:31:14+05:30" level=warning msg="Not connected to eth1 node, skip pending deposit insertion" package=beacon-chain/rpc/prysm/v1alpha1/validator
+    packing_compaction_diagnostic_test.go:320: PACKING_CANCELED elapsed=1.107976ms err=context canceled bare_canceled=true
+--- PASS: TestDiagnosticHistoricalPackingCompaction (20.10s)
+PASS

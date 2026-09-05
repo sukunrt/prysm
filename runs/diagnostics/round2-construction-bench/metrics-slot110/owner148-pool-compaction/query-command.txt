@@ -1,0 +1,1 @@
+panda -o json prometheus query devnets '{__name__=~"aggregate_attestations_t1_(bucket|sum|count)|aggregate_attestations_t2_(bucket|sum|count)",network="glamsterdam-devnet-9",ip_address="143.198.65.112"}[4m]' --time '2026-09-05T01:54:00Z'

@@ -1,0 +1,12 @@
+{
+  "status": "success",
+  "isPartial": false,
+  "data": {
+    "resultType": "vector",
+    "result": []
+  },
+  "stats": {
+    "seriesFetched": "0",
+    "executionTimeMsec": 1
+  }
+}

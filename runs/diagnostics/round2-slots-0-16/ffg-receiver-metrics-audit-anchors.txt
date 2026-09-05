@@ -1,0 +1,90 @@
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:3830:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 7511
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:3831:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 7495
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:3832:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 7505
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:3833:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 7501
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:3834:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 7499
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:3835:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 7489
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:4207:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 7511
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:4208:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 7495
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:4209:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 7505
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:4210:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 7501
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:4211:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 7499
+/tmp/prysm-startup3-wire-i2/results/bn3-metrics-after.prom:4212:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 7489
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:3844:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 7511
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:3845:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 7495
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:3846:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 7505
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:3847:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 7501
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:3848:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 7499
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:3849:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 7489
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:4202:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 7511
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:4203:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 7495
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:4204:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 7505
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:4205:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 7501
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:4206:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 7499
+/tmp/prysm-startup3-round4-control-d/bn3-metrics-after.prom:4207:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 7489
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:3844:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 2524
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:3845:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 2523
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:3846:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 2522
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:3847:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 2522
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:3848:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 2521
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:3849:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 2521
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4014:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 4920
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4015:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 4913
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4016:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 4914
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4017:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 4913
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4018:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 4912
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4019:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 4900
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4227:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 7444
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4228:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 7436
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4229:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 7436
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4230:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 7435
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4231:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 7433
+/tmp/prysm-startup3-round4-load-b/bn3-metrics-after.prom:4232:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 7421
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:3847:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 7511
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:3848:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 7495
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:3849:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 7505
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:3850:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 7501
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:3851:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 7499
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:3852:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 7489
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:4205:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 7511
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:4206:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 7495
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:4207:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 7505
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:4208:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 7501
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:4209:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 7499
+/tmp/prysm-startup3-round4-early-f1/bn3-metrics-after.prom:4210:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 7489
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3756:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 2589
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3757:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 2598
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3758:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 2594
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3759:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 2592
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3760:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 2590
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3761:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 2593
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3925:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 4340
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3926:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 4318
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3927:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 4329
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3928:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 4331
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3929:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 4330
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:3930:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 4320
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:4136:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 6929
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:4137:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 6916
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:4138:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 6923
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:4139:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 6923
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:4140:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 6920
+/tmp/prysm-startup3-round4-early-e1/bn3-metrics-after.prom:4141:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 6913
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3809:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 2672
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3810:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 2677
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3811:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 2664
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3812:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 2683
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3813:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 2675
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3814:p2p_pubsub_deliver_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 2672
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3978:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 3910
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3979:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 3890
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3980:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 3892
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3981:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 3894
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3982:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 3901
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:3983:p2p_pubsub_reject_total{reason="validation throttled",topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 3890
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:4174:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_0/ssz_snappy"} 6582
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:4175:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_1/ssz_snappy"} 6567
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:4176:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_2/ssz_snappy"} 6556
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:4177:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_3/ssz_snappy"} 6577
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:4178:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_4/ssz_snappy"} 6576
+/tmp/prysm-startup3-wire-h/results/bn3-metrics-after.prom:4179:p2p_pubsub_validate_total{topic="/eth2/3a328783/beacon_attestation_5/ssz_snappy"} 6562

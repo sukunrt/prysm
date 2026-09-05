@@ -1,0 +1,433 @@
+{
+  "status": "success",
+  "isPartial": false,
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "nethermind",
+          "instance": "perf-devnet-2-lighthouse-nethermind-1",
+          "ip_address": "157.180.14.230",
+          "job": "consensus_node",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "nethermind",
+          "instance": "perf-devnet-2-lighthouse-nethermind-1",
+          "ip_address": "157.180.14.230",
+          "job": "execution",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "nethermind",
+          "instance": "perf-devnet-2-lighthouse-nethermind-1",
+          "ip_address": "157.180.14.230",
+          "job": "exporter",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "nethermind",
+          "instance": "perf-devnet-2-lighthouse-nethermind-1",
+          "ip_address": "157.180.14.230",
+          "job": "node",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "nethermind",
+          "instance": "perf-devnet-2-lighthouse-nethermind-1",
+          "ip_address": "157.180.14.230",
+          "job": "prometheus",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "nethermind",
+          "instance": "perf-devnet-2-lighthouse-nethermind-1",
+          "ip_address": "157.180.14.230",
+          "job": "snooper",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "instance": "perf-devnet-3-lighthouse-reth-1",
+          "ip_address": "157.180.14.227",
+          "job": "consensus_node",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "instance": "perf-devnet-3-lighthouse-reth-1",
+          "ip_address": "157.180.14.227",
+          "job": "execution",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "instance": "perf-devnet-3-lighthouse-reth-1",
+          "ip_address": "157.180.14.227",
+          "job": "exporter",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "instance": "perf-devnet-3-lighthouse-reth-1",
+          "ip_address": "157.180.14.227",
+          "job": "node",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "instance": "perf-devnet-3-lighthouse-reth-1",
+          "ip_address": "157.180.14.227",
+          "job": "prometheus",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "instance": "perf-devnet-3-lighthouse-reth-1",
+          "ip_address": "157.180.14.227",
+          "job": "snooper",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "instance": "perf-devnet-2-prysm-geth-1",
+          "ip_address": "157.180.14.225",
+          "job": "consensus_node",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "instance": "perf-devnet-2-prysm-geth-1",
+          "ip_address": "157.180.14.225",
+          "job": "execution",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "instance": "perf-devnet-2-prysm-geth-1",
+          "ip_address": "157.180.14.225",
+          "job": "exporter",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "instance": "perf-devnet-2-prysm-geth-1",
+          "ip_address": "157.180.14.225",
+          "job": "node",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "instance": "perf-devnet-2-prysm-geth-1",
+          "ip_address": "157.180.14.225",
+          "job": "prometheus",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "prysm",
+          "execution_client": "geth",
+          "instance": "perf-devnet-2-prysm-geth-1",
+          "ip_address": "157.180.14.225",
+          "job": "snooper",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "erigon",
+          "instance": "perf-devnet-3-teku-erigon-1",
+          "ip_address": "157.180.14.228",
+          "job": "consensus_node",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "erigon",
+          "instance": "perf-devnet-3-teku-erigon-1",
+          "ip_address": "157.180.14.228",
+          "job": "execution",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "erigon",
+          "instance": "perf-devnet-3-teku-erigon-1",
+          "ip_address": "157.180.14.228",
+          "job": "exporter",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "erigon",
+          "instance": "perf-devnet-3-teku-erigon-1",
+          "ip_address": "157.180.14.228",
+          "job": "node",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "erigon",
+          "instance": "perf-devnet-3-teku-erigon-1",
+          "ip_address": "157.180.14.228",
+          "job": "prometheus",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "erigon",
+          "instance": "perf-devnet-3-teku-erigon-1",
+          "ip_address": "157.180.14.228",
+          "job": "snooper",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "geth",
+          "instance": "bootnode-1",
+          "ip_address": "157.180.14.229",
+          "job": "consensus_node",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "geth",
+          "instance": "bootnode-1",
+          "ip_address": "157.180.14.229",
+          "job": "execution",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "geth",
+          "instance": "bootnode-1",
+          "ip_address": "157.180.14.229",
+          "job": "exporter",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "geth",
+          "instance": "bootnode-1",
+          "ip_address": "157.180.14.229",
+          "job": "node",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "geth",
+          "instance": "bootnode-1",
+          "ip_address": "157.180.14.229",
+          "job": "prometheus",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "consensus_client": "teku",
+          "execution_client": "geth",
+          "instance": "bootnode-1",
+          "ip_address": "157.180.14.229",
+          "job": "snooper",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "seriesFetched": "30",
+    "executionTimeMsec": 5
+  }
+}

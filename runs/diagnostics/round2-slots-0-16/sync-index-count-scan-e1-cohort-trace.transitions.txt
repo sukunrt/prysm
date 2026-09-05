@@ -1,0 +1,505 @@
+M=2976865 P=2 G=284 StateTransition Time=260896437058176 GoID=10681 Undetermined->Waiting Reason=""
+M=2976865 P=2 G=284 StateTransition Time=260896437058240 GoID=10681 Waiting->Runnable Reason=""
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad @ 0x1d2f4b9
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:275
+	testing.tRunner @ 0x570409
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/testing/testing.go:2036
+
+M=2976865 P=2 G=-1 StateTransition Time=260896439188864 GoID=10681 Runnable->Running Reason=""
+M=2976859 P=3 G=9224 StateTransition Time=260896439190080 GoID=9224 Running->Waiting Reason="chan send"
+TransitionStack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b5fc4
+		/home/sukun/dev/prysm2/async/multilock.go:116
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1c436eb
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1c5725b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func3 @ 0x1d31b0f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:211
+
+M=2976860 P=0 G=-1 StateTransition Time=260896439190336 GoID=10477 Runnable->Running Reason=""
+M=2976865 P=2 G=10681 RegionBegin Time=260896439191104 Task=0 Type="sync-index-probe-1"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4 @ 0x1d3180e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:248
+
+M=2976860 P=0 G=-1 StateTransition Time=260896439200320 GoID=8805 Runnable->Running Reason=""
+M=2976865 P=2 G=10681 StateTransition Time=260896439200640 GoID=10681 Running->Waiting Reason="chan send"
+TransitionStack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b5fc4
+		/home/sukun/dev/prysm2/async/multilock.go:116
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a606
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:139
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4.1 @ 0x1d31988
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:250
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4 @ 0x1d3180e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:248
+
+M=2976861 P=0 G=-1 StateTransition Time=260896469593792 GoID=8806 Runnable->Running Reason=""
+M=2976861 P=0 G=8806 StateTransition Time=260896469594368 GoID=10681 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.getChan.func1 @ 0x12b667b
+		/home/sukun/dev/prysm2/async/multilock.go:117
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b60b6
+		/home/sukun/dev/prysm2/async/multilock.go:123
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1c436eb
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1c5725b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func3 @ 0x1d31b0f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:211
+
+M=2976861 P=0 G=-1 StateTransition Time=260896469594944 GoID=10681 Runnable->Running Reason=""
+M=2976861 P=0 G=10681 StateTransition Time=260896469596032 GoID=10511 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.getChan.func1 @ 0x12b667b
+		/home/sukun/dev/prysm2/async/multilock.go:117
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b60b6
+		/home/sukun/dev/prysm2/async/multilock.go:123
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a606
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:139
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4.1 @ 0x1d31988
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:250
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4 @ 0x1d3180e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:248
+
+M=2976861 P=0 G=10681 StateTransition Time=260896469597952 GoID=10681 Running->Waiting Reason="chan send"
+TransitionStack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5d0d
+		/home/sukun/dev/prysm2/async/multilock.go:94
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a9fc
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:148
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4.1 @ 0x1d31988
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:250
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4 @ 0x1d3180e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:248
+
+M=2976857 P=3 G=-1 StateTransition Time=260900889578496 GoID=8806 Runnable->Running Reason=""
+M=2976857 P=3 G=8806 StateTransition Time=260900889579968 GoID=10681 Waiting->Waiting Reason=""
+M=2976857 P=3 G=8806 StateTransition Time=260900889580864 GoID=10681 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.Clean.func1 @ 0x12b66bb
+		/home/sukun/dev/prysm2/async/multilock.go:95
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5f3d
+		/home/sukun/dev/prysm2/async/multilock.go:111
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1c444ef
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:120
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1c5725b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func3 @ 0x1d31b0f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:211
+
+M=2976865 P=2 G=-1 StateTransition Time=260900890079744 GoID=10681 Runnable->Running Reason=""
+M=2976865 P=2 G=10681 StateTransition Time=260900890080704 GoID=10511 Waiting->Waiting Reason=""
+M=2976865 P=2 G=10681 StateTransition Time=260900890081216 GoID=10511 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.Clean.func1 @ 0x12b66bb
+		/home/sukun/dev/prysm2/async/multilock.go:95
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5f3d
+		/home/sukun/dev/prysm2/async/multilock.go:111
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a9fc
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:148
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4.1 @ 0x1d31988
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:250
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4 @ 0x1d3180e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:248
+
+M=2976865 P=2 G=10681 RegionEnd Time=260900890099328 Task=0 Type="sync-index-probe-1"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4 @ 0x1d3180e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:248
+
+M=2976865 P=2 G=-1 StateTransition Time=260900890186752 GoID=4525 Runnable->Running Reason=""
+M=2976865 P=2 G=4525 RegionBegin Time=260900890187584 Task=0 Type="sync-index-probe-2"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976865 P=2 G=4525 StateTransition Time=260900890189888 GoID=4525 Running->Waiting Reason="chan send"
+TransitionStack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b5fc4
+		/home/sukun/dev/prysm2/async/multilock.go:116
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a606
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:139
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6.1 @ 0x1d315c8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:310
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976859 P=2 G=-1 StateTransition Time=260911907691712 GoID=10513 Runnable->Running Reason=""
+M=2976859 P=2 G=10513 StateTransition Time=260911907692096 GoID=4525 Waiting->Waiting Reason=""
+M=2976859 P=2 G=10513 StateTransition Time=260911907692224 GoID=4525 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.getChan.func1 @ 0x12b667b
+		/home/sukun/dev/prysm2/async/multilock.go:117
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b60b6
+		/home/sukun/dev/prysm2/async/multilock.go:123
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1c436eb
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1c5725b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func3 @ 0x1d31b0f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:211
+
+M=2976859 P=2 G=-1 StateTransition Time=260911907692800 GoID=4525 Runnable->Running Reason=""
+M=2976859 P=2 G=4525 StateTransition Time=260911907693568 GoID=10512 Waiting->Waiting Reason=""
+M=2976859 P=2 G=4525 StateTransition Time=260911907693824 GoID=10512 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.getChan.func1 @ 0x12b667b
+		/home/sukun/dev/prysm2/async/multilock.go:117
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b60b6
+		/home/sukun/dev/prysm2/async/multilock.go:123
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a606
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:139
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6.1 @ 0x1d315c8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:310
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976859 P=2 G=4525 StateTransition Time=260911907695360 GoID=4525 Running->Waiting Reason="chan send"
+TransitionStack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5d0d
+		/home/sukun/dev/prysm2/async/multilock.go:94
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a9fc
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:148
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6.1 @ 0x1d315c8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:310
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976863 P=1 G=-1 StateTransition Time=260916430789632 GoID=10513 Runnable->Running Reason=""
+M=2976863 P=1 G=10513 StateTransition Time=260916430790720 GoID=4525 Waiting->Waiting Reason=""
+M=2976863 P=1 G=10513 StateTransition Time=260916430791936 GoID=4525 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.Clean.func1 @ 0x12b66bb
+		/home/sukun/dev/prysm2/async/multilock.go:95
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5f3d
+		/home/sukun/dev/prysm2/async/multilock.go:111
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1c444ef
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:120
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1c5725b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func3 @ 0x1d31b0f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:211
+
+M=2976859 P=0 G=-1 StateTransition Time=260916434646656 GoID=4525 Runnable->Running Reason=""
+M=2976859 P=0 G=4525 StateTransition Time=260916434647680 GoID=10512 Waiting->Waiting Reason=""
+M=2976859 P=0 G=4525 StateTransition Time=260916434648320 GoID=10512 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.Clean.func1 @ 0x12b66bb
+		/home/sukun/dev/prysm2/async/multilock.go:95
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5f3d
+		/home/sukun/dev/prysm2/async/multilock.go:111
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a9fc
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:148
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6.1 @ 0x1d315c8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:310
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976859 P=0 G=4525 RegionEnd Time=260916434656512 Task=0 Type="sync-index-probe-2"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976859 P=0 G=-1 StateTransition Time=260916434728640 GoID=4458 Runnable->Running Reason=""
+M=2976859 P=0 G=4458 RegionBegin Time=260916434730048 Task=0 Type="sync-index-probe-3"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976859 P=0 G=4458 StateTransition Time=260916434732352 GoID=4458 Running->Waiting Reason="chan send"
+TransitionStack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b5fc4
+		/home/sukun/dev/prysm2/async/multilock.go:116
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a606
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:139
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6.1 @ 0x1d315c8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:310
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976865 P=2 G=-1 StateTransition Time=260927629335424 GoID=10476 Runnable->Running Reason=""
+M=2976865 P=2 G=10476 StateTransition Time=260927629336000 GoID=4458 Waiting->Waiting Reason=""
+M=2976865 P=2 G=10476 StateTransition Time=260927629336256 GoID=4458 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.getChan.func1 @ 0x12b667b
+		/home/sukun/dev/prysm2/async/multilock.go:117
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b60b6
+		/home/sukun/dev/prysm2/async/multilock.go:123
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1c436eb
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1c5725b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func3 @ 0x1d31b0f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:211
+
+M=2976865 P=2 G=-1 StateTransition Time=260927629337216 GoID=4458 Runnable->Running Reason=""
+M=2976865 P=2 G=4458 StateTransition Time=260927629338304 GoID=9139 Waiting->Waiting Reason=""
+M=2976865 P=2 G=4458 StateTransition Time=260927629338880 GoID=9139 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.getChan.func1 @ 0x12b667b
+		/home/sukun/dev/prysm2/async/multilock.go:117
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b60b6
+		/home/sukun/dev/prysm2/async/multilock.go:123
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a606
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:139
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6.1 @ 0x1d315c8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:310
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976865 P=2 G=4458 StateTransition Time=260927629341056 GoID=4458 Running->Waiting Reason="chan send"
+TransitionStack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5d0d
+		/home/sukun/dev/prysm2/async/multilock.go:94
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a9fc
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:148
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6.1 @ 0x1d315c8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:310
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976857 P=2 G=9140 StateTransition Time=260932274737152 GoID=9140 Running->NotExist Reason=""
+M=2976859 P=0 G=-1 StateTransition Time=260932274783424 ProcID=0 Running->Idle Reason=""
+M=2976859 P=-1 G=-1 StateTransition Time=260932274784384 ProcID=0 Idle->Running Reason=""
+M=2976857 P=2 G=-1 StateTransition Time=260932274816000 GoID=10476 Runnable->Running Reason=""
+M=2976857 P=2 G=10476 StateTransition Time=260932274817152 GoID=4458 Waiting->Waiting Reason=""
+M=2976857 P=2 G=10476 StateTransition Time=260932274817856 GoID=4458 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.Clean.func1 @ 0x12b66bb
+		/home/sukun/dev/prysm2/async/multilock.go:95
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5f3d
+		/home/sukun/dev/prysm2/async/multilock.go:111
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1c444ef
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:120
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1c5725b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func3 @ 0x1d31b0f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:211
+
+M=2976859 P=0 G=-1 StateTransition Time=260932274860800 ProcID=0 Running->Idle Reason=""
+M=2976859 P=-1 G=-1 StateTransition Time=260932274861312 ProcID=0 Idle->Running Reason=""
+M=2976859 P=0 G=-1 StateTransition Time=260932274937536 GoID=4458 Runnable->Running Reason=""
+M=2976859 P=0 G=4458 StateTransition Time=260932274938496 GoID=9139 Waiting->Waiting Reason=""
+M=2976859 P=0 G=4458 StateTransition Time=260932274939072 GoID=9139 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.Clean.func1 @ 0x12b66bb
+		/home/sukun/dev/prysm2/async/multilock.go:95
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5f3d
+		/home/sukun/dev/prysm2/async/multilock.go:111
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a9fc
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:148
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6.1 @ 0x1d315c8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:310
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976859 P=0 G=4458 RegionEnd Time=260932274948288 Task=0 Type="sync-index-probe-3"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976859 P=0 G=-1 StateTransition Time=260932275003008 GoID=4459 Runnable->Running Reason=""
+M=2976859 P=0 G=4459 RegionBegin Time=260932275004416 Task=0 Type="sync-index-probe-4"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976859 P=0 G=4459 StateTransition Time=260932275007872 GoID=4459 Running->Waiting Reason="chan send"
+TransitionStack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.getChan @ 0x12b5fc4
+		/home/sukun/dev/prysm2/async/multilock.go:116
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x12b57ee
+		/home/sukun/dev/prysm2/async/multilock.go:43
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x1c3a606
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:139
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x1c3a0e8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x1c3a049
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6.1 @ 0x1d315c8
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:310
+	runtime/trace.WithRegion @ 0x55ba30
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/trace/annotation.go:141
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+
+M=2976859 P=1 G=7748 StateTransition Time=260934629628800 GoID=7748 Running->NotExist Reason=""
+M=2976859 P=1 G=-1 StateTransition Time=260934629700608 GoID=7747 Runnable->Running Reason=""
+M=2976859 P=1 G=7747 StateTransition Time=260934629704192 GoID=4459 Waiting->Waiting Reason=""
+M=2976859 P=1 G=7747 StateTransition Time=260934629706304 GoID=4459 Waiting->Runnable Reason=""
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/async.Clean.func1 @ 0x12b66bb
+		/home/sukun/dev/prysm2/async/multilock.go:95
+	github.com/OffchainLabs/prysm/v7/async.Clean @ 0x12b5f3d
+		/home/sukun/dev/prysm2/async/multilock.go:111
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x12b5929
+		/home/sukun/dev/prysm2/async/multilock.go:66
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1c444ef
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:120
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1c5725b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func3 @ 0x1d31b0f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:211
+
+M=2976863 P=3 G=7866 StateTransition Time=260934636020736 GoID=7866 Running->NotExist Reason=""
+M=2976863 P=3 G=-1 StateTransition Time=260934636100864 GoID=4459 Runnable->Running Reason=""
+M=2976863 P=3 G=4459 RegionEnd Time=260934636118720 Task=0 Type="sync-index-probe-4"
+Stack=
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func6 @ 0x1d31464
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:308
+

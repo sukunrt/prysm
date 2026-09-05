@@ -1,0 +1,6 @@
+=== RUN   TestDiagnosticFullGossipRealChainPreflight
+    full_gossip_domain_export_test.go:518: persistent gossip peers did not discover all six subscribed topics
+--- FAIL: TestDiagnosticFullGossipRealChainPreflight (13.68s)
+FAIL
+FAIL	github.com/OffchainLabs/prysm/v7/beacon-chain/sync	13.731s
+FAIL

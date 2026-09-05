@@ -1,0 +1,233 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {
+          "__name__": "aggregated_attestations_in_pool_total",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788572882.46,
+            "568"
+          ],
+          [
+            1788572912.46,
+            "593"
+          ],
+          [
+            1788572942.46,
+            "614"
+          ],
+          [
+            1788572972.46,
+            "73"
+          ],
+          [
+            1788573002.46,
+            "109"
+          ],
+          [
+            1788573032.46,
+            "142"
+          ],
+          [
+            1788573062.46,
+            "172"
+          ],
+          [
+            1788573092.46,
+            "201"
+          ],
+          [
+            1788573122.46,
+            "114"
+          ],
+          [
+            1788573152.46,
+            "138"
+          ],
+          [
+            1788573182.46,
+            "175"
+          ],
+          [
+            1788573212.46,
+            "182"
+          ],
+          [
+            1788573242.46,
+            "256"
+          ],
+          [
+            1788573272.46,
+            "290"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "unaggregated_attestations_in_pool_total",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788572882.46,
+            "1"
+          ],
+          [
+            1788572912.46,
+            "1397"
+          ],
+          [
+            1788572942.46,
+            "1"
+          ],
+          [
+            1788572972.46,
+            "51"
+          ],
+          [
+            1788573002.46,
+            "1837"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "1775"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "690"
+          ],
+          [
+            1788573242.46,
+            "1"
+          ],
+          [
+            1788573272.46,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "seen_aggregated_attestations_in_pool_total",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788572882.46,
+            "480"
+          ],
+          [
+            1788572912.46,
+            "492"
+          ],
+          [
+            1788572942.46,
+            "510"
+          ],
+          [
+            1788572972.46,
+            "637"
+          ],
+          [
+            1788573002.46,
+            "669"
+          ],
+          [
+            1788573032.46,
+            "685"
+          ],
+          [
+            1788573062.46,
+            "716"
+          ],
+          [
+            1788573092.46,
+            "734"
+          ],
+          [
+            1788573122.46,
+            "864"
+          ],
+          [
+            1788573152.46,
+            "879"
+          ],
+          [
+            1788573182.46,
+            "907"
+          ],
+          [
+            1788573212.46,
+            "925"
+          ],
+          [
+            1788573242.46,
+            "958"
+          ],
+          [
+            1788573272.46,
+            "997"
+          ]
+        ]
+      }
+    ]
+  }
+}

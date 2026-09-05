@@ -1,0 +1,16 @@
+Total: 49.73s
+ROUTINE ======================== github.com/OffchainLabs/go-bitfield.Bitlist.Contains in /home/sukun/go/pkg/mod/github.com/!offchain!labs/go-bitfield@v0.0.0-20260504143531-5cbb6d0f5f2e/bitlist.go
+     3.43s      3.88s (flat, cum)  7.80% of Total
+         .          .    160:func (b Bitlist) Contains(c Bitlist) (bool, error) {
+      20ms      470ms    161:	if b.Len() != c.Len() {
+         .          .    162:		return false, ErrBitlistDifferentLength
+         .          .    163:	}
+         .          .    164:
+     750ms      750ms    165:	for i := 0; i < len(b); i++ {
+     2.63s      2.63s    166:		if b[i]&c[i] != c[i] {
+      30ms       30ms    167:			return false, nil
+         .          .    168:		}
+         .          .    169:	}
+         .          .    170:
+         .          .    171:	return true, nil
+         .          .    172:}

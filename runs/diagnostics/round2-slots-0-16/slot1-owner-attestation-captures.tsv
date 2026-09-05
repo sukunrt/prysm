@@ -1,0 +1,17 @@
+owned_slot	node	capture_status	summary_activity_slot	first_success_capture_timestamp	first_success_capture_genesis_offset_ms	submitted_since_slot_start	submission_spread	captured_key_count	target_round	summary_log_timestamp	source_anchor
+1	169	not_present									
+2	191	not_present									
+3	22	summary_group_capture	1	2026-09-05T01:30:12.334000Z	12334.000	334ms	1.305s	71	0	2026-09-05T01:30:24.002820620Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-22.tar.gz::validator.log:694
+4	91	summary_group_capture	1	2026-09-05T01:30:19.630000Z	19630.000	7.63s	3.178s	94	0	2026-09-05T01:30:24.003465182Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-91.tar.gz::validator.log:692
+5	118	summary_group_capture	1	2026-09-05T01:30:15.011000Z	15011.000	3.011s	1.53s	81	0	2026-09-05T01:30:24.001862912Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-118.tar.gz::validator.log:688
+6	83	summary_group_capture	1	2026-09-05T01:30:22.867000Z	22867.000	10.867s	1ms	6	0	2026-09-05T01:30:24.032578118Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-83.tar.gz::validator.log:750
+7	144	summary_group_capture	1	2026-09-05T01:30:12.362000Z	12362.000	362ms	1.41s	73	0	2026-09-05T01:30:24.002220391Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-144.tar.gz::validator.log:693
+8	19	summary_group_capture	1	2026-09-05T01:30:12.176000Z	12176.000	176ms	392ms	78	0	2026-09-05T01:30:24.001172410Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-19.tar.gz::validator.log:687
+9	107	not_present									
+10	35	summary_group_capture	1	2026-09-05T01:30:12.232000Z	12232.000	232ms	829ms	74	0	2026-09-05T01:30:24.001529217Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-35.tar.gz::validator.log:691
+11	117	summary_group_capture	1	2026-09-05T01:30:15.875000Z	15875.000	3.875s	2ms	79	0	2026-09-05T01:30:22.119855318Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-117.tar.gz::validator.log:685
+12	14	summary_group_capture	1	2026-09-05T01:30:12.491000Z	12491.000	491ms	1.002s	73	0	2026-09-05T01:30:21.022291094Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-14.tar.gz::validator.log:687
+13	20	summary_group_capture	1	2026-09-05T01:30:12.045000Z	12045.000	45ms	204ms	85	0	2026-09-05T01:30:24.001579752Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-20.tar.gz::validator.log:689
+14	85	summary_group_capture	1	2026-09-05T01:30:12.393000Z	12393.000	393ms	235ms	86	0	2026-09-05T01:30:24.001071090Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-85.tar.gz::validator.log:693
+15	32	summary_group_capture	1	2026-09-05T01:30:12.178000Z	12178.000	178ms	1.339s	79	0	2026-09-05T01:30:24.002113275Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-32.tar.gz::validator.log:689
+16	76	summary_group_capture	1	2026-09-05T01:30:12.260000Z	12260.000	260ms	582ms	90	0	2026-09-05T01:30:24.002122878Z	/tmp/prysm-r2-extra-logs.Rd7MjT/round2-prysm-geth-76.tar.gz::validator.log:689

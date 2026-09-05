@@ -1,0 +1,1277 @@
+# parsed_lines=5753-5797
+M=3072837 P=2 G=348 StateTransition Time=277054184513088 GoID=348 Running->Waiting Reason="sync"
+TransitionStack=
+	sync.(*RWMutex).Lock @ 0x4a618a
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:155
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Copy @ 0xdf43ae
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:181
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).Copy @ 0x118ddf3
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1157
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headState @ 0x180a59e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head.go:303
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadState @ 0x17f34ab
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/chain_info.go:248
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x180cb19
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:150
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x180c528
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x180c49a
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.TestDiagnosticFullGossipDomainTCP @ 0x205e5a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:659
+	testing.tRunner @ 0x570329
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/testing/testing.go:2036
+
+Stack=
+	sync.(*RWMutex).Lock @ 0x4a618a
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:155
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Copy @ 0xdf43ae
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:181
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).Copy @ 0x118ddf3
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1157
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headState @ 0x180a59e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head.go:303
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadState @ 0x17f34ab
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/chain_info.go:248
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x180cb19
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:150
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x180c528
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x180c49a
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.TestDiagnosticFullGossipDomainTCP @ 0x205e5a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:659
+	testing.tRunner @ 0x570329
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/testing/testing.go:2036
+
+# parsed_lines=6079-6101
+M=3072837 P=2 G=348 StateTransition Time=277054184526784 GoID=4590 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).Unlock @ 0x4a62e4
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:216
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Copy @ 0xdf466d
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:214
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).Copy @ 0x118ddf3
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1157
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headState @ 0x180a59e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head.go:303
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadState @ 0x17f34ab
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/chain_info.go:248
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x180cb19
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:150
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x180c528
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x180c49a
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.TestDiagnosticFullGossipDomainTCP @ 0x205e5a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:659
+	testing.tRunner @ 0x570329
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/testing/testing.go:2036
+
+# parsed_lines=6102-6124
+M=3072837 P=2 G=348 StateTransition Time=277054184527488 GoID=4915 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).Unlock @ 0x4a62e4
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:216
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Copy @ 0xdf466d
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:214
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).Copy @ 0x118ddf3
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1157
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headState @ 0x180a59e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head.go:303
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadState @ 0x17f34ab
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/chain_info.go:248
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x180cb19
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:150
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x180c528
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x180c49a
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.TestDiagnosticFullGossipDomainTCP @ 0x205e5a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:659
+	testing.tRunner @ 0x570329
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/testing/testing.go:2036
+
+# parsed_lines=6125-6147
+M=3072837 P=2 G=348 StateTransition Time=277054184528064 GoID=4894 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).Unlock @ 0x4a62e4
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:216
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Copy @ 0xdf466d
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:214
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).Copy @ 0x118ddf3
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1157
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headState @ 0x180a59e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head.go:303
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadState @ 0x17f34ab
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/chain_info.go:248
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState @ 0x180cb19
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:150
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices @ 0x180c528
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices @ 0x180c49a
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.TestDiagnosticFullGossipDomainTCP @ 0x205e5a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:659
+	testing.tRunner @ 0x570329
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/testing/testing.go:2036
+
+# parsed_lines=14904-14964
+M=3072840 P=0 G=4591 StateTransition Time=277054186625664 GoID=4591 Running->Waiting Reason="sync"
+TransitionStack=
+	sync.(*RWMutex).Lock @ 0x4a618a
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:155
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Copy @ 0xdf43ae
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:181
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).Copy @ 0x118ddf3
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1157
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headState @ 0x180a59e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head.go:303
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadState @ 0x17f34ab
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/chain_info.go:248
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.(*fullGossipHeadCopyFetcher).HeadState @ 0x2058728
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:228
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/core.(*Service).GetAttestationData @ 0x2009154
+		/home/sukun/dev/prysm2/beacon-chain/rpc/core/validator.go:596
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.(*Server).GetAttestationData @ 0x2011e50
+		/home/sukun/dev/prysm2/beacon-chain/rpc/prysm/v1alpha1/validator/attester.go:42
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_GetAttestationData_Handler.func1 @ 0xcbdc0a
+		/home/sukun/dev/prysm2/proto/prysm/v1alpha1/validator.pb.go:6990
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.(*fullGossipDomainServerRecorder).intercept @ 0x205801e
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:191
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_GetAttestationData_Handler @ 0xcbda62
+		/home/sukun/dev/prysm2/proto/prysm/v1alpha1/validator.pb.go:6992
+	google.golang.org/grpc.(*Server).processUnaryRPC @ 0xb5cf1b
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1430
+	google.golang.org/grpc.(*Server).handleStream @ 0xb620c5
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1856
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xb5a83e
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1065
+
+Stack=
+	sync.(*RWMutex).Lock @ 0x4a618a
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:155
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Copy @ 0xdf43ae
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:181
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).Copy @ 0x118ddf3
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1157
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headState @ 0x180a59e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head.go:303
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadState @ 0x17f34ab
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/chain_info.go:248
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.(*fullGossipHeadCopyFetcher).HeadState @ 0x2058728
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:228
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/core.(*Service).GetAttestationData @ 0x2009154
+		/home/sukun/dev/prysm2/beacon-chain/rpc/core/validator.go:596
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.(*Server).GetAttestationData @ 0x2011e50
+		/home/sukun/dev/prysm2/beacon-chain/rpc/prysm/v1alpha1/validator/attester.go:42
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_GetAttestationData_Handler.func1 @ 0xcbdc0a
+		/home/sukun/dev/prysm2/proto/prysm/v1alpha1/validator.pb.go:6990
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.(*fullGossipDomainServerRecorder).intercept @ 0x205801e
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:191
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_GetAttestationData_Handler @ 0xcbda62
+		/home/sukun/dev/prysm2/proto/prysm/v1alpha1/validator.pb.go:6992
+	google.golang.org/grpc.(*Server).processUnaryRPC @ 0xb5cf1b
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1430
+	google.golang.org/grpc.(*Server).handleStream @ 0xb620c5
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1856
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xb5a83e
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1065
+
+# parsed_lines=15222-15252
+M=3072837 P=2 G=4591 StateTransition Time=277054186638272 GoID=4930 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).Unlock @ 0x4a62e4
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:216
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Copy @ 0xdf466d
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:214
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).Copy @ 0x118ddf3
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1157
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headState @ 0x180a59e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head.go:303
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadState @ 0x17f34ab
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/chain_info.go:248
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.(*fullGossipHeadCopyFetcher).HeadState @ 0x2058728
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:228
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/core.(*Service).GetAttestationData @ 0x2009154
+		/home/sukun/dev/prysm2/beacon-chain/rpc/core/validator.go:596
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.(*Server).GetAttestationData @ 0x2011e50
+		/home/sukun/dev/prysm2/beacon-chain/rpc/prysm/v1alpha1/validator/attester.go:42
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_GetAttestationData_Handler.func1 @ 0xcbdc0a
+		/home/sukun/dev/prysm2/proto/prysm/v1alpha1/validator.pb.go:6990
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.(*fullGossipDomainServerRecorder).intercept @ 0x205801e
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:191
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_GetAttestationData_Handler @ 0xcbda62
+		/home/sukun/dev/prysm2/proto/prysm/v1alpha1/validator.pb.go:6992
+	google.golang.org/grpc.(*Server).processUnaryRPC @ 0xb5cf1b
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1430
+	google.golang.org/grpc.(*Server).handleStream @ 0xb620c5
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1856
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xb5a83e
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1065
+
+# parsed_lines=15253-15283
+M=3072837 P=2 G=4591 StateTransition Time=277054186639104 GoID=4590 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).Unlock @ 0x4a62e4
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:216
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Copy @ 0xdf466d
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:214
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).Copy @ 0x118ddf3
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1157
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headState @ 0x180a59e
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/head.go:303
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadState @ 0x17f34ab
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/chain_info.go:248
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.(*fullGossipHeadCopyFetcher).HeadState @ 0x2058728
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:228
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/core.(*Service).GetAttestationData @ 0x2009154
+		/home/sukun/dev/prysm2/beacon-chain/rpc/core/validator.go:596
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.(*Server).GetAttestationData @ 0x2011e50
+		/home/sukun/dev/prysm2/beacon-chain/rpc/prysm/v1alpha1/validator/attester.go:42
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_GetAttestationData_Handler.func1 @ 0xcbdc0a
+		/home/sukun/dev/prysm2/proto/prysm/v1alpha1/validator.pb.go:6990
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test.(*fullGossipDomainServerRecorder).intercept @ 0x205801e
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:191
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_GetAttestationData_Handler @ 0xcbda62
+		/home/sukun/dev/prysm2/proto/prysm/v1alpha1/validator.pb.go:6992
+	google.golang.org/grpc.(*Server).processUnaryRPC @ 0xb5cf1b
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1430
+	google.golang.org/grpc.(*Server).handleStream @ 0xb620c5
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1856
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xb5a83e
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1065
+
+# parsed_lines=27982-28038
+M=3072844 P=1 G=4968 StateTransition Time=277054191887936 GoID=4968 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv2 @ 0x4207b1
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:514
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x178a77d
+		/home/sukun/dev/prysm2/async/multilock.go:44
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1815b8b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1829e1b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainChain).AttestationTargetState @ 0x1e39a48
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:152
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de54c3
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:143
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	runtime.chanrecv2 @ 0x4207b1
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:514
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x178a77d
+		/home/sukun/dev/prysm2/async/multilock.go:44
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1815b8b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1829e1b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainChain).AttestationTargetState @ 0x1e39a48
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:152
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de54c3
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:143
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=28102-28158
+M=3072844 P=1 G=4970 StateTransition Time=277054191954560 GoID=4970 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv2 @ 0x4207b1
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:514
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x178a77d
+		/home/sukun/dev/prysm2/async/multilock.go:44
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1815b8b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1829e1b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainChain).AttestationTargetState @ 0x1e39a48
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:152
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de54c3
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:143
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	runtime.chanrecv2 @ 0x4207b1
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:514
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x178a77d
+		/home/sukun/dev/prysm2/async/multilock.go:44
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1815b8b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1829e1b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainChain).AttestationTargetState @ 0x1e39a48
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:152
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de54c3
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:143
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=58617-58673
+M=3072844 P=1 G=5133 StateTransition Time=277054206753344 GoID=5133 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv2 @ 0x4207b1
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:514
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x178a77d
+		/home/sukun/dev/prysm2/async/multilock.go:44
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1815b8b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1829e1b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainChain).AttestationTargetState @ 0x1e39a48
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:152
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de54c3
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:143
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	runtime.chanrecv2 @ 0x4207b1
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:514
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Lock @ 0x178a77d
+		/home/sukun/dev/prysm2/async/multilock.go:44
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x1815b8b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:113
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1829e1b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainChain).AttestationTargetState @ 0x1e39a48
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:152
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de54c3
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:143
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=997425-997453
+M=3072837 P=0 G=4967 StateTransition Time=277054647219520 GoID=4968 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x178a8d5
+		/home/sukun/dev/prysm2/async/multilock.go:61
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x181698f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:120
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1829e1b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainChain).AttestationTargetState @ 0x1e39a48
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:152
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de54c3
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:143
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1030861-1030889
+M=3072837 P=0 G=4969 StateTransition Time=277054661603328 GoID=4970 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x178a8d5
+		/home/sukun/dev/prysm2/async/multilock.go:61
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x181698f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:120
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1829e1b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainChain).AttestationTargetState @ 0x1e39a48
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:152
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de54c3
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:143
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1031300-1031300
+M=3072841 P=2 G=-1 StateTransition Time=277054661821376 GoID=6 Undetermined->Waiting Reason=""
+
+# parsed_lines=1031301-1031301
+M=3072841 P=2 G=-1 StateTransition Time=277054661821504 GoID=6 Waiting->Runnable Reason=""
+
+# parsed_lines=1031302-1031302
+M=3072841 P=2 G=-1 StateTransition Time=277054661822208 GoID=6 Runnable->Running Reason=""
+
+# parsed_lines=1031308-1031372
+M=3072837 P=0 G=4970 StateTransition Time=277054661832192 GoID=4970 Running->Waiting Reason="sync"
+TransitionStack=
+	sync.(*RWMutex).RLock @ 0xdf48fd
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:74
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Len @ 0xdf48d6
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:169
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).ValidatorsReadOnlySeq.func1 @ 0x11638ee
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:237
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainState).ValidatorsReadOnlySeq.func1 @ 0x1e397fa
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:137
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.ActiveValidatorCount @ 0x1130251
+		/home/sukun/dev/prysm2/beacon-chain/core/helpers/validators.go:168
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexAndCount @ 0x1de6f64
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:292
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttTopic @ 0x1de6996
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:255
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de5525
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:149
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	sync.(*RWMutex).RLock @ 0xdf48fd
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:74
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Len @ 0xdf48d6
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:169
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).ValidatorsReadOnlySeq.func1 @ 0x11638ee
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:237
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainState).ValidatorsReadOnlySeq.func1 @ 0x1e397fa
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:137
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.ActiveValidatorCount @ 0x1130251
+		/home/sukun/dev/prysm2/beacon-chain/core/helpers/validators.go:168
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexAndCount @ 0x1de6f64
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:292
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttTopic @ 0x1de6996
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:255
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de5525
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:149
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1031405-1031425
+M=3072841 P=2 G=6 StateTransition Time=277054661840512 GoID=6 Running->Waiting Reason="sync"
+TransitionStack=
+	sync.(*RWMutex).Lock @ 0x4a618a
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:155
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Detach @ 0xdf20fe
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:356
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.finalizerCleanup @ 0x119388c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1747
+	runtime.runFinalizers @ 0x4328d6
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/mfinal.go:272
+
+Stack=
+	sync.(*RWMutex).Lock @ 0x4a618a
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:155
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Detach @ 0xdf20fe
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:356
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.finalizerCleanup @ 0x119388c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1747
+	runtime.runFinalizers @ 0x4328d6
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/mfinal.go:272
+
+# parsed_lines=1047266-1047294
+M=3072837 P=0 G=5083 StateTransition Time=277054662589824 GoID=5133 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock @ 0x178a8d5
+		/home/sukun/dev/prysm2/async/multilock.go:61
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState @ 0x181698f
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:120
+	github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState @ 0x1829e1b
+		/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainChain).AttestationTargetState @ 0x1e39a48
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:152
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de54c3
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:143
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1047454-1047486
+M=3072845 P=1 G=4968 StateTransition Time=277054662598208 GoID=6 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).RUnlock @ 0xdf3e08
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:122
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).At @ 0xdf3763
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:268
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).ValidatorsReadOnlySeq.func1 @ 0x116395e
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:238
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainState).ValidatorsReadOnlySeq.func1 @ 0x1e397fa
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:137
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.ActiveValidatorCount @ 0x1130251
+		/home/sukun/dev/prysm2/beacon-chain/core/helpers/validators.go:168
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexAndCount @ 0x1de6f64
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:292
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttTopic @ 0x1de6996
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:255
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de5525
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:149
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1047488-1047552
+M=3072837 P=0 G=5133 StateTransition Time=277054662599424 GoID=5133 Running->Waiting Reason="sync"
+TransitionStack=
+	sync.(*RWMutex).RLock @ 0xdf48fd
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:74
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Len @ 0xdf48d6
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:169
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).ValidatorsReadOnlySeq.func1 @ 0x11638ee
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:237
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainState).ValidatorsReadOnlySeq.func1 @ 0x1e397fa
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:137
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.ActiveValidatorCount @ 0x1130251
+		/home/sukun/dev/prysm2/beacon-chain/core/helpers/validators.go:168
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexAndCount @ 0x1de6f64
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:292
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttTopic @ 0x1de6996
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:255
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de5525
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:149
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	sync.(*RWMutex).RLock @ 0xdf48fd
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:74
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Len @ 0xdf48d6
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:169
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).ValidatorsReadOnlySeq.func1 @ 0x11638ee
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:237
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainState).ValidatorsReadOnlySeq.func1 @ 0x1e397fa
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:137
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.ActiveValidatorCount @ 0x1130251
+		/home/sukun/dev/prysm2/beacon-chain/core/helpers/validators.go:168
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexAndCount @ 0x1de6f64
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:292
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttTopic @ 0x1de6996
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:255
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de5525
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:149
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1047555-1047619
+M=3072845 P=1 G=4968 StateTransition Time=277054662600640 GoID=4968 Running->Waiting Reason="sync"
+TransitionStack=
+	sync.(*RWMutex).RLock @ 0xdf35e9
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:74
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).At @ 0xdf35c4
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:256
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).ValidatorsReadOnlySeq.func1 @ 0x116395e
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:238
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainState).ValidatorsReadOnlySeq.func1 @ 0x1e397fa
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:137
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.ActiveValidatorCount @ 0x1130251
+		/home/sukun/dev/prysm2/beacon-chain/core/helpers/validators.go:168
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexAndCount @ 0x1de6f64
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:292
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttTopic @ 0x1de6996
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:255
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de5525
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:149
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	sync.(*RWMutex).RLock @ 0xdf35e9
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:74
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).At @ 0xdf35c4
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:256
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).ValidatorsReadOnlySeq.func1 @ 0x116395e
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:238
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*fullGossipDomainState).ValidatorsReadOnlySeq.func1 @ 0x1e397fa
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:137
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.ActiveValidatorCount @ 0x1130251
+		/home/sukun/dev/prysm2/beacon-chain/core/helpers/validators.go:168
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexAndCount @ 0x1de6f64
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:292
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttTopic @ 0x1de6996
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:255
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de5525
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:149
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1047620-1047620
+M=3072845 P=1 G=-1 StateTransition Time=277054662600896 GoID=6 Runnable->Running Reason=""
+
+# parsed_lines=1047650-1047660
+M=3072845 P=1 G=6 StateTransition Time=277054662602688 GoID=4970 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).Unlock @ 0x4a62e4
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:216
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Detach @ 0xdf23a3
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:399
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.finalizerCleanup @ 0x119388c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1747
+	runtime.runFinalizers @ 0x4328d6
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/mfinal.go:272
+
+# parsed_lines=1049061-1049071
+M=3072845 P=1 G=6 StateTransition Time=277054662630528 GoID=5133 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).Unlock @ 0x4a62e4
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:216
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Detach @ 0xdf23a3
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:399
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.finalizerCleanup @ 0x119388c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1747
+	runtime.runFinalizers @ 0x4328d6
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/mfinal.go:272
+
+# parsed_lines=1049072-1049082
+M=3072845 P=1 G=6 StateTransition Time=277054662630784 GoID=4968 Waiting->Runnable Reason=""
+Stack=
+	sync.(*RWMutex).Unlock @ 0x4a62e4
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:216
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Detach @ 0xdf23a3
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:399
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.finalizerCleanup @ 0x119388c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1747
+	runtime.runFinalizers @ 0x4328d6
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/mfinal.go:272
+
+# parsed_lines=1049083-1049091
+M=3072845 P=1 G=6 StateTransition Time=277054662632256 GoID=6 Running->Waiting Reason="system goroutine wait"
+TransitionStack=
+	runtime.runFinalizers @ 0x4325e6
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/mfinal.go:210
+
+Stack=
+	runtime.runFinalizers @ 0x4325e6
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/mfinal.go:210
+
+# parsed_lines=1049092-1049092
+M=3072845 P=1 G=-1 StateTransition Time=277054662632512 GoID=4968 Runnable->Running Reason=""
+
+# parsed_lines=1084147-1084147
+M=3072845 P=1 G=-1 StateTransition Time=277054677649280 GoID=4970 Runnable->Running Reason=""
+
+# parsed_lines=1102883-1102955
+M=3072844 P=3 G=4968 StateTransition Time=277054686093440 GoID=4968 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).coreAggregate @ 0xd78eef
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1660
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).Aggregate @ 0xd78b73
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1537
+	github.com/OffchainLabs/prysm/v7/crypto/bls/blst.AggregatePublicKeys @ 0xd7c639
+		/home/sukun/dev/prysm2/crypto/bls/blst/public_key.go:93
+	github.com/OffchainLabs/prysm/v7/crypto/bls.AggregatePublicKeys @ 0x116314b
+		/home/sukun/dev/prysm2/crypto/bls/bls.go:46
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).AggregateKeyFromIndices @ 0x116314c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.createAttestationSignatureBatch @ 0x11b71c8
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.AttestationSignatureBatch @ 0x11b7e3e
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:267
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de76a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:348
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).coreAggregate @ 0xd78eef
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1660
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).Aggregate @ 0xd78b73
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1537
+	github.com/OffchainLabs/prysm/v7/crypto/bls/blst.AggregatePublicKeys @ 0xd7c639
+		/home/sukun/dev/prysm2/crypto/bls/blst/public_key.go:93
+	github.com/OffchainLabs/prysm/v7/crypto/bls.AggregatePublicKeys @ 0x116314b
+		/home/sukun/dev/prysm2/crypto/bls/bls.go:46
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).AggregateKeyFromIndices @ 0x116314c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.createAttestationSignatureBatch @ 0x11b71c8
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.AttestationSignatureBatch @ 0x11b7e3e
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:267
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de76a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:348
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1108555-1108561
+M=3072844 P=3 G=8660 StateTransition Time=277054687104832 GoID=4968 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).coreAggregate.func1 @ 0xd791d0
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1649
+
+# parsed_lines=1108720-1108768
+M=3072844 P=3 G=4968 StateTransition Time=277054687124096 GoID=4968 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateWithBatchVerifier @ 0x1d6cb6e
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:64
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de774c
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:355
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateWithBatchVerifier @ 0x1d6cb6e
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:64
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de774c
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:355
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1116102-1116110
+M=3072841 P=2 G=480 StateTransition Time=277054693603520 GoID=4968 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.verifyBatch @ 0x1d6d4e5
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:105
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).verifierRoutine @ 0x1d6c844
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:49
+
+# parsed_lines=1127791-1127863
+M=3072844 P=3 G=4970 StateTransition Time=277054714124608 GoID=4970 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).coreAggregate @ 0xd78eef
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1660
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).Aggregate @ 0xd78b73
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1537
+	github.com/OffchainLabs/prysm/v7/crypto/bls/blst.AggregatePublicKeys @ 0xd7c639
+		/home/sukun/dev/prysm2/crypto/bls/blst/public_key.go:93
+	github.com/OffchainLabs/prysm/v7/crypto/bls.AggregatePublicKeys @ 0x116314b
+		/home/sukun/dev/prysm2/crypto/bls/bls.go:46
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).AggregateKeyFromIndices @ 0x116314c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.createAttestationSignatureBatch @ 0x11b71c8
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.AttestationSignatureBatch @ 0x11b7e3e
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:267
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de76a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:348
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).coreAggregate @ 0xd78eef
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1660
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).Aggregate @ 0xd78b73
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1537
+	github.com/OffchainLabs/prysm/v7/crypto/bls/blst.AggregatePublicKeys @ 0xd7c639
+		/home/sukun/dev/prysm2/crypto/bls/blst/public_key.go:93
+	github.com/OffchainLabs/prysm/v7/crypto/bls.AggregatePublicKeys @ 0x116314b
+		/home/sukun/dev/prysm2/crypto/bls/bls.go:46
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).AggregateKeyFromIndices @ 0x116314c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.createAttestationSignatureBatch @ 0x11b71c8
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.AttestationSignatureBatch @ 0x11b7e3e
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:267
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de76a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:348
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1163151-1163157
+M=3072841 P=2 G=9038 StateTransition Time=277054726669696 GoID=4970 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).coreAggregate.func1 @ 0xd791d0
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1649
+
+# parsed_lines=1163260-1163308
+M=3072841 P=2 G=4970 StateTransition Time=277054726682752 GoID=4970 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateWithBatchVerifier @ 0x1d6cb6e
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:64
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de774c
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:355
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateWithBatchVerifier @ 0x1d6cb6e
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:64
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de774c
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:355
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=1317334-1317342
+M=3072841 P=2 G=480 StateTransition Time=277054835814784 GoID=4970 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.verifyBatch @ 0x1d6d4e5
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:105
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).verifierRoutine @ 0x1d6c844
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:49
+
+# parsed_lines=2567523-2567523
+M=3072845 P=1 G=-1 StateTransition Time=277056580799168 GoID=5133 Runnable->Running Reason=""
+
+# parsed_lines=2989471-2989543
+M=3072845 P=1 G=5133 StateTransition Time=277056855854080 GoID=5133 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).coreAggregate @ 0xd78eef
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1660
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).Aggregate @ 0xd78b73
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1537
+	github.com/OffchainLabs/prysm/v7/crypto/bls/blst.AggregatePublicKeys @ 0xd7c639
+		/home/sukun/dev/prysm2/crypto/bls/blst/public_key.go:93
+	github.com/OffchainLabs/prysm/v7/crypto/bls.AggregatePublicKeys @ 0x116314b
+		/home/sukun/dev/prysm2/crypto/bls/bls.go:46
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).AggregateKeyFromIndices @ 0x116314c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.createAttestationSignatureBatch @ 0x11b71c8
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.AttestationSignatureBatch @ 0x11b7e3e
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:267
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de76a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:348
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).coreAggregate @ 0xd78eef
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1660
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).Aggregate @ 0xd78b73
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1537
+	github.com/OffchainLabs/prysm/v7/crypto/bls/blst.AggregatePublicKeys @ 0xd7c639
+		/home/sukun/dev/prysm2/crypto/bls/blst/public_key.go:93
+	github.com/OffchainLabs/prysm/v7/crypto/bls.AggregatePublicKeys @ 0x116314b
+		/home/sukun/dev/prysm2/crypto/bls/bls.go:46
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).AggregateKeyFromIndices @ 0x116314c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/getters_validator.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.createAttestationSignatureBatch @ 0x11b71c8
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:196
+	github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.AttestationSignatureBatch @ 0x11b7e3e
+		/home/sukun/dev/prysm2/beacon-chain/core/blocks/signature.go:267
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de76a4
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:348
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=3033338-3033344
+M=3072844 P=3 G=14781 StateTransition Time=277057014455360 GoID=5133 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/supranational/blst/bindings/go.(*P1Aggregate).coreAggregate.func1 @ 0xd791d0
+		/home/sukun/go/pkg/mod/github.com/supranational/blst@v0.3.16/bindings/go/blst.go:1649
+
+# parsed_lines=3033478-3033526
+M=3072844 P=3 G=5133 StateTransition Time=277057014468736 GoID=5133 Running->Waiting Reason="chan receive"
+TransitionStack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateWithBatchVerifier @ 0x1d6cb6e
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:64
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de774c
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:355
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+Stack=
+	runtime.chanrecv1 @ 0x420791
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:509
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateWithBatchVerifier @ 0x1d6cb6e
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:64
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateUnaggregatedAttWithState @ 0x1de774c
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:355
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).validateCommitteeIndexBeaconAttestation @ 0x1de583d
+		/home/sukun/dev/prysm2/beacon-chain/sync/validate_beacon_attestation.go:195
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.NewFullGossipDomainDiagnosticFixture.func5 @ 0x1e3ee70
+		/home/sukun/dev/prysm2/beacon-chain/sync/full_gossip_domain_export_test.go:430
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).subscribeWithBase.(*Service).wrapAndReportValidation.func3 @ 0x1dd07a2
+		/home/sukun/dev/prysm2/beacon-chain/sync/subscriber.go:582
+	github.com/libp2p/go-libp2p-pubsub.(*validatorImpl).validateMsg @ 0xedae06
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:503
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateSingleTopic @ 0xedabc9
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:481
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validateTopic @ 0xeda724
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:430
+	github.com/libp2p/go-libp2p-pubsub.(*validation).doValidateTopic @ 0xeda256
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:401
+	github.com/libp2p/go-libp2p-pubsub.(*validation).validate.func1 @ 0xeda0fb
+		/home/sukun/go/pkg/mod/github.com/libp2p/go-libp2p-pubsub@v0.17.0/validation.go:371
+
+# parsed_lines=3605313-3605333
+M=3072845 P=1 G=6 StateTransition Time=277059015092224 GoID=6 Running->Waiting Reason="sync"
+TransitionStack=
+	sync.(*RWMutex).Lock @ 0x4a618a
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:155
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Detach @ 0xdf20fe
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:356
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.finalizerCleanup @ 0x119388c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1747
+	runtime.runFinalizers @ 0x4328d6
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/mfinal.go:272
+
+Stack=
+	sync.(*RWMutex).Lock @ 0x4a618a
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/sync/rwmutex.go:155
+	github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[...]).Detach @ 0xdf20fe
+		/home/sukun/dev/prysm2/container/multi-value-slice/multi_value_slice.go:356
+	github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.finalizerCleanup @ 0x119388c
+		/home/sukun/dev/prysm2/beacon-chain/state/state-native/state_trie.go:1747
+	runtime.runFinalizers @ 0x4328d6
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/mfinal.go:272
+
+# parsed_lines=3650295-3650303
+M=3072841 P=2 G=480 StateTransition Time=277059086813248 GoID=5133 Waiting->Runnable Reason=""
+Stack=
+	runtime.chansend1 @ 0x41f876
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:161
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.verifyBatch @ 0x1d6d4e5
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:105
+	github.com/OffchainLabs/prysm/v7/beacon-chain/sync.(*Service).verifierRoutine @ 0x1d6c844
+		/home/sukun/dev/prysm2/beacon-chain/sync/batch_verifier.go:49
+

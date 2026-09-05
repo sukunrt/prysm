@@ -1,0 +1,2312 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "2.5",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "1",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_sum",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0.732992584"
+          ],
+          [
+            1788573032.46,
+            "0.732992584"
+          ],
+          [
+            1788573062.46,
+            "0.732992584"
+          ],
+          [
+            1788573092.46,
+            "0.732992584"
+          ],
+          [
+            1788573122.46,
+            "0.732992584"
+          ],
+          [
+            1788573152.46,
+            "0.981796017"
+          ],
+          [
+            1788573182.46,
+            "0.981796017"
+          ],
+          [
+            1788573212.46,
+            "0.981796017"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.05",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.1",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "1",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "1"
+          ],
+          [
+            1788573182.46,
+            "1"
+          ],
+          [
+            1788573212.46,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "+Inf",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.005",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.01",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "5",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.005",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.25",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "1"
+          ],
+          [
+            1788573182.46,
+            "1"
+          ],
+          [
+            1788573212.46,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.5",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "1"
+          ],
+          [
+            1788573182.46,
+            "1"
+          ],
+          [
+            1788573212.46,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.01",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.025",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.05",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "5",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_count",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_sum",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0.869167884"
+          ],
+          [
+            1788573032.46,
+            "0.869167884"
+          ],
+          [
+            1788573062.46,
+            "0.869167884"
+          ],
+          [
+            1788573092.46,
+            "0.869167884"
+          ],
+          [
+            1788573122.46,
+            "0.869167884"
+          ],
+          [
+            1788573152.46,
+            "4.263233977"
+          ],
+          [
+            1788573182.46,
+            "4.263233977"
+          ],
+          [
+            1788573212.46,
+            "4.263233977"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "5",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.5",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "10",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "2.5",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "1"
+          ],
+          [
+            1788573182.46,
+            "1"
+          ],
+          [
+            1788573212.46,
+            "1"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "10",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.5",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "+Inf",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.01",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.005",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "+Inf",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.025",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.025",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.25",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_count",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "2.5",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_count",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.25",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "276"
+          ],
+          [
+            1788573032.46,
+            "285"
+          ],
+          [
+            1788573062.46,
+            "291"
+          ],
+          [
+            1788573092.46,
+            "300"
+          ],
+          [
+            1788573122.46,
+            "306"
+          ],
+          [
+            1788573152.46,
+            "315"
+          ],
+          [
+            1788573182.46,
+            "324"
+          ],
+          [
+            1788573212.46,
+            "330"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "1",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "10",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1"
+          ],
+          [
+            1788573032.46,
+            "1"
+          ],
+          [
+            1788573062.46,
+            "1"
+          ],
+          [
+            1788573092.46,
+            "1"
+          ],
+          [
+            1788573122.46,
+            "1"
+          ],
+          [
+            1788573152.46,
+            "2"
+          ],
+          [
+            1788573182.46,
+            "2"
+          ],
+          [
+            1788573212.46,
+            "2"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.05",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.1",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_bucket",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "ProposeBeaconBlock",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "le": "0.1",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0"
+          ],
+          [
+            1788573032.46,
+            "0"
+          ],
+          [
+            1788573062.46,
+            "0"
+          ],
+          [
+            1788573092.46,
+            "0"
+          ],
+          [
+            1788573122.46,
+            "0"
+          ],
+          [
+            1788573152.46,
+            "0"
+          ],
+          [
+            1788573182.46,
+            "0"
+          ],
+          [
+            1788573212.46,
+            "0"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "grpc_server_handling_seconds_sum",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "grpc_method": "GetSyncMessageBlockRoot",
+          "grpc_service": "ethereum.eth.v1alpha1.BeaconNodeValidator",
+          "grpc_type": "unary",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "0.005477156"
+          ],
+          [
+            1788573032.46,
+            "0.005671977"
+          ],
+          [
+            1788573062.46,
+            "0.005779159"
+          ],
+          [
+            1788573092.46,
+            "0.005904494"
+          ],
+          [
+            1788573122.46,
+            "0.005987953"
+          ],
+          [
+            1788573152.46,
+            "0.006148094"
+          ],
+          [
+            1788573182.46,
+            "0.006402754"
+          ],
+          [
+            1788573212.46,
+            "0.006484068"
+          ]
+        ]
+      }
+    ]
+  }
+}

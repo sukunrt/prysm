@@ -1,0 +1,187 @@
+Computing main repo mapping: 
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (0 packages loaded, 0 targets configured)
+Analyzing: target //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (0 packages loaded, 0 targets configured)
+
+INFO: Analyzed target //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (0 packages loaded, 6575 targets configured).
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 7 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 7 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 1 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 1 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 9 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 9 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 3 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 3 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 4 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 4 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 2 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 2 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 5 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 5 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 8 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 8 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 6 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 6 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: From Testing //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 10 of 10):
+==================== Test output for //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test (run 10 of 10):
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked
+=== RUN   TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root
+--- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics (0.05s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_failure_returns_while_consensus_dependency_is_blocked (0.00s)
+    --- PASS: TestDiagnosticBuildBlockGloasControlledCancellationSemantics/payload_success_waits_then_reports_late_canceled_state_root (0.05s)
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked
+=== RUN   TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress
+--- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_head_dependency_is_blocked (0.05s)
+    --- PASS: TestDiagnosticParentStateSlot13CancellationBoundaries/cancellation_while_real_skip_slot_cache_is_in_progress (0.00s)
+PASS
+================================================================================
+INFO: Found 1 test target...
+Target //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test up-to-date:
+  bazel-bin/beacon-chain/rpc/prysm/v1alpha1/validator/go_default_test_/go_default_test
+INFO: Elapsed time: 0.763s, Critical Path: 0.23s
+INFO: 11 processes: 1 internal, 10 linux-sandbox.
+INFO: Build completed successfully, 11 total actions
+//beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test              PASSED in 0.2s
+  Stats over 10 runs: max = 0.2s, min = 0.2s, avg = 0.2s, dev = 0.0s
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+  WARNING: //beacon-chain/rpc/prysm/v1alpha1/validator:go_default_test: Test execution time (0.2s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+
+Executed 1 out of 1 test: 1 test passes.

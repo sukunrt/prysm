@@ -1,0 +1,377 @@
+{
+  "scope": "Round 2 slot 110 retained owner node 148 and 12 retained observers",
+  "genesis": "2026-09-05T01:30:00Z",
+  "slot": 110,
+  "slot_start": "2026-09-05T01:52:00Z",
+  "owner_node": 148,
+  "proposer_validator_index": 39774,
+  "proposer_pubkey_prefix": "0xa929a06ad750",
+  "archive": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148.tar.gz",
+  "archive_sha256": "18a7829ec2dfb63df7d8c97a02ccafff1750172182f3daa197813e82513f1d56",
+  "block_root": "0xf287cca39adc7e69ca3916a27edcfb2a163627e31989222d1318d902838816de",
+  "execution_block_hash": "0x3d8b7508ed7d7dd30a991d82e367295879edf4c5da0deefa53bd489a5d118040",
+  "execution_parent_hash": "0x4605354653950925dde75cdd48a2786966938c883187a557ca1a4012842d9832",
+  "owner_events": [
+    {
+      "event": "proposer_duty",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/validator.log",
+      "line": 2541,
+      "timestamp": "2026-09-05T01:49:12.007068738Z",
+      "offset_ms": -167992.932,
+      "raw": "2026-09-05T01:49:12.007068738Z [2026-09-05 01:49:12.00]  INFO client: Duties schedule attesterCount=68 attesterPubkeys=[0x92caeb9deadf 0xa5c9dbbab6b6 0xb995ee8c08d5 0x8e756cb2945a 0xae5134fecc11 0xb6c9caac83d0 0xad8e08772737 0xa76e01cd631a 0x86c22c4d8e50 0x81590772f106 0xae4afcb26b45 0x82896b3aee7a 0x9481f39c2bbe 0xb33b27827eaa 0xa827ea051e45 0xb56347224b5f 0xa6619b5c0ba9 0x8177575fea7c 0x9748592f2fdf 0xb8dc854691af 0x8f2c2c53f834 0xacc3ef79c872 0x8d5546c4d0f5 0xb41860f2c723 0xa98b8deb6744 0x8cb4ed910952 0xafb8b89c0aef 0x8afd68b714d6 0x8ff4c4c7ab98 0x8c4fcf365d2d 0xa1574f51f478 0xb92c6a571a38 0xa31bc0e134b0 0xa7ce5811f38d 0x9953beb2dad3 0xb66ed2027d8a 0xa5a6083ef864 0x831c42a0b76f 0xa9178cae7e9c 0x913578c81b93 0xaedbf8926d6a 0x96895f4ef14e 0x91e8bc7c20a1 0x82b00921d77f 0x80e22208ae31 0x864368a37476 0x8ef24b810f64 0x9592be1b56c7 0xa96b802bede0 0xaefb7b0ef57e 0x850513524ea9 0xa8ad3bc5c1bd 0x8dab08ad4dc0 0x959a9b0aeb69 0x913e3810fc61 0x9346771638cc 0xabfb34aa68ab 0xa608cafe57fb 0xa7b63cc51640 0xb88dbca2e6b0 0x8fefd9598c80 0xa0f4450dcec3 0x84b16b5ca056 0x81eaced221eb 0xb3e1a98b1952 0x97b014131458 0xb8c570b0a9d5 0x95a3fe7f1f87] proposerPubkey=0xa929a06ad750 ptcCount=3 ptcPubkeys=[0x82896b3aee7a 0xb56347224b5f 0x9953beb2dad3] slot=110 slotInEpoch=14 timeUntilDuty=2m48s\r"
+    },
+    {
+      "event": "parent109_import",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 931,
+      "timestamp": "2026-09-05T01:51:48.974389536Z",
+      "offset_ms": -11025.611,
+      "raw": "2026-09-05T01:51:48.974389536Z [2026-09-05 01:51:48.96]  INFO blockchain: Synced new block block=0x8f962346... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=967.725106ms slot=109\r"
+    },
+    {
+      "event": "parent109_envelope",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 933,
+      "timestamp": "2026-09-05T01:51:49.396396041Z",
+      "offset_ms": -10603.604,
+      "raw": "2026-09-05T01:51:49.396396041Z [2026-09-05 01:51:49.39]  INFO blockchain: Synced execution payload envelope blockHash=0x460535465395 blockRoot=0x8f9623466205 parentHash=0xe7eb34e8ddd5 slot=109\r"
+    },
+    {
+      "event": "geth_payload_ready",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/execution.log",
+      "line": 338,
+      "timestamp": "2026-09-05T01:51:49.399985625Z",
+      "offset_ms": -10600.015,
+      "raw": "2026-09-05T01:51:49.399985625Z INFO [09-05|01:51:49.399] Updated payload                          id=0x0460a255558bbf2d number=75 hash=3d8b75..118040 txs=0 withdrawals=0 gas=0 fees=0 root=dfac15..3b83cc elapsed=1.481ms     balhash=0xf892bb60786ee76ad7a8e5f22176e4194bf77a7bca8f2c8834188c2f4f01a3d2"
+    },
+    {
+      "event": "build_entry",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 934,
+      "timestamp": "2026-09-05T01:52:00.016983760Z",
+      "offset_ms": 16.983,
+      "raw": "2026-09-05T01:52:00.016983760Z [2026-09-05 01:52:00.01]  INFO rpc/validator: Building block sinceSlotStartTime=15.585265ms slot=110\r"
+    },
+    {
+      "event": "eth1_head_fallback",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 935,
+      "timestamp": "2026-09-05T01:52:00.023703683Z",
+      "offset_ms": 23.703,
+      "raw": "2026-09-05T01:52:00.023703683Z [2026-09-05 01:52:00.02]  WARN rpc/validator: Voting period before genesis + follow distance, using eth1data from head genesisTime=1788571800 latestValidTime=1788543128\r"
+    },
+    {
+      "event": "geth_payload_delivery",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/execution.log",
+      "line": 339,
+      "timestamp": "2026-09-05T01:52:00.024143897Z",
+      "offset_ms": 24.143,
+      "raw": "2026-09-05T01:52:00.024143897Z INFO [09-05|01:52:00.023] Stopping work on payload                 id=0x0460a255558bbf2d reason=delivery"
+    },
+    {
+      "event": "payload_choice",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 936,
+      "timestamp": "2026-09-05T01:52:00.024960787Z",
+      "offset_ms": 24.96,
+      "raw": "2026-09-05T01:52:00.024960787Z [2026-09-05 01:52:00.02]  INFO rpc/validator: Chose payload bid slot=110 source=self-build valueGwei=0\r"
+    },
+    {
+      "event": "xatu_queue_full",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/xatu-sentry.log",
+      "line": 1310,
+      "timestamp": "2026-09-05T01:52:00.307372415Z",
+      "offset_ms": 307.372,
+      "raw": "2026-09-05T01:52:00.307372415Z {\"error\":\"queue is full\",\"event_type\":19,\"level\":\"error\",\"module\":\"sentry\",\"msg\":\"Failed to send event to sink\",\"sink\":\"xatu\",\"suppressed\":14990,\"time\":\"2026-09-05T01:52:00Z\"}"
+    },
+    {
+      "event": "event_stream_slow_reader",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 937,
+      "timestamp": "2026-09-05T01:52:01.725042996Z",
+      "offset_ms": 1725.042,
+      "raw": "2026-09-05T01:52:01.725042996Z [2026-09-05 01:52:01.72]  WARN events: Client is unable to keep up with event stream, shutting down. error=client failed to read fast enough to keep outgoing buffer below threshold\r"
+    },
+    {
+      "event": "build_finish",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 938,
+      "timestamp": "2026-09-05T01:52:03.409893292Z",
+      "offset_ms": 3409.893,
+      "raw": "2026-09-05T01:52:03.409893292Z [2026-09-05 01:52:03.40]  INFO rpc/validator: Finished building block sinceSlotStartTime=3.409432868s slot=110 validator=39774\r"
+    },
+    {
+      "event": "owner_import",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 939,
+      "timestamp": "2026-09-05T01:52:03.663232141Z",
+      "offset_ms": 3663.232,
+      "raw": "2026-09-05T01:52:03.663232141Z [2026-09-05 01:52:03.66]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.662571565s slot=110\r"
+    },
+    {
+      "event": "state_transition_applied",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 940,
+      "timestamp": "2026-09-05T01:52:03.663287155Z",
+      "offset_ms": 3663.287,
+      "raw": "2026-09-05T01:52:03.663287155Z [2026-09-05 01:52:03.66]  INFO blockchain: Finished applying state transition attestations=8 blobKzgCommitmentCount=0 builderIndex=self-build parentHash=0x460535465395 payloadHash=0x3d8b7508ed7d slot=110 syncBitsCount=511\r"
+    },
+    {
+      "event": "envelope_published",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 941,
+      "timestamp": "2026-09-05T01:52:03.666045663Z",
+      "offset_ms": 3666.045,
+      "raw": "2026-09-05T01:52:03.666045663Z [2026-09-05 01:52:03.66]  INFO rpc/validator: Published execution payload envelope beaconBlockRoot=0xf287cca39adc7e69 builderIndex=self-build duration=272.6\u00b5s slot=110\r"
+    },
+    {
+      "event": "validator_submitted",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/validator.log",
+      "line": 2618,
+      "timestamp": "2026-09-05T01:52:03.666680190Z",
+      "offset_ms": 3666.68,
+      "raw": "2026-09-05T01:52:03.666680190Z [2026-09-05 01:52:03.66]  INFO client: Submitted new block attestationCount=8 bidValue=0 blockHash=0x3d8b7508ed7d blockRoot=0xf287cca39adc builderIndex=self-build depositCount=0 fork=gloas gasLimit=185868599 graffiti=prysm-geth-148 GEaa1fPM0280 parentHash=0x460535465395 payloadAttestationCount=1 pubkey=0xa929a06ad750 slot=110\r"
+    },
+    {
+      "event": "geth_import",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/execution.log",
+      "line": 340,
+      "timestamp": "2026-09-05T01:52:03.670057329Z",
+      "offset_ms": 3670.057,
+      "raw": "2026-09-05T01:52:03.670057329Z INFO [09-05|01:52:03.669] Imported new potential chain segment     number=75 hash=3d8b75..118040 blocks=1 txs=0 mgas=0.000 elapsed=2.041ms     mgasps=0.000 triediffs=406.67KiB triedirty=0.00B"
+    },
+    {
+      "event": "envelope_imported",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/beacon.log",
+      "line": 942,
+      "timestamp": "2026-09-05T01:52:03.673014945Z",
+      "offset_ms": 3673.014,
+      "raw": "2026-09-05T01:52:03.673014945Z [2026-09-05 01:52:03.67]  INFO blockchain: Synced execution payload envelope blockHash=0x3d8b7508ed7d blockRoot=0xf287cca39adc parentHash=0x460535465395 slot=110\r"
+    },
+    {
+      "event": "xatu_upstream_deadline",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/xatu-sentry.log",
+      "line": 1311,
+      "timestamp": "2026-09-05T01:52:04.379211896Z",
+      "offset_ms": 4379.211,
+      "raw": "2026-09-05T01:52:04.379211896Z {\"error\":\"rpc error: code = DeadlineExceeded desc = context deadline exceeded\",\"level\":\"error\",\"module\":\"sentry\",\"msg\":\"Failed to send events upstream\",\"num_events\":512,\"output_name\":\"grpc\",\"output_type\":\"xatu\",\"time\":\"2026-09-05T01:52:04Z\"}"
+    }
+  ],
+  "engine_records": [
+    {
+      "event": "engine_request_1180",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/snooper-engine.log",
+      "line": 49465,
+      "end_line": 49474,
+      "timestamp": "2026-09-05T01:52:00.023182559Z",
+      "offset_ms": 23.182,
+      "header": "2026-09-05T01:52:00.023182559Z INFO[2026-09-05T01:52:00Z] REQUEST #1180: POST /                         length=89 method=engine_getPayloadV6 type=json",
+      "method": "engine_getPayloadV6",
+      "jsonrpc_id": 672,
+      "status": null,
+      "payload_id": null,
+      "block_hash": null,
+      "parent_hash": null,
+      "transactions_empty": false,
+      "gas_used_zero": false,
+      "execution_requests_empty": false
+    },
+    {
+      "event": "engine_response_1180",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/snooper-engine.log",
+      "line": 49475,
+      "end_line": 49511,
+      "timestamp": "2026-09-05T01:52:00.026670044Z",
+      "offset_ms": 26.67,
+      "header": "2026-09-05T01:52:00.026670044Z INFO[2026-09-05T01:52:00Z] RESPONSE #1180: POST /                        duration_ms=0 length=2028 status=200 type=json",
+      "method": "engine_getPayloadV6",
+      "jsonrpc_id": 672,
+      "status": null,
+      "payload_id": null,
+      "block_hash": "0x3d8b7508ed7d7dd30a991d82e367295879edf4c5da0deefa53bd489a5d118040",
+      "parent_hash": "0x4605354653950925dde75cdd48a2786966938c883187a557ca1a4012842d9832",
+      "transactions_empty": true,
+      "gas_used_zero": true,
+      "execution_requests_empty": true
+    },
+    {
+      "event": "engine_request_1181",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/snooper-engine.log",
+      "line": 49512,
+      "end_line": 49544,
+      "timestamp": "2026-09-05T01:52:03.668259822Z",
+      "offset_ms": 3668.259,
+      "header": "2026-09-05T01:52:03.668259822Z INFO[2026-09-05T01:52:03Z] REQUEST #1181: POST /                         length=1987 method=engine_newPayloadV5 type=json",
+      "method": "engine_newPayloadV5",
+      "jsonrpc_id": 673,
+      "status": null,
+      "payload_id": null,
+      "block_hash": "0x3d8b7508ed7d7dd30a991d82e367295879edf4c5da0deefa53bd489a5d118040",
+      "parent_hash": "0x4605354653950925dde75cdd48a2786966938c883187a557ca1a4012842d9832",
+      "transactions_empty": true,
+      "gas_used_zero": true,
+      "execution_requests_empty": false
+    },
+    {
+      "event": "engine_response_1181",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/snooper-engine.log",
+      "line": 49545,
+      "end_line": 49555,
+      "timestamp": "2026-09-05T01:52:03.670593620Z",
+      "offset_ms": 3670.593,
+      "header": "2026-09-05T01:52:03.670593620Z INFO[2026-09-05T01:52:03Z] RESPONSE #1181: POST /                        duration_ms=3 length=164 status=200 type=json",
+      "method": "engine_newPayloadV5",
+      "jsonrpc_id": 673,
+      "status": "VALID",
+      "payload_id": null,
+      "block_hash": null,
+      "parent_hash": null,
+      "transactions_empty": false,
+      "gas_used_zero": false,
+      "execution_requests_empty": false
+    },
+    {
+      "event": "engine_request_1182",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/snooper-engine.log",
+      "line": 49556,
+      "end_line": 49570,
+      "timestamp": "2026-09-05T01:52:03.673573262Z",
+      "offset_ms": 3673.573,
+      "header": "2026-09-05T01:52:03.673573262Z INFO[2026-09-05T01:52:03Z] REQUEST #1182: POST /                         length=342 method=engine_forkchoiceUpdatedV4 type=json",
+      "method": "engine_forkchoiceUpdatedV4",
+      "jsonrpc_id": 674,
+      "status": null,
+      "payload_id": null,
+      "block_hash": null,
+      "parent_hash": null,
+      "transactions_empty": false,
+      "gas_used_zero": false,
+      "execution_requests_empty": false
+    },
+    {
+      "event": "engine_response_1182",
+      "source": "runs/diagnostics/round2-construction-bench/round2-slot110-owner-node148/snooper-engine.log",
+      "line": 49571,
+      "end_line": 49585,
+      "timestamp": "2026-09-05T01:52:03.678164308Z",
+      "offset_ms": 3678.164,
+      "header": "2026-09-05T01:52:03.678164308Z INFO[2026-09-05T01:52:03Z] RESPONSE #1182: POST /                        duration_ms=1 length=199 status=200 type=json",
+      "method": "engine_forkchoiceUpdatedV4",
+      "jsonrpc_id": 674,
+      "status": "VALID",
+      "payload_id": null,
+      "block_hash": null,
+      "parent_hash": null,
+      "transactions_empty": false,
+      "gas_used_zero": false,
+      "execution_requests_empty": false
+    }
+  ],
+  "observer_imports": [
+    {
+      "node": 300,
+      "source": "runs/round2/prysm-geth-300/beacon.log",
+      "line": 750,
+      "timestamp": "2026-09-05T01:52:03.639960068Z",
+      "offset_ms": 3639.96,
+      "raw": "2026-09-05T01:52:03.639960068Z [2026-09-05 01:52:03.63]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.639412993s slot=110"
+    },
+    {
+      "node": 700,
+      "source": "runs/round2/prysm-geth-700/beacon.log",
+      "line": 776,
+      "timestamp": "2026-09-05T01:52:03.644742354Z",
+      "offset_ms": 3644.742,
+      "raw": "2026-09-05T01:52:03.644742354Z [2026-09-05 01:52:03.64]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.64416226s slot=110"
+    },
+    {
+      "node": 500,
+      "source": "runs/round2/prysm-geth-500/beacon.log",
+      "line": 732,
+      "timestamp": "2026-09-05T01:52:03.756135801Z",
+      "offset_ms": 3756.135,
+      "raw": "2026-09-05T01:52:03.756135801Z [2026-09-05 01:52:03.75]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.755116559s slot=110"
+    },
+    {
+      "node": 151,
+      "source": "runs/round2/prysm-geth-151/beacon.log",
+      "line": 892,
+      "timestamp": "2026-09-05T01:52:03.765012315Z",
+      "offset_ms": 3765.012,
+      "raw": "2026-09-05T01:52:03.765012315Z [2026-09-05 01:52:03.76]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.764424441s slot=110"
+    },
+    {
+      "node": 3,
+      "source": "runs/round2/prysm-geth-3/beacon.log",
+      "line": 902,
+      "timestamp": "2026-09-05T01:52:03.771620809Z",
+      "offset_ms": 3771.62,
+      "raw": "2026-09-05T01:52:03.771620809Z [2026-09-05 01:52:03.77]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.771160973s slot=110"
+    },
+    {
+      "node": 2,
+      "source": "runs/round2/prysm-geth-2/beacon.log",
+      "line": 885,
+      "timestamp": "2026-09-05T01:52:03.772513226Z",
+      "offset_ms": 3772.513,
+      "raw": "2026-09-05T01:52:03.772513226Z [2026-09-05 01:52:03.77]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.770918355s slot=110"
+    },
+    {
+      "node": 150,
+      "source": "runs/round2/prysm-geth-150/beacon.log",
+      "line": 1317233,
+      "timestamp": "2026-09-05T01:52:03.774312796Z",
+      "offset_ms": 3774.312,
+      "raw": "2026-09-05T01:52:03.774312796Z [2026-09-05 01:52:03.77]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.774015849s slot=110"
+    },
+    {
+      "node": 400,
+      "source": "runs/round2/prysm-geth-400/beacon.log",
+      "line": 605309,
+      "timestamp": "2026-09-05T01:52:03.790605502Z",
+      "offset_ms": 3790.605,
+      "raw": "2026-09-05T01:52:03.790605502Z [2026-09-05 01:52:03.78]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.789951102s slot=110"
+    },
+    {
+      "node": 900,
+      "source": "runs/round2/prysm-geth-900/beacon.log",
+      "line": 755,
+      "timestamp": "2026-09-05T01:52:03.792139941Z",
+      "offset_ms": 3792.139,
+      "raw": "2026-09-05T01:52:03.792139941Z [2026-09-05 01:52:03.79]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.791578644s slot=110"
+    },
+    {
+      "node": 50,
+      "source": "runs/round2/prysm-geth-50/beacon.log",
+      "line": 1396334,
+      "timestamp": "2026-09-05T01:52:03.841253607Z",
+      "offset_ms": 3841.253,
+      "raw": "2026-09-05T01:52:03.841253607Z [2026-09-05 01:52:03.84]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.840542732s slot=110"
+    },
+    {
+      "node": 201,
+      "source": "runs/round2/prysm-geth-201/beacon.log",
+      "line": 609135,
+      "timestamp": "2026-09-05T01:52:03.843281775Z",
+      "offset_ms": 3843.281,
+      "raw": "2026-09-05T01:52:03.843281775Z [2026-09-05 01:52:03.84]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.840799589s slot=110"
+    },
+    {
+      "node": 1,
+      "source": "runs/round2/prysm-geth-1/beacon.log",
+      "line": 1331610,
+      "timestamp": "2026-09-05T01:52:03.861027313Z",
+      "offset_ms": 3861.027,
+      "raw": "2026-09-05T01:52:03.861027313Z [2026-09-05 01:52:03.85]  INFO blockchain: Synced new block block=0xf287cca3... epoch=3 finalizedRoot=0x4164585b... finalizedRound=11 finalizedSlot=88 sinceSlotStartTime=3.859907889s slot=110"
+    }
+  ],
+  "observer_import_offset_bounds_ms": [
+    3639.96,
+    3861.027
+  ],
+  "boundaries": [
+    "Node 148 is a compact archive: beacon.log is INFO/WARN level and has no detailed FFG vote-ledger rows.",
+    "Engine proxy timestamps are from snooper-engine.log and do not provide internal consensus-stage spans.",
+    "The event-stream and Xatu records are contemporaneous observations; this extraction does not attribute causation."
+  ]
+}

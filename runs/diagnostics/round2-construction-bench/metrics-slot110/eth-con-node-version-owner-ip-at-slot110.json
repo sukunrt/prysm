@@ -1,0 +1,37 @@
+{
+  "status": "success",
+  "isPartial": false,
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "eth_con_node_version",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "ip_address": "143.198.65.112",
+          "job": "exporter",
+          "module": "general",
+          "network": "glamsterdam-devnet-9",
+          "node": "consensus-client",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "version": "Prysm/v5.0.3-0280403 (linux amd64)",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "value": [
+          1788573123,
+          "1"
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "seriesFetched": "1",
+    "executionTimeMsec": 39
+  }
+}

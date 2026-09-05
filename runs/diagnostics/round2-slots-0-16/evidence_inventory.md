@@ -80,6 +80,15 @@ statement about the two scanned ledgers, not a network-wide equivocation audit.
 | 400 | 16 | slot 16 `0x4b07a2a4…` | 23 | 94 | 01:33:15.211242–01:33:15.429185 |
 | 400 | 16 | slot 15 `0x68564190…` | 489 | 93 | 01:33:15.698190–01:33:16.520535 |
 
+A separate fresh audit applies
+`decoupled.AvailableAttestationSeatsToValidatorIndices`'s hash and big-endian
+slot rule with an electorate of 120,000. Slot 15 computes the exact committee
+interval 93,514–94,025, split by activation records into node 68's 54 indices
+and node 69's 458. Slot 16 computes 27,068–27,579, split into node 93's 489
+and node 94's 23. Both observer ledgers exactly equal their computed 512-index
+committee. These owners come from archived activation records, without
+validator-number or node-number arithmetic.
+
 The activation owners' own import logs match the split. Node 68 imports slot 15
 at +2.177131 seconds, while node 69 imports it at +12.466413. Node 94 imports
 slot 16 at +3.010779, while node 93 imports it at +5.069302. Node 400 then logs
@@ -89,6 +98,16 @@ fork-choice insertion, so it proves validation and carried root, but does not
 by itself prove retained-store admission before the scoring boundary.
 
 ## Reproduction and outputs
+
+The independent committee/ownership check can be reproduced with:
+
+```bash
+python3 runs/diagnostics/round2-slots-0-16/validate_goldfish_committees.py \
+  /tmp/prysm-r2-extra-logs.Rd7MjT runs/round2 --workers 8
+```
+
+This reads the archived activation records and the extracted vote ledger. It
+does not contact or start a node.
 
 ```sh
 python3 runs/diagnostics/round2-slots-0-16/extract_census.py \
@@ -106,6 +125,58 @@ python3 runs/diagnostics/round2-slots-0-16/extract_census.py \
 - `archive_inventory.tsv`: one row per selected node, including excluded copies.
 - `goldfish_vote_groups.tsv`: eight root/observer groups with first/last timing.
 - `goldfish_votes_15_16_unique.tsv`: 2,048 deduplicated validator rows.
+- `validate_goldfish_committees.py`: recomputes the slot-15/16 committee and
+  freshly reads the corresponding validator owners from activation records.
+- `goldfish_committee_intervals.tsv`: eight observer/root/activation-owner
+  intervals with computed committee offsets and activation-log anchors.
+- `goldfish_committee_validation.md`: compact committee and ownership result.
+
+The committee/owner audit is reproducible with:
+
+```sh
+python3 runs/diagnostics/round2-slots-0-16/validate_goldfish_committees.py \
+  /tmp/prysm-r2-extra-logs.Rd7MjT runs/round2
+```
 
 The absence conclusions are bounded to the complete saved 1,000-node archive
 union. They do not establish that an event outside these captures was impossible.
+
+## Sixteen-owner early-timeline extension
+
+The follow-up extractor is bounded to the 16 owner archives and the interval
+genesis minus 12 seconds through genesis plus 240 seconds:
+
+```sh
+python3 runs/diagnostics/round2-slots-0-16/extract_owner_early_timeline.py \
+  --archive-dir /tmp/prysm-r2-extra-logs.Rd7MjT
+```
+
+It generated:
+
+- `owner_slot_activity.tsv`: 352 compact owner/slot rows, including all parsed
+  message-type counts and Engine RPC counts.
+- `owner_failure_neighborhood.tsv`: 16 before/during/after proposal summaries.
+- `validator_role_progress.tsv`: 1,275 startup schedules, duty schedules,
+  submitted-role, and payload-skip summaries, including list cardinalities.
+- `owner_message_types.tsv`: 1,328 component/severity/message-type groups with
+  exact counts and first/last source anchors.
+- `owner_nonroutine_events.tsv`: all 15,448 WARN/ERROR records in the bounded
+  window, sanitized and individually anchored.
+- `owner_early_timeline.tsv`: 17,159 nonroutine and selected routine progress
+  records, with timestamps, derived slot, selected fields, and sanitized text.
+- `engine_rpc_timeline.tsv`: 148 matched `engine_forkchoiceUpdatedV4` and
+  `engine_getPayloadV6` pairs. It emits selected HTTP metadata and JSON body
+  fields and never emits HTTP headers.
+- `getpayload_timeout_discriminators.tsv`: the four slot 5/6/8/9 request,
+  proxy-copy, and BN timeout boundaries.
+- `owner_timeline_excerpts.md`: compact per-owner schedules, proposer events,
+  error-group boundaries, subsequent role progress, and Engine summaries.
+- `owner_early_timeline_findings.md`: interpreted phase split, exact timeout
+  source identity, and evidence limits.
+- `offline-preflight-results.md`: controlled `RolesAt` and attestation-cache
+  reproductions and the Bazel command used to run them.
+- `owner_timeline_archives.tsv`: exact 16 input paths and sizes.
+
+The 16 compact archives contain the same five member types recorded above and
+no historical runtime traces. The timeline extension intentionally scans no
+other node and performs no devnet rerun or download.

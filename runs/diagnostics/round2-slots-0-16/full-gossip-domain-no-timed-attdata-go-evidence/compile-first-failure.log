@@ -1,0 +1,5 @@
+# github.com/OffchainLabs/prysm/v7/beacon-chain/sync_test [github.com/OffchainLabs/prysm/v7/beacon-chain/sync.test]
+beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:832:11: undefined: require.Nil
+beacon-chain/sync/full_gossip_domain_tcp_diagnostic_test.go:833:11: undefined: require.Nil
+FAIL	github.com/OffchainLabs/prysm/v7/beacon-chain/sync [build failed]
+FAIL

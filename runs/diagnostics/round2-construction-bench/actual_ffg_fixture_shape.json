@@ -1,0 +1,74 @@
+{
+  "scope": {
+    "run": "round2",
+    "observer": 400,
+    "log": "runs/round2/prysm-geth-400/beacon.log",
+    "genesisTime": "2026-09-05T01:30:00Z",
+    "validatorCount": 120000,
+    "committeesPerSlot": 6,
+    "committeeCapacity": 2500,
+    "notes": [
+      "The source and target checkpoint roots are not fields in the retained vote-ledger records.",
+      "targetRound is logged; beaconBlockRoot is the attestation data's BeaconBlockRoot.",
+      "Large validator CSVs require removing repeated outer RFC3339 capture prefixes before parsing."
+    ]
+  },
+  "votes": [
+    {
+      "attSlot": 91,
+      "targetRound": 11,
+      "sourceCheckpointRoot": null,
+      "targetCheckpointRoot": null,
+      "beaconBlockRoot": "0x7b609d078b5fe84889cd4d55cbdb1dce39842760ece749b01b05943e5f93f23a",
+      "includedDataRoot": "0x1fe5887a6af98797fcbe5d8470105e28543f2f671e55de5236cd2bc268037d",
+      "committeeBits": [0, 1, 2, 3, 4, 5],
+      "includedSeats": 14920,
+      "includedValidatorCount": 14920,
+      "includedValidatorCsvSha256": "ff7de25eb7d8eabad028d64693ab11815d61e4f09228adcd3a877bef2deaa814",
+      "committeeAggregates": [
+        {"committee": 0, "seats": 2486, "dataRoot": "0x7dd6bec64b147417029f17a346d11dfff8fb2bf406ecfb156564c43cdfe450", "line": 490291, "timestamp": "2026-09-05T01:48:20.047466898Z"},
+        {"committee": 1, "seats": 2488, "dataRoot": "0x77eafc03ad4be09b7fb3c91ae87b11e02be81cfa5f9b768cbfc0e866131b67", "line": 490294, "timestamp": "2026-09-05T01:48:20.050813914Z"},
+        {"committee": 2, "seats": 2481, "dataRoot": "0xce404673f968e24469f2a3772187c1f3feff8142d6faa207bd840e9c273a3a", "line": 490297, "timestamp": "2026-09-05T01:48:20.059342928Z"},
+        {"committee": 3, "seats": 2491, "dataRoot": "0x173a2f3cdad15e30ab32e1c60ee3bcceda21e868b155a1eb4e04e0cdf60c06", "line": 490298, "timestamp": "2026-09-05T01:48:20.062141300Z"},
+        {"committee": 4, "seats": 2487, "dataRoot": "0xd629a4fb6bc101298a5d19aa9a52cd762bcf916c6b9b37b229a605071010d6", "line": 490293, "timestamp": "2026-09-05T01:48:20.049747809Z"},
+        {"committee": 5, "seats": 2487, "dataRoot": "0xc37b9b33fcc4d67e38a9ef42d012247559d4348b1e43a8f1482241d85bcc31", "line": 490289, "timestamp": "2026-09-05T01:48:20.036678559Z"}
+      ],
+      "committeeSeatSum": 14920,
+      "committeeValidatorUnionCount": 14920,
+      "committeeValidatorUnionEqualsIncluded": true,
+      "retainedInclusions": [
+        {"blockSlot": 94, "line": 507053, "timestamp": "2026-09-05T01:48:49.007170218Z"},
+        {"blockSlot": 95, "line": 512902, "timestamp": "2026-09-05T01:49:00.819872468Z"},
+        {"blockSlot": 96, "line": 519927, "timestamp": "2026-09-05T01:49:13.518244919Z"}
+      ]
+    },
+    {
+      "attSlot": 93,
+      "targetRound": 11,
+      "sourceCheckpointRoot": null,
+      "targetCheckpointRoot": null,
+      "beaconBlockRoot": "0xbd3087a87d2ce719d2523f4f7dec64af872539b649c0133de27387bae0b78a1c",
+      "includedDataRoot": "0x4868980d9c37478e681c6e959156964064af28698a60009504f604a48d20c6",
+      "committeeBits": [0, 1, 2, 3, 4, 5],
+      "includedSeats": 14927,
+      "includedValidatorCount": 14927,
+      "includedValidatorCsvSha256": "677aaf70de49aa72a893f416cc22a377e2925d654047c3e2c08ccc46ea3de0f1",
+      "committeeAggregates": [
+        {"committee": 0, "seats": 2489, "dataRoot": "0xd64f7826c46c0697fe5077192f79f0205b0ce2de7ca7e316666ada77d624e4", "line": 502364, "timestamp": "2026-09-05T01:48:44.068344960Z"},
+        {"committee": 1, "seats": 2485, "dataRoot": "0xab91a8f5ed70b951d0ed14a4aeaeefdd67a71fbc6e2298604db85d41a48f66", "line": 502362, "timestamp": "2026-09-05T01:48:44.060221867Z"},
+        {"committee": 2, "seats": 2484, "dataRoot": "0x13400e4ba40f18303d00fdde2588e17854a422122138f9120173c8dbc9a95a", "line": 502359, "timestamp": "2026-09-05T01:48:44.055706028Z"},
+        {"committee": 3, "seats": 2487, "dataRoot": "0xacd7c9d20085eb247cb13fd8fc56720f180c989b4e412f05b2c496fbabf37c", "line": 502358, "timestamp": "2026-09-05T01:48:44.053878189Z"},
+        {"committee": 4, "seats": 2492, "dataRoot": "0xef54e95c884f4006f7f819ca5a2ef2d506e4878a0694b3d7c1c289fa1cf1cb", "line": 502368, "timestamp": "2026-09-05T01:48:44.078710519Z"},
+        {"committee": 5, "seats": 2490, "dataRoot": "0x8fd8c1a2a252e783f15946cc48d4149f4fe4e53f8de1e178b18dada9f294a4", "line": 502353, "timestamp": "2026-09-05T01:48:44.037930486Z"}
+      ],
+      "committeeSeatSum": 14927,
+      "committeeValidatorUnionCount": 14927,
+      "committeeValidatorUnionEqualsIncluded": true,
+      "retainedInclusions": [
+        {"blockSlot": 94, "line": 507049, "timestamp": "2026-09-05T01:48:48.981578033Z"},
+        {"blockSlot": 95, "line": 512960, "timestamp": "2026-09-05T01:49:00.825366074Z"},
+        {"blockSlot": 96, "line": 519924, "timestamp": "2026-09-05T01:49:13.501154728Z"}
+      ]
+    }
+  ]
+}

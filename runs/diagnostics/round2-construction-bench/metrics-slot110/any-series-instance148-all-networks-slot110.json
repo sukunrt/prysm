@@ -1,0 +1,68 @@
+{
+  "status": "success",
+  "isPartial": false,
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "instance": "glamsterdam-devnet-9-lighthouse-geth-148",
+          "job": "consensus_node",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "2574"
+        ]
+      },
+      {
+        "metric": {
+          "instance": "glamsterdam-devnet-9-lighthouse-geth-148",
+          "job": "execution",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "1109"
+        ]
+      },
+      {
+        "metric": {
+          "instance": "glamsterdam-devnet-9-lighthouse-geth-148",
+          "job": "exporter",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "228"
+        ]
+      },
+      {
+        "metric": {
+          "instance": "glamsterdam-devnet-9-lighthouse-geth-148",
+          "job": "node",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "1190"
+        ]
+      },
+      {
+        "metric": {
+          "instance": "glamsterdam-devnet-9-lighthouse-geth-148",
+          "job": "prometheus",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "451"
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "seriesFetched": "5587",
+    "executionTimeMsec": 29594
+  }
+}

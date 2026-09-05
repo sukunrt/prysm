@@ -1,0 +1,325 @@
+{
+  "incident": {
+    "slot": 110,
+    "slot_start": "2026-09-05T01:52:00Z",
+    "owner": "round2 prysm-geth-148",
+    "owner_external_ip": "143.198.65.112"
+  },
+  "identity": {
+    "selector": "ip_address=\"143.198.65.112\",network=\"glamsterdam-devnet-9\"",
+    "stored_instance_label": "glamsterdam-devnet-9-lighthouse-reth-6",
+    "stored_consensus_client_label": "lighthouse",
+    "stored_execution_client_label": "reth",
+    "prysm_commit": "0280403c70d88967f49d2d4c730f4c5417dabdf5",
+    "prysm_version": "v5.0.3",
+    "exporter_node_version": "Prysm/v5.0.3-0280403 (linux amd64)",
+    "consensus_process_start": "2026-09-05T00:50:34.620Z",
+    "interpretation": "direct process metrics identify the deployed Prysm despite stale instance/client labels"
+  },
+  "native_scrape": {
+    "cadence_seconds": 30.0,
+    "consensus_offset_samples": [
+      "2026-09-05T01:50:02.460Z",
+      "2026-09-05T01:50:32.460Z",
+      "2026-09-05T01:51:02.460Z",
+      "2026-09-05T01:51:32.460Z",
+      "2026-09-05T01:52:02.460Z",
+      "2026-09-05T01:52:32.460Z"
+    ],
+    "exporter_offset_example": "2026-09-05T01:52:15.867Z"
+  },
+  "head": [
+    [
+      "2026-09-05T01:50:02.460Z",
+      99
+    ],
+    [
+      "2026-09-05T01:50:32.460Z",
+      102
+    ],
+    [
+      "2026-09-05T01:51:02.460Z",
+      104
+    ],
+    [
+      "2026-09-05T01:51:32.460Z",
+      107
+    ],
+    [
+      "2026-09-05T01:52:02.460Z",
+      109
+    ],
+    [
+      "2026-09-05T01:52:32.460Z",
+      112
+    ]
+  ],
+  "goroutines_native_window": [
+    [
+      "2026-09-05T01:48:02.460Z",
+      882
+    ],
+    [
+      "2026-09-05T01:48:32.460Z",
+      850
+    ],
+    [
+      "2026-09-05T01:49:02.460Z",
+      847
+    ],
+    [
+      "2026-09-05T01:49:32.460Z",
+      850
+    ],
+    [
+      "2026-09-05T01:50:02.460Z",
+      3821
+    ],
+    [
+      "2026-09-05T01:50:32.460Z",
+      850
+    ],
+    [
+      "2026-09-05T01:51:02.460Z",
+      849
+    ],
+    [
+      "2026-09-05T01:51:32.460Z",
+      851
+    ],
+    [
+      "2026-09-05T01:52:02.460Z",
+      15438
+    ],
+    [
+      "2026-09-05T01:52:32.460Z",
+      870
+    ],
+    [
+      "2026-09-05T01:53:02.460Z",
+      870
+    ],
+    [
+      "2026-09-05T01:53:32.460Z",
+      870
+    ],
+    [
+      "2026-09-05T01:54:02.460Z",
+      870
+    ],
+    [
+      "2026-09-05T01:54:32.460Z",
+      872
+    ]
+  ],
+  "incident_bracket_consensus_process": {
+    "start": "2026-09-05T01:52:02.460Z",
+    "end": "2026-09-05T01:52:32.460Z",
+    "cpu_seconds_delta": 55.36000000000013,
+    "average_cores_over_30s": 1.8453333333333375,
+    "rss_bytes_start": 2998464512.0,
+    "rss_bytes_end": 3095949312.0,
+    "goroutines_start": 15438.0,
+    "goroutines_end": 870.0,
+    "gc_cycles_delta": 3.0,
+    "gc_pause_seconds_delta": 0.006433438999999985,
+    "last_completed_gc_at_start_sample": "2026-09-05T01:51:51.606Z",
+    "last_completed_gc_at_end_sample": "2026-09-05T01:52:26.890Z",
+    "gomaxprocs": 8.0
+  },
+  "exporter_sample_during_incident": {
+    "timestamp": "2026-09-05T01:52:15.867Z",
+    "beacon_container_cpu_usage_percent": 610.9412658227001,
+    "beacon_container_memory_usage_bytes": 4986286080.0,
+    "beacon_container_memory_limit_bytes": 33661607936.0,
+    "online_cpus": 8.0,
+    "throttle_periods_total": 0.0,
+    "throttled_periods_total": 0.0,
+    "throttled_time_nanoseconds": 0.0
+  },
+  "grpc_get_beacon_block_incident_bracket": {
+    "count_delta": 1.0,
+    "sum_seconds_delta": 3.3940660929999997
+  },
+  "pool_samples": {
+    "aggregated_attestations_in_pool_total": [
+      [
+        "2026-09-05T01:48:02.460Z",
+        568
+      ],
+      [
+        "2026-09-05T01:48:32.460Z",
+        593
+      ],
+      [
+        "2026-09-05T01:49:02.460Z",
+        614
+      ],
+      [
+        "2026-09-05T01:49:32.460Z",
+        73
+      ],
+      [
+        "2026-09-05T01:50:02.460Z",
+        109
+      ],
+      [
+        "2026-09-05T01:50:32.460Z",
+        142
+      ],
+      [
+        "2026-09-05T01:51:02.460Z",
+        172
+      ],
+      [
+        "2026-09-05T01:51:32.460Z",
+        201
+      ],
+      [
+        "2026-09-05T01:52:02.460Z",
+        114
+      ],
+      [
+        "2026-09-05T01:52:32.460Z",
+        138
+      ],
+      [
+        "2026-09-05T01:53:02.460Z",
+        175
+      ],
+      [
+        "2026-09-05T01:53:32.460Z",
+        182
+      ],
+      [
+        "2026-09-05T01:54:02.460Z",
+        256
+      ],
+      [
+        "2026-09-05T01:54:32.460Z",
+        290
+      ]
+    ],
+    "unaggregated_attestations_in_pool_total": [
+      [
+        "2026-09-05T01:48:02.460Z",
+        1
+      ],
+      [
+        "2026-09-05T01:48:32.460Z",
+        1397
+      ],
+      [
+        "2026-09-05T01:49:02.460Z",
+        1
+      ],
+      [
+        "2026-09-05T01:49:32.460Z",
+        51
+      ],
+      [
+        "2026-09-05T01:50:02.460Z",
+        1837
+      ],
+      [
+        "2026-09-05T01:50:32.460Z",
+        0
+      ],
+      [
+        "2026-09-05T01:51:02.460Z",
+        0
+      ],
+      [
+        "2026-09-05T01:51:32.460Z",
+        0
+      ],
+      [
+        "2026-09-05T01:52:02.460Z",
+        1775
+      ],
+      [
+        "2026-09-05T01:52:32.460Z",
+        0
+      ],
+      [
+        "2026-09-05T01:53:02.460Z",
+        0
+      ],
+      [
+        "2026-09-05T01:53:32.460Z",
+        690
+      ],
+      [
+        "2026-09-05T01:54:02.460Z",
+        1
+      ],
+      [
+        "2026-09-05T01:54:32.460Z",
+        1
+      ]
+    ],
+    "seen_aggregated_attestations_in_pool_total": [
+      [
+        "2026-09-05T01:48:02.460Z",
+        480
+      ],
+      [
+        "2026-09-05T01:48:32.460Z",
+        492
+      ],
+      [
+        "2026-09-05T01:49:02.460Z",
+        510
+      ],
+      [
+        "2026-09-05T01:49:32.460Z",
+        637
+      ],
+      [
+        "2026-09-05T01:50:02.460Z",
+        669
+      ],
+      [
+        "2026-09-05T01:50:32.460Z",
+        685
+      ],
+      [
+        "2026-09-05T01:51:02.460Z",
+        716
+      ],
+      [
+        "2026-09-05T01:51:32.460Z",
+        734
+      ],
+      [
+        "2026-09-05T01:52:02.460Z",
+        864
+      ],
+      [
+        "2026-09-05T01:52:32.460Z",
+        879
+      ],
+      [
+        "2026-09-05T01:53:02.460Z",
+        907
+      ],
+      [
+        "2026-09-05T01:53:32.460Z",
+        925
+      ],
+      [
+        "2026-09-05T01:54:02.460Z",
+        958
+      ],
+      [
+        "2026-09-05T01:54:32.460Z",
+        997
+      ]
+    ]
+  },
+  "limits": [
+    "The stored instance and client labels are stale; identity depends on commit, process-start, and head progression cross-checks.",
+    "Thirty-second native scrapes cannot isolate CPU, memory, pool, or GC behavior during the 3.4-second build.",
+    "Pool values are periodic gauges, not the proposal's exact pool snapshot."
+  ]
+}

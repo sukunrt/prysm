@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    embedsrcs = ["response.json"],
+    importpath = "github.com/OffchainLabs/prysm/v7/runs/diagnostics/startup3/payloadserver",
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "payloadserver",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)

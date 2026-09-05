@@ -1,0 +1,8 @@
+BUILD
+env GOCACHE=/tmp/prysm-diagnostic-buildcache GOMAXPROCS=4 /home/sukun/dev/go/bin/go test -p=2 -tags=develop -c -o /tmp/prysm-domain-data.test ./beacon-chain/blockchain > /tmp/prysm-domain-data-build.log 2>&1
+
+MEMOIZED
+env GOMAXPROCS=4 PRYSM_DIAGNOSTIC_DOMAIN_ARM=memoized PRYSM_DIAGNOSTIC_DOMAIN_OUTPUT_DIR=/tmp/prysm-domain-data-real-tcp/memoized /tmp/prysm-domain-data.test -test.run '^TestDiagnosticDomainDataTCPUnderCheckpointCountLoad$' -test.v -test.timeout=10m > /tmp/prysm-domain-data-real-tcp/memoized/full.test.log 2>&1
+
+SCAN
+env GOMAXPROCS=4 PRYSM_DIAGNOSTIC_DOMAIN_ARM=scan PRYSM_DIAGNOSTIC_DOMAIN_OUTPUT_DIR=/tmp/prysm-domain-data-real-tcp/scan /tmp/prysm-domain-data.test -test.run '^TestDiagnosticDomainDataTCPUnderCheckpointCountLoad$' -test.v -test.timeout=10m > /tmp/prysm-domain-data-real-tcp/scan/full.test.log 2>&1

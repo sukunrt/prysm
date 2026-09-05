@@ -1,0 +1,9 @@
+Command (retained trace extracts only; no runtime workload):
+
+python3 runs/diagnostics/round2-slots-0-16/validate_full_gossip_checkpoint_summaries.py runs/diagnostics/round2-slots-0-16/full-gossip-checkpoint-token-chain.tsv runs/diagnostics/round2-slots-0-16/full-gossip-checkpoint-to-reader-gate.tsv runs/diagnostics/round2-slots-0-16/full-gossip-finalizer-cohort-members.tsv runs/diagnostics/round2-slots-0-16/full-gossip-probe14-checkpoint-backlog.tsv /tmp/full-gossip-checkpoint-backchain-full-histories.txt /tmp/full-gossip-finalizer-cohort-events.txt /tmp/full-gossip-probe14-count-checkpoint-events.txt /tmp/full-gossip-probe14-count-transitions.tsv /tmp/full-gossip-mvs-count-events.txt runs/diagnostics/round2-slots-0-16/full-gossip-finalizer-gc-markers.tsv
+
+Output:
+
+chain_holders=60 start=277054191954560 end=277054661603328 total_ns=469648768 ready_ns=468388673 first_run_to_release_ns=1260095 ready_percent=99.731694 body_min_ns=5184 body_max_ns=125760 intervening_state_transitions=0 gc_sweep_ns=108736 gc_ready_holder=4961
+reader_gate_rows=98 next_waiter_in_cohort=97 release_to_len_min_ns=2688 median_ns=3232 max_ns=201024 sum_ns=589821 first_release_to_last_len_park_ns=968256
+probe14_backlog_rows=134 created=277054224022528..277054250620352 checkpoint_park=277054224034816..277054250635008 checkpoint_wake=277057039987200..277058457077248 checkpoint_wait_ns=2815952384..4206442240 all_created_and_parked_before_wave=true all_woken_after_wave=true all_wake_run_release_preempt_ordered=true

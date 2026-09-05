@@ -1,0 +1,180 @@
+{
+  "status": "success",
+  "data": {
+    "resultType": "matrix",
+    "result": [
+      {
+        "metric": {
+          "__name__": "process_start_time_seconds",
+          "job": "node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573029.399,
+            "1788227849.15"
+          ],
+          [
+            1788573059.399,
+            "1788227849.15"
+          ],
+          [
+            1788573089.399,
+            "1788227849.15"
+          ],
+          [
+            1788573119.399,
+            "1788227849.15"
+          ],
+          [
+            1788573149.399,
+            "1788227849.15"
+          ],
+          [
+            1788573179.399,
+            "1788227849.15"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "process_start_time_seconds",
+          "job": "prometheus",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573021.675,
+            "1788227908.41"
+          ],
+          [
+            1788573051.675,
+            "1788227908.41"
+          ],
+          [
+            1788573081.675,
+            "1788227908.41"
+          ],
+          [
+            1788573111.675,
+            "1788227908.41"
+          ],
+          [
+            1788573141.675,
+            "1788227908.41"
+          ],
+          [
+            1788573171.675,
+            "1788227908.41"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "process_start_time_seconds",
+          "job": "consensus_node",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573002.46,
+            "1788569434.62"
+          ],
+          [
+            1788573032.46,
+            "1788569434.62"
+          ],
+          [
+            1788573062.46,
+            "1788569434.62"
+          ],
+          [
+            1788573092.46,
+            "1788569434.62"
+          ],
+          [
+            1788573122.46,
+            "1788569434.62"
+          ],
+          [
+            1788573152.46,
+            "1788569434.62"
+          ]
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "process_start_time_seconds",
+          "job": "exporter",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "ip_address": "143.198.65.112",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "values": [
+          [
+            1788573015.867,
+            "1788562447.52"
+          ],
+          [
+            1788573045.867,
+            "1788562447.52"
+          ],
+          [
+            1788573075.867,
+            "1788562447.52"
+          ],
+          [
+            1788573105.867,
+            "1788562447.52"
+          ],
+          [
+            1788573135.867,
+            "1788562447.52"
+          ],
+          [
+            1788573165.867,
+            "1788562447.52"
+          ]
+        ]
+      }
+    ]
+  }
+}

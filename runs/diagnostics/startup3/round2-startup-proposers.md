@@ -1,5 +1,8 @@
 # Round2 startup proposer reconstruction
 
+For the continued upstream code investigation and the complete slots 0–16
+census, see the [current causal explanation](../round2-slots-0-16/best-causal-explanation.md).
+
 Round2 genesis was exactly `2026-09-05T01:30:00Z`. The archive indexer was run
 over the locally recovered round2 archives with `--min-slot 1 --max-slot 20
 --round round2 --genesis 2026-09-05T01:30:00`. It reads only `validator.log`
@@ -42,7 +45,7 @@ preflight and then dispatched a proposer with an already expired context
 (2–4, 7, 11, 12). Slot 1 has no preceding preflight error and fails directly
 at RANDAO DomainData. Five reached a block request but exhausted its slot
 deadline (5, 8, 10, 13, 14), and two reached local payload retrieval but lost
-to the 300 ms execution HTTP timeout with no P2P fallback (6, 9). Slot 19 is a
+to the 300 ms execution HTTP timeout with no matching cached P2P bid (6, 9). Slot 19 is a
 later case where the owner's submit RPC reports a deadline after building
 finished only 54 ms before the boundary, but the block was published and
 imported by a peer; it is not a missed network block.

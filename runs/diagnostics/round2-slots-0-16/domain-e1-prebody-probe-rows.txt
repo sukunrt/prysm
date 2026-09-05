@@ -1,0 +1,11 @@
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:1:{"event":"ready","genesis_unix":1788617038}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:98:{"event":"probe","method":"DomainData","slot":3,"offset_ms":300.336,"duration_ms":5.137,"ok":true}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:99:{"event":"probe","method":"GetSyncSubcommitteeIndex","slot":3,"offset_ms":300.316,"duration_ms":5.182,"ok":true}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:100:{"event":"probe","method":"DomainData","slot":3,"offset_ms":800.189,"duration_ms":4.579,"ok":true}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:101:{"event":"probe","method":"GetSyncSubcommitteeIndex","slot":3,"offset_ms":800.262,"duration_ms":4.532,"ok":true}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:102:{"event":"probe","method":"DomainData","slot":3,"offset_ms":1300.655,"duration_ms":1710.75,"ok":true}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:103:{"event":"probe","method":"DomainData","slot":3,"offset_ms":3011.42,"duration_ms":1176.308,"ok":true}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:104:{"event":"probe","method":"DomainData","slot":3,"offset_ms":4187.748,"duration_ms":2165.041,"ok":true}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:105:{"event":"probe","method":"GetSyncSubcommitteeIndex","slot":3,"offset_ms":1300.637,"duration_ms":5052.181,"ok":true}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:106:{"event":"probe","method":"GetSyncSubcommitteeIndex","slot":3,"offset_ms":6352.828,"duration_ms":4271.896,"ok":true}
+/tmp/prysm-startup3-round4-early-e1/rpcprobe.jsonl:107:{"event":"probe","method":"DomainData","slot":3,"offset_ms":6352.81,"duration_ms":4271.995,"ok":true}

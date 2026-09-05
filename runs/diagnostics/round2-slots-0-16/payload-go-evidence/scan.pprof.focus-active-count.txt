@@ -1,0 +1,21 @@
+File: execution.test
+Build ID: 96a83cf9dfcc69ce870359c5434e061296eade87
+Type: cpu
+Time: 2026-09-06 15:17:02 IST
+Duration: 2.20s, Total samples = 8.53s (387.51%)
+Active filters:
+   focus=ActiveValidatorCount
+Showing nodes accounting for 8.43s, 98.83% of 8.53s total
+Dropped 3 nodes (cum <= 0.04s)
+      flat  flat%   sum%        cum   cum%
+     5.34s 62.60% 62.60%      5.34s 62.60%  sync/atomic.(*Int32).Add (inline)
+     1.10s 12.90% 75.50%      1.19s 13.95%  github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.IsActiveValidatorUsingTrie
+     0.78s  9.14% 84.64%      8.44s 98.94%  github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).ValidatorsReadOnlySeq.func1
+     0.62s  7.27% 91.91%      6.25s 73.27%  github.com/OffchainLabs/prysm/v7/container/multi-value-slice.(*Slice[go.shape.struct { PublicKey [48]uint8; WithdrawalCredentials [32]uint8; EffectiveBalance uint64; Slashed bool; ActivationEligibilityEpoch github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch; ActivationEpoch github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch; ExitEpoch github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch; WithdrawableEpoch github.com/OffchainLabs/prysm/v7/consensus-types/primitives.Epoch }]).At
+     0.22s  2.58% 94.49%      1.41s 16.53%  github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.ActiveValidatorCount-range1
+     0.19s  2.23% 96.72%      0.19s  2.23%  runtime.mapaccess2_fast64
+     0.10s  1.17% 97.89%      5.28s 61.90%  sync.(*RWMutex).RLock (inline)
+     0.08s  0.94% 98.83%      0.08s  0.94%  github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.checkValidatorActiveStatus (inline)
+         0     0% 98.83%      8.44s 98.94%  github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers.ActiveValidatorCount
+         0     0% 98.83%      8.43s 98.83%  github.com/OffchainLabs/prysm/v7/beacon-chain/execution.TestDiagnosticGetPayloadV6UnderGenesisCountLoad.func2
+         0     0% 98.83%      0.16s  1.88%  sync.(*RWMutex).RUnlock

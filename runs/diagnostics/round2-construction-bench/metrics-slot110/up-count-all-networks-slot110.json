@@ -1,0 +1,692 @@
+{
+  "status": "success",
+  "isPartial": false,
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "job": "besu",
+          "network": "hoodi"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "job": "consensus_node",
+          "network": "glamsterdam-devnet-10"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "consensus_node",
+          "network": "glamsterdam-devnet-8"
+        },
+        "value": [
+          1788573120,
+          "92"
+        ]
+      },
+      {
+        "metric": {
+          "job": "consensus_node",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "1001"
+        ]
+      },
+      {
+        "metric": {
+          "job": "consensus_node",
+          "network": "hoodi"
+        },
+        "value": [
+          1788573120,
+          "10"
+        ]
+      },
+      {
+        "metric": {
+          "job": "consensus_node",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "8"
+        ]
+      },
+      {
+        "metric": {
+          "job": "consensus_node",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "consensus_node",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "consensus_node",
+          "network": "sepolia"
+        },
+        "value": [
+          1788573120,
+          "6"
+        ]
+      },
+      {
+        "metric": {
+          "job": "execution",
+          "network": "glamsterdam-devnet-10"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "execution",
+          "network": "glamsterdam-devnet-8"
+        },
+        "value": [
+          1788573120,
+          "92"
+        ]
+      },
+      {
+        "metric": {
+          "job": "execution",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "1001"
+        ]
+      },
+      {
+        "metric": {
+          "job": "execution",
+          "network": "hoodi"
+        },
+        "value": [
+          1788573120,
+          "4"
+        ]
+      },
+      {
+        "metric": {
+          "job": "execution",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "execution",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "execution",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "exporter",
+          "network": "glamsterdam-devnet-10"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "exporter",
+          "network": "glamsterdam-devnet-8"
+        },
+        "value": [
+          1788573120,
+          "92"
+        ]
+      },
+      {
+        "metric": {
+          "job": "exporter",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "1001"
+        ]
+      },
+      {
+        "metric": {
+          "job": "exporter",
+          "network": "hoodi"
+        },
+        "value": [
+          1788573120,
+          "10"
+        ]
+      },
+      {
+        "metric": {
+          "job": "exporter",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "8"
+        ]
+      },
+      {
+        "metric": {
+          "job": "exporter",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "exporter",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "exporter",
+          "network": "sepolia"
+        },
+        "value": [
+          1788573120,
+          "6"
+        ]
+      },
+      {
+        "metric": {
+          "job": "geth",
+          "network": "sepolia"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-besu-tysm-7870-001-beacon"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-besu-tysm-7870-001-beacon-headless"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-besu-tysm-7870-001-execution"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-besu-tysm-7870-001-execution-headless"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-besu-tysm-7870-001-metrics",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-erigon-tysm-7870-001-beacon"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-erigon-tysm-7870-001-beacon-headless"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-erigon-tysm-7870-001-execution"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-erigon-tysm-7870-001-execution-headless"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-erigon-tysm-7870-001-metrics",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-ethrex-tysm-7870-001-beacon"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-ethrex-tysm-7870-001-beacon-headless"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-ethrex-tysm-7870-001-execution"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-ethrex-tysm-7870-001-metrics",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-geth-tysm-7870-001-beacon"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-geth-tysm-7870-001-beacon-headless"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-geth-tysm-7870-001-execution"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-geth-tysm-7870-001-execution-headless"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-geth-tysm-7870-001-metrics",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-nethermind-tysm-7870-001-beacon"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-nethermind-tysm-7870-001-beacon-headless"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-nethermind-tysm-7870-001-execution"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-nethermind-tysm-7870-001-metrics",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-reth-tysm-7870-001-beacon"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-reth-tysm-7870-001-beacon-headless"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-reth-tysm-7870-001-execution"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "mainnet-prysm-reth-tysm-7870-001-metrics",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "node",
+          "network": "glamsterdam-devnet-10"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "node",
+          "network": "glamsterdam-devnet-8"
+        },
+        "value": [
+          1788573120,
+          "92"
+        ]
+      },
+      {
+        "metric": {
+          "job": "node",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "1001"
+        ]
+      },
+      {
+        "metric": {
+          "job": "node",
+          "network": "hoodi"
+        },
+        "value": [
+          1788573120,
+          "10"
+        ]
+      },
+      {
+        "metric": {
+          "job": "node",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "9"
+        ]
+      },
+      {
+        "metric": {
+          "job": "node",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "node",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "node",
+          "network": "sepolia"
+        },
+        "value": [
+          1788573120,
+          "6"
+        ]
+      },
+      {
+        "metric": {
+          "job": "prometheus",
+          "network": "glamsterdam-devnet-10"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "prometheus",
+          "network": "glamsterdam-devnet-8"
+        },
+        "value": [
+          1788573120,
+          "92"
+        ]
+      },
+      {
+        "metric": {
+          "job": "prometheus",
+          "network": "glamsterdam-devnet-9"
+        },
+        "value": [
+          1788573120,
+          "1001"
+        ]
+      },
+      {
+        "metric": {
+          "job": "prometheus",
+          "network": "hoodi"
+        },
+        "value": [
+          1788573120,
+          "10"
+        ]
+      },
+      {
+        "metric": {
+          "job": "prometheus",
+          "network": "mainnet"
+        },
+        "value": [
+          1788573120,
+          "9"
+        ]
+      },
+      {
+        "metric": {
+          "job": "prometheus",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "prometheus",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      },
+      {
+        "metric": {
+          "job": "prometheus",
+          "network": "sepolia"
+        },
+        "value": [
+          1788573120,
+          "6"
+        ]
+      },
+      {
+        "metric": {
+          "job": "snooper",
+          "network": "perf-devnet-2"
+        },
+        "value": [
+          1788573120,
+          "3"
+        ]
+      },
+      {
+        "metric": {
+          "job": "snooper",
+          "network": "perf-devnet-3"
+        },
+        "value": [
+          1788573120,
+          "2"
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "seriesFetched": "5666",
+    "executionTimeMsec": 213
+  }
+}

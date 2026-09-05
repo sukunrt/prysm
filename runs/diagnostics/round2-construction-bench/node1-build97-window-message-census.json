@@ -1,0 +1,238 @@
+{
+  "category_components": {
+    "block_construction": {
+      "rpc/validator": 3
+    },
+    "ffg_vote": {
+      "rpc/validator": 71,
+      "sync": 14355
+    },
+    "head_vote_ledger": {
+      "sync": 465
+    },
+    "other": {
+      "execution": 1,
+      "rpc/validator": 1
+    }
+  },
+  "category_counts": {
+    "block_construction": 3,
+    "ffg_aggregate": 0,
+    "ffg_vote": 14426,
+    "head_vote_ledger": 465,
+    "other": 2,
+    "ptc_vote": 0,
+    "sync_committee": 0
+  },
+  "category_outcomes": {
+    "block_construction": {
+      "(none)": 3
+    },
+    "ffg_vote": {
+      "gossip": 14355,
+      "local": 71
+    },
+    "head_vote_ledger": {
+      "accepted": 465
+    },
+    "other": {
+      "(none)": 2
+    }
+  },
+  "category_unique_validators": {
+    "block_construction": 1,
+    "ffg_vote": 14426,
+    "head_vote_ledger": 465
+  },
+  "event_anchors": [
+    {
+      "line": 1121950,
+      "message": "Building block",
+      "offset_from_build_ms": 0.0,
+      "outer_timestamp": "2026-09-05T01:49:24.008736237Z",
+      "raw_prefix": "2026-09-05T01:49:24.008736237Z [2026-09-05 01:49:24.00]  INFO rpc/validator: Building block sinceSlotStartTime=8.492268ms slot=97"
+    },
+    {
+      "line": 1121951,
+      "message": "Graffiti includes client version info appended after user graffiti",
+      "offset_from_build_ms": 3.198,
+      "outer_timestamp": "2026-09-05T01:49:24.011934465Z",
+      "raw_prefix": "2026-09-05T01:49:24.011934465Z [2026-09-05 01:49:24.01]  INFO execution: Graffiti includes client version info appended after user graffiti graffiti=prysm-geth-1 GEaa1fPM0280"
+    },
+    {
+      "line": 1121952,
+      "message": "Voting period before genesis + follow distance, using eth1data from head",
+      "offset_from_build_ms": 3.418,
+      "outer_timestamp": "2026-09-05T01:49:24.012154428Z",
+      "raw_prefix": "2026-09-05T01:49:24.012154428Z [2026-09-05 01:49:24.01]  WARN rpc/validator: Voting period before genesis + follow distance, using eth1data from head genesisTime=1788571800 latestValidTime=1788543128"
+    },
+    {
+      "line": 1121953,
+      "message": "Chose payload bid",
+      "offset_from_build_ms": 8.513,
+      "outer_timestamp": "2026-09-05T01:49:24.017249896Z",
+      "raw_prefix": "2026-09-05T01:49:24.017249896Z [2026-09-05 01:49:24.01]  INFO rpc/validator: Chose payload bid slot=97 source=self-build valueGwei=0"
+    },
+    {
+      "line": 1136845,
+      "message": "Finished building block",
+      "offset_from_build_ms": 3653.886,
+      "outer_timestamp": "2026-09-05T01:49:27.662622713Z",
+      "raw_prefix": "2026-09-05T01:49:27.662622713Z [2026-09-05 01:49:27.66]  INFO rpc/validator: Finished building block sinceSlotStartTime=3.662413031s slot=97 validator=445"
+    }
+  ],
+  "message_counts": {
+    "Building block": 1,
+    "Chose payload bid": 1,
+    "FFG vote": 14426,
+    "Finished building block": 1,
+    "Goldfish vote": 465,
+    "Graffiti includes client version info appended after user graffiti": 1,
+    "Voting period before genesis + follow distance, using eth1data from head": 1
+  },
+  "message_outcome_time_ranges": [
+    {
+      "arrivedMs_max": null,
+      "arrivedMs_min": null,
+      "count": 1,
+      "decidedMs_max": null,
+      "decidedMs_min": null,
+      "first_line": 1121950,
+      "first_outer_timestamp": "2026-09-05T01:49:24.008736237Z",
+      "last_line": 1121950,
+      "last_outer_timestamp": "2026-09-05T01:49:24.008736237Z",
+      "message": "Building block",
+      "outcome": null
+    },
+    {
+      "arrivedMs_max": null,
+      "arrivedMs_min": null,
+      "count": 1,
+      "decidedMs_max": null,
+      "decidedMs_min": null,
+      "first_line": 1121951,
+      "first_outer_timestamp": "2026-09-05T01:49:24.011934465Z",
+      "last_line": 1121951,
+      "last_outer_timestamp": "2026-09-05T01:49:24.011934465Z",
+      "message": "Graffiti includes client version info appended after user graffiti",
+      "outcome": null
+    },
+    {
+      "arrivedMs_max": null,
+      "arrivedMs_min": null,
+      "count": 1,
+      "decidedMs_max": null,
+      "decidedMs_min": null,
+      "first_line": 1121952,
+      "first_outer_timestamp": "2026-09-05T01:49:24.012154428Z",
+      "last_line": 1121952,
+      "last_outer_timestamp": "2026-09-05T01:49:24.012154428Z",
+      "message": "Voting period before genesis + follow distance, using eth1data from head",
+      "outcome": null
+    },
+    {
+      "arrivedMs_max": null,
+      "arrivedMs_min": null,
+      "count": 1,
+      "decidedMs_max": null,
+      "decidedMs_min": null,
+      "first_line": 1121953,
+      "first_outer_timestamp": "2026-09-05T01:49:24.017249896Z",
+      "last_line": 1121953,
+      "last_outer_timestamp": "2026-09-05T01:49:24.017249896Z",
+      "message": "Chose payload bid",
+      "outcome": null
+    },
+    {
+      "arrivedMs_max": 3489,
+      "arrivedMs_min": 30,
+      "count": 14355,
+      "decidedMs_max": null,
+      "decidedMs_min": null,
+      "first_line": 1121954,
+      "first_outer_timestamp": "2026-09-05T01:49:24.037320340Z",
+      "last_line": 1136844,
+      "last_outer_timestamp": "2026-09-05T01:49:27.532503325Z",
+      "message": "FFG vote",
+      "outcome": "gossip"
+    },
+    {
+      "arrivedMs_max": 261,
+      "arrivedMs_min": 108,
+      "count": 71,
+      "decidedMs_max": null,
+      "decidedMs_min": null,
+      "first_line": 1122057,
+      "first_outer_timestamp": "2026-09-05T01:49:24.110229828Z",
+      "last_line": 1122686,
+      "last_outer_timestamp": "2026-09-05T01:49:24.266728942Z",
+      "message": "FFG vote",
+      "outcome": "local"
+    },
+    {
+      "arrivedMs_max": 3471,
+      "arrivedMs_min": 3423,
+      "count": 465,
+      "decidedMs_max": 3523,
+      "decidedMs_min": 3430,
+      "first_line": 1136284,
+      "first_outer_timestamp": "2026-09-05T01:49:27.431597977Z",
+      "last_line": 1136831,
+      "last_outer_timestamp": "2026-09-05T01:49:27.528240195Z",
+      "message": "Goldfish vote",
+      "outcome": "accepted"
+    },
+    {
+      "arrivedMs_max": null,
+      "arrivedMs_min": null,
+      "count": 1,
+      "decidedMs_max": null,
+      "decidedMs_min": null,
+      "first_line": 1136845,
+      "first_outer_timestamp": "2026-09-05T01:49:27.662622713Z",
+      "last_line": 1136845,
+      "last_outer_timestamp": "2026-09-05T01:49:27.662622713Z",
+      "message": "Finished building block",
+      "outcome": null
+    }
+  ],
+  "scope": {
+    "accounting": {
+      "header_parse_failures": 0,
+      "physical_lf_records_scanned": 16846,
+      "records_after_finish_within_line_bound": 0,
+      "records_before_window": 1950,
+      "records_build_through_finish": 14896,
+      "records_in_window": 14896,
+      "records_preceding_one_second": 0
+    },
+    "build_outer_timestamp": "2026-09-05T01:49:24.008736237Z",
+    "clock_semantics": {
+      "Goldfish_arrivedMs": "validation-entry time minus the vote's slot start; beacon-chain/sync/vote_ledger.go:43-50",
+      "Goldfish_decidedMs": "ledger-decision/log time minus the vote's slot start; beacon-chain/sync/vote_ledger.go:50-61",
+      "event_anchor_offset_from_build_ms": "outer timestamp minus 2026-09-05T01:49:24.008736237Z build-start outer timestamp",
+      "outer_timestamp": "retained log emission timestamp"
+    },
+    "input": "runs/round2/prysm-geth-1/beacon.log",
+    "input_size_bytes": 1336022480,
+    "limitations": [
+      "Counts are retained outer log records, not CPU, queue-depth, subscriber-insertion, or pool-snapshot measurements.",
+      "The one-second pre-build interval contains no retained record; the immediately preceding record is reported separately.",
+      "Sync counts recognize PTC vote and message labels containing sync committee or sync contribution; no such record occurs in this window."
+    ],
+    "previous_retained_record": {
+      "line": 1121949,
+      "outer_timestamp": "2026-09-05T01:49:21.368256250Z",
+      "raw_prefix": "2026-09-05T01:49:21.368256250Z [2026-09-05 01:49:21.36]  INFO sync: PTC vote arrivedMs=9366 blobDataAvailable=true blockRoot=0xc3da59207794daa351ec2af7830805288c79cb20f717f2f527d0b8f0eb537237 outcome=gossip payloadPresent=true slot=96 validatorIndex=14911"
+    },
+    "scan_line_bounds_inclusive": [
+      1120000,
+      1136845
+    ],
+    "selected_raw_records_sha256": "3e6128dfbfb0b611ab30309ce06ead17a7f9675112d8c5caf3cd6d6a457173c5",
+    "window_outer_timestamp_inclusive": [
+      "2026-09-05T01:49:23.008736237Z",
+      "2026-09-05T01:49:27.662622713Z"
+    ]
+  }
+}

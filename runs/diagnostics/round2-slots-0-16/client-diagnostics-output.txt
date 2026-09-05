@@ -1,0 +1,42 @@
+Computing main repo mapping: 
+Loading: 
+Loading: 0 packages loaded
+Analyzing: target //validator/client:go_default_test (0 packages loaded, 0 targets configured)
+Analyzing: target //validator/client:go_default_test (0 packages loaded, 0 targets configured)
+
+INFO: Analyzed target //validator/client:go_default_test (0 packages loaded, 1788 targets configured).
+INFO: From Testing //validator/client:go_default_test:
+==================== Test output for //validator/client:go_default_test:
+=== RUN   TestDomainDataCacheInternalCostDiagnostic
+    domain_cache_diagnostic_test.go:53: retained domains: production=3 ignore-internal-cost=13
+--- PASS: TestDomainDataCacheInternalCostDiagnostic (0.00s)
+=== RUN   TestDomainDataCanceledWaiterDiagnostic
+--- PASS: TestDomainDataCanceledWaiterDiagnostic (0.15s)
+=== RUN   TestRolesAtDeadlineStageDifferentialDiagnostic
+=== RUN   TestRolesAtDeadlineStageDifferentialDiagnostic/sync-index-occupies-budget
+    startup_deadline_diagnostic_test.go:193: roles_elapsed=76.237812ms sync_entered_with=<nil> sync_duration=75.554418ms
+=== RUN   TestRolesAtDeadlineStageDifferentialDiagnostic/selection-singleflight-occupies-budget
+    startup_deadline_diagnostic_test.go:193: roles_elapsed=76.700292ms sync_entered_with=context deadline exceeded sync_duration=3.426µs
+--- PASS: TestRolesAtDeadlineStageDifferentialDiagnostic (0.16s)
+    --- PASS: TestRolesAtDeadlineStageDifferentialDiagnostic/sync-index-occupies-budget (0.08s)
+    --- PASS: TestRolesAtDeadlineStageDifferentialDiagnostic/selection-singleflight-occupies-budget (0.08s)
+=== RUN   TestRolesAtSyncSelectionDomainDeadlineDiagnostic
+    startup_deadline_diagnostic_test.go:256: roles_elapsed=75.655228ms sync_selection_domain_entered_with=<nil> domain_duration=74.73049ms
+--- PASS: TestRolesAtSyncSelectionDomainDeadlineDiagnostic (0.08s)
+=== RUN   TestRolesAtLiveBudgetReachesBeaconBlockDiagnostic
+--- PASS: TestRolesAtLiveBudgetReachesBeaconBlockDiagnostic (0.00s)
+=== RUN   TestAttestationDataCanceledFanoutDiagnostic
+    startup_deadline_diagnostic_test.go:365: rpc_entries=75 live_at_entry=1 max_concurrent=1 drain_after_deadline=2.235527ms
+--- PASS: TestAttestationDataCanceledFanoutDiagnostic (0.08s)
+PASS
+================================================================================
+INFO: Found 1 test target...
+Target //validator/client:go_default_test up-to-date:
+  bazel-bin/validator/client/go_default_test_/go_default_test
+INFO: Elapsed time: 0.994s, Critical Path: 0.58s
+INFO: 2 processes: 1 internal, 1 linux-sandbox.
+INFO: Build completed successfully, 2 total actions
+//validator/client:go_default_test                                       PASSED in 0.5s
+  WARNING: //validator/client:go_default_test: Test execution time (0.5s excluding execution overhead) outside of range for MODERATE tests. Consider setting timeout="short" or size="small".
+
+Executed 1 out of 1 test: 1 test passes.

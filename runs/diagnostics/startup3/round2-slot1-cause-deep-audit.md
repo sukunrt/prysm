@@ -1,5 +1,13 @@
 # Round 2 slot-1 cause deep audit
 
+Later source and timing review ranks the specific startup proof/domain-cache
+convoy below broader servicing delay. The proof batch reuses two ordered
+epoch/domain keys, and overlap with the qualifying slot-1 gossip wave is not
+established. A subsequent profile-free TCP control also kept all 32 loaded
+DomainData calls below 5.701 ms. See the
+[updated causal ranking](../round2-slots-0-16/best-domain-preflight-hypothesis.md)
+for these counterweights to the possible cache coupling described below.
+
 This audit uses node 169's complete recovered archive and exact round-2 revision
 `0280403c70d88967f49d2d4c730f4c5417dabdf5`. It separates what the historical
 timestamps prove from the remaining choice between VC scheduling/domain-lock delay
@@ -132,9 +140,18 @@ load B had a 31.367 ms median and 73.586 ms maximum), but not a seconds-long hol
 An independent E1 DomainData probe did exhibit a 4,271.995 ms client envelope in
 slot 3 even though the measured server body remained below 0.015 ms. That is direct
 evidence that this real loaded process can delay a constant-time DomainData call
-outside the handler body. It is **not** a reproduction of the historical slot-1
-RANDAO failure: the real proposer succeeded, its slot-1 RANDAO RPC was 0.340 ms,
-and the outlier probe did not use the VC domain-cache mutex. Accordingly it supports
+outside the handler body in this instrumented run. Its genesis-relative interval,
++42.352810 to +46.624805 seconds, overlaps about 3.602 seconds of the +43 BN
+goroutine-profile request. Another 2,165.041 ms DomainData envelope, +40.187748 to
++42.352789, lies entirely between discrete goroutine-profile requests. Continuous
+CPU profiling remained active, so neither observation is a no-observer control.
+Exact boundaries and source qualifications are in
+[domain-data-causal-audit.md](../round2-slots-0-16/domain-data-causal-audit.md).
+It is **not** a reproduction of the historical slot-1
+RANDAO failure: the real proposer's RANDAO step succeeded in 0.340 ms, but its
+subsequent slot-1 block RPC failed (`validator3.log:40529`; slots 2 and 3 also
+failed at `:40707,41631` in `/tmp/prysm-startup3-round4-early-e1`). The outlier
+probe did not use the VC domain-cache mutex. Accordingly it supports
 transport/admission/response scheduling as a viable loaded mechanism, but does not
 choose it over late proposer scheduling or a historical VC mutex wait.
 

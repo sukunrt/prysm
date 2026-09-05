@@ -1,0 +1,3 @@
+=== RUN   TestDiagnosticFullGossipDomainTCPClient
+--- PASS: TestDiagnosticFullGossipDomainTCPClient (11.73s)
+PASS

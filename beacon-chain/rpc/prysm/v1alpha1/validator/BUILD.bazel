@@ -189,6 +189,7 @@ common_deps = [
     "//proto/prysm/v1alpha1:go_default_library",
     "//proto/prysm/v1alpha1/attestation:go_default_library",
     "//proto/prysm/v1alpha1/attestation/aggregation/attestations:go_default_library",
+    "//runtime/interop:go_default_library",
     "//testing/assert:go_default_library",
     "//testing/mock:go_default_library",
     "//testing/require:go_default_library",
@@ -229,12 +230,14 @@ go_test(
         "proposer_bid_builder_test.go",
         "proposer_bid_test.go",
         "proposer_bellatrix_test.go",
+		"proposer_build_retention_diagnostic_test.go",
         "proposer_builder_test.go",
         "proposer_deneb_bench_test.go",
         "proposer_deneb_test.go",
         "proposer_deposits_test.go",
         "proposer_empty_block_test.go",
         "proposer_execution_payload_test.go",
+        "proposer_execution_payload_timeout_identity_test.go",
         "proposer_exits_test.go",
         "proposer_gloas_test.go",
         "proposer_payload_attestation_test.go",
@@ -257,6 +260,7 @@ go_test(
     tags = ["minimal"],
     deps = common_deps + [
         "//beacon-chain/operations/attestations/mock:go_default_library",
+        "//consensus-types/payload-attribute:go_default_library",
     ],
 )
 
@@ -265,6 +269,7 @@ go_test(
     timeout = "moderate",
     srcs = [
         "attester_mainnet_test.go",
+        "historical_state_root_diagnostic_test.go",
         "proposer_utils_bench_test.go",
         "server_mainnet_test.go",
         "status_mainnet_test.go",

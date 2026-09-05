@@ -1,5 +1,10 @@
 # Round 2: why the first block was slot 15
 
+The [continued causal investigation](../round2-slots-0-16/best-causal-explanation.md)
+adds the complete archive census and source/trace/Go controls for these
+dependencies. Historical terminal timestamps do not date RPC entry. The
+P2P recovery path exists; the payload failures below lacked a matching cached bid.
+
 ## Outcome and scope
 
 Round 2 genesis was **2026-09-05 01:30:00 UTC**, with 12-second slots,
@@ -36,14 +41,14 @@ proposer dispatch, not an EL or proxy check.
 | Slot | Node | Directly observed reason no proposal completed |
 | ---: | ---: | --- |
 | 1 | 169 | RANDAO domain lookup returned a deadline at +12.002. No block-building RPC followed. Unlike the other RANDAO failures, there is no preceding logged preflight error; the split among VC scheduling/domain-lock wait and RPC servicing is unresolved. |
-| 2 | 191 | Sync-committee index preflight used the entire slot. Proposer dispatch then reached RANDAO with an expired context at +12.004. |
+| 2 | 191 | Sync-committee index preflight had not returned by the slot deadline. Proposer dispatch then reached RANDAO with an expired context at +12.004. |
 | 3 | 22 | Same preflight-before-dispatch failure; RANDAO expired at +12.003. |
 | 4 | 91 | Sync-selection **signing/domain** preflight, rather than index lookup, expired; RANDAO immediately followed at +12.004. |
-| 5 | 118 | BN building began only at +10.119. Payload retrieval hit the slot deadline; no P2P fallback existed. BN logged final failure at +14.527. |
-| 6 | 83 | Building began at +3.664, but execution HTTP response retrieval timed out and no P2P fallback existed. BN failed at +4.456, well before the slot deadline. Geth and proxy evidence below rule out a slow payload build as the explanation. |
+| 5 | 118 | BN building began only at +10.119. Payload retrieval timed out around the slot deadline; no matching P2P bid was cached. BN logged final failure at +14.527. |
+| 6 | 83 | Building began at +3.664, but execution HTTP response retrieval timed out and no matching P2P bid was cached. BN failed at +4.456, well before the slot deadline. Geth and proxy evidence below rule out a slow payload build as the explanation. |
 | 7 | 144 | Sync-index preflight expired; RANDAO then failed on the expired slot context at +12.002. |
 | 8 | 19 | BN building began only at +11.190. Payload retrieval failed at +12.007; no fallback was available. |
-| 9 | 107 | Building began at +5.981; execution response retrieval timed out and no P2P fallback existed. BN failed at +7.639. Again the proxy had already logged a successful response. |
+| 9 | 107 | Building began at +5.981; execution response retrieval timed out and no matching P2P bid was cached. BN failed at +7.639. Again the proxy had already logged a successful response. |
 | 10 | 35 | Building began at +7.446 and a payload was selected at +10.338. The required parallel consensus-field branch did not return before the deadline; packing cancellation and state-root/build errors appeared at +36.873/+36.874. |
 | 11 | 117 | Sync-index preflight expired; RANDAO then failed at +12.012. |
 | 12 | 14 | Sync-index preflight expired; RANDAO then failed at +12.007. |

@@ -1,0 +1,300 @@
+TEXT main.main.func1(SB) /home/sukun/dev/prysm2/runs/diagnostics/startup3/rpcprobe/main.go
+  main.go:79			0xf507c0		4c8da42420ffffff	LEAQ 0xffffff20(SP), R12																				
+  main.go:79			0xf507c8		4d3b6610		CMPQ R12, 0x10(R14)																					
+  main.go:79			0xf507cc		0f86c1050000		JBE 0xf50d93																						
+  main.go:79			0xf507d2		55			PUSHQ BP																						
+  main.go:79			0xf507d3		4889e5			MOVQ SP, BP																						
+  main.go:79			0xf507d6		4881ec58010000		SUBQ $0x158, SP																						
+  main.go:80			0xf507dd		4889842468010000	MOVQ AX, 0x168(SP)																					
+  main.go:80			0xf507e5		48899c2470010000	MOVQ BX, 0x170(SP)																					
+  main.go:79			0xf507ed		4c8b4a68		MOVQ 0x68(DX), R9																					
+  main.go:79			0xf507f1		4c898c2450010000	MOVQ R9, 0x150(SP)																					
+  main.go:79			0xf507f9		4c8b5270		MOVQ 0x70(DX), R10																					
+  main.go:79			0xf507fd		4c899424b0000000	MOVQ R10, 0xb0(SP)																					
+  main.go:79			0xf50805		4c8b5a38		MOVQ 0x38(DX), R11																					
+  main.go:79			0xf50809		4c899c24a8000000	MOVQ R11, 0xa8(SP)																					
+  main.go:79			0xf50811		4c8b6240		MOVQ 0x40(DX), R12																					
+  main.go:79			0xf50815		4c89a424a0000000	MOVQ R12, 0xa0(SP)																					
+  main.go:79			0xf5081d		4c8b6a48		MOVQ 0x48(DX), R13																					
+  main.go:79			0xf50821		4c89ac2400010000	MOVQ R13, 0x100(SP)																					
+  main.go:79			0xf50829		4c8b7a50		MOVQ 0x50(DX), R15																					
+  main.go:79			0xf5082d		4c897c2460		MOVQ R15, 0x60(SP)																					
+  main.go:79			0xf50832		488b4a58		MOVQ 0x58(DX), CX																					
+  main.go:79			0xf50836		48898c24d0000000	MOVQ CX, 0xd0(SP)																					
+  main.go:79			0xf5083e		488b7208		MOVQ 0x8(DX), SI																					
+  main.go:79			0xf50842		488b7a10		MOVQ 0x10(DX), DI																					
+  main.go:79			0xf50846		4c8b4218		MOVQ 0x18(DX), R8																					
+  main.go:79			0xf5084a		4c8b5220		MOVQ 0x20(DX), R10																					
+  main.go:79			0xf5084e		4c89942498000000	MOVQ R10, 0x98(SP)																					
+  main.go:79			0xf50856		4c8b4a28		MOVQ 0x28(DX), R9																					
+  main.go:79			0xf5085a		4c898c2490000000	MOVQ R9, 0x90(SP)																					
+  main.go:79			0xf50862		488b4a30		MOVQ 0x30(DX), CX																					
+  main.go:79			0xf50866		48898c24f8000000	MOVQ CX, 0xf8(SP)																					
+  main.go:79			0xf5086e		488b5260		MOVQ 0x60(DX), DX																					
+  main.go:79			0xf50872		48899424c8000000	MOVQ DX, 0xc8(SP)																					
+  main.go:80			0xf5087a		eb3d			JMP 0xf508b9																						
+  main.go:80			0xf5087c		488b442448		MOVQ 0x48(SP), AX																					
+  main.go:80			0xf50881		488b5c2450		MOVQ 0x50(SP), BX																					
+  main.go:80			0xf50886		488b8c24b8000000	MOVQ 0xb8(SP), CX																					
+  main.go:80			0xf5088e		bf0065cd1d		MOVL $0x1dcd6500, DI																					
+  main.go:80			0xf50893		e8a89956ff		CALL time.Time.Add(SB)																					
+  main.go:80			0xf50898		4c8b8c2490000000	MOVQ 0x90(SP), R9																					
+  main.go:80			0xf508a0		4c8b942498000000	MOVQ 0x98(SP), R10																					
+  main.go:80			0xf508a8		4889df			MOVQ BX, DI																						
+  main.go:80			0xf508ab		4889c6			MOVQ AX, SI																						
+  main.go:80			0xf508ae		4989c8			MOVQ CX, R8																						
+  main.go:80			0xf508b1		488b8c24f8000000	MOVQ 0xf8(SP), CX																					
+  main.go:80			0xf508b9		4c898424b8000000	MOVQ R8, 0xb8(SP)																					
+  main.go:80			0xf508c1		48897c2450		MOVQ DI, 0x50(SP)																					
+  main.go:80			0xf508c6		4889742448		MOVQ SI, 0x48(SP)																					
+  main.go:80			0xf508cb		4889f0			MOVQ SI, AX																						
+  main.go:80			0xf508ce		4889fb			MOVQ DI, BX																						
+  main.go:80			0xf508d1		4c89d7			MOVQ R10, DI																						
+  main.go:80			0xf508d4		4c89ce			MOVQ R9, SI																						
+  main.go:79			0xf508d7		4889ca			MOVQ CX, DX																						
+  main.go:80			0xf508da		4c89c1			MOVQ R8, CX																						
+  main.go:80			0xf508dd		4989d0			MOVQ DX, R8																						
+  main.go:80			0xf508e0		e81b8156ff		CALL time.Time.After(SB)																				
+  main.go:80			0xf508e5		84c0			TESTL AL, AL																						
+  main.go:80			0xf508e7		0f8569040000		JNE 0xf50d56																						
+  main.go:81			0xf508ed		488b442448		MOVQ 0x48(SP), AX																					
+  main.go:81			0xf508f2		488b5c2450		MOVQ 0x50(SP), BX																					
+  main.go:81			0xf508f7		488b8c24b8000000	MOVQ 0xb8(SP), CX																					
+  main.go:81			0xf508ff		90			NOPL																							
+  main.go:81			0xf50900		e83b9d56ff		CALL time.Until(SB)																					
+  main.go:81			0xf50905		4885c0			TESTQ AX, AX																						
+  main.go:81			0xf50908		7e05			JLE 0xf5090f																						
+  main.go:82			0xf5090a		e8112b54ff		CALL time.Sleep(SB)																					
+  main.go:84			0xf5090f		e80c1957ff		CALL time.Now(SB)																					
+  main.go:84			0xf50914		4889842488000000	MOVQ AX, 0x88(SP)																					
+  main.go:84			0xf5091c		48899c2480000000	MOVQ BX, 0x80(SP)																					
+  main.go:84			0xf50924		48898c24f0000000	MOVQ CX, 0xf0(SP)																					
+  main.go:85			0xf5092c		488bbc24a8000000	MOVQ 0xa8(SP), DI																					
+  main.go:85			0xf50934		488bb424a0000000	MOVQ 0xa0(SP), SI																					
+  main.go:85			0xf5093c		4c8b842400010000	MOVQ 0x100(SP), R8																					
+  main.go:85			0xf50944		e8579a56ff		CALL time.Time.Sub(SB)																					
+  config_utils_prod.go:11	0xf50949		488b0db0032301		MOVQ github.com/OffchainLabs/prysm/v7/config/params.configs(SB), CX															
+  configset.go:136		0xf50950		488b09			MOVQ 0(CX), CX																						
+  main.go:85			0xf50953		488b8920010000		MOVQ 0x120(CX), CX																					
+  main.go:85			0xf5095a		4869c900ca9a3b		IMULQ $0x3b9aca00, CX, CX																				
+  main.go:85			0xf50961		4885c9			TESTQ CX, CX																						
+  main.go:85			0xf50964		0f8423040000		JE 0xf50d8d																						
+  main.go:85			0xf5096a		4883f9ff		CMPQ CX, $-0x1																						
+  main.go:85			0xf5096e		7507			JNE 0xf50977																						
+  main.go:85			0xf50970		48f7d8			NEGQ AX																							
+  main.go:85			0xf50973		31d2			XORL DX, DX																						
+  main.go:85			0xf50975		eb09			JMP 0xf50980																						
+  main.go:85			0xf50977		4899			CQO																							
+  main.go:85			0xf50979		48f7f9			IDIVQ CX																						
+  main.go:85			0xf5097c		0f1f4000		NOPL 0(AX)																						
+  main.go:86			0xf50980		4885c0			TESTQ AX, AX																						
+  main.go:86			0xf50983		7507			JNE 0xf5098c																						
+  main.go:86			0xf50985		b801000000		MOVL $0x1, AX																						
+  main.go:91			0xf5098a		eb0d			JMP 0xf50999																						
+  main.go:88			0xf5098c		4883f803		CMPQ AX, $0x3																						
+  main.go:88			0xf50990		ba03000000		MOVL $0x3, DX																						
+  main.go:88			0xf50995		480f47c2		CMOVA DX, AX																						
+  main.go:91			0xf50999		4889442438		MOVQ AX, 0x38(SP)																					
+  main.go:91			0xf5099e		488d056bbc6000		LEAQ go:itab.context.backgroundCtx,context.Context(SB), AX																
+  main.go:91			0xf509a5		488d1d94e02501		LEAQ 0x125e094(IP), BX																					
+  main.go:91			0xf509ac		48b9007841cb02000000	MOVQ $0x2cb417800, CX																					
+  main.go:91			0xf509b6		e8256c57ff		CALL context.WithTimeout(SB)																				
+  main.go:91			0xf509bb		4889442458		MOVQ AX, 0x58(SP)																					
+  main.go:91			0xf509c0		48898c24d8000000	MOVQ CX, 0xd8(SP)																					
+  main.go:91			0xf509c8		48899c24c0000000	MOVQ BX, 0xc0(SP)																					
+  main.go:93			0xf509d0		488b942470010000	MOVQ 0x170(SP), DX																					
+  main.go:93			0xf509d8		0f1f840000000000	NOPL 0(AX)(AX*1)																					
+  main.go:93			0xf509e0		4883fa0a		CMPQ DX, $0xa																						
+  main.go:93			0xf509e4		0f85ca000000		JNE 0xf50ab4																						
+  main.go:93			0xf509ea		48be446f6d61696e4461	MOVQ $0x61446e69616d6f44, SI																				
+  main.go:93			0xf509f4		488bbc2468010000	MOVQ 0x168(SP), DI																					
+  main.go:93			0xf509fc		0f1f4000		NOPL 0(AX)																						
+  main.go:93			0xf50a00		483937			CMPQ 0(DI), SI																						
+  main.go:93			0xf50a03		0f85ab000000		JNE 0xf50ab4																						
+  main.go:93			0xf50a09		66817f087461		CMPW 0x8(DI), $0x6174																					
+  main.go:93			0xf50a0f		0f859f000000		JNE 0xf50ab4																						
+  main.go:94			0xf50a15		488d05240d3400		LEAQ 0x340d24(IP), AX																					
+  main.go:94			0xf50a1c		0f1f4000		NOPL 0(AX)																						
+  main.go:94			0xf50a20		e8db854dff		CALL runtime.newobject(SB)																				
+  main.go:94			0xf50a25		48898424e8000000	MOVQ AX, 0xe8(SP)																					
+  main.go:94			0xf50a2d		488d05ac151f00		LEAQ 0x1f15ac(IP), AX																					
+  main.go:94			0xf50a34		e8c7854dff		CALL runtime.newobject(SB)																				
+  main.go:94			0xf50a39		c70002000000		MOVL $0x2, 0(AX)																					
+  main.go:94			0xf50a3f		488bbc24e8000000	MOVQ 0xe8(SP), DI																					
+  main.go:94			0xf50a47		48c7471804000000	MOVQ $0x4, 0x18(DI)																					
+  main.go:94			0xf50a4f		48c7472004000000	MOVQ $0x4, 0x20(DI)																					
+  main.go:94			0xf50a57		833de2eb250100		CMPL runtime.writeBarrier(SB), $0x0																			
+  main.go:94			0xf50a5e		6690			NOPW																							
+  main.go:94			0xf50a60		7410			JE 0xf50a72																						
+  main.go:94			0xf50a62		488b5710		MOVQ 0x10(DI), DX																					
+  main.go:94			0xf50a66		e8356354ff		CALL runtime.gcWriteBarrier2(SB)																			
+  main.go:94			0xf50a6b		498903			MOVQ AX, 0(R11)																						
+  main.go:94			0xf50a6e		49895308		MOVQ DX, 0x8(R11)																					
+  main.go:94			0xf50a72		48894710		MOVQ AX, 0x10(DI)																					
+  main.go:94			0xf50a76		488b442460		MOVQ 0x60(SP), AX																					
+  main.go:94			0xf50a7b		8400			TESTB AL, 0(AX)																						
+  main.go:94			0xf50a7d		488d15d46c6200		LEAQ go:itab.*github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.beaconNodeValidatorClient,github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.BeaconNodeValidatorClient(SB), DX	
+  main.go:94			0xf50a84		4839d0			CMPQ AX, DX																						
+  main.go:94			0xf50a87		0f85ed020000		JNE 0xf50d7a																						
+  main.go:94			0xf50a8d		488b8424d0000000	MOVQ 0xd0(SP), AX																					
+  main.go:94			0xf50a95		488b5c2458		MOVQ 0x58(SP), BX																					
+  main.go:94			0xf50a9a		488b8c24c0000000	MOVQ 0xc0(SP), CX																					
+  main.go:94			0xf50aa2		31f6			XORL SI, SI																						
+  main.go:94			0xf50aa4		4531c0			XORL R8, R8																						
+  main.go:94			0xf50aa7		4d89c1			MOVQ R8, R9																						
+  main.go:94			0xf50aaa		e89125c4ff		CALL github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*beaconNodeValidatorClient).DomainData(SB)											
+  main.go:94			0xf50aaf		e99a000000		JMP 0xf50b4e																						
+  main.go:96			0xf50ab4		488d05a5203400		LEAQ 0x3420a5(IP), AX																					
+  main.go:96			0xf50abb		0f1f440000		NOPL 0(AX)(AX*1)																					
+  main.go:96			0xf50ac0		e83b854dff		CALL runtime.newobject(SB)																				
+  main.go:96			0xf50ac5		488b8c24c8000000	MOVQ 0xc8(SP), CX																					
+  main.go:96			0xf50acd		4883791000		CMPQ 0x10(CX), $0x0																					
+  main.go:96			0xf50ad2		0f869d020000		JBE 0xf50d75																						
+  main.go:96			0xf50ad8		488b5108		MOVQ 0x8(CX), DX																					
+  main.go:96			0xf50adc		4c8b5208		MOVQ 0x8(DX), R10																					
+  main.go:96			0xf50ae0		4c8b5a10		MOVQ 0x10(DX), R11																					
+  main.go:96			0xf50ae4		488b12			MOVQ 0(DX), DX																						
+  main.go:96			0xf50ae7		4c895010		MOVQ R10, 0x10(AX)																					
+  main.go:96			0xf50aeb		4c895818		MOVQ R11, 0x18(AX)																					
+  main.go:96			0xf50aef		833d4aeb250100		CMPL runtime.writeBarrier(SB), $0x0																			
+  main.go:96			0xf50af6		7408			JE 0xf50b00																						
+  main.go:96			0xf50af8		e8836254ff		CALL runtime.gcWriteBarrier1(SB)																			
+  main.go:96			0xf50afd		498913			MOVQ DX, 0(R11)																						
+  main.go:96			0xf50b00		48895008		MOVQ DX, 0x8(AX)																					
+  main.go:96			0xf50b04		488b542438		MOVQ 0x38(SP), DX																					
+  main.go:96			0xf50b09		48895020		MOVQ DX, 0x20(AX)																					
+  main.go:96			0xf50b0d		4c8b542460		MOVQ 0x60(SP), R10																					
+  main.go:96			0xf50b12		418402			TESTB AL, 0(R10)																					
+  main.go:96			0xf50b15		4c8d1d3c6c6200		LEAQ go:itab.*github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.beaconNodeValidatorClient,github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.BeaconNodeValidatorClient(SB), R11	
+  main.go:96			0xf50b1c		0f1f4000		NOPL 0(AX)																						
+  main.go:96			0xf50b20		4d39da			CMPQ R10, R11																						
+  main.go:96			0xf50b23		0f8536020000		JNE 0xf50d5f																						
+  main.go:96			0xf50b29		488b5c2458		MOVQ 0x58(SP), BX																					
+  main.go:96			0xf50b2e		488b8c24c0000000	MOVQ 0xc0(SP), CX																					
+  main.go:96			0xf50b36		4889c7			MOVQ AX, DI																						
+  main.go:96			0xf50b39		31f6			XORL SI, SI																						
+  main.go:96			0xf50b3b		4531c0			XORL R8, R8																						
+  main.go:96			0xf50b3e		4d89c1			MOVQ R8, R9																						
+  main.go:96			0xf50b41		488b8424d0000000	MOVQ 0xd0(SP), AX																					
+  main.go:96			0xf50b49		e8b244c4ff		CALL github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*beaconNodeValidatorClient).GetSyncSubcommitteeIndex(SB)									
+  main.go:98			0xf50b4e		48895c2440		MOVQ BX, 0x40(SP)																					
+  main.go:98			0xf50b53		488b9424d8000000	MOVQ 0xd8(SP), DX																					
+  main.go:98			0xf50b5b		488b02			MOVQ 0(DX), AX																						
+  main.go:98			0xf50b5e		6690			NOPW																							
+  main.go:98			0xf50b60		ffd0			CALL AX																							
+  main.go:99			0xf50b62		488b8424a8000000	MOVQ 0xa8(SP), AX																					
+  main.go:99			0xf50b6a		488b9c24a0000000	MOVQ 0xa0(SP), BX																					
+  main.go:99			0xf50b72		488b8c2400010000	MOVQ 0x100(SP), CX																					
+  main.go:99			0xf50b7a		488b7c2438		MOVQ 0x38(SP), DI																					
+  main.go:99			0xf50b7f		90			NOPL																							
+  main.go:99			0xf50b80		e8bb54d2ff		CALL github.com/OffchainLabs/prysm/v7/time/slots.StartTime(SB)																
+  main.go:100			0xf50b85		90			NOPL																							
+  mutex.go:46			0xf50b86		90			NOPL																							
+  main.go:99			0xf50b87		4889c2			MOVQ AX, DX																						
+  mutex.go:63			0xf50b8a		31c0			XORL AX, AX																						
+  mutex.go:63			0xf50b8c		488bb42450010000	MOVQ 0x150(SP), SI																					
+  mutex.go:63			0xf50b94		bf01000000		MOVL $0x1, DI																						
+  mutex.go:63			0xf50b99		f00fb13e		LOCK CMPXCHGL DI, 0(SI)																					
+  mutex.go:63			0xf50b9d		0f94c0			SETE AL																							
+  mutex.go:63			0xf50ba0		84c0			TESTL AL, AL																						
+  mutex.go:63			0xf50ba2		752c			JNE 0xf50bd0																						
+  main.go:99			0xf50ba4		48898c24e0000000	MOVQ CX, 0xe0(SP)																					
+  main.go:99			0xf50bac		48895c2478		MOVQ BX, 0x78(SP)																					
+  main.go:99			0xf50bb1		4889542470		MOVQ DX, 0x70(SP)																					
+  mutex.go:70			0xf50bb6		4889f0			MOVQ SI, AX																						
+  mutex.go:70			0xf50bb9		e802ef54ff		CALL internal/sync.(*Mutex).lockSlow(SB)																		
+  main.go:101			0xf50bbe		488b8c24e0000000	MOVQ 0xe0(SP), CX																					
+  main.go:101			0xf50bc6		488b542470		MOVQ 0x70(SP), DX																					
+  main.go:101			0xf50bcb		488b5c2478		MOVQ 0x78(SP), BX																					
+  main.go:101			0xf50bd0		488b842488000000	MOVQ 0x88(SP), AX																					
+  main.go:101			0xf50bd8		4889d7			MOVQ DX, DI																						
+  main.go:101			0xf50bdb		4889de			MOVQ BX, SI																						
+  main.go:101			0xf50bde		4989c8			MOVQ CX, R8																						
+  main.go:101			0xf50be1		488b9c2480000000	MOVQ 0x80(SP), BX																					
+  main.go:101			0xf50be9		488b8c24f0000000	MOVQ 0xf0(SP), CX																					
+  main.go:101			0xf50bf1		e8aa9756ff		CALL time.Time.Sub(SB)																					
+  time.go:1075			0xf50bf6		4889c2			MOVQ AX, DX																						
+  time.go:1075			0xf50bf9		48c1f83f		SARQ $0x3f, AX																						
+  time.go:1075			0xf50bfd		4889c1			MOVQ AX, CX																						
+  time.go:1075			0xf50c00		48b89eefa7c64b378941	MOVQ $0x4189374bc6a7ef9e, AX																				
+  time.go:1075			0xf50c0a		48f7ea			IMULQ DX																						
+  time.go:1075			0xf50c0d		48c1fa08		SARQ $0x8, DX																						
+  time.go:1075			0xf50c11		4829ca			SUBQ CX, DX																						
+  main.go:101			0xf50c14		0f57c0			XORPS X0, X0																						
+  main.go:101			0xf50c17		f2480f2ac2		CVTSI2SDQ DX, X0																					
+  main.go:101			0xf50c1c		f20f100d1c625f00	MOVSD_XMM $f64.408f400000000000(SB), X1																			
+  main.go:101			0xf50c24		f20f5ec1		DIVSD X1, X0																						
+  main.go:101			0xf50c28		f20f11442468		MOVSD_XMM X0, 0x68(SP)																					
+  main.go:101			0xf50c2e		488b842488000000	MOVQ 0x88(SP), AX																					
+  main.go:101			0xf50c36		488b9c2480000000	MOVQ 0x80(SP), BX																					
+  main.go:101			0xf50c3e		488b8c24f0000000	MOVQ 0xf0(SP), CX																					
+  main.go:101			0xf50c46		e8159956ff		CALL time.Since(SB)																					
+  main.go:101			0xf50c4b		4889c1			MOVQ AX, CX																						
+  time.go:1075			0xf50c4e		48b89eefa7c64b378941	MOVQ $0x4189374bc6a7ef9e, AX																				
+  time.go:1075			0xf50c58		48f7e9			IMULQ CX																						
+  time.go:1075			0xf50c5b		48c1fa08		SARQ $0x8, DX																						
+  time.go:1075			0xf50c5f		48c1f93f		SARQ $0x3f, CX																						
+  time.go:1075			0xf50c63		4829ca			SUBQ CX, DX																						
+  main.go:101			0xf50c66		0f57c0			XORPS X0, X0																						
+  main.go:101			0xf50c69		f2480f2ac2		CVTSI2SDQ DX, X0																					
+  main.go:101			0xf50c6e		f20f100dca615f00	MOVSD_XMM $f64.408f400000000000(SB), X1																			
+  main.go:101			0xf50c76		f20f5ec1		DIVSD X1, X0																						
+  main.go:101			0xf50c7a		488d9c2408010000	LEAQ 0x108(SP), BX																					
+  main.go:101			0xf50c82		488d153f3c6100		LEAQ main..stmp_2(SB), DX																				
+  main.go:101			0xf50c89		440f1032		MOVUPS 0(DX), X14																					
+  main.go:101			0xf50c8d		440f1133		MOVUPS X14, 0(BX)																					
+  main.go:101			0xf50c91		440f107210		MOVUPS 0x10(DX), X14																					
+  main.go:101			0xf50c96		440f117310		MOVUPS X14, 0x10(BX)																					
+  main.go:101			0xf50c9b		440f107220		MOVUPS 0x20(DX), X14																					
+  main.go:101			0xf50ca0		440f117320		MOVUPS X14, 0x20(BX)																					
+  main.go:101			0xf50ca5		440f107230		MOVUPS 0x30(DX), X14																					
+  main.go:101			0xf50caa		440f117330		MOVUPS X14, 0x30(BX)																					
+  main.go:101			0xf50caf		440f107238		MOVUPS 0x38(DX), X14																					
+  main.go:101			0xf50cb4		440f117338		MOVUPS X14, 0x38(BX)																					
+  main.go:101			0xf50cb9		488b942468010000	MOVQ 0x168(SP), DX																					
+  main.go:101			0xf50cc1		4889942418010000	MOVQ DX, 0x118(SP)																					
+  main.go:101			0xf50cc9		488b942470010000	MOVQ 0x170(SP), DX																					
+  main.go:101			0xf50cd1		4889942420010000	MOVQ DX, 0x120(SP)																					
+  main.go:101			0xf50cd9		488b542438		MOVQ 0x38(SP), DX																					
+  main.go:101			0xf50cde		4889942428010000	MOVQ DX, 0x128(SP)																					
+  main.go:101			0xf50ce6		f20f104c2468		MOVSD_XMM 0x68(SP), X1																					
+  main.go:101			0xf50cec		f20f118c2430010000	MOVSD_XMM X1, 0x130(SP)																					
+  main.go:101			0xf50cf5		f20f11842438010000	MOVSD_XMM X0, 0x138(SP)																					
+  main.go:101			0xf50cfe		488b542440		MOVQ 0x40(SP), DX																					
+  main.go:101			0xf50d03		4885d2			TESTQ DX, DX																						
+  main.go:101			0xf50d06		0f94842440010000	SETE 0x140(SP)																						
+  main.go:101			0xf50d0e		488d052bfe3600		LEAQ 0x36fe2b(IP), AX																					
+  main.go:101			0xf50d15		e8c6444dff		CALL runtime.convT(SB)																					
+  main.go:101			0xf50d1a		488d1d1ffe3600		LEAQ 0x36fe1f(IP), BX																					
+  main.go:101			0xf50d21		4889c1			MOVQ AX, CX																						
+  main.go:101			0xf50d24		488b8424b0000000	MOVQ 0xb0(SP), AX																					
+  main.go:101			0xf50d2c		e80fc15fff		CALL encoding/json.(*Encoder).Encode(SB)																		
+  main.go:102			0xf50d31		90			NOPL																							
+  mutex.go:65			0xf50d32		90			NOPL																							
+  mutex.go:194			0xf50d33		bbffffffff		MOVL $-0x1, BX																						
+  mutex.go:194			0xf50d38		488b842450010000	MOVQ 0x150(SP), AX																					
+  mutex.go:194			0xf50d40		f00fc118		LOCK XADDL BX, 0(AX)																					
+  mutex.go:194			0xf50d44		ffcb			DECL BX																							
+  mutex.go:195			0xf50d46		0f8430fbffff		JE 0xf5087c																						
+  mutex.go:198			0xf50d4c		e84ff054ff		CALL internal/sync.(*Mutex).unlockSlow(SB)																		
+  mutex.go:198			0xf50d51		e926fbffff		JMP 0xf5087c																						
+  main.go:104			0xf50d56		4881c458010000		ADDQ $0x158, SP																						
+  main.go:104			0xf50d5d		5d			POPQ BP																							
+  main.go:104			0xf50d5e		c3			RET																							
+  main.go:96			0xf50d5f		4c89d0			MOVQ R10, AX																						
+  main.go:96			0xf50d62		488d1d572e3e00		LEAQ 0x3e2e57(IP), BX																					
+  main.go:96			0xf50d69		488d0df0083c00		LEAQ 0x3c08f0(IP), CX																					
+  main.go:96			0xf50d70		e82b434dff		CALL runtime.panicdottypeI(SB)																				
+  main.go:96			0xf50d75		e8c66354ff		CALL runtime.panicBounds(SB)																				
+  main.go:94			0xf50d7a		488d1d3f2e3e00		LEAQ 0x3e2e3f(IP), BX																					
+  main.go:94			0xf50d81		488d0dd8083c00		LEAQ 0x3c08d8(IP), CX																					
+  main.go:94			0xf50d88		e813434dff		CALL runtime.panicdottypeI(SB)																				
+  main.go:85			0xf50d8d		e80e4050ff		CALL runtime.panicdivide(SB)																				
+  main.go:85			0xf50d92		90			NOPL																							
+  main.go:79			0xf50d93		4889442408		MOVQ AX, 0x8(SP)																					
+  main.go:79			0xf50d98		48895c2410		MOVQ BX, 0x10(SP)																					
+  main.go:79			0xf50d9d		0f1f00			NOPL 0(AX)																						
+  main.go:79			0xf50da0		e85b4454ff		CALL runtime.morestack.abi0(SB)																				
+  main.go:79			0xf50da5		488b442408		MOVQ 0x8(SP), AX																					
+  main.go:79			0xf50daa		488b5c2410		MOVQ 0x10(SP), BX																					
+  main.go:79			0xf50daf		e90cfaffff		JMP main.main.func1(SB)																					

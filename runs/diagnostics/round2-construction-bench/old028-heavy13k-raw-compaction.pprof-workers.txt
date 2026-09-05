@@ -1,0 +1,25 @@
+File: validator.test
+Build ID: 83ab6be436a0779c40b98cac63077114de5934ad
+Type: cpu
+Time: 2026-09-08 21:29:42 IST
+Duration: 35.23s, Total samples = 49.73s (141.17%)
+Active filters:
+   focus=aggregateParallel|AggregateDisjointOneBitAtts
+Showing nodes accounting for 1.73s, 3.48% of 49.73s total
+      flat  flat%   sum%        cum   cum%
+     1.69s  3.40%  3.40%      1.69s  3.40%  runtime.cgocall
+     0.02s  0.04%  3.44%      0.02s  0.04%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).GetSignature
+     0.01s  0.02%  3.46%      0.01s  0.02%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).GetAggregationBits
+     0.01s  0.02%  3.48%      0.01s  0.02%  runtime.memclrNoHeapPointers
+         0     0%  3.48%      0.01s  0.02%  github.com/OffchainLabs/go-bitfield.Bitlist.ToBitlist64
+         0     0%  3.48%      0.01s  0.02%  github.com/OffchainLabs/go-bitfield.NewBitlist64FromBytes
+         0     0%  3.48%      1.73s  3.48%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).aggregateParallel.func1
+         0     0%  3.48%      1.69s  3.40%  github.com/OffchainLabs/prysm/v7/crypto/bls.SignatureFromBytesNoValidation
+         0     0%  3.48%      1.69s  3.40%  github.com/OffchainLabs/prysm/v7/crypto/bls/blst.SignatureFromBytesNoValidation
+         0     0%  3.48%      1.69s  3.40%  github.com/OffchainLabs/prysm/v7/crypto/bls/blst.signatureFromBytesNoValidation
+         0     0%  3.48%      1.73s  3.48%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation/attestations.AggregateDisjointOneBitAtts
+         0     0%  3.48%      1.71s  3.44%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation/attestations.aggregateAttestations
+         0     0%  3.48%      1.69s  3.40%  github.com/supranational/blst/bindings/go.(*P2Affine).Uncompress (inline)
+         0     0%  3.48%      1.69s  3.40%  github.com/supranational/blst/bindings/go._Cfunc_blst_p2_uncompress
+         0     0%  3.48%      0.01s  0.02%  runtime.growslice
+         0     0%  3.48%      1.73s  3.48%  sync.(*WaitGroup).Go.func1

@@ -1,0 +1,118 @@
+{
+  "status": "success",
+  "isPartial": false,
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "up",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "ip_address": "143.198.65.112",
+          "job": "consensus_node",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "ip_address": "143.198.65.112",
+          "job": "execution",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "value": [
+          1788573120,
+          "0"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "ip_address": "143.198.65.112",
+          "job": "exporter",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "ip_address": "143.198.65.112",
+          "job": "node",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "ip_address": "143.198.65.112",
+          "job": "prometheus",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "value": [
+          1788573120,
+          "1"
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "seriesFetched": "5",
+    "executionTimeMsec": 1
+  }
+}

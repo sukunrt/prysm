@@ -1,0 +1,2 @@
+PRYSM_DIAGNOSTIC_FULL_GOSSIP_ARM=shared PRYSM_DIAGNOSTIC_FULL_GOSSIP_OUTPUT_DIR=runs/diagnostics/round2-slots-0-16/full-gossip-domain-go-evidence/shared go test ./beacon-chain/sync -run '^TestDiagnosticFullGossipDomainTCP$' -count=1 -v -timeout=8m
+PRYSM_DIAGNOSTIC_FULL_GOSSIP_ARM=snapshot PRYSM_DIAGNOSTIC_FULL_GOSSIP_OUTPUT_DIR=/home/sukun/dev/prysm2/runs/diagnostics/round2-slots-0-16/full-gossip-domain-go-evidence/snapshot go test ./beacon-chain/sync -run '^TestDiagnosticFullGossipDomainTCP$' -count=1 -v -timeout=8m

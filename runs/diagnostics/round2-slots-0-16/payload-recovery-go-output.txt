@@ -1,0 +1,8 @@
+=== RUN   TestGetLocalPayloadFromEngine_CachedTimeoutErrorIdentityControlsFallback
+=== RUN   TestGetLocalPayloadFromEngine_CachedTimeoutErrorIdentityControlsFallback/raw_context_deadline_reaches_fresh_payload_preparation
+=== RUN   TestGetLocalPayloadFromEngine_CachedTimeoutErrorIdentityControlsFallback/execution_timeout_sentinel_aborts_cached_payload_retrieval
+--- PASS: TestGetLocalPayloadFromEngine_CachedTimeoutErrorIdentityControlsFallback (0.00s)
+    --- PASS: TestGetLocalPayloadFromEngine_CachedTimeoutErrorIdentityControlsFallback/raw_context_deadline_reaches_fresh_payload_preparation (0.00s)
+    --- PASS: TestGetLocalPayloadFromEngine_CachedTimeoutErrorIdentityControlsFallback/execution_timeout_sentinel_aborts_cached_payload_retrieval (0.00s)
+PASS
+ok  	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator	0.018s

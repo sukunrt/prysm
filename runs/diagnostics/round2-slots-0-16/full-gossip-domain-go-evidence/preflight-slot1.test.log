@@ -1,0 +1,5 @@
+=== RUN   TestDiagnosticFullGossipRealChainPreflight
+    full_gossip_domain_export_test.go:622: FULL_GOSSIP_PREFLIGHT stats={ValidationStarted:1 ValidationAccepted:1 ValidationIgnored:0 ValidationRejected:0 SubscriberStarted:1 SubscriberCompleted:1 SubscriberFailed:0 FeedEvents:1 IteratorEntries:1 IteratorExits:1 ActiveIterators:0 MaximumActiveIterators:1 UnaggregatedPoolEntries:1 FirstError:} genesis_root=0xd589dc3ef73e04a5d13fc20beac335ee134e9f496e86a0046eb769e9bfdb9395
+--- PASS: TestDiagnosticFullGossipRealChainPreflight (30.27s)
+PASS
+ok  	github.com/OffchainLabs/prysm/v7/beacon-chain/sync	30.317s

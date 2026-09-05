@@ -1,0 +1,94 @@
+{
+  "builds": {
+    "round1-d799b1a3": {
+      "author": "Bosul Mun",
+      "author_date": "2026-09-04T22:31:13+02:00",
+      "commit": "d799b1a3f20fe9d983bfff6cc53fb246bcab1298",
+      "commit_date": "2026-09-04T22:31:13+02:00",
+      "parents": "8a6b06fef836a84850711dfa3799851c4d331fdf",
+      "subject": "cmd/devp2p: skip eth72 test (#35647)",
+      "tree": "847f9395bf4f154431beb5a60b5249911187b08f"
+    },
+    "round1-ff083d45": {
+      "author": "cui",
+      "author_date": "2026-09-03T16:54:28+08:00",
+      "commit": "ff083d4574710ea32b0cf7a6a8ae0f04521d0316",
+      "commit_date": "2026-09-03T10:54:28+02:00",
+      "parents": "d0e5e44d7c403ce93c2b8f9ea2c9db32986e6dfd",
+      "subject": "eth/protocols/snap: set abort when storage range hits limit hash (#35299)",
+      "tree": "45ceea944ddb335eaae856dd72fbdf3d56c870db"
+    },
+    "round2-aa1f2fcf": {
+      "author": "Bosul Mun",
+      "author_date": "2026-08-13T17:42:52+02:00",
+      "commit": "aa1f2fcf512988eb8890d9352e601b898d6fdb2c",
+      "commit_date": "2026-08-13T17:42:52+02:00",
+      "parents": "393555b0977c97d502fcf8c25685e5f6042142d7",
+      "subject": "eth/fetcher: validate announced blob tx size against announcer's protocol version (#35524)",
+      "tree": "d019385161eee4a9d64e5a61e9293e310c1a7b41"
+    }
+  },
+  "comparisons": {
+    "round1-ff083d45..round1-d799b1a3": {
+      "artifacts": {
+        "build_config_diff": "geth_round1-ff083d45_to_round1-d799b1a3.build-config.diff",
+        "commits": "geth_round1-ff083d45_to_round1-d799b1a3.commits.tsv",
+        "diffstat": "geth_round1-ff083d45_to_round1-d799b1a3.diffstat.txt",
+        "full_diff_gzip": "geth_round1-ff083d45_to_round1-d799b1a3.full.diff.gz",
+        "numstat": "geth_round1-ff083d45_to_round1-d799b1a3.numstat.tsv",
+        "paths": "geth_round1-ff083d45_to_round1-d799b1a3.paths.tsv"
+      },
+      "commit_count": 3,
+      "full_diff_bytes": 8782,
+      "full_diff_gzip_bytes": 3208,
+      "full_diff_gzip_sha256": "2413aaf9aaa83169b2a4a1caeaa3b18ef6ed3a7d2b064c2d8d8545468b9d6f63",
+      "full_diff_sha256": "a8db36d360be45ea3d3fff8a6a174895dea45b84a2e46ecc31904029866152f8",
+      "merge_base": "ff083d4574710ea32b0cf7a6a8ae0f04521d0316",
+      "newer": "d799b1a3f20fe9d983bfff6cc53fb246bcab1298",
+      "older": "ff083d4574710ea32b0cf7a6a8ae0f04521d0316",
+      "older_is_ancestor": true,
+      "shortstat_older_to_newer": "4 files changed, 132 insertions(+), 1 deletion(-)"
+    },
+    "round2-aa1f2fcf..round1-d799b1a3": {
+      "artifacts": {
+        "build_config_diff": "geth_round2-aa1f2fcf_to_round1-d799b1a3.build-config.diff",
+        "commits": "geth_round2-aa1f2fcf_to_round1-d799b1a3.commits.tsv",
+        "diffstat": "geth_round2-aa1f2fcf_to_round1-d799b1a3.diffstat.txt",
+        "full_diff_gzip": "geth_round2-aa1f2fcf_to_round1-d799b1a3.full.diff.gz",
+        "numstat": "geth_round2-aa1f2fcf_to_round1-d799b1a3.numstat.tsv",
+        "paths": "geth_round2-aa1f2fcf_to_round1-d799b1a3.paths.tsv"
+      },
+      "commit_count": 52,
+      "full_diff_bytes": 3217141,
+      "full_diff_gzip_bytes": 913902,
+      "full_diff_gzip_sha256": "0f76abae44bf447e4733a1f4f73fcea99568a58fa1196e855ff710a21d749a80",
+      "full_diff_sha256": "f56957dbcbe059863cd2bb10ba198ef81f34f55c2930c9d0024d6599dfd2e2f3",
+      "merge_base": "aa1f2fcf512988eb8890d9352e601b898d6fdb2c",
+      "newer": "d799b1a3f20fe9d983bfff6cc53fb246bcab1298",
+      "older": "aa1f2fcf512988eb8890d9352e601b898d6fdb2c",
+      "older_is_ancestor": true,
+      "shortstat_older_to_newer": "176 files changed, 10814 insertions(+), 5339 deletions(-)"
+    },
+    "round2-aa1f2fcf..round1-ff083d45": {
+      "artifacts": {
+        "build_config_diff": "geth_round2-aa1f2fcf_to_round1-ff083d45.build-config.diff",
+        "commits": "geth_round2-aa1f2fcf_to_round1-ff083d45.commits.tsv",
+        "diffstat": "geth_round2-aa1f2fcf_to_round1-ff083d45.diffstat.txt",
+        "full_diff_gzip": "geth_round2-aa1f2fcf_to_round1-ff083d45.full.diff.gz",
+        "numstat": "geth_round2-aa1f2fcf_to_round1-ff083d45.numstat.tsv",
+        "paths": "geth_round2-aa1f2fcf_to_round1-ff083d45.paths.tsv"
+      },
+      "commit_count": 49,
+      "full_diff_bytes": 3209857,
+      "full_diff_gzip_bytes": 911696,
+      "full_diff_gzip_sha256": "30728f84c798a02c11e99fce8946eea711fb6ff396b746f869ec6a6a7cc15331",
+      "full_diff_sha256": "16d3c0dca8a6bc090a4633b757d369a1ddfdcd16565cedb487193e349ec19b0c",
+      "merge_base": "aa1f2fcf512988eb8890d9352e601b898d6fdb2c",
+      "newer": "ff083d4574710ea32b0cf7a6a8ae0f04521d0316",
+      "older": "aa1f2fcf512988eb8890d9352e601b898d6fdb2c",
+      "older_is_ancestor": true,
+      "shortstat_older_to_newer": "173 files changed, 10682 insertions(+), 5338 deletions(-)"
+    }
+  },
+  "source_remote": "https://github.com/ethereum/go-ethereum.git"
+}

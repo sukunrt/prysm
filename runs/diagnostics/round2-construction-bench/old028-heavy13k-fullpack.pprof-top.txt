@@ -1,0 +1,59 @@
+File: validator.test
+Build ID: aa8e15cc679aa57bf44e8a1eee6fde2d4e4517fe
+Type: cpu
+Time: 2026-09-08 15:06:25 IST
+Duration: 36.69s, Total samples = 49.65s (135.31%)
+Showing nodes accounting for 47.78s, 96.23% of 49.65s total
+Dropped 240 nodes (cum <= 0.25s)
+Showing top 50 nodes out of 64
+      flat  flat%   sum%        cum   cum%
+    35.82s 72.15% 72.15%     35.91s 72.33%  runtime.cgocall
+     5.33s 10.74% 82.88%      5.80s 11.68%  github.com/OffchainLabs/go-bitfield.Bitlist.Contains
+     1.92s  3.87% 86.75%      1.92s  3.87%  github.com/OffchainLabs/go-bitfield.(*Bitlist64).Overlaps (inline)
+     1.77s  3.56% 90.31%      1.77s  3.56%  github.com/OffchainLabs/go-bitfield.(*Bitlist64).AndCount (inline)
+     0.80s  1.61% 91.92%      0.80s  1.61%  github.com/OffchainLabs/go-bitfield.(*Bitlist64).Count (inline)
+     0.60s  1.21% 93.13%      0.60s  1.21%  github.com/OffchainLabs/go-bitfield.Bitlist.Len (inline)
+     0.38s  0.77% 93.90%      6.57s 13.23%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.proposerAtts.dedup
+     0.37s  0.75% 94.64%      5.01s 10.09%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation.MaxCover
+     0.36s  0.73% 95.37%      0.36s  0.73%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).GetAggregationBits
+     0.17s  0.34% 95.71%      0.50s  1.01%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation.AttestingIndices
+     0.07s  0.14% 95.85%      0.27s  0.54%  runtime.scanObject
+     0.05s   0.1% 95.95%      0.44s  0.89%  runtime.gcDrain
+     0.03s  0.06% 96.01%      0.27s  0.54%  runtime.mallocgcSmallNoscan
+     0.02s  0.04% 96.05%     13.24s 26.67%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.diagnosticLateAggregateSet
+     0.02s  0.04% 96.09%        17s 34.24%  github.com/OffchainLabs/prysm/v7/crypto/bls/blst.(*bls12SecretKey).Sign
+     0.02s  0.04% 96.13%     16.98s 34.20%  github.com/supranational/blst/bindings/go.(*P2Affine).Sign
+     0.02s  0.04% 96.17%      0.33s  0.66%  runtime.mallocgc
+     0.01s  0.02% 96.19%      1.26s  2.54%  github.com/OffchainLabs/prysm/v7/crypto/bls.SignatureFromBytesNoValidation
+     0.01s  0.02% 96.21%     10.71s 21.57%  github.com/OffchainLabs/prysm/v7/runtime/interop.deterministicallyGenerateKeys
+     0.01s  0.02% 96.23%     10.51s 21.17%  github.com/supranational/blst/bindings/go.(*P1Affine).From (inline)
+         0     0% 96.23%     10.71s 21.57%  github.com/OffchainLabs/prysm/v7/async.Scatter.func1
+         0     0% 96.23%      0.78s  1.57%  github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.AttestationSignatureBatch
+         0     0% 96.23%      0.58s  1.17%  github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.VerifyAttestationNoVerifySignature
+         0     0% 96.23%      0.78s  1.57%  github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks.createAttestationSignatureBatch
+         0     0% 96.23%     13.49s 27.17%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.(*Server).packAttestations
+         0     0% 96.23%      0.48s  0.97%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.(*Server).validateAndDeleteAttsInPool
+         0     0% 96.23%     13.34s 26.87%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.BenchmarkDiagnosticHistoricalLateRawDensityControls
+         0     0% 96.23%      8.06s 16.23%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.BenchmarkDiagnosticHistoricalLateRawDensityControls.func1
+         0     0% 96.23%     10.15s 20.44%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.BenchmarkDiagnosticHistoricalLateRawDensityControls.func1.3
+         0     0% 96.23%      0.78s  1.57%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.diagnosticLateRequireSignatures
+         0     0% 96.23%      3.81s  7.67%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.diagnosticLateSingleAttestations
+         0     0% 96.23%     13.34s 26.87%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.newDiagnosticLateFixtureAt
+         0     0% 96.23%      0.58s  1.17%  github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.proposerAtts.filter
+         0     0% 96.23%      0.68s  1.37%  github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native.(*BeaconState).AggregateKeyFromIndices
+         0     0% 96.23%      0.68s  1.37%  github.com/OffchainLabs/prysm/v7/crypto/bls.AggregatePublicKeys (inline)
+         0     0% 96.23%     10.51s 21.17%  github.com/OffchainLabs/prysm/v7/crypto/bls/blst.(*bls12SecretKey).PublicKey
+         0     0% 96.23%      0.68s  1.37%  github.com/OffchainLabs/prysm/v7/crypto/bls/blst.AggregatePublicKeys
+         0     0% 96.23%      1.25s  2.52%  github.com/OffchainLabs/prysm/v7/crypto/bls/blst.SignatureFromBytesNoValidation
+         0     0% 96.23%      0.65s  1.31%  github.com/OffchainLabs/prysm/v7/crypto/bls/blst.publicKeyFromBytes
+         0     0% 96.23%      1.25s  2.52%  github.com/OffchainLabs/prysm/v7/crypto/bls/blst.signatureFromBytesNoValidation
+         0     0% 96.23%      0.51s  1.03%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation.ConvertToIndexed
+         0     0% 96.23%      1.92s  3.87%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation.MaxCover.func1 (inline)
+         0     0% 96.23%      6.32s 12.73%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation/attestations.Aggregate (inline)
+         0     0% 96.23%      6.32s 12.73%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation/attestations.MaxCoverAttestationAggregation
+         0     0% 96.23%      1.28s  2.58%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation/attestations.aggregateAttestations
+         0     0% 96.23%     10.71s 21.57%  github.com/OffchainLabs/prysm/v7/runtime/interop.DeterministicallyGenerateKeys.func1
+         0     0% 96.23%      0.53s  1.07%  github.com/supranational/blst/bindings/go.(*P1Affine).KeyValidate (inline)
+         0     0% 96.23%      0.33s  0.66%  github.com/supranational/blst/bindings/go.(*P2Affine).BatchUncompress.func1
+         0     0% 96.23%      1.57s  3.16%  github.com/supranational/blst/bindings/go.(*P2Affine).Uncompress (inline)
+         0     0% 96.23%      8.41s 16.94%  github.com/supranational/blst/bindings/go.HashToG2

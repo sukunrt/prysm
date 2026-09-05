@@ -10,15 +10,30 @@ slot's start through 1.599 s after it; no batch was sent around slot 0/genesis.
 The genesis time was
 `1788617038` (`2026-09-05T14:03:58Z`).
 
-The BN3 `FFG votes` summaries reported exactly 15,000 accepted votes in each
-of slots 1–3. Its separate `Goldfish votes` summaries reported zero. These
-measure different message families: `countFFGVote` is called immediately
-before `ValidationAccept` for beacon-attestation gossip
-(`beacon-chain/sync/validate_beacon_attestation.go:240–246`), whereas
-`goldfishNewSlot` reads the fork-choice store of available-attestation voters
-(`beacon-chain/forkchoice/doubly-linked-tree/goldfish.go:215–229`). The source
-sent FFG beacon attestations, not available attestations, so zero Goldfish
-votes is expected and does not mean that the FFG load was rejected or skipped.
+The 45,000 accepted source RPCs are not 45,000 completed BN3 validations.
+The retained E1 BN3 `FFG votes` summaries contain **2,336, 0, and 0** for
+slots 1–3, at their roughly +6-second aggregation ticks (`beacon3.log:679,
+1201,1552`). `countFFGVote` runs immediately before gossip
+`ValidationAccept`; the summary takes that slot's counters once and deletes
+all counters through that slot. Later completions can recreate an old bucket,
+which the next summary discards without reporting it. These lines therefore
+measure accepted completions by the summary tick, not eventual per-slot
+totals (`beacon-chain/sync/ffg_summary.go:55–119`).
+
+The separate retained after-scrape counters contain 41,524 BN3 pubsub
+validation-attempt events, including 25,968 validation-throttled rejects,
+and 15,556 deliveries on the six attestation topics. The before scrape has
+no corresponding populated series. These counters distinguish source RPC
+success, validation attempts, and completed pubsub delivery; they do not
+locate the 3,476-source-submission difference before the validation counter.
+Bounded raw anchors and the comparison with F1, B/D, and H/I2 are preserved in
+[the receiver-acceptance audit](../round2-slots-0-16/ffg-receiver-acceptance-audit.md).
+
+The separate `Goldfish votes` summaries describe available-attestation votes,
+not these FFG beacon attestations. Zero Goldfish votes therefore does not
+mean the FFG load was absent. The retained E1/F1 configurations used four
+slots per round and **six total attestation subnets**; their later slot
+bursts reused those six topics.
 
 ## Validator-client timeline
 

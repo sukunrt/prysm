@@ -1,0 +1,1 @@
+env GOMAXPROCS=4 PRYSM_DIAGNOSTIC_PACKING_COMPACTION=1 /tmp/prysm-packing-compaction.test -test.run '^TestDiagnosticHistoricalPackingCompaction$' -test.v -test.timeout=5m > /tmp/prysm-packing-compaction-go.log 2>&1

@@ -1,0 +1,6 @@
+=== RUN   TestDiagnosticFullGossipDomainTCP
+    assertions.go:40: full_gossip_domain_tcp_diagnostic_test.go:654 Values are not equal, want: 1 (uint64), got: 0 (uint64)
+--- FAIL: TestDiagnosticFullGossipDomainTCP (50.71s)
+FAIL
+FAIL	github.com/OffchainLabs/prysm/v7/beacon-chain/sync	50.753s
+FAIL

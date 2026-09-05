@@ -1,0 +1,8 @@
+23	M=3072840 P=2 G=348 RangeBegin Time=277054169934400 Name="stop-the-world (start trace)" Scope=Goroutine(348)
+60	M=3072840 P=2 G=348 RangeEnd Time=277054169945792 Name="stop-the-world (start trace)" Scope=Goroutine(348) Attributes=[]
+920706	M=3072837 P=0 G=4760 RangeBegin Time=277054595626880 Name="GC concurrent mark phase" Scope=None
+921317	M=3072837 P=0 G=4760 RangeBegin Time=277054595695552 Name="stop-the-world (GC sweep termination)" Scope=Goroutine(4760)
+921604	M=3072837 P=0 G=4760 RangeEnd Time=277054595804288 Name="stop-the-world (GC sweep termination)" Scope=Goroutine(4760) Attributes=[]
+1031136	M=3072845 P=1 G=10 RangeBegin Time=277054661634944 Name="stop-the-world (GC mark termination)" Scope=Goroutine(10)
+1031265	M=3072845 P=1 G=10 RangeEnd Time=277054661664960 Name="GC concurrent mark phase" Scope=None Attributes=[]
+1031298	M=3072845 P=1 G=10 RangeEnd Time=277054661753216 Name="stop-the-world (GC mark termination)" Scope=Goroutine(10) Attributes=[]

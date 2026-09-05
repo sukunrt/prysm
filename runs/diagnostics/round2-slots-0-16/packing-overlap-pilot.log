@@ -1,0 +1,13 @@
+=== RUN   TestDiagnosticHistoricalPackingSnapshotOverlap
+    packing_compaction_diagnostic_test.go:364: PACKING_DATA_ROOT slot=4 committee=5 target_round=0 ssz_data_root=fc76081183fea649c92f349c4fceac1297923d3d9c94336fa56299809b09ef98 full_electra_grouping_root=47af105c327435d258e6a435c00311591bc93afc8558a6773b6d833bdab34802 observer400=0xaf105c327435d258e6a435c00311591bc93afc8558a6773b6d833bdab34802
+    packing_compaction_diagnostic_test.go:364: PACKING_DATA_ROOT slot=8 committee=5 target_round=1 ssz_data_root=481332fe1ff3a0399fd2fb4ee24ef73acf985aaceeaf859aaab34bf37d93d808 full_electra_grouping_root=ec3fb84d64e264f1396d72654b6e72a0a12db7831639fcbe07de6efd95bdd552 observer400=0x3fb84d64e264f1396d72654b6e72a0a12db7831639fcbe07de6efd95bdd552
+    packing_compaction_diagnostic_test.go:364: PACKING_CONFIG target_committee_size=2500 configured_max_committees_per_slot=64 configured_max_validators_per_committee=2048 computed_committees_per_slot=6
+    packing_compaction_diagnostic_test.go:365: PACKING_OVERLAP_FIXTURE validators=120000 block_slot=14 attestation_slot=7 committees=6 singles=15000 elapsed=5.637764898s
+time="2026-09-06T17:29:10+05:30" level=warning msg="Not connected to eth1 node, skip pending deposit insertion" package=beacon-chain/rpc/prysm/v1alpha1/validator
+    packing_compaction_diagnostic_test.go:400: PACKING_OVERLAP_SNAPSHOT elapsed=29.019493ms copied=15000 live_unaggregated=15000 live_aggregated=0 old_done=false
+    packing_compaction_diagnostic_test.go:412: PACKING_OVERLAP_COMPACTION start=29.185986ms end=2.267941639s elapsed=2.238755653s live_unaggregated=0 live_aggregated=6 old_active_at_end=true timer_fired=true
+time="2026-09-06T17:29:13+05:30" level=warning msg="Not connected to eth1 node, skip pending deposit insertion" package=beacon-chain/rpc/prysm/v1alpha1/validator
+    packing_compaction_diagnostic_test.go:426: PACKING_OVERLAP_FRESH start=2.267989909s end=2.269153735s elapsed=1.163826ms deposits=0 outputs=1 coverage=15000 signatures_valid=true old_active_at_start=true old_active_at_end=true
+    packing_compaction_diagnostic_test.go:434: PACKING_OVERLAP_OLD budget=1.662s timer=1.662235132s end=5.32593358s elapsed=5.32593358s deposits=0 outputs=0 err=context canceled bare_canceled=true old_active_at_compaction_end=true old_active_at_fresh_start=true old_active_at_fresh_end=true
+--- PASS: TestDiagnosticHistoricalPackingSnapshotOverlap (11.02s)
+PASS

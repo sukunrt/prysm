@@ -1,0 +1,774 @@
+M=-1 P=-1 G=-1 Sync Time=192182054457153 N=2 Trace=192182054357120 Mono=192182054357054 Wall=2026-09-05T20:41:02.92781406+05:30
+
+M=23 P=1 G=5070 StateTransition Time=192182128946688 GoID=5070 Running->Waiting Reason="network"
+TransitionStack=
+	internal/poll.(*FD).RawRead @ 0x511dac
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:710
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+Stack=
+	internal/poll.(*FD).RawRead @ 0x511dac
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:710
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=8 P=-1 G=-1 StateTransition Time=192182279468224 GoID=5070 Waiting->Runnable Reason=""
+
+M=9 P=0 G=-1 StateTransition Time=192182405884160 GoID=5070 Runnable->Running Reason=""
+
+M=9 P=0 G=5070 StateTransition Time=192182405886720 GoID=5070 Running->Syscall Reason=""
+TransitionStack=
+	syscall.read @ 0x4ec157
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/zsyscall_linux_amd64.go:736
+	syscall.Read @ 0xa5c110
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/syscall_unix.go:183
+	google.golang.org/grpc/internal/transport/readyreader.sysRead @ 0xa5c106
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/raw_conn_linux.go:33
+	google.golang.org/grpc/internal/transport/readyreader.NewNonBlocking.func1 @ 0xa5c0fb
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:98
+	internal/poll.(*FD).RawRead @ 0x511da7
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:707
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+Stack=
+	syscall.read @ 0x4ec157
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/zsyscall_linux_amd64.go:736
+	syscall.Read @ 0xa5c110
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/syscall_unix.go:183
+	google.golang.org/grpc/internal/transport/readyreader.sysRead @ 0xa5c106
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/raw_conn_linux.go:33
+	google.golang.org/grpc/internal/transport/readyreader.NewNonBlocking.func1 @ 0xa5c0fb
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:98
+	internal/poll.(*FD).RawRead @ 0x511da7
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:707
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=9 P=0 G=5070 StateTransition Time=192182405891008 GoID=5070 Syscall->Running Reason=""
+
+M=9 P=0 G=5070 StateTransition Time=192182405893952 GoID=5068 Waiting->Runnable Reason=""
+Stack=
+	runtime.selectnbsend @ 0x4214b9
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:785
+	google.golang.org/grpc/internal/transport.(*controlBuffer).executeAndPut @ 0xa5e9c5
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/controlbuf.go:393
+	google.golang.org/grpc/internal/transport.(*controlBuffer).put @ 0xa7a135
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/controlbuf.go:349
+	google.golang.org/grpc/internal/transport.(*http2Server).handleWindowUpdate @ 0xa7a0f5
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:918
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa78935
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:685
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=9 P=0 G=5070 Metric Time=192182405897024 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(284351088)}
+
+M=9 P=0 G=5070 Metric Time=192182405899968 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(284353200)}
+
+M=9 P=0 G=5070 Metric Time=192182405901568 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(284361072)}
+
+M=9 P=0 G=5070 Metric Time=192182405908672 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(284368560)}
+
+M=9 P=0 G=5070 StateTransition Time=192182405916672 GoID=7995 NotExist->Runnable Reason=""
+TransitionStack=
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xaeee40
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1062
+
+Stack=
+	google.golang.org/grpc.(*Server).serveStreams.func2 @ 0xaeee1c
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1076
+	google.golang.org/grpc/internal/transport.(*http2Server).operateHeaders @ 0xa78130
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:624
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa789ed
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:665
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=9 P=0 G=5070 StateTransition Time=192182405918720 GoID=5070 Running->Syscall Reason=""
+TransitionStack=
+	syscall.read @ 0x4ec157
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/zsyscall_linux_amd64.go:736
+	syscall.Read @ 0xa5c110
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/syscall_unix.go:183
+	google.golang.org/grpc/internal/transport/readyreader.sysRead @ 0xa5c106
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/raw_conn_linux.go:33
+	google.golang.org/grpc/internal/transport/readyreader.NewNonBlocking.func1 @ 0xa5c0fb
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:98
+	internal/poll.(*FD).RawRead @ 0x511da7
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:707
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+Stack=
+	syscall.read @ 0x4ec157
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/zsyscall_linux_amd64.go:736
+	syscall.Read @ 0xa5c110
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/syscall_unix.go:183
+	google.golang.org/grpc/internal/transport/readyreader.sysRead @ 0xa5c106
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/raw_conn_linux.go:33
+	google.golang.org/grpc/internal/transport/readyreader.NewNonBlocking.func1 @ 0xa5c0fb
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:98
+	internal/poll.(*FD).RawRead @ 0x511da7
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:707
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=9 P=0 G=5070 StateTransition Time=192182405919616 GoID=5070 Syscall->Running Reason=""
+
+M=9 P=0 G=5070 StateTransition Time=192182405920000 GoID=5070 Running->Waiting Reason="network"
+TransitionStack=
+	internal/poll.(*FD).RawRead @ 0x511dac
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:710
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+Stack=
+	internal/poll.(*FD).RawRead @ 0x511dac
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:710
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=9 P=0 G=-1 StateTransition Time=192182406958656 GoID=7995 Runnable->Running Reason=""
+
+M=9 P=0 G=7995 Metric Time=192182406964864 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(285042560)}
+
+M=9 P=0 G=7995 StateTransition Time=192182407002944 GoID=5560 Waiting->Runnable Reason=""
+Stack=
+	runtime.selectnbsend @ 0x4214b9
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:785
+	github.com/OffchainLabs/prysm/v7/runtime/startupdiagnostic.emit @ 0x12b7488
+		/tmp/prysm-startup-repro/runtime/startupdiagnostic/startupdiagnostic.go:65
+	github.com/OffchainLabs/prysm/v7/runtime/startupdiagnostic.Start @ 0x12b73c0
+		/tmp/prysm-startup-repro/runtime/startupdiagnostic/startupdiagnostic.go:53
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.(*Server).DomainData @ 0x1ae9ed2
+		/tmp/prysm-startup-repro/beacon-chain/rpc/prysm/v1alpha1/validator/server.go:180
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_DomainData_Handler.func1 @ 0xc4a96a
+		/tmp/prysm-startup-repro/proto/prysm/v1alpha1/validator.pb.go:6804
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.(*Service).validatorUnaryConnectionInterceptor @ 0x1bf1609
+		/tmp/prysm-startup-repro/beacon-chain/rpc/service.go:432
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6.1.1 @ 0x1bf07f3
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:25
+	github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing.UnaryServerInterceptor.func1 @ 0x1bb64b1
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/tracing/opentracing/server_interceptors.go:34
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6.1.1 @ 0x1bf07f3
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:25
+	github.com/grpc-ecosystem/go-grpc-prometheus.init.(*ServerMetrics).UnaryServerInterceptor.func3 @ 0x1bb7b16
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-prometheus@v1.2.0/server_metrics.go:107
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6.1.1 @ 0x1bf07f3
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:25
+	github.com/grpc-ecosystem/go-grpc-middleware/recovery.UnaryServerInterceptor.func1 @ 0x1bb317d
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/recovery/interceptors.go:33
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6.1.1 @ 0x1bf07f3
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:25
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6 @ 0x1bf06a9
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:34
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_DomainData_Handler @ 0xc4a7c2
+		/tmp/prysm-startup-repro/proto/prysm/v1alpha1/validator.pb.go:6806
+	google.golang.org/grpc.(*Server).processUnaryRPC @ 0xaf159b
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1430
+	google.golang.org/grpc.(*Server).handleStream @ 0xaf6745
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1856
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xaeeebe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1065
+
+
+M=9 P=0 G=7995 StateTransition Time=192182407017536 GoID=7995 Running->NotExist Reason=""
+
+M=-1 P=-1 G=-1 Sync Time=192199135820097 N=18 Trace=192199135467392 Mono=192199135467377 Wall=2026-09-05T20:41:20.008924413+05:30
+
+M=23 P=3 G=5070 StateTransition Time=192199230821184 GoID=5070 Running->Waiting Reason="network"
+TransitionStack=
+	internal/poll.(*FD).RawRead @ 0x511dac
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:710
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+Stack=
+	internal/poll.(*FD).RawRead @ 0x511dac
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:710
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=15 P=-1 G=-1 StateTransition Time=192199231802625 GoID=5070 Waiting->Runnable Reason=""
+
+M=16 P=2 G=-1 StateTransition Time=192199367188032 GoID=5070 Runnable->Running Reason=""
+
+M=16 P=2 G=5070 Metric Time=192199367193664 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(209090344)}
+
+M=16 P=2 G=5070 StateTransition Time=192199367196352 GoID=5070 Running->Syscall Reason=""
+TransitionStack=
+	syscall.read @ 0x4ec157
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/zsyscall_linux_amd64.go:736
+	syscall.Read @ 0xa5c110
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/syscall_unix.go:183
+	google.golang.org/grpc/internal/transport/readyreader.sysRead @ 0xa5c106
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/raw_conn_linux.go:33
+	google.golang.org/grpc/internal/transport/readyreader.NewNonBlocking.func1 @ 0xa5c0fb
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:98
+	internal/poll.(*FD).RawRead @ 0x511da7
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:707
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+Stack=
+	syscall.read @ 0x4ec157
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/zsyscall_linux_amd64.go:736
+	syscall.Read @ 0xa5c110
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/syscall_unix.go:183
+	google.golang.org/grpc/internal/transport/readyreader.sysRead @ 0xa5c106
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/raw_conn_linux.go:33
+	google.golang.org/grpc/internal/transport/readyreader.NewNonBlocking.func1 @ 0xa5c0fb
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:98
+	internal/poll.(*FD).RawRead @ 0x511da7
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:707
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=16 P=2 G=5070 StateTransition Time=192199367205184 GoID=5070 Syscall->Running Reason=""
+
+M=16 P=2 G=5070 Metric Time=192199367233024 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(209105320)}
+
+M=16 P=2 G=5070 StateTransition Time=192199367246464 GoID=5068 Waiting->Runnable Reason=""
+Stack=
+	runtime.selectnbsend @ 0x4214b9
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:785
+	google.golang.org/grpc/internal/transport.(*controlBuffer).executeAndPut @ 0xa5e9c5
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/controlbuf.go:393
+	google.golang.org/grpc/internal/transport.(*controlBuffer).put @ 0xa7811b
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/controlbuf.go:349
+	google.golang.org/grpc/internal/transport.(*http2Server).operateHeaders @ 0xa780b9
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:620
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa789ed
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:665
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=16 P=2 G=5070 StateTransition Time=192199367249792 GoID=57144 NotExist->Runnable Reason=""
+TransitionStack=
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xaeee40
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1062
+
+Stack=
+	google.golang.org/grpc.(*Server).serveStreams.func2 @ 0xaeee1c
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1076
+	google.golang.org/grpc/internal/transport.(*http2Server).operateHeaders @ 0xa78130
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:624
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa789ed
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:665
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=16 P=2 G=5070 Metric Time=192199367260864 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(209112728)}
+
+M=16 P=2 G=5070 StateTransition Time=192199367262464 GoID=57145 NotExist->Runnable Reason=""
+TransitionStack=
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xaeee40
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1062
+
+Stack=
+	google.golang.org/grpc.(*Server).serveStreams.func2 @ 0xaeee1c
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1076
+	google.golang.org/grpc/internal/transport.(*http2Server).operateHeaders @ 0xa78130
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:624
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa789ed
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:665
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=16 P=2 G=5070 Metric Time=192199367264192 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(209115592)}
+
+M=16 P=2 G=5070 StateTransition Time=192199367268288 GoID=57146 NotExist->Runnable Reason=""
+TransitionStack=
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xaeee40
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1062
+
+Stack=
+	google.golang.org/grpc.(*Server).serveStreams.func2 @ 0xaeee1c
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1076
+	google.golang.org/grpc/internal/transport.(*http2Server).operateHeaders @ 0xa78130
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:624
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa789ed
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:665
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=16 P=2 G=5070 Metric Time=192199367270336 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(209117544)}
+
+M=16 P=2 G=5070 Metric Time=192199367272128 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(209125736)}
+
+M=16 P=2 G=5070 StateTransition Time=192199367275776 GoID=57147 NotExist->Runnable Reason=""
+TransitionStack=
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xaeee40
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1062
+
+Stack=
+	google.golang.org/grpc.(*Server).serveStreams.func2 @ 0xaeee1c
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1076
+	google.golang.org/grpc/internal/transport.(*http2Server).operateHeaders @ 0xa78130
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:624
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa789ed
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:665
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=16 P=2 G=5070 Metric Time=192199367280000 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(209135768)}
+
+M=16 P=2 G=5070 StateTransition Time=192199367281408 GoID=57148 NotExist->Runnable Reason=""
+TransitionStack=
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xaeee40
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1062
+
+Stack=
+	google.golang.org/grpc.(*Server).serveStreams.func2 @ 0xaeee1c
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1076
+	google.golang.org/grpc/internal/transport.(*http2Server).operateHeaders @ 0xa78130
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:624
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa789ed
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:665
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=16 P=2 G=5070 StateTransition Time=192199367283136 GoID=5070 Running->Syscall Reason=""
+TransitionStack=
+	syscall.read @ 0x4ec157
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/zsyscall_linux_amd64.go:736
+	syscall.Read @ 0xa5c110
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/syscall_unix.go:183
+	google.golang.org/grpc/internal/transport/readyreader.sysRead @ 0xa5c106
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/raw_conn_linux.go:33
+	google.golang.org/grpc/internal/transport/readyreader.NewNonBlocking.func1 @ 0xa5c0fb
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:98
+	internal/poll.(*FD).RawRead @ 0x511da7
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:707
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+Stack=
+	syscall.read @ 0x4ec157
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/zsyscall_linux_amd64.go:736
+	syscall.Read @ 0xa5c110
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/syscall/syscall_unix.go:183
+	google.golang.org/grpc/internal/transport/readyreader.sysRead @ 0xa5c106
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/raw_conn_linux.go:33
+	google.golang.org/grpc/internal/transport/readyreader.NewNonBlocking.func1 @ 0xa5c0fb
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:98
+	internal/poll.(*FD).RawRead @ 0x511da7
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:707
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=16 P=2 G=5070 StateTransition Time=192199367284160 GoID=5070 Syscall->Running Reason=""
+
+M=16 P=2 G=5070 StateTransition Time=192199367285248 GoID=5070 Running->Waiting Reason="network"
+TransitionStack=
+	internal/poll.(*FD).RawRead @ 0x511dac
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:710
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+Stack=
+	internal/poll.(*FD).RawRead @ 0x511dac
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/internal/poll/fd_unix.go:710
+	net.(*rawConn).Read @ 0x70f915
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/net/rawconn.go:44
+	google.golang.org/grpc/internal/transport/readyreader.(*nonBlockingReader).ReadOnReady @ 0xa5c2c6
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:114
+	google.golang.org/grpc/internal/transport/readyreader.(*bufReadyReader).Read @ 0xa5c593
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/readyreader/ready_reader.go:221
+	io.ReadAtLeast @ 0x4dcbed
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:335
+	io.ReadFull @ 0xa4be84
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/io/io.go:354
+	golang.org/x/net/http2.readFrameHeader @ 0xa4be52
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:250
+	golang.org/x/net/http2.(*Framer).ReadFrameHeader @ 0xa4c54a
+		/home/sukun/go/pkg/mod/golang.org/x/net@v0.55.0/http2/frame.go:513
+	google.golang.org/grpc/internal/transport.(*framer).readFrame @ 0xa802a4
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http_util.go:493
+	google.golang.org/grpc/internal/transport.(*http2Server).HandleStreams @ 0xa787fe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/internal/transport/http2_server.go:638
+	google.golang.org/grpc.(*Server).serveStreams @ 0xaeec67
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1059
+	google.golang.org/grpc.(*Server).handleRawConn.func1 @ 0xaee435
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:993
+
+
+M=16 P=2 G=-1 StateTransition Time=192199368229632 GoID=57147 Runnable->Running Reason=""
+
+M=16 P=2 G=57147 StateTransition Time=192199368254848 GoID=5560 Waiting->Runnable Reason=""
+Stack=
+	runtime.selectnbsend @ 0x4214b9
+		/home/sukun/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.5.linux-amd64/src/runtime/chan.go:785
+	github.com/OffchainLabs/prysm/v7/runtime/startupdiagnostic.emit @ 0x12b7488
+		/tmp/prysm-startup-repro/runtime/startupdiagnostic/startupdiagnostic.go:65
+	github.com/OffchainLabs/prysm/v7/runtime/startupdiagnostic.Start @ 0x12b73c0
+		/tmp/prysm-startup-repro/runtime/startupdiagnostic/startupdiagnostic.go:53
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc/prysm/v1alpha1/validator.(*Server).DomainData @ 0x1ae9ed2
+		/tmp/prysm-startup-repro/beacon-chain/rpc/prysm/v1alpha1/validator/server.go:180
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_DomainData_Handler.func1 @ 0xc4a96a
+		/tmp/prysm-startup-repro/proto/prysm/v1alpha1/validator.pb.go:6804
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.(*Service).validatorUnaryConnectionInterceptor @ 0x1bf1609
+		/tmp/prysm-startup-repro/beacon-chain/rpc/service.go:432
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6.1.1 @ 0x1bf07f3
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:25
+	github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing.UnaryServerInterceptor.func1 @ 0x1bb64b1
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/tracing/opentracing/server_interceptors.go:34
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6.1.1 @ 0x1bf07f3
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:25
+	github.com/grpc-ecosystem/go-grpc-prometheus.init.(*ServerMetrics).UnaryServerInterceptor.func3 @ 0x1bb7b16
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-prometheus@v1.2.0/server_metrics.go:107
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6.1.1 @ 0x1bf07f3
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:25
+	github.com/grpc-ecosystem/go-grpc-middleware/recovery.UnaryServerInterceptor.func1 @ 0x1bb317d
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/recovery/interceptors.go:33
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6.1.1 @ 0x1bf07f3
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:25
+	github.com/OffchainLabs/prysm/v7/beacon-chain/rpc.NewService.ChainUnaryServer.func6 @ 0x1bf06a9
+		/home/sukun/go/pkg/mod/github.com/grpc-ecosystem/go-grpc-middleware@v1.2.2/chain.go:34
+	github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1._BeaconNodeValidator_DomainData_Handler @ 0xc4a7c2
+		/tmp/prysm-startup-repro/proto/prysm/v1alpha1/validator.pb.go:6806
+	google.golang.org/grpc.(*Server).processUnaryRPC @ 0xaf159b
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1430
+	google.golang.org/grpc.(*Server).handleStream @ 0xaf6745
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1856
+	google.golang.org/grpc.(*Server).serveStreams.func2.1 @ 0xaeeebe
+		/home/sukun/go/pkg/mod/google.golang.org/grpc@v1.81.1/server.go:1065
+
+
+M=16 P=2 G=57147 Metric Time=192199368264640 Name="/memory/classes/heap/objects:bytes" Value=Value{Uint64(209559936)}
+
+M=16 P=2 G=57147 StateTransition Time=192199368269632 GoID=57147 Running->NotExist Reason=""
+

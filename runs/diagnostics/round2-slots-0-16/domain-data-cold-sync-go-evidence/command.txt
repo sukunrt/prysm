@@ -1,0 +1,8 @@
+BUILD
+env GOCACHE=/tmp/prysm-diagnostic-buildcache GOMAXPROCS=4 /home/sukun/dev/go/bin/go test -p=2 -tags=develop -c -o /tmp/prysm-domain-data-cold-sync.test ./beacon-chain/blockchain > runs/diagnostics/round2-slots-0-16/domain-data-cold-sync-go-evidence/compile.log 2>&1
+
+MEMOIZED
+env GOMAXPROCS=4 PRYSM_DIAGNOSTIC_DOMAIN_ARM=memoized PRYSM_DIAGNOSTIC_DOMAIN_ARRIVAL=paced PRYSM_DIAGNOSTIC_DOMAIN_COLD_SYNC=1 PRYSM_DIAGNOSTIC_DOMAIN_OUTPUT_DIR=runs/diagnostics/round2-slots-0-16/domain-data-cold-sync-go-evidence/memoized /tmp/prysm-domain-data-cold-sync.test -test.run '^TestDiagnosticDomainDataTCPUnderCheckpointCountLoad$' -test.v -test.timeout=10m > runs/diagnostics/round2-slots-0-16/domain-data-cold-sync-go-evidence/memoized/full.test.log 2>&1
+
+SCAN
+env GOMAXPROCS=4 PRYSM_DIAGNOSTIC_DOMAIN_ARM=scan PRYSM_DIAGNOSTIC_DOMAIN_ARRIVAL=paced PRYSM_DIAGNOSTIC_DOMAIN_COLD_SYNC=1 PRYSM_DIAGNOSTIC_DOMAIN_OUTPUT_DIR=runs/diagnostics/round2-slots-0-16/domain-data-cold-sync-go-evidence/scan /tmp/prysm-domain-data-cold-sync.test -test.run '^TestDiagnosticDomainDataTCPUnderCheckpointCountLoad$' -test.v -test.timeout=10m > runs/diagnostics/round2-slots-0-16/domain-data-cold-sync-go-evidence/scan/full.test.log 2>&1

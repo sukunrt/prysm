@@ -1,5 +1,10 @@
 # Round 2 startup: state and payload deep audit
 
+The [continued payload code investigation](../round2-slots-0-16/payload-code-root-cause.md)
+adds the real HTTP-reader scheduling reproduction and error-translation
+recovery test. P2P recovery exists in code; these failures have no matching
+cached bid available to that path.
+
 This audit follows slots 5, 8, and 13 across the owner VC, BN, Engine API
 snooper, and geth logs.  Genesis is `2026-09-05T01:30:00Z`; offsets below are
 from the relevant 12-second slot start.  Source references are to exact Round 2
@@ -9,7 +14,7 @@ revision `0280403c70d88967f49d2d4c730f4c5417dabdf5`.
 
 | slot / owner | VC/BN request entry | engine boundary | terminal boundary |
 | --- | --- | --- | --- |
-| 5 / node118 | VC's first slot-tagged role output is at +10.094; BN `GetBeaconBlock` enters +10.120 (`validator.log:932-933`, `beacon.log:524`) | `engine_getPayloadV6` request +10.138, proxy response +10.142 (3 ms; `snooper-engine.log:31710-31720`) | BN reports HTTP-client timeout +12.012, then no P2P fallback +14.527 (`beacon.log:527-528`); VC deadline +12.002 (`validator.log:971`) |
+| 5 / node118 | VC's first slot-tagged role output is at +10.094; BN `GetBeaconBlock` enters +10.120 (`validator.log:932-933`, `beacon.log:524`) | `engine_getPayloadV6` request +10.138, proxy response +10.142 (3 ms; `snooper-engine.log:31710-31720`) | BN reports HTTP-client timeout +12.012, then no matching cached P2P bid +14.527 (`beacon.log:527-528`); VC deadline +12.002 (`validator.log:971`) |
 | 8 / node19 | first slot-tagged VC output +11.189; BN enters +11.191 (`validator.log:1402-1406`, `beacon.log:533`) | request +11.197, proxy response in the same millisecond (`snooper-engine.log:32102-32112`) | BN timeout +12.008 and no fallback +12.053 (`beacon.log:536,540`); VC deadline +12.003 (`validator.log:1419`) |
 | 13 / node20 | BN enters promptly at +1.317 (`beacon.log:527`), proving the block RPC was issued early | no `engine_getPayloadV6` occurs for this attempt. A separate late-slot FCU request occurs +6.085 and gets a 1 ms response; its BN completion log is delayed until +10.343 (`snooper-engine.log:32149-32178`, `beacon.log:530`) | `getParentState` exits from `ProcessSlots` cancellation +12.038 (`beacon.log:531`); VC observes deadline +12.008 (`validator.log:1221`) |
 

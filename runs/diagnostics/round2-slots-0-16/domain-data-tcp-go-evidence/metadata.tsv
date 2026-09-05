@@ -1,0 +1,7 @@
+binary	/tmp/prysm-domain-data.test
+go_version	go version go1.26.5 linux/amd64
+gomaxprocs	4
+workers	6144
+jobs	15000
+probes	32
+budget	12s

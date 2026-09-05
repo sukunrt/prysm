@@ -34,6 +34,7 @@ ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
 OUTER_TS_RE = re.compile(r"^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z)\s+(.*)$")
 PRYSM_RE = re.compile(r"^\[[^]]+\]\s+(TRACE|DEBUG|INFO|WARN|ERROR)\s+([^:]+):\s+(.*)$")
 GETH_RE = re.compile(r"^(TRACE|DEBUG|INFO|WARN|ERROR)\s+\[[^]]+\]\s+(.*)$")
+SNOOPER_LOG_RE = re.compile(r"^(TRACE|DEBUG|INFO|WARN|ERROR)\[[^]]+\]\s+(.*)$")
 FIELD_RE = re.compile(r"(?:^|\s)([A-Za-z][A-Za-z0-9_]*)=(.*?)(?=\s+[A-Za-z][A-Za-z0-9_]*=|$)")
 HEADER_RE = re.compile(r"(?:REQUEST|RESPONSE) #(\d+):")
 SNOOPER_REQUEST_RE = re.compile(r"REQUEST #(\d+):.*?\bmethod=(engine_[A-Za-z0-9_]+)")
@@ -70,6 +71,9 @@ def list_count(value: str | None) -> int | None:
 
 def sanitize_text(value: str, limit: int = 900) -> str:
     value = ANSI_RE.sub("", value).replace("\t", " ").rstrip()
+    if "authorization" in value.lower() or re.search(r"\bBearer\s+", value, re.IGNORECASE):
+        outer = OUTER_TS_RE.match(value)
+        return (outer.group(1) + " <authorization-bearing record redacted>") if outer else "<authorization-bearing record redacted>"
 
     def repl(match: re.Match[str]) -> str:
         count = list_count(match.group(2))
@@ -128,7 +132,7 @@ def parse_standard(clean: str, member: str) -> tuple[str, str, str, dict[str, st
 
 def selected_routine(member: str, message: str) -> bool:
     if member == "validator.log":
-        return message.startswith(("Schedule for epoch", "Submitted ", "Skipping payload attestation"))
+        return message.startswith(("Schedule for epoch", "Duties schedule", "Submitted ", "Skipping payload attestation"))
     if member == "beacon.log":
         needles = (
             "Connected peers", "Building block", "Finished building", "Finished proposing",
@@ -152,6 +156,7 @@ def metric_subset(fields: dict[str, str]) -> dict[str, Any]:
         "targetRoot", "targetRound", "payloadID", "payloadId", "id", "reason", "total",
         "inboundTCP", "outboundTCP", "target", "number", "hash", "txs", "withdrawals",
         "gas", "elapsed", "error", "prefix", "pubkey",
+        "method", "duration_ms", "status", "length", "type",
     )
     result: dict[str, Any] = {k: fields[k] for k in keep if k in fields}
     for key in ("pubkeys", "attesterPubkeys", "aggregatorPubkeys", "ptcPubkeys", "validatorIndices"):
@@ -332,7 +337,9 @@ def main() -> None:
                         nonroutine.append(base)
                     if selected_routine(member, message):
                         routine.append(base)
-                    if member == "validator.log" and message.startswith(("Submitted ", "Skipping payload attestation", "Schedule for epoch")):
+                    if member == "validator.log" and message.startswith((
+                        "Submitted ", "Skipping payload attestation", "Schedule for epoch", "Duties schedule",
+                    )):
                         counts = {key: list_count(fields.get(key)) for key in (
                             "pubkeys", "attesterPubkeys", "aggregatorPubkeys", "ptcPubkeys", "validatorIndices"
                         )}
@@ -348,6 +355,8 @@ def main() -> None:
                             "contributions": fields.get("contributions", ""),
                             "attester_count": fields.get("attesterCount", ""),
                             "proposer_count": fields.get("proposerCount", ""),
+                            "proposer_pubkey": fields.get("proposerPubkey", ""),
+                            "slot_in_epoch": fields.get("slotInEpoch", ""),
                             "ptc_count": fields.get("ptcCount", ""),
                             "sync_count": fields.get("syncCount", fields.get("syncCommitteeCount", "")),
                         })
@@ -365,6 +374,37 @@ def main() -> None:
                 ts = parse_ts(outer.group(1))
                 if not (WINDOW_START <= ts <= WINDOW_END):
                     continue
+                snooper_log = SNOOPER_LOG_RE.match(outer.group(2))
+                if snooper_log:
+                    severity, tail = snooper_log.groups()
+                    message, fields = fields_from(tail)
+                    request_header = SNOOPER_REQUEST_RE.search(tail)
+                    if request_header:
+                        message = "REQUEST " + request_header.group(2)
+                    elif SNOOPER_RESPONSE_RE.search(tail):
+                        message = "RESPONSE"
+                    source = anchor(archive, snooper, index + 1)
+                    key = (node, owned_slot, snooper, severity, "proxy", message)
+                    group = type_groups.setdefault(key, {
+                        "node": node, "owned_slot": owned_slot, "component": snooper,
+                        "severity": severity, "logger": "proxy", "message_type": message,
+                        "count": 0, "first_timestamp": outer.group(1), "first_anchor": source,
+                        "last_timestamp": outer.group(1), "last_anchor": source,
+                    })
+                    group["count"] += 1
+                    group["last_timestamp"] = outer.group(1)
+                    group["last_anchor"] = source
+                    if severity in {"WARN", "ERROR"}:
+                        row = {
+                            "node": node, "owned_slot": owned_slot, "activity_slot": wall_slot(ts),
+                            "wall_slot": wall_slot(ts), "timestamp": outer.group(1),
+                            "genesis_offset_ms": round((ts - GENESIS).total_seconds() * 1000, 3),
+                            "component": snooper, "severity": severity, "logger": "proxy",
+                            "message_type": message, "fields_json": json.dumps(metric_subset(fields), sort_keys=True),
+                            "source_anchor": source, "sanitized_record": sanitize_text(original),
+                        }
+                        all_standard.append(row)
+                        nonroutine.append(row)
                 req = SNOOPER_REQUEST_RE.search(outer.group(2))
                 if req:
                     number, method = int(req.group(1)), req.group(2)
@@ -402,6 +442,19 @@ def main() -> None:
     nonroutine.sort(key=lambda r: (r["timestamp"], r["node"], r["source_anchor"]))
     submissions.sort(key=lambda r: (r["timestamp"], r["node"]))
     rpcs.sort(key=lambda r: (r["request_timestamp"], r["node"], r["proxy_id"]))
+    for row in rpcs:
+        request = json.loads(row["request_summary_json"])
+        response = json.loads(row.get("response_summary_json", "{}"))
+        target: int | None = None
+        if row["method"] == "engine_forkchoiceUpdatedV4":
+            attrs = request.get("payload_attributes")
+            if isinstance(attrs, dict) and isinstance(attrs.get("timestamp"), str):
+                target = math.floor((int(attrs["timestamp"], 16) - GENESIS.timestamp()) / 12)
+        elif row["method"] == "engine_getPayloadV6":
+            value = (response.get("execution_payload") or {}).get("slotNumber")
+            if isinstance(value, str):
+                target = int(value, 16)
+        row["target_slot"] = target if target is not None else wall_slot(parse_ts(row["request_timestamp"]))
 
     event_cols = [
         "node", "owned_slot", "activity_slot", "wall_slot", "timestamp", "genesis_offset_ms",
@@ -417,10 +470,10 @@ def main() -> None:
         "node", "owned_slot", "activity_slot", "wall_slot", "timestamp", "genesis_offset_ms",
         "message_type", "explicit_slot", "duty", "submitted_since_slot_start", "submission_spread",
         "key_count", "attestations", "messages", "contributions", "attester_count", "proposer_count",
-        "ptc_count", "sync_count", "fields_json", "source_anchor",
+        "ptc_count", "sync_count", "proposer_pubkey", "slot_in_epoch", "fields_json", "source_anchor",
     ], submissions)
     write_tsv(args.output_dir / "engine_rpc_timeline.tsv", [
-        "node", "owned_slot", "proxy_id", "method", "request_timestamp", "request_genesis_offset_ms",
+        "node", "owned_slot", "target_slot", "proxy_id", "method", "request_timestamp", "request_genesis_offset_ms",
         "request_header_anchor", "request_body_anchor", "request_body_end_anchor", "request_summary_json",
         "response_timestamp", "response_genesis_offset_ms", "duration_ms", "http_status",
         "response_header_anchor", "response_body_anchor", "response_body_end_anchor", "response_summary_json",
@@ -432,6 +485,7 @@ def main() -> None:
     for owned_slot, node in sorted(OWNER_BY_SLOT.items()):
         for slot in range(-1, 21):
             selected = [r for r in all_standard if r["node"] == node and r["activity_slot"] == slot]
+            selected.sort(key=lambda r: (r["timestamp"], r["component"], r["source_anchor"]))
             vc_ok = Counter(r["message_type"] for r in selected if r["component"] == "validator.log" and r["severity"] == "INFO")
             vc_bad = Counter(r["message_type"] for r in selected if r["component"] == "validator.log" and r["severity"] in {"WARN", "ERROR"})
             bn_bad = Counter(r["message_type"] for r in selected if r["component"] == "beacon.log" and r["severity"] in {"WARN", "ERROR"})
@@ -443,7 +497,7 @@ def main() -> None:
                     metrics = json.loads(row["fields_json"])
                     if str(metrics.get("total", "")).isdigit():
                         peer_values.append(int(metrics["total"]))
-            rpc_selected = [r for r in rpcs if r["node"] == node and wall_slot(parse_ts(r["request_timestamp"])) == slot]
+            rpc_selected = [r for r in rpcs if r["node"] == node and r["target_slot"] == slot]
             activity_rows.append({
                 "node": node, "owned_slot": owned_slot, "slot": slot,
                 "event_count": len(selected),
@@ -466,9 +520,131 @@ def main() -> None:
         "execution_counts", "engine_fcu_count", "engine_getpayload_count", "peer_min", "peer_max",
     ], activity_rows)
 
+    # Match the four payload requests whose BN later logged the literal timeout.
+    timeout_rows: list[dict[str, Any]] = []
+    for owned_slot, node in ((5, 118), (6, 83), (8, 19), (9, 107)):
+        getpayload = [r for r in rpcs if r["node"] == node and r["method"] == "engine_getPayloadV6"]
+        if len(getpayload) != 1:
+            raise RuntimeError(f"node {node}: expected one getPayloadV6, found {len(getpayload)}")
+        rpc = getpayload[0]
+        timeout = [r for r in nonroutine if r["node"] == node and r["message_type"] == "Could not get local payload, falling back to P2P bid"]
+        if len(timeout) != 1:
+            raise RuntimeError(f"node {node}: expected one local-payload timeout, found {len(timeout)}")
+        timeout_ts = parse_ts(timeout[0]["timestamp"])
+        request_ts = parse_ts(rpc["request_timestamp"])
+        response_ts = parse_ts(rpc["response_timestamp"])
+        timeout_rows.append({
+            "node": node, "slot": owned_slot, "proxy_id": rpc["proxy_id"],
+            "payload_id": json.loads(rpc["request_summary_json"])["payload_id"],
+            "request_timestamp": rpc["request_timestamp"], "response_timestamp": rpc["response_timestamp"],
+            "proxy_duration_ms": rpc["duration_ms"], "timeout_log_timestamp": timeout[0]["timestamp"],
+            "request_to_response_ms": round((response_ts - request_ts).total_seconds() * 1000, 3),
+            "response_to_timeout_log_ms": round((timeout_ts - response_ts).total_seconds() * 1000, 3),
+            "request_to_timeout_log_ms": round((timeout_ts - request_ts).total_seconds() * 1000, 3),
+            "request_anchor": rpc["request_header_anchor"], "response_anchor": rpc["response_header_anchor"],
+            "timeout_anchor": timeout[0]["source_anchor"],
+            "source_timeout_ms": 300,
+            "source_interpretation": "GetPayload creates a 300ms context deadline and passes it to rpcClient.CallContext",
+        })
+    write_tsv(args.output_dir / "getpayload_timeout_discriminators.tsv", [
+        "node", "slot", "proxy_id", "payload_id", "request_timestamp", "response_timestamp", "proxy_duration_ms",
+        "timeout_log_timestamp", "request_to_response_ms", "response_to_timeout_log_ms", "request_to_timeout_log_ms",
+        "request_anchor", "response_anchor", "timeout_anchor", "source_timeout_ms", "source_interpretation",
+    ], timeout_rows)
+
+    # Summarize progress around each owner's proposal without reproducing every repetitive error.
+    neighborhood_rows: list[dict[str, Any]] = []
+    terminal_messages = {
+        "Failed to sign randao reveal", "Failed to request block from beacon node", "Could not build block",
+        "Fail to build block: could not get parent state", "Finished building block", "Submitted new block",
+    }
+    for owned_slot, node in sorted(OWNER_BY_SLOT.items()):
+        node_rows = [r for r in all_standard if r["node"] == node]
+        owned_rows = [r for r in node_rows if r["activity_slot"] == owned_slot]
+        terminal = [r for r in owned_rows if r["message_type"] in terminal_messages]
+        successes = [r for r in node_rows if r["message_type"].startswith("Submitted ")]
+        slot_end = GENESIS + dt.timedelta(seconds=(owned_slot + 1) * 12)
+        after = [r for r in successes if parse_ts(r["timestamp"]) >= slot_end]
+        def counts_for(target: int, severity: str | None = None) -> Counter[str]:
+            return Counter(
+                r["message_type"] for r in node_rows
+                if r["activity_slot"] == target and r["component"] == "validator.log"
+                and (severity is None or r["severity"] == severity)
+            )
+        neighborhood_rows.append({
+            "node": node, "owned_slot": owned_slot,
+            "previous_slot_validator_info": json.dumps(counts_for(owned_slot - 1, "INFO"), sort_keys=True, separators=(",", ":")),
+            "owned_slot_validator_info": json.dumps(counts_for(owned_slot, "INFO"), sort_keys=True, separators=(",", ":")),
+            "owned_slot_validator_warn_error": json.dumps(Counter(
+                r["message_type"] for r in owned_rows if r["component"] == "validator.log" and r["severity"] in {"WARN", "ERROR"}
+            ), sort_keys=True, separators=(",", ":")),
+            "next_slot_validator_info": json.dumps(counts_for(owned_slot + 1, "INFO"), sort_keys=True, separators=(",", ":")),
+            "terminal_events": " | ".join(f'{r["message_type"]}@{r["timestamp"]}' for r in terminal),
+            "terminal_anchors": " | ".join(r["source_anchor"] for r in terminal),
+            "first_submission_after_slot_end": after[0]["timestamp"] if after else "",
+            "first_submission_after_slot_end_type": after[0]["message_type"] if after else "",
+            "first_submission_after_slot_end_anchor": after[0]["source_anchor"] if after else "",
+        })
+    write_tsv(args.output_dir / "owner_failure_neighborhood.tsv", [
+        "node", "owned_slot", "previous_slot_validator_info", "owned_slot_validator_info",
+        "owned_slot_validator_warn_error", "next_slot_validator_info", "terminal_events", "terminal_anchors",
+        "first_submission_after_slot_end", "first_submission_after_slot_end_type", "first_submission_after_slot_end_anchor",
+    ], neighborhood_rows)
+
+    excerpt_lines = [
+        "# Sanitized owner-local early-timeline excerpts", "",
+        f"Window: `{WINDOW_START.isoformat()}` through `{WINDOW_END.isoformat()}` (inclusive).",
+        "Long validator-key and committee lists are replaced by item counts. Engine API HTTP headers are never emitted.", "",
+    ]
+    proposal_messages = {
+        "Failed to sign randao reveal", "Failed to request block from beacon node", "Building block",
+        "Could not get local payload, falling back to P2P bid", "Could not build block",
+        "Fail to build block: could not get parent state", "Chose payload bid", "Finished building block",
+        "Submitted new block", "Forkchoice updated with payload attributes for proposal",
+    }
+    for owned_slot, node in sorted(OWNER_BY_SLOT.items()):
+        excerpt_lines.extend((f"## Slot {owned_slot}: node {node}", ""))
+        node_rows = [r for r in all_standard if r["node"] == node]
+        schedule = [r for r in node_rows if r["message_type"] == "Duties schedule" and explicit_slot(json.loads(r["fields_json"])) == owned_slot]
+        if schedule:
+            excerpt_lines.extend((f"- Schedule `{schedule[0]['source_anchor']}`", f"  `{schedule[0]['sanitized_record']}`"))
+        owned = [r for r in node_rows if r["activity_slot"] == owned_slot]
+        for row in owned:
+            if row["message_type"] in proposal_messages or row["message_type"].startswith("Submitted "):
+                excerpt_lines.extend((f"- `{row['source_anchor']}`", f"  `{row['sanitized_record']}`"))
+        grouped_errors: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for row in owned:
+            if row["severity"] in {"WARN", "ERROR"} and row["message_type"] not in proposal_messages:
+                grouped_errors[row["message_type"]].append(row)
+        if grouped_errors:
+            excerpt_lines.append("- Other owned-slot nonroutine records (exact count and boundary anchors):")
+            for message, records in sorted(grouped_errors.items()):
+                excerpt_lines.append(
+                    f"  - `{message}`: {len(records)}; first `{records[0]['source_anchor']}`; last `{records[-1]['source_anchor']}`"
+                )
+        after_boundary = [
+            r for r in node_rows if r["message_type"].startswith("Submitted ")
+            and parse_ts(r["timestamp"]) >= GENESIS + dt.timedelta(seconds=(owned_slot + 1) * 12)
+        ]
+        if after_boundary:
+            excerpt_lines.extend((
+                f"- First later successful role output `{after_boundary[0]['source_anchor']}`",
+                f"  `{after_boundary[0]['sanitized_record']}`",
+            ))
+        owned_rpcs = [r for r in rpcs if r["node"] == node and r["target_slot"] == owned_slot]
+        for rpc in owned_rpcs:
+            excerpt_lines.extend((
+                f"- Engine `{rpc['method']}` proxy #{rpc['proxy_id']}: request `{rpc['request_header_anchor']}` / body `{rpc['request_body_anchor']}`; response `{rpc['response_header_anchor']}` / body `{rpc['response_body_anchor']}`; proxy duration `{rpc['duration_ms']} ms`.",
+                f"  Request body fields: `{rpc['request_summary_json']}`",
+                f"  Response body fields: `{rpc['response_summary_json']}`",
+            ))
+        excerpt_lines.append("")
+    (args.output_dir / "owner_timeline_excerpts.md").write_text("\n".join(excerpt_lines) + "\n")
+
     print(json.dumps({
         "archives": len(archive_rows), "message_type_groups": len(type_rows), "timeline_rows": len(timeline),
         "nonroutine_rows": len(nonroutine), "validator_progress_rows": len(submissions), "engine_rpc_rows": len(rpcs),
+        "timeout_discriminator_rows": len(timeout_rows), "owner_neighborhood_rows": len(neighborhood_rows),
     }, sort_keys=True))
 
 

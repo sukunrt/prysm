@@ -1,0 +1,593 @@
+{
+  "scope": {
+    "datasource": "devnets",
+    "selector": {
+      "network": "glamsterdam-devnet-9",
+      "ip_address": "143.198.65.112",
+      "job": "node"
+    },
+    "prometheus_instance_label": "glamsterdam-devnet-9-lighthouse-reth-6",
+    "identity_note": "The instance/client labels are stale; these are physical-host node-exporter metrics selected by the owner node's public IP.",
+    "evaluation": "2026-09-05T01:54:00Z",
+    "range": "6m"
+  },
+  "events": {
+    "slot96_fast_build": [
+      "2026-09-05T01:49:12.145581Z",
+      "2026-09-05T01:49:13.014523Z"
+    ],
+    "slot110_slow_build": [
+      "2026-09-05T01:52:00.016984Z",
+      "2026-09-05T01:52:03.409893Z"
+    ],
+    "xatu_queue_full": "2026-09-05T01:52:00.307Z",
+    "prysm_sse_slow_reader": "2026-09-05T01:52:01.725Z"
+  },
+  "instant_samples": {
+    "node_load1": [
+      {
+        "timestamp": "2026-09-05T01:48:29.399Z",
+        "value": 5.91
+      },
+      {
+        "timestamp": "2026-09-05T01:48:59.399Z",
+        "value": 4.44
+      },
+      {
+        "timestamp": "2026-09-05T01:49:29.399Z",
+        "value": 4.47
+      },
+      {
+        "timestamp": "2026-09-05T01:49:59.399Z",
+        "value": 3.93
+      },
+      {
+        "timestamp": "2026-09-05T01:50:29.399Z",
+        "value": 4.32
+      },
+      {
+        "timestamp": "2026-09-05T01:50:59.399Z",
+        "value": 3.49
+      },
+      {
+        "timestamp": "2026-09-05T01:51:29.399Z",
+        "value": 3.79
+      },
+      {
+        "timestamp": "2026-09-05T01:51:59.399Z",
+        "value": 3.07
+      },
+      {
+        "timestamp": "2026-09-05T01:52:29.399Z",
+        "value": 4.16
+      },
+      {
+        "timestamp": "2026-09-05T01:52:59.399Z",
+        "value": 4.02
+      },
+      {
+        "timestamp": "2026-09-05T01:53:29.399Z",
+        "value": 4.07
+      },
+      {
+        "timestamp": "2026-09-05T01:53:59.399Z",
+        "value": 3.4
+      }
+    ],
+    "node_load15": [
+      {
+        "timestamp": "2026-09-05T01:48:29.399Z",
+        "value": 3.18
+      },
+      {
+        "timestamp": "2026-09-05T01:48:59.399Z",
+        "value": 3.15
+      },
+      {
+        "timestamp": "2026-09-05T01:49:29.399Z",
+        "value": 3.17
+      },
+      {
+        "timestamp": "2026-09-05T01:49:59.399Z",
+        "value": 3.17
+      },
+      {
+        "timestamp": "2026-09-05T01:50:29.399Z",
+        "value": 3.22
+      },
+      {
+        "timestamp": "2026-09-05T01:50:59.399Z",
+        "value": 3.18
+      },
+      {
+        "timestamp": "2026-09-05T01:51:29.399Z",
+        "value": 3.2
+      },
+      {
+        "timestamp": "2026-09-05T01:51:59.399Z",
+        "value": 3.16
+      },
+      {
+        "timestamp": "2026-09-05T01:52:29.399Z",
+        "value": 3.23
+      },
+      {
+        "timestamp": "2026-09-05T01:52:59.399Z",
+        "value": 3.24
+      },
+      {
+        "timestamp": "2026-09-05T01:53:29.399Z",
+        "value": 3.25
+      },
+      {
+        "timestamp": "2026-09-05T01:53:59.399Z",
+        "value": 3.21
+      }
+    ],
+    "node_load5": [
+      {
+        "timestamp": "2026-09-05T01:48:29.399Z",
+        "value": 4.53
+      },
+      {
+        "timestamp": "2026-09-05T01:48:59.399Z",
+        "value": 4.29
+      },
+      {
+        "timestamp": "2026-09-05T01:49:29.399Z",
+        "value": 4.27
+      },
+      {
+        "timestamp": "2026-09-05T01:49:59.399Z",
+        "value": 4.15
+      },
+      {
+        "timestamp": "2026-09-05T01:50:29.399Z",
+        "value": 4.21
+      },
+      {
+        "timestamp": "2026-09-05T01:50:59.399Z",
+        "value": 4.0
+      },
+      {
+        "timestamp": "2026-09-05T01:51:29.399Z",
+        "value": 3.99
+      },
+      {
+        "timestamp": "2026-09-05T01:51:59.399Z",
+        "value": 3.79
+      },
+      {
+        "timestamp": "2026-09-05T01:52:29.399Z",
+        "value": 3.94
+      },
+      {
+        "timestamp": "2026-09-05T01:52:59.399Z",
+        "value": 3.92
+      },
+      {
+        "timestamp": "2026-09-05T01:53:29.399Z",
+        "value": 3.89
+      },
+      {
+        "timestamp": "2026-09-05T01:53:59.399Z",
+        "value": 3.73
+      }
+    ],
+    "node_memory_MemAvailable_bytes": [
+      {
+        "timestamp": "2026-09-05T01:48:29.399Z",
+        "value": 26166841344.0
+      },
+      {
+        "timestamp": "2026-09-05T01:48:59.399Z",
+        "value": 26175250432.0
+      },
+      {
+        "timestamp": "2026-09-05T01:49:29.399Z",
+        "value": 25727164416.0
+      },
+      {
+        "timestamp": "2026-09-05T01:49:59.399Z",
+        "value": 25766428672.0
+      },
+      {
+        "timestamp": "2026-09-05T01:50:29.399Z",
+        "value": 25852510208.0
+      },
+      {
+        "timestamp": "2026-09-05T01:50:59.399Z",
+        "value": 25878687744.0
+      },
+      {
+        "timestamp": "2026-09-05T01:51:29.399Z",
+        "value": 25498664960.0
+      },
+      {
+        "timestamp": "2026-09-05T01:51:59.399Z",
+        "value": 25691570176.0
+      },
+      {
+        "timestamp": "2026-09-05T01:52:29.399Z",
+        "value": 25619857408.0
+      },
+      {
+        "timestamp": "2026-09-05T01:52:59.399Z",
+        "value": 25637806080.0
+      },
+      {
+        "timestamp": "2026-09-05T01:53:29.399Z",
+        "value": 25757786112.0
+      },
+      {
+        "timestamp": "2026-09-05T01:53:59.399Z",
+        "value": 25583570944.0
+      }
+    ]
+  },
+  "interval_rates": [
+    {
+      "start": "2026-09-05T01:48:29.399Z",
+      "end": "2026-09-05T01:48:59.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 6.159666666667908,
+        "iowait": 0.001000000000000038,
+        "irq": 0.0,
+        "nice": 0.0013333333333333326,
+        "softirq": 0.1116666666666788,
+        "steal": 0.008333333333333333,
+        "system": 0.10466666666661695,
+        "user": 1.5550000000000488
+      },
+      "observed_cpu_seconds_per_second": 7.94166666666792,
+      "cpu_busy_cores": 1.7820000000000116,
+      "cpu_busy_percent": 22.4386149003114,
+      "cpu_executing_cores": 1.772666666666678,
+      "cpu_psi_waiting_fraction": 0.05652179999997316,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.00015729999999981222,
+      "io_psi_stalled_fraction": 0.0001283333333333303,
+      "major_faults_per_second": 0.23333333333333334,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0,
+      "vda_write_mib_per_second": 0.15403645833333332,
+      "vda_reads_per_second": 0.0,
+      "vda_writes_per_second": 25.5,
+      "vda_busy_fraction": 0.0009333333333340003,
+      "vda_weighted_io_seconds_per_second": 0.02626666666668219
+    },
+    {
+      "start": "2026-09-05T01:48:59.399Z",
+      "end": "2026-09-05T01:49:29.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.342333333335895,
+        "iowait": 0.001333333333333068,
+        "irq": 0.0,
+        "nice": 0.00166666666666666,
+        "softirq": 0.14233333333334788,
+        "steal": 0.024333333333333946,
+        "system": 0.15333333333331517,
+        "user": 2.2723333333330324
+      },
+      "observed_cpu_seconds_per_second": 7.937666666668924,
+      "cpu_busy_cores": 2.595333333333029,
+      "cpu_busy_percent": 32.69642632174389,
+      "cpu_executing_cores": 2.5696666666663623,
+      "cpu_psi_waiting_fraction": 0.1124058333333475,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.000420866666666105,
+      "io_psi_stalled_fraction": 0.00024906666666690093,
+      "major_faults_per_second": 0.0,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0,
+      "vda_write_mib_per_second": 0.22643229166666667,
+      "vda_reads_per_second": 0.0,
+      "vda_writes_per_second": 36.666666666666664,
+      "vda_busy_fraction": 0.0033333333333378807,
+      "vda_weighted_io_seconds_per_second": 0.035300000000036864
+    },
+    {
+      "start": "2026-09-05T01:49:29.399Z",
+      "end": "2026-09-05T01:49:59.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.56333333333217,
+        "iowait": 0.003000000000001061,
+        "irq": 0.0,
+        "nice": 0.0020000000000000018,
+        "softirq": 0.12333333333332727,
+        "steal": 0.08366666666665878,
+        "system": 0.12666666666670304,
+        "user": 2.028666666666929
+      },
+      "observed_cpu_seconds_per_second": 7.930666666665789,
+      "cpu_busy_cores": 2.367333333333619,
+      "cpu_busy_percent": 29.850369872232864,
+      "cpu_executing_cores": 2.2806666666669595,
+      "cpu_psi_waiting_fraction": 0.08322703333336297,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.0008052666666666634,
+      "io_psi_stalled_fraction": 0.0006276333333327481,
+      "major_faults_per_second": 0.0,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0,
+      "vda_write_mib_per_second": 0.1890625,
+      "vda_reads_per_second": 0.0,
+      "vda_writes_per_second": 30.933333333333334,
+      "vda_busy_fraction": 0.004266666666664302,
+      "vda_weighted_io_seconds_per_second": 0.04809999999997672
+    },
+    {
+      "start": "2026-09-05T01:49:59.399Z",
+      "end": "2026-09-05T01:50:29.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.066333333334964,
+        "iowait": 0.0019999999999991283,
+        "irq": 0.0,
+        "nice": 0.001,
+        "softirq": 0.16466666666664576,
+        "steal": 0.18033333333334364,
+        "system": 0.16133333333327757,
+        "user": 2.3996666666663566
+      },
+      "observed_cpu_seconds_per_second": 7.975333333334587,
+      "cpu_busy_cores": 2.9089999999996223,
+      "cpu_busy_percent": 36.47496447378373,
+      "cpu_executing_cores": 2.7266666666662798,
+      "cpu_psi_waiting_fraction": 0.10978270000002037,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.00042593333333419047,
+      "io_psi_stalled_fraction": 0.0002902333333338447,
+      "major_faults_per_second": 0.06666666666666667,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0,
+      "vda_write_mib_per_second": 0.21328125,
+      "vda_reads_per_second": 0.0,
+      "vda_writes_per_second": 37.4,
+      "vda_busy_fraction": 0.003200000000000121,
+      "vda_weighted_io_seconds_per_second": 0.03830000000004172
+    },
+    {
+      "start": "2026-09-05T01:50:29.399Z",
+      "end": "2026-09-05T01:50:59.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.823666666663485,
+        "iowait": 0.0006666666666670077,
+        "irq": 0.0,
+        "nice": 0.001,
+        "softirq": 0.10800000000003061,
+        "steal": 0.01999999999998181,
+        "system": 0.10633333333338064,
+        "user": 1.8800000000000483
+      },
+      "observed_cpu_seconds_per_second": 7.939666666663593,
+      "cpu_busy_cores": 2.116000000000108,
+      "cpu_busy_percent": 26.650992904835558,
+      "cpu_executing_cores": 2.0953333333334596,
+      "cpu_psi_waiting_fraction": 0.06883313333334323,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.0004200999999994792,
+      "io_psi_stalled_fraction": 0.00012596666666600715,
+      "major_faults_per_second": 0.0,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0,
+      "vda_write_mib_per_second": 0.144140625,
+      "vda_reads_per_second": 0.0,
+      "vda_writes_per_second": 25.8,
+      "vda_busy_fraction": 0.002266666666666121,
+      "vda_weighted_io_seconds_per_second": 0.028866666666605548
+    },
+    {
+      "start": "2026-09-05T01:50:59.399Z",
+      "end": "2026-09-05T01:51:29.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.339666666666744,
+        "iowait": 0.0003333333333330302,
+        "irq": 0.0,
+        "nice": 0.0016666666666666603,
+        "softirq": 0.17833333333326964,
+        "steal": 0.025333333333355766,
+        "system": 0.16699999999997697,
+        "user": 2.216666666666667
+      },
+      "observed_cpu_seconds_per_second": 7.929000000000013,
+      "cpu_busy_cores": 2.5893333333332684,
+      "cpu_busy_percent": 32.65649304241726,
+      "cpu_executing_cores": 2.56366666666658,
+      "cpu_psi_waiting_fraction": 0.1036568666666426,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.00018163333333329017,
+      "io_psi_stalled_fraction": 0.00010716666666705047,
+      "major_faults_per_second": 0.0,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0,
+      "vda_write_mib_per_second": 0.12174479166666667,
+      "vda_reads_per_second": 0.0,
+      "vda_writes_per_second": 19.933333333333334,
+      "vda_busy_fraction": 0.0012000000000019402,
+      "vda_weighted_io_seconds_per_second": 0.014833333333323631
+    },
+    {
+      "start": "2026-09-05T01:51:29.399Z",
+      "end": "2026-09-05T01:51:59.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.675000000003881,
+        "iowait": 0.0013333333333340155,
+        "irq": 0.0,
+        "nice": 0.000999999999999993,
+        "softirq": 0.12166666666672275,
+        "steal": 0.03533333333333152,
+        "system": 0.11000000000000605,
+        "user": 1.9943333333336342
+      },
+      "observed_cpu_seconds_per_second": 7.93866666667091,
+      "cpu_busy_cores": 2.263666666667029,
+      "cpu_busy_percent": 28.51444407120195,
+      "cpu_executing_cores": 2.227000000000363,
+      "cpu_psi_waiting_fraction": 0.07613226666665772,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.00024270000000020293,
+      "io_psi_stalled_fraction": 0.0001527000000000574,
+      "major_faults_per_second": 0.0,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0,
+      "vda_write_mib_per_second": 0.19921875,
+      "vda_reads_per_second": 0.0,
+      "vda_writes_per_second": 34.03333333333333,
+      "vda_busy_fraction": 0.0017333333333302411,
+      "vda_weighted_io_seconds_per_second": 0.03243333333339251
+    },
+    {
+      "start": "2026-09-05T01:51:59.399Z",
+      "end": "2026-09-05T01:52:29.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.219666666665581,
+        "iowait": 0.002666666666665189,
+        "irq": 0.0,
+        "nice": 0.010333333333333333,
+        "softirq": 0.1586666666666209,
+        "steal": 0.011333333333338184,
+        "system": 0.16199999999998907,
+        "user": 2.3666666666664242
+      },
+      "observed_cpu_seconds_per_second": 7.931333333331952,
+      "cpu_busy_cores": 2.711666666666371,
+      "cpu_busy_percent": 34.18929141800677,
+      "cpu_executing_cores": 2.6976666666663673,
+      "cpu_psi_waiting_fraction": 0.09868629999994785,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.00032029999999944416,
+      "io_psi_stalled_fraction": 0.00022403333333329556,
+      "major_faults_per_second": 0.03333333333333333,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.07447916666666667,
+      "vda_write_mib_per_second": 0.2930989583333333,
+      "vda_reads_per_second": 4.833333333333333,
+      "vda_writes_per_second": 26.633333333333333,
+      "vda_busy_fraction": 0.0033333333333378807,
+      "vda_weighted_io_seconds_per_second": 0.024699999999938882
+    },
+    {
+      "start": "2026-09-05T01:52:29.399Z",
+      "end": "2026-09-05T01:52:59.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.814999999998449,
+        "iowait": 0.0003333333333330302,
+        "irq": 0.0,
+        "nice": 0.0006666666666666598,
+        "softirq": 0.11366666666669213,
+        "steal": 0.018666666666664847,
+        "system": 0.1113333333333685,
+        "user": 1.865333333333062
+      },
+      "observed_cpu_seconds_per_second": 7.924999999998236,
+      "cpu_busy_cores": 2.109999999999787,
+      "cpu_busy_percent": 26.62460567823668,
+      "cpu_executing_cores": 2.0909999999997892,
+      "cpu_psi_waiting_fraction": 0.07013306666667632,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.00013186666666721673,
+      "io_psi_stalled_fraction": 0.00010193333333366658,
+      "major_faults_per_second": 0.06666666666666667,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0036458333333333334,
+      "vda_write_mib_per_second": 0.08138020833333333,
+      "vda_reads_per_second": 0.13333333333333333,
+      "vda_writes_per_second": 13.133333333333333,
+      "vda_busy_fraction": 0.0007999999999962408,
+      "vda_weighted_io_seconds_per_second": 0.010666666666778232
+    },
+    {
+      "start": "2026-09-05T01:52:59.399Z",
+      "end": "2026-09-05T01:53:29.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.439666666666744,
+        "iowait": 0.0013333333333349628,
+        "irq": 0.0,
+        "nice": 0.0010000000000000083,
+        "softirq": 0.1623333333333373,
+        "steal": 0.021000000000003637,
+        "system": 0.14099999999995513,
+        "user": 2.1780000000003685
+      },
+      "observed_cpu_seconds_per_second": 7.944333333333743,
+      "cpu_busy_cores": 2.504666666666999,
+      "cpu_busy_percent": 31.52771367431968,
+      "cpu_executing_cores": 2.482333333333661,
+      "cpu_psi_waiting_fraction": 0.09609906666676883,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 0.00016056666666675786,
+      "io_psi_stalled_fraction": 0.00010016666666672336,
+      "major_faults_per_second": 0.0,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0,
+      "vda_write_mib_per_second": 0.09466145833333334,
+      "vda_reads_per_second": 0.0,
+      "vda_writes_per_second": 14.366666666666667,
+      "vda_busy_fraction": 0.0017333333333378201,
+      "vda_weighted_io_seconds_per_second": 0.01129999999999806
+    },
+    {
+      "start": "2026-09-05T01:53:29.399Z",
+      "end": "2026-09-05T01:53:59.399Z",
+      "seconds": 30.0,
+      "cpu_count": 8,
+      "cpu_cores_by_mode": {
+        "idle": 5.795999999998214,
+        "iowait": 0.0003333333333330302,
+        "irq": 0.0,
+        "nice": 0.0013333333333333346,
+        "softirq": 0.12033333333334514,
+        "steal": 0.035999999999982414,
+        "system": 0.11366666666669213,
+        "user": 1.8643333333335856
+      },
+      "observed_cpu_seconds_per_second": 7.931999999998486,
+      "cpu_busy_cores": 2.136000000000272,
+      "cpu_busy_percent": 26.928895612716587,
+      "cpu_executing_cores": 2.0996666666669563,
+      "cpu_psi_waiting_fraction": 0.07360526666658794,
+      "memory_psi_waiting_fraction": 0.0,
+      "memory_psi_stalled_fraction": 0.0,
+      "io_psi_waiting_fraction": 7.743333333299536e-05,
+      "io_psi_stalled_fraction": 5.9399999999717085e-05,
+      "major_faults_per_second": 0.0,
+      "oom_kills_per_second": 0.0,
+      "vda_read_mib_per_second": 0.0,
+      "vda_write_mib_per_second": 0.040625,
+      "vda_reads_per_second": 0.0,
+      "vda_writes_per_second": 5.266666666666667,
+      "vda_busy_fraction": 0.0005333333333283008,
+      "vda_weighted_io_seconds_per_second": 0.003733333333245052
+    }
+  ]
+}

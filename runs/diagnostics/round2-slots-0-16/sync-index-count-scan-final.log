@@ -1,0 +1,71 @@
+=== RUN   TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad
+    sync_index_count_load_diagnostic_test.go:261: SYNC_INDEX_PHASE arm=scan phase=work_released fixture_elapsed=2.140063776s workers=256 jobs=4096 probes=32
+    sync_index_count_load_diagnostic_test.go:341: SYNC_INDEX_SLOW_STACK arm=scan call=1 threshold=25ms
+        checkpoint_clean_waiters=243 checkpoint_lock_waiters=10 active_count_stacks=3 sync_stacks=1
+        goroutine 4775 [chan send]:
+        github.com/OffchainLabs/prysm/v7/async.Clean()
+        	/home/sukun/dev/prysm2/async/multilock.go:94 +0x4e
+        github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock(0xd2854070300)
+        	/home/sukun/dev/prysm2/async/multilock.go:66 +0x4a
+        github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getSyncCommitteeHeadState(0xd2853e2b380, {0x2809798, 0x42fb2e0}, 0x1)
+        	/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:148 +0x51d
+        github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).headCurrentSyncCommitteeIndices(0x1?, {0x2809798?, 0x42fb2e0?}, 0x0, 0x0?)
+        	/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:80 +0x29
+        github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).HeadSyncCommitteeIndices(0xd2853e2b380, {0x2809798, 0x42fb2e0}, 0x0, 0x1)
+        	/home/sukun/dev/prysm2/beacon-chain/blockchain/head_sync_committee_info.go:67 +0x1aa
+        github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func4()
+        	/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:245 +0xbd
+        created by github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad in goroutine 275
+        	/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:239 +0xf29
+        checkpoint_clean_sample:
+        goroutine 4560 [chan send]:
+        github.com/OffchainLabs/prysm/v7/async.Clean()
+        	/home/sukun/dev/prysm2/async/multilock.go:94 +0x4e
+        github.com/OffchainLabs/prysm/v7/async.(*Lock).Unlock(0xd285aaa4580)
+        	/home/sukun/dev/prysm2/async/multilock.go:66 +0x4a
+        github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).getAttPreState(0xd2853e2b380, {0x2809798, 0x42fb2e0}, 0xd285428cff0)
+        	/home/sukun/dev/prysm2/beacon-chain/blockchain/process_attestation_helpers.go:120 +0xf30
+        github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.(*Service).AttestationTargetState(0xd2853e2b380, {0x2809798, 0x42fb2e0}, 0xd285428cff0)
+        	/home/sukun/dev/prysm2/beacon-chain/blockchain/receive_attestation.go:52 +0x11c
+        github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad.func3()
+        	/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:210 +0x110
+        created by github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain.TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad in goroutine 275
+        	/home/sukun/dev/prysm2/beacon-chain/blockchain/sync_index_count_load_diagnostic_test.go:203 +0xcf8
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":1,"handler_duration_us":347088,"observer_duration_us":347304,"jobs_at_start":0,"jobs_at_end":165,"active_scans_at_start":1,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":true,"stack_captured":true}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":2,"handler_duration_us":520981,"observer_duration_us":520989,"jobs_at_start":165,"jobs_at_end":418,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":3,"handler_duration_us":528012,"observer_duration_us":528024,"jobs_at_start":418,"jobs_at_end":671,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":4,"handler_duration_us":532290,"observer_duration_us":532298,"jobs_at_start":671,"jobs_at_end":924,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":5,"handler_duration_us":531703,"observer_duration_us":531716,"jobs_at_start":924,"jobs_at_end":1178,"active_scans_at_start":3,"active_scans_at_end":2,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":6,"handler_duration_us":538090,"observer_duration_us":538098,"jobs_at_start":1178,"jobs_at_end":1431,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":7,"handler_duration_us":542254,"observer_duration_us":542262,"jobs_at_start":1431,"jobs_at_end":1684,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":8,"handler_duration_us":539325,"observer_duration_us":539336,"jobs_at_start":1684,"jobs_at_end":1937,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":9,"handler_duration_us":540567,"observer_duration_us":540580,"jobs_at_start":1937,"jobs_at_end":2190,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":10,"handler_duration_us":534733,"observer_duration_us":534741,"jobs_at_start":2190,"jobs_at_end":2443,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":11,"handler_duration_us":532615,"observer_duration_us":532623,"jobs_at_start":2443,"jobs_at_end":2696,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":12,"handler_duration_us":536550,"observer_duration_us":536568,"jobs_at_start":2696,"jobs_at_end":2949,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":13,"handler_duration_us":536383,"observer_duration_us":536412,"jobs_at_start":2949,"jobs_at_end":3202,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":14,"handler_duration_us":542744,"observer_duration_us":542752,"jobs_at_start":3202,"jobs_at_end":3455,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":15,"handler_duration_us":545171,"observer_duration_us":545182,"jobs_at_start":3455,"jobs_at_end":3708,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":16,"handler_duration_us":537420,"observer_duration_us":537426,"jobs_at_start":3708,"jobs_at_end":3961,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":17,"handler_duration_us":285492,"observer_duration_us":285499,"jobs_at_start":3961,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":18,"handler_duration_us":13,"observer_duration_us":26,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":19,"handler_duration_us":3,"observer_duration_us":4,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":20,"handler_duration_us":2,"observer_duration_us":3,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":21,"handler_duration_us":2,"observer_duration_us":3,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":22,"handler_duration_us":2,"observer_duration_us":3,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":23,"handler_duration_us":2,"observer_duration_us":3,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":24,"handler_duration_us":2,"observer_duration_us":3,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":25,"handler_duration_us":1,"observer_duration_us":2,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":26,"handler_duration_us":2,"observer_duration_us":2,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":27,"handler_duration_us":1,"observer_duration_us":2,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":28,"handler_duration_us":1,"observer_duration_us":2,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":29,"handler_duration_us":1,"observer_duration_us":2,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":30,"handler_duration_us":2,"observer_duration_us":3,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":31,"handler_duration_us":10,"observer_duration_us":11,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:350: SYNC_INDEX_PROBE {"call":32,"handler_duration_us":2,"observer_duration_us":3,"jobs_at_start":4093,"jobs_at_end":4093,"active_scans_at_start":3,"active_scans_at_end":3,"load_active_at_start":true,"stack_attempted":false,"stack_captured":false}
+    sync_index_count_load_diagnostic_test.go:378: SYNC_INDEX_SUMMARY {"arm":"scan","estimated_user_cpu_seconds":0,"fixture_elapsed_ms":2140,"gomaxprocs":4,"jobs":4096,"jobs_completed":4096,"memoized_count":120000,"num_cpu":16,"probes_during_scans":32,"probes_under_load":32,"stack_after_ms":25,"stack_capture_count":1,"sync_clean_max_us":545171,"sync_max_us":545171,"sync_p50_us":285492,"sync_p95_us":542744,"sync_probes":32,"validator_count":120000,"work_elapsed_ms":8677,"workers":256}
+--- PASS: TestDiagnosticWarmSyncIndexUnderCheckpointCountLoad (10.88s)
+PASS
+real 10.90
+user 36.62
+sys 0.10

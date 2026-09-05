@@ -1,0 +1,5 @@
+=== RUN   TestDiagnosticFullGossipDomainTCP
+    full_gossip_domain_tcp_diagnostic_test.go:864: FULL_GOSSIP_DOMAIN arm=shared writer=true published=15000 stats={ValidationStarted:6937 ValidationAccepted:6937 ValidationIgnored:0 ValidationRejected:0 SubscriberStarted:6937 SubscriberCompleted:6937 SubscriberFailed:0 FeedEvents:6937 IteratorEntries:6937 IteratorExits:6937 ActiveIterators:0 MaximumActiveIterators:6 UnaggregatedPoolEntries:6937 FirstError:} cold_sync=228.199µs domain_probes=48 output=/home/sukun/dev/prysm2/runs/diagnostics/round2-slots-0-16/full-gossip-domain-no-timed-attdata-go-evidence/omitted
+--- PASS: TestDiagnosticFullGossipDomainTCP (51.78s)
+PASS
+ok  	github.com/OffchainLabs/prysm/v7/beacon-chain/sync	51.819s

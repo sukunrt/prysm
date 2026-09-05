@@ -1,0 +1,41 @@
+File: old028-batch-forkchoice-raw-full.test
+Build ID: 32d77c866c6d70f182626b9632c0a02c881b182f
+Type: cpu
+Time: 2026-09-08 21:37:32 IST
+Duration: 9.55s, Total samples = 10920ms (114.35%)
+Active filters:
+   focus=batchForkChoiceAtts
+Showing nodes accounting for 3530ms, 32.33% of 10920ms total
+Dropped 35 nodes (cum <= 54.60ms)
+Showing top 30 nodes out of 53
+      flat  flat%   sum%        cum   cum%
+    2710ms 24.82% 24.82%     3150ms 28.85%  github.com/OffchainLabs/go-bitfield.Bitlist.Contains
+     430ms  3.94% 28.75%      430ms  3.94%  github.com/OffchainLabs/go-bitfield.Bitlist.Len (inline)
+     160ms  1.47% 30.22%     3400ms 31.14%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).insertSeenBit
+      80ms  0.73% 30.95%       80ms  0.73%  runtime.memmove
+      30ms  0.27% 31.23%       70ms  0.64%  github.com/OffchainLabs/go-bitfield.Bitvector64.BitIndices
+      30ms  0.27% 31.50%      110ms  1.01%  github.com/OffchainLabs/methodical-ssz/ssz.merkleizeInput
+      20ms  0.18% 31.68%       20ms  0.18%  internal/sync.(*Mutex).Lock (inline)
+      20ms  0.18% 31.87%       20ms  0.18%  runtime.(*mspan).init
+      20ms  0.18% 32.05%       20ms  0.18%  runtime.(*spanInlineMarkBits).init
+      10ms 0.092% 32.14%      110ms  1.01%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).Merkleize
+      10ms 0.092% 32.23%       50ms  0.46%  github.com/OffchainLabs/methodical-ssz/ssz.merkleizeChunks
+      10ms 0.092% 32.33%       30ms  0.27%  runtime.mallocgcSmallScanNoHeader
+         0     0% 32.33%       30ms  0.27%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).AppendBytes32 (inline)
+         0     0% 32.33%       20ms  0.18%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).MerkleizeWithMixin
+         0     0% 32.33%       40ms  0.37%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).PutBitlist
+         0     0% 32.33%       30ms  0.27%  github.com/OffchainLabs/methodical-ssz/ssz.(*Hasher).PutBytes
+         0     0% 32.33%     3670ms 33.61%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations.(*Service).batchForkChoiceAtts
+         0     0% 32.33%     3670ms 33.61%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations.BenchmarkHistoricalBatchForkChoiceAtts.func1
+         0     0% 32.33%     3670ms 33.61%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations.runDiagnosticBatchArm
+         0     0% 32.33%     3670ms 33.61%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).AggregateUnaggregatedAttestations
+         0     0% 32.33%     3480ms 31.87%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).DeleteUnaggregatedAttestation
+         0     0% 32.33%       90ms  0.82%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).UnaggregatedAttestations
+         0     0% 32.33%     3580ms 32.78%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).aggregateUnaggregatedAtts
+         0     0% 32.33%       30ms  0.27%  github.com/OffchainLabs/prysm/v7/beacon-chain/operations/attestations/kv.(*AttCaches).hasSeenBit
+         0     0% 32.33%       30ms  0.27%  github.com/OffchainLabs/prysm/v7/encoding/bytesutil.SafeCopyBytes (inline)
+         0     0% 32.33%       50ms  0.46%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationData).HashTreeRoot
+         0     0% 32.33%       90ms  0.82%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationData).HashTreeRootWith
+         0     0% 32.33%       50ms  0.46%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).Clone
+         0     0% 32.33%       50ms  0.46%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).Copy
+         0     0% 32.33%      120ms  1.10%  github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1.(*AttestationElectra).HashTreeRoot

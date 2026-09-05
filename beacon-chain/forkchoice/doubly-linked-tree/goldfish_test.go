@@ -2,6 +2,8 @@ package doublylinkedtree
 
 import (
 	"context"
+	"encoding/hex"
+	"fmt"
 	"testing"
 	"time"
 
@@ -15,6 +17,15 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 )
+
+func goldfishDiagnosticRoot(t *testing.T, encoded string) [32]byte {
+	t.Helper()
+	b, err := hex.DecodeString(encoded)
+	require.NoError(t, err)
+	var root [32]byte
+	copy(root[:], b)
+	return root
+}
 
 // counterValue reads a package level prometheus counter, which is process wide
 // and therefore only usable as a before/after delta.
@@ -826,4 +837,66 @@ func TestGoldfishNewSlot_WritesTheSummaryLine(t *testing.T) {
 	require.Equal(t, primitives.Slot(2), entry.Data["slot"])
 	require.Equal(t, uint64(0), entry.Data["votes"])
 	require.Equal(t, uint64(0), entry.Data["seats"])
+}
+
+// TestGoldfishWalk_Round2Slots15And16SuppliedCohorts replays the observed vote
+// cohorts, not the unrecorded historical fork-choice store snapshot.
+func TestGoldfishWalk_Round2Slots15And16SuppliedCohorts(t *testing.T) {
+	root15 := goldfishDiagnosticRoot(t, "6856419067eae1ba1bd63c1f519dcff0c921b3363a5f202ea5f69c6ef429df41")
+	root16 := goldfishDiagnosticRoot(t, "4b07a2a4ef496b99e14601673b47caf145ce8834b57e2f365cb40c71b03e9857")
+
+	for _, payloadPresent := range []bool{false, true} {
+		t.Run(fmt.Sprintf("payload_present_%t", payloadPresent), func(t *testing.T) {
+			f := setupGoldfish(t, 0, 0)
+			ctx := t.Context()
+			genesis := params.BeaconConfig().ZeroHash
+
+			// The empty slot-14 electorate is a synthetic initial condition.
+			driftGenesisTime(f, 15, 0)
+			insertGoldfishBlock(t, f, 15, root15, genesis, true)
+			head, err := f.Head(ctx)
+			require.NoError(t, err)
+			require.Equal(t, root15, head)
+
+			// Slot 15 supplied 54 one-seat votes for block 15 and 458 for genesis.
+			for validator := primitives.ValidatorIndex(0); validator < 54; validator++ {
+				f.InsertAvailableAttestation(15, validator, 1, root15, payloadPresent)
+			}
+			for validator := primitives.ValidatorIndex(54); validator < 512; validator++ {
+				f.InsertAvailableAttestation(15, validator, 1, genesis, payloadPresent)
+			}
+			driftGenesisTime(f, 16, 0)
+			scores15 := f.store.goldfishScoresForSlot(15, f.store.treeRootNode)
+			require.Equal(t, uint64(256), scores15.threshold)
+			require.Equal(t, uint64(54), scores15.nodeScore(f.store.emptyNodeByRoot[root15].node))
+			head, err = f.Head(ctx)
+			require.NoError(t, err)
+			require.Equal(t, genesis, head)
+
+			// Block 16 is a second genesis child. During its own round-start slot it
+			// is the distinguished proposal even though the ordinary gate refuses it.
+			insertGoldfishBlock(t, f, 16, root16, genesis, true)
+			require.NotNil(t, f.store.goldfishRoundProposal(f.store.treeRootNode, 16))
+			head, err = f.Head(ctx)
+			require.NoError(t, err)
+			require.Equal(t, root16, head)
+
+			// Slot 16 supplied 23 one-seat votes for block 16 and 489 for block 15.
+			for validator := primitives.ValidatorIndex(0); validator < 23; validator++ {
+				f.InsertAvailableAttestation(16, validator, 1, root16, payloadPresent)
+			}
+			for validator := primitives.ValidatorIndex(23); validator < 512; validator++ {
+				f.InsertAvailableAttestation(16, validator, 1, root15, payloadPresent)
+			}
+			driftGenesisTime(f, 17, 0)
+			require.Equal(t, true, f.store.goldfishRoundProposal(f.store.treeRootNode, 17) == nil)
+			scores16 := f.store.goldfishScoresForSlot(16, f.store.treeRootNode)
+			require.Equal(t, uint64(256), scores16.threshold)
+			require.Equal(t, uint64(23), scores16.nodeScore(f.store.emptyNodeByRoot[root16].node))
+			require.Equal(t, uint64(489), scores16.nodeScore(f.store.emptyNodeByRoot[root15].node))
+			head, err = f.Head(ctx)
+			require.NoError(t, err)
+			require.Equal(t, root15, head)
+		})
+	}
 }

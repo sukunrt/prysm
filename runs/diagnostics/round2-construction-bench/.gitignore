@@ -1,0 +1,4 @@
+/validator.test
+/*.pprof
+/*.pb.gz
+/*.trace

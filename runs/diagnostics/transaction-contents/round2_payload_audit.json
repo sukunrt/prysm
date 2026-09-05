@@ -1,0 +1,460 @@
+{
+  "beacon_payload_envelopes": {
+    "missing_tx_count_records": 0,
+    "nonzero_gas_records": 0,
+    "nonzero_tx_records": 0,
+    "records": 586,
+    "unique_block_roots": 122,
+    "zero_tx_records": 586
+  },
+  "engine_payloads": {
+    "by_observation_full_snooper_files": {
+      "getPayload_response": {
+        "by_method": {
+          "engine_getPayloadV6": 14
+        },
+        "classifications": {
+          "empty": 14
+        },
+        "nonzero_gas_records": 0,
+        "records": 14,
+        "unique_block_hashes": 14
+      },
+      "newPayload_request": {
+        "by_method": {
+          "engine_newPayloadV5": 1435
+        },
+        "classifications": {
+          "empty": 1435
+        },
+        "nonzero_gas_records": 0,
+        "records": 1435,
+        "unique_block_hashes": 130
+      }
+    },
+    "full_snooper_files": {
+      "by_method": {
+        "engine_getPayloadV6": 14,
+        "engine_newPayloadV5": 1435
+      },
+      "classifications": {
+        "empty": 1449
+      },
+      "nonzero_gas_records": 0,
+      "records": 1449,
+      "unique_block_hashes": 136
+    },
+    "round2_at_or_after_2026_09_05T01_30_00Z": {
+      "by_method": {
+        "engine_getPayloadV6": 8,
+        "engine_newPayloadV5": 1411
+      },
+      "classifications": {
+        "empty": 1419
+      },
+      "nonzero_gas_records": 0,
+      "records": 1419,
+      "unique_block_hashes": 128
+    },
+    "rows_with_tx_count": 1449,
+    "transaction_total_across_records": 0
+  },
+  "eth_block_queries": {
+    "by_method": {
+      "eth_getBlockByHash": 94,
+      "eth_getBlockByNumber": 10961
+    },
+    "classifications": {
+      "empty": 11055
+    },
+    "nonzero_gas_records": 0,
+    "records": 11055,
+    "unique_block_hashes": 123
+  },
+  "execution_txs_markers": {
+    "nonzero_tx_records": 0,
+    "records": 1423,
+    "zero_tx_records": 1423
+  },
+  "payload_body_recovery": {
+    "full_snooper_files": {
+      "by_method": {
+        "engine_getPayloadBodiesByHashV2": 70
+      },
+      "classifications": {
+        "empty": 70
+      },
+      "nonzero_gas_records": 0,
+      "records": 70,
+      "unique_block_hashes": 22
+    },
+    "round2_at_or_after_2026_09_05T01_30_00Z": {
+      "by_method": {
+        "engine_getPayloadBodiesByHashV2": 69
+      },
+      "classifications": {
+        "empty": 69
+      },
+      "nonzero_gas_records": 0,
+      "records": 69,
+      "unique_block_hashes": 21
+    },
+    "transaction_total_across_records": 0
+  },
+  "scope": {
+    "missing_advertised_archive_union": "/tmp/prysm-r2-extra-logs.Rd7MjT",
+    "missing_advertised_archive_union_exists": false,
+    "node_count": 12,
+    "nodes": [
+      1,
+      2,
+      3,
+      50,
+      150,
+      151,
+      201,
+      300,
+      400,
+      500,
+      700,
+      900
+    ],
+    "note": "The startup3 reproduction and diagnostic reproduction outputs are excluded.",
+    "run": "historical round2 only"
+  },
+  "snooper_coverage": [
+    {
+      "bytes": 4856269,
+      "first_timestamp": "2026-09-04T22:15:12.735134453Z",
+      "last_timestamp": "2026-09-05T02:15:12.742328587Z",
+      "lines": 65928,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-1/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 3118,
+      "request_records": 1559,
+      "response_records": 1559
+    },
+    {
+      "bytes": 4729265,
+      "first_timestamp": "2026-09-04T22:25:05.253680613Z",
+      "last_timestamp": "2026-09-05T02:15:13.566943583Z",
+      "lines": 64233,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-2/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 3050,
+      "request_records": 1525,
+      "response_records": 1525
+    },
+    {
+      "bytes": 4697980,
+      "first_timestamp": "2026-09-04T22:26:44.662421982Z",
+      "last_timestamp": "2026-09-05T02:15:02.523370991Z",
+      "lines": 63812,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-3/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 3028,
+      "request_records": 1514,
+      "response_records": 1514
+    },
+    {
+      "bytes": 4216257,
+      "first_timestamp": "2026-09-04T22:54:09.262816792Z",
+      "last_timestamp": "2026-09-05T02:15:22.412090620Z",
+      "lines": 57294,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-50/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 2738,
+      "request_records": 1369,
+      "response_records": 1369
+    },
+    {
+      "bytes": 4228972,
+      "first_timestamp": "2026-09-04T22:53:49.405486292Z",
+      "last_timestamp": "2026-09-05T02:15:02.158290297Z",
+      "lines": 57469,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-150/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 2746,
+      "request_records": 1373,
+      "response_records": 1373
+    },
+    {
+      "bytes": 4199609,
+      "first_timestamp": "2026-09-04T22:53:58.162448657Z",
+      "last_timestamp": "2026-09-05T02:15:16.401843223Z",
+      "lines": 57065,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-151/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 2724,
+      "request_records": 1362,
+      "response_records": 1362
+    },
+    {
+      "bytes": 4241930,
+      "first_timestamp": "2026-09-04T22:53:50.499918057Z",
+      "last_timestamp": "2026-09-05T02:15:02.143017726Z",
+      "lines": 57656,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-201/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 2758,
+      "request_records": 1379,
+      "response_records": 1379
+    },
+    {
+      "bytes": 4274129,
+      "first_timestamp": "2026-09-04T22:53:53.489627966Z",
+      "last_timestamp": "2026-09-05T02:15:04.968088576Z",
+      "lines": 58112,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-300/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 2782,
+      "request_records": 1391,
+      "response_records": 1391
+    },
+    {
+      "bytes": 4208253,
+      "first_timestamp": "2026-09-04T22:53:57.371916299Z",
+      "last_timestamp": "2026-09-05T02:15:11.960153273Z",
+      "lines": 57190,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-400/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 2734,
+      "request_records": 1367,
+      "response_records": 1367
+    },
+    {
+      "bytes": 4200153,
+      "first_timestamp": "2026-09-04T22:54:06.179138724Z",
+      "last_timestamp": "2026-09-05T02:15:06.510977795Z",
+      "lines": 57076,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-500/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 2728,
+      "request_records": 1364,
+      "response_records": 1364
+    },
+    {
+      "bytes": 4221877,
+      "first_timestamp": "2026-09-04T22:54:23.286728921Z",
+      "last_timestamp": "2026-09-05T02:15:23.297824716Z",
+      "lines": 57370,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-700/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 2742,
+      "request_records": 1371,
+      "response_records": 1371
+    },
+    {
+      "bytes": 4211908,
+      "first_timestamp": "2026-09-04T22:54:43.277469620Z",
+      "last_timestamp": "2026-09-05T02:15:40.853136353Z",
+      "lines": 57234,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-900/snooper-engine.log",
+      "record_parse_errors": 0,
+      "records": 2736,
+      "request_records": 1368,
+      "response_records": 1368
+    }
+  ],
+  "text_log_coverage": {
+    "1/beacon.log": {
+      "bytes": 1336022480,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-1/beacon.log"
+    },
+    "1/execution.log": {
+      "bytes": 71374,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-1/execution.log"
+    },
+    "1/validator.log": {
+      "bytes": 2519167,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-1/validator.log"
+    },
+    "1/xatu-sentry.log": {
+      "bytes": 469071,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-1/xatu-sentry.log"
+    },
+    "150/beacon.log": {
+      "bytes": 1306732023,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-150/beacon.log"
+    },
+    "150/execution.log": {
+      "bytes": 66456,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-150/execution.log"
+    },
+    "150/validator.log": {
+      "bytes": 2650065,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-150/validator.log"
+    },
+    "150/xatu-sentry.log": {
+      "bytes": 443988,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-150/xatu-sentry.log"
+    },
+    "151/beacon.log": {
+      "bytes": 296012,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-151/beacon.log"
+    },
+    "151/execution.log": {
+      "bytes": 69261,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-151/execution.log"
+    },
+    "151/validator.log": {
+      "bytes": 2742274,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-151/validator.log"
+    },
+    "151/xatu-sentry.log": {
+      "bytes": 443406,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-151/xatu-sentry.log"
+    },
+    "2/beacon.log": {
+      "bytes": 301654,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-2/beacon.log"
+    },
+    "2/execution.log": {
+      "bytes": 67981,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-2/execution.log"
+    },
+    "2/validator.log": {
+      "bytes": 2571994,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-2/validator.log"
+    },
+    "2/xatu-sentry.log": {
+      "bytes": 923927,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-2/xatu-sentry.log"
+    },
+    "201/beacon.log": {
+      "bytes": 640165331,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-201/beacon.log"
+    },
+    "201/execution.log": {
+      "bytes": 68874,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-201/execution.log"
+    },
+    "201/validator.log": {
+      "bytes": 33651,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-201/validator.log"
+    },
+    "201/xatu-sentry.log": {
+      "bytes": 441963,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-201/xatu-sentry.log"
+    },
+    "3/beacon.log": {
+      "bytes": 307980,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-3/beacon.log"
+    },
+    "3/execution.log": {
+      "bytes": 67384,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-3/execution.log"
+    },
+    "3/validator.log": {
+      "bytes": 2797005,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-3/validator.log"
+    },
+    "3/xatu-sentry.log": {
+      "bytes": 460038,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-3/xatu-sentry.log"
+    },
+    "300/beacon.log": {
+      "bytes": 249054,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-300/beacon.log"
+    },
+    "300/execution.log": {
+      "bytes": 68162,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-300/execution.log"
+    },
+    "300/validator.log": {
+      "bytes": 33662,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-300/validator.log"
+    },
+    "300/xatu-sentry.log": {
+      "bytes": 443835,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-300/xatu-sentry.log"
+    },
+    "400/beacon.log": {
+      "bytes": 674200479,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-400/beacon.log"
+    },
+    "400/execution.log": {
+      "bytes": 67995,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-400/execution.log"
+    },
+    "400/validator.log": {
+      "bytes": 33444,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-400/validator.log"
+    },
+    "400/xatu-sentry.log": {
+      "bytes": 441031,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-400/xatu-sentry.log"
+    },
+    "50/beacon.log": {
+      "bytes": 1370246106,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-50/beacon.log"
+    },
+    "50/execution.log": {
+      "bytes": 68986,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-50/execution.log"
+    },
+    "50/validator.log": {
+      "bytes": 2601117,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-50/validator.log"
+    },
+    "50/xatu-sentry.log": {
+      "bytes": 443950,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-50/xatu-sentry.log"
+    },
+    "500/beacon.log": {
+      "bytes": 243357,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-500/beacon.log"
+    },
+    "500/execution.log": {
+      "bytes": 68973,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-500/execution.log"
+    },
+    "500/validator.log": {
+      "bytes": 33729,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-500/validator.log"
+    },
+    "500/xatu-sentry.log": {
+      "bytes": 443060,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-500/xatu-sentry.log"
+    },
+    "700/beacon.log": {
+      "bytes": 256960,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-700/beacon.log"
+    },
+    "700/execution.log": {
+      "bytes": 68610,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-700/execution.log"
+    },
+    "700/validator.log": {
+      "bytes": 33618,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-700/validator.log"
+    },
+    "700/xatu-sentry.log": {
+      "bytes": 443531,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-700/xatu-sentry.log"
+    },
+    "900/beacon.log": {
+      "bytes": 251051,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-900/beacon.log"
+    },
+    "900/execution.log": {
+      "bytes": 67868,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-900/execution.log"
+    },
+    "900/validator.log": {
+      "bytes": 34317,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-900/validator.log"
+    },
+    "900/xatu-sentry.log": {
+      "bytes": 444647,
+      "path": "/home/sukun/dev/prysm2/runs/round2/prysm-geth-900/xatu-sentry.log"
+    }
+  },
+  "transaction_submission_markers": {
+    "by_pattern": {},
+    "interpretation": "Absence only means no configured retained log recorded these markers.",
+    "other_log_markers": 0,
+    "records": 0,
+    "snooper_rpc_requests": 0
+  }
+}

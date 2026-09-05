@@ -1,0 +1,16 @@
+/tmp/prysm-startup3-wire-i2/bundle/network-configs/config.yaml:70:SLOTS_PER_ROUND: 4
+/tmp/prysm-startup3-wire-i2/bundle/network-configs/config.yaml:75:TARGET_COMMITTEE_SIZE: 2500
+/tmp/prysm-startup3-wire-i2/bundle/network-configs/config.yaml:104:AGGREGATE_DUE_BPS_GLOAS: 5000
+/tmp/prysm-startup3-wire-i2/bundle/network-configs/config.yaml:186:ATTESTATION_SUBNET_COUNT: 6
+/tmp/prysm-startup3-wire-h/bundle/network-configs/config.yaml:70:SLOTS_PER_ROUND: 4
+/tmp/prysm-startup3-wire-h/bundle/network-configs/config.yaml:75:TARGET_COMMITTEE_SIZE: 2500
+/tmp/prysm-startup3-wire-h/bundle/network-configs/config.yaml:104:AGGREGATE_DUE_BPS_GLOAS: 5000
+/tmp/prysm-startup3-wire-h/bundle/network-configs/config.yaml:186:ATTESTATION_SUBNET_COUNT: 6
+/tmp/prysm-startup3-round4-early-e1-bundle/network-configs/config.yaml:70:SLOTS_PER_ROUND: 4
+/tmp/prysm-startup3-round4-early-e1-bundle/network-configs/config.yaml:75:TARGET_COMMITTEE_SIZE: 2500
+/tmp/prysm-startup3-round4-early-e1-bundle/network-configs/config.yaml:104:AGGREGATE_DUE_BPS_GLOAS: 5000
+/tmp/prysm-startup3-round4-early-e1-bundle/network-configs/config.yaml:186:ATTESTATION_SUBNET_COUNT: 6
+/tmp/prysm-startup3-round4-early-f1-bundle/network-configs/config.yaml:70:SLOTS_PER_ROUND: 4
+/tmp/prysm-startup3-round4-early-f1-bundle/network-configs/config.yaml:75:TARGET_COMMITTEE_SIZE: 2500
+/tmp/prysm-startup3-round4-early-f1-bundle/network-configs/config.yaml:104:AGGREGATE_DUE_BPS_GLOAS: 5000
+/tmp/prysm-startup3-round4-early-f1-bundle/network-configs/config.yaml:186:ATTESTATION_SUBNET_COUNT: 6

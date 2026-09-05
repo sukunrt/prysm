@@ -1,5 +1,10 @@
 # Round 2 failure analysis
 
+The continued investigation of slots 0–16 is in the
+[current causal explanation](../round2-slots-0-16/best-causal-explanation.md),
+with the complete owner census and bounded reproductions. The P2P fallback
+path exists in code; the payload failures below had no matching cached bid.
+
 ## Findings
 
 Round 2 contains two distinct failure phases:
@@ -42,8 +47,8 @@ The direct terminal split is:
 | --- | --- |
 | 1 | RANDAO domain lookup deadline; exact VC/RPC wait split not logged. |
 | 2, 3, 4, 7, 11, 12 | Synchronous sync-committee preflight expires before proposer dispatch; the proposer then encounters an expired context. Slot 4 stalls in selection signing/domain lookup; the others in sync-index lookup. |
-| 5, 8 | Block building begins at +10.119/+11.190 seconds, leaving insufficient slot time; payload retrieval fails and no P2P fallback exists. |
-| 6, 9 | Execution HTTP response timeouts despite successful proxy responses in 2/22 ms and sub-millisecond empty-payload builds. No P2P fallback exists. |
+| 5, 8 | Block building begins at +10.119/+11.190 seconds with a reduced remaining budget; payload retrieval fails and no matching P2P bid is cached. |
+| 6, 9 | Execution HTTP response timeouts despite successful proxy responses in 2/22 ms and sub-millisecond empty-payload builds. No matching P2P bid is cached. |
 | 10, 14 | Payload selection succeeds, but the joined consensus-field/packing branch is still outstanding at the slot deadline. |
 | 13 | Parent-state/slot processing expires before parallel assembly; this is not packing. |
 

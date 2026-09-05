@@ -1,0 +1,4 @@
+=== RUN   TestDiagnosticDomainDataTCPClientProcess
+    domain_data_tcp_diagnostic_test.go:271: DOMAIN_DATA_CLIENT probes=32 warm_response_bytes=32 result_path=/tmp/prysm-domain-data-real-tcp/scan/client.jsonl
+--- PASS: TestDiagnosticDomainDataTCPClientProcess (31.65s)
+PASS

@@ -1,0 +1,6 @@
+=== RUN   TestDiagnosticFullGossipRealChainPreflight
+    assertions.go:40: full_gossip_domain_export_test.go:422 Values are not equal, want: 0 (uint64), got: 6 (uint64)
+--- FAIL: TestDiagnosticFullGossipRealChainPreflight (3.74s)
+FAIL
+FAIL	github.com/OffchainLabs/prysm/v7/beacon-chain/sync	3.786s
+FAIL

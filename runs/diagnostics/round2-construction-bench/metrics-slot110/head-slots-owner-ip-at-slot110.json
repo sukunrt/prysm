@@ -1,0 +1,78 @@
+{
+  "status": "success",
+  "isPartial": false,
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "beacon_head_slot",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "ip_address": "143.198.65.112",
+          "job": "consensus_node",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "value": [
+          1788573123,
+          "109"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "doublylinkedtree_head_slot",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "ip_address": "143.198.65.112",
+          "job": "consensus_node",
+          "network": "glamsterdam-devnet-9",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "value": [
+          1788573123,
+          "109"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "eth_con_sync_head_slot",
+          "consensus_client": "lighthouse",
+          "execution_client": "reth",
+          "ingress_user": "glamsterdam-devnet-9",
+          "instance": "glamsterdam-devnet-9-lighthouse-reth-6",
+          "ip_address": "143.198.65.112",
+          "job": "exporter",
+          "module": "sync",
+          "network": "glamsterdam-devnet-9",
+          "node": "consensus-client",
+          "supernode": "True",
+          "tenant_tier": "external",
+          "testnet": "glamsterdam-devnet-9",
+          "vm_account_id": "1",
+          "vm_project_id": "0"
+        },
+        "value": [
+          1788573123,
+          "108"
+        ]
+      }
+    ]
+  },
+  "stats": {
+    "seriesFetched": "3",
+    "executionTimeMsec": 65
+  }
+}

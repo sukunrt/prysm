@@ -1,0 +1,1 @@
+{"invoke_unix_nano":0,"return_unix_nano":0,"duration_nano":0,"deadline_unix_nano":0,"budget_at_invoke_nano":0,"budget_at_return_nano":0,"status_code":"","response_slot":0,"response_index":0,"omitted":true,"omit_reason":"diagnostic control omitted timed GetAttestationData"}

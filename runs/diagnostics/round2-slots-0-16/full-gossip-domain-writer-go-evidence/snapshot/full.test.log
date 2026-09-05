@@ -1,0 +1,5 @@
+=== RUN   TestDiagnosticFullGossipDomainTCP
+    full_gossip_domain_tcp_diagnostic_test.go:789: FULL_GOSSIP_DOMAIN arm=snapshot writer=true published=15000 stats={ValidationStarted:7688 ValidationAccepted:7688 ValidationIgnored:0 ValidationRejected:0 SubscriberStarted:7688 SubscriberCompleted:7688 SubscriberFailed:0 FeedEvents:7688 IteratorEntries:7688 IteratorExits:7688 ActiveIterators:0 MaximumActiveIterators:6 UnaggregatedPoolEntries:7688 FirstError:} cold_sync=1.5492ms domain_probes=48 output=/home/sukun/dev/prysm2/runs/diagnostics/round2-slots-0-16/full-gossip-domain-writer-go-evidence/snapshot
+--- PASS: TestDiagnosticFullGossipDomainTCP (44.04s)
+PASS
+ok  	github.com/OffchainLabs/prysm/v7/beacon-chain/sync	44.154s

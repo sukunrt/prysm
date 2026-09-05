@@ -1,0 +1,441 @@
+{
+  "aggregate_emissions": {
+    "emitted_offset_ms_max": 8113.861,
+    "emitted_offset_ms_min": 8035.044,
+    "groups": [
+      {
+        "committeeIndex": 0,
+        "dataRoot": "0x045eb04570fb793fcd09345f91af07112aba6d9ff0612785f58680b91392af",
+        "emission_row_count": 1,
+        "emissions": [
+          {
+            "aggregatorIndex": 40382,
+            "arrivedMs": 8034,
+            "committeeIndex": 0,
+            "dataRoot": "0x045eb04570fb793fcd09345f91af07112aba6d9ff0612785f58680b91392af",
+            "emitted_offset_ms": 8049.152,
+            "line": 1121434,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.049152Z",
+            "seats": 2491
+          }
+        ],
+        "outcomes": {
+          "gossip": 1
+        },
+        "seats_max": 2491,
+        "seats_min": 2491,
+        "unique_aggregators": 1
+      },
+      {
+        "committeeIndex": 3,
+        "dataRoot": "0x1a766ff490303f0287c338eacad1238679895dd9b00e2e8527518d590104ae",
+        "emission_row_count": 1,
+        "emissions": [
+          {
+            "aggregatorIndex": 102933,
+            "arrivedMs": 8029,
+            "committeeIndex": 3,
+            "dataRoot": "0x1a766ff490303f0287c338eacad1238679895dd9b00e2e8527518d590104ae",
+            "emitted_offset_ms": 8043.111,
+            "line": 1121433,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.043111Z",
+            "seats": 2483
+          }
+        ],
+        "outcomes": {
+          "gossip": 1
+        },
+        "seats_max": 2483,
+        "seats_min": 2483,
+        "unique_aggregators": 1
+      },
+      {
+        "committeeIndex": 1,
+        "dataRoot": "0x27a818cddc9cb4124d33356c9bc89db85a85651d06d9adc7d4f61fb5e5a00d",
+        "emission_row_count": 2,
+        "emissions": [
+          {
+            "aggregatorIndex": 530,
+            "arrivedMs": 8034,
+            "committeeIndex": 1,
+            "dataRoot": "0x27a818cddc9cb4124d33356c9bc89db85a85651d06d9adc7d4f61fb5e5a00d",
+            "emitted_offset_ms": 8035.044,
+            "line": 1121432,
+            "outcome": "local",
+            "outer_timestamp": "2026-09-05T01:49:20.035044Z",
+            "seats": 1812
+          },
+          {
+            "aggregatorIndex": 10561,
+            "arrivedMs": 8049,
+            "committeeIndex": 1,
+            "dataRoot": "0x27a818cddc9cb4124d33356c9bc89db85a85651d06d9adc7d4f61fb5e5a00d",
+            "emitted_offset_ms": 8063.143,
+            "line": 1121440,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.063143Z",
+            "seats": 2486
+          }
+        ],
+        "outcomes": {
+          "gossip": 1,
+          "local": 1
+        },
+        "seats_max": 2486,
+        "seats_min": 1812,
+        "unique_aggregators": 2
+      },
+      {
+        "committeeIndex": 4,
+        "dataRoot": "0x4159f067ffe27fd222e17d70cac9402631ab29ae2453753145d5adbc95c6fe",
+        "emission_row_count": 1,
+        "emissions": [
+          {
+            "aggregatorIndex": 67676,
+            "arrivedMs": 8104,
+            "committeeIndex": 4,
+            "dataRoot": "0x4159f067ffe27fd222e17d70cac9402631ab29ae2453753145d5adbc95c6fe",
+            "emitted_offset_ms": 8113.861,
+            "line": 1121443,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.113861Z",
+            "seats": 15
+          }
+        ],
+        "outcomes": {
+          "gossip": 1
+        },
+        "seats_max": 15,
+        "seats_min": 15,
+        "unique_aggregators": 1
+      },
+      {
+        "committeeIndex": 2,
+        "dataRoot": "0x71b4ddc4b4b209bb38bb181d2c255b0f722ecbdfb7571745ae5d2128508e58",
+        "emission_row_count": 4,
+        "emissions": [
+          {
+            "aggregatorIndex": 79415,
+            "arrivedMs": 8044,
+            "committeeIndex": 2,
+            "dataRoot": "0x71b4ddc4b4b209bb38bb181d2c255b0f722ecbdfb7571745ae5d2128508e58",
+            "emitted_offset_ms": 8057.547,
+            "line": 1121436,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.057547Z",
+            "seats": 2306
+          },
+          {
+            "aggregatorIndex": 78968,
+            "arrivedMs": 8049,
+            "committeeIndex": 2,
+            "dataRoot": "0x71b4ddc4b4b209bb38bb181d2c255b0f722ecbdfb7571745ae5d2128508e58",
+            "emitted_offset_ms": 8062.759,
+            "line": 1121438,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.062759Z",
+            "seats": 2491
+          },
+          {
+            "aggregatorIndex": 116268,
+            "arrivedMs": 8048,
+            "committeeIndex": 2,
+            "dataRoot": "0x71b4ddc4b4b209bb38bb181d2c255b0f722ecbdfb7571745ae5d2128508e58",
+            "emitted_offset_ms": 8062.867,
+            "line": 1121439,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.062867Z",
+            "seats": 2491
+          },
+          {
+            "aggregatorIndex": 59121,
+            "arrivedMs": 8055,
+            "committeeIndex": 2,
+            "dataRoot": "0x71b4ddc4b4b209bb38bb181d2c255b0f722ecbdfb7571745ae5d2128508e58",
+            "emitted_offset_ms": 8066.635,
+            "line": 1121441,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.066635Z",
+            "seats": 2491
+          }
+        ],
+        "outcomes": {
+          "gossip": 4
+        },
+        "seats_max": 2491,
+        "seats_min": 2306,
+        "unique_aggregators": 4
+      },
+      {
+        "committeeIndex": 4,
+        "dataRoot": "0x9053d7afc9a18e954c70e729b1fdc22cf3fe219af496942f887e19638ee548",
+        "emission_row_count": 1,
+        "emissions": [
+          {
+            "aggregatorIndex": 100822,
+            "arrivedMs": 8039,
+            "committeeIndex": 4,
+            "dataRoot": "0x9053d7afc9a18e954c70e729b1fdc22cf3fe219af496942f887e19638ee548",
+            "emitted_offset_ms": 8057.677,
+            "line": 1121437,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.057677Z",
+            "seats": 2485
+          }
+        ],
+        "outcomes": {
+          "gossip": 1
+        },
+        "seats_max": 2485,
+        "seats_min": 2485,
+        "unique_aggregators": 1
+      },
+      {
+        "committeeIndex": 5,
+        "dataRoot": "0x9f84f36191a59c140f00f9deb8d3b8753c72b473be735f926e00f0db7910cc",
+        "emission_row_count": 1,
+        "emissions": [
+          {
+            "aggregatorIndex": 67283,
+            "arrivedMs": 8105,
+            "committeeIndex": 5,
+            "dataRoot": "0x9f84f36191a59c140f00f9deb8d3b8753c72b473be735f926e00f0db7910cc",
+            "emitted_offset_ms": 8113.257,
+            "line": 1121442,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.113257Z",
+            "seats": 11
+          }
+        ],
+        "outcomes": {
+          "gossip": 1
+        },
+        "seats_max": 11,
+        "seats_min": 11,
+        "unique_aggregators": 1
+      },
+      {
+        "committeeIndex": 5,
+        "dataRoot": "0xc133ac364ce4b9ca2517dcdcf35986d67284a4440a4b88a460be67af0b3264",
+        "emission_row_count": 1,
+        "emissions": [
+          {
+            "aggregatorIndex": 40594,
+            "arrivedMs": 8034,
+            "committeeIndex": 5,
+            "dataRoot": "0xc133ac364ce4b9ca2517dcdcf35986d67284a4440a4b88a460be67af0b3264",
+            "emitted_offset_ms": 8051.128,
+            "line": 1121435,
+            "outcome": "gossip",
+            "outer_timestamp": "2026-09-05T01:49:20.051128Z",
+            "seats": 2489
+          }
+        ],
+        "outcomes": {
+          "gossip": 1
+        },
+        "seats_max": 2489,
+        "seats_min": 2489,
+        "unique_aggregators": 1
+      }
+    ],
+    "row_count": 12,
+    "unique_committees": 6,
+    "unique_dataRoot_committee_groups": 8,
+    "unique_dataRoots": 8
+  },
+  "scope": {
+    "attSlot": 96,
+    "bucket_semantics": "lower bound exclusive; upper bound inclusive",
+    "input": "runs/round2/prysm-geth-1/beacon.log",
+    "input_sha256": "fc3836a9ebe0399ddb0e6e4fc23671d5e04d4edc665cd5253c89332edd4c2fbf",
+    "input_size_bytes": 1336022480,
+    "limitations": [
+      "arrivedMs is copied from the ledger field; outer_timestamp is the log emission prefix",
+      "ledger emission is not proof of subscriber insertion time or proposal-pool snapshot membership",
+      "aggregate grouping uses logged dataRoot and committeeIndex only"
+    ],
+    "physical_lf_records_scanned": 2857343,
+    "slot_start_utc": "2026-09-05T01:49:12Z"
+  },
+  "single_votes": {
+    "arrivedMs_buckets": {
+      "after_12s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "gt_11_8s_le_12s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "gt_11s_le_11_8s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "gt_7s_le_9_5s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "gt_9_5s_le_11s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_7s": {
+        "row_count": 13947,
+        "unique_validator_dataRoot_committee": 13947,
+        "unique_validators": 13947
+      }
+    },
+    "arrivedMs_max": 4144,
+    "arrivedMs_min": 124,
+    "dataRoot_committee_groups": [
+      {
+        "arrivedMs_max": 3056,
+        "arrivedMs_min": 158,
+        "committeeIndex": 0,
+        "dataRoot": "0x045eb04570fb793fcd09345f91af07112aba6d9ff0612785f58680b91392af",
+        "emitted_offset_ms_max": 3221.879,
+        "emitted_offset_ms_min": 167.59,
+        "row_count": 2491,
+        "unique_validators": 2491
+      },
+      {
+        "arrivedMs_max": 2219,
+        "arrivedMs_min": 1751,
+        "committeeIndex": 1,
+        "dataRoot": "0x15e07dc1ec771ab06bd920f1e8ea2ab6e5722a210146f8a196224ec429a624",
+        "emitted_offset_ms_max": 2529.933,
+        "emitted_offset_ms_min": 1968.201,
+        "row_count": 13,
+        "unique_validators": 13
+      },
+      {
+        "arrivedMs_max": 2120,
+        "arrivedMs_min": 124,
+        "committeeIndex": 3,
+        "dataRoot": "0x1a766ff490303f0287c338eacad1238679895dd9b00e2e8527518d590104ae",
+        "emitted_offset_ms_max": 2461.562,
+        "emitted_offset_ms_min": 131.136,
+        "row_count": 2483,
+        "unique_validators": 2483
+      },
+      {
+        "arrivedMs_max": 2219,
+        "arrivedMs_min": 151,
+        "committeeIndex": 1,
+        "dataRoot": "0x27a818cddc9cb4124d33356c9bc89db85a85651d06d9adc7d4f61fb5e5a00d",
+        "emitted_offset_ms_max": 2534.04,
+        "emitted_offset_ms_min": 159.672,
+        "row_count": 1812,
+        "unique_validators": 1812
+      },
+      {
+        "arrivedMs_max": 4144,
+        "arrivedMs_min": 4117,
+        "committeeIndex": 4,
+        "dataRoot": "0x4159f067ffe27fd222e17d70cac9402631ab29ae2453753145d5adbc95c6fe",
+        "emitted_offset_ms_max": 4156.98,
+        "emitted_offset_ms_min": 4121.581,
+        "row_count": 15,
+        "unique_validators": 15
+      },
+      {
+        "arrivedMs_max": 2650,
+        "arrivedMs_min": 158,
+        "committeeIndex": 2,
+        "dataRoot": "0x71b4ddc4b4b209bb38bb181d2c255b0f722ecbdfb7571745ae5d2128508e58",
+        "emitted_offset_ms_max": 2708.04,
+        "emitted_offset_ms_min": 167.513,
+        "row_count": 2403,
+        "unique_validators": 2403
+      },
+      {
+        "arrivedMs_max": 3669,
+        "arrivedMs_min": 150,
+        "committeeIndex": 4,
+        "dataRoot": "0x9053d7afc9a18e954c70e729b1fdc22cf3fe219af496942f887e19638ee548",
+        "emitted_offset_ms_max": 3686.099,
+        "emitted_offset_ms_min": 157.818,
+        "row_count": 2474,
+        "unique_validators": 2474
+      },
+      {
+        "arrivedMs_max": 3663,
+        "arrivedMs_min": 3620,
+        "committeeIndex": 5,
+        "dataRoot": "0x9f84f36191a59c140f00f9deb8d3b8753c72b473be735f926e00f0db7910cc",
+        "emitted_offset_ms_max": 3673.617,
+        "emitted_offset_ms_min": 3631.09,
+        "row_count": 11,
+        "unique_validators": 11
+      },
+      {
+        "arrivedMs_max": 2201,
+        "arrivedMs_min": 164,
+        "committeeIndex": 5,
+        "dataRoot": "0xc133ac364ce4b9ca2517dcdcf35986d67284a4440a4b88a460be67af0b3264",
+        "emitted_offset_ms_max": 2510.296,
+        "emitted_offset_ms_min": 181.656,
+        "row_count": 2236,
+        "unique_validators": 2236
+      },
+      {
+        "arrivedMs_max": 3093,
+        "arrivedMs_min": 3092,
+        "committeeIndex": 0,
+        "dataRoot": "0xff74743bff7d10d42662bedba646734330c7c2faf0978459a3a5eb76efe9c3",
+        "emitted_offset_ms_max": 3236.249,
+        "emitted_offset_ms_min": 3224.151,
+        "row_count": 9,
+        "unique_validators": 9
+      }
+    ],
+    "duplicate_tuple_rows": 0,
+    "emitted_offset_ms_max": 4156.98,
+    "emitted_offset_ms_min": 131.136,
+    "outer_emitted_offset_buckets": {
+      "after_12s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "gt_11_8s_le_12s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "gt_11s_le_11_8s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "gt_7s_le_9_5s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "gt_9_5s_le_11s": {
+        "row_count": 0,
+        "unique_validator_dataRoot_committee": 0,
+        "unique_validators": 0
+      },
+      "le_7s": {
+        "row_count": 13947,
+        "unique_validator_dataRoot_committee": 13947,
+        "unique_validators": 13947
+      }
+    },
+    "row_count": 13947,
+    "unique_committees": 6,
+    "unique_dataRoots": 10,
+    "unique_validator_dataRoot_committee": 13947,
+    "unique_validators": 13947
+  }
+}
