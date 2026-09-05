@@ -404,6 +404,62 @@ func TestGoldfishWalk_HeadRetreatsWhenLateBlockLosesPassthrough(t *testing.T) {
 	require.Equal(t, before+1, goldfishRetreats(t))
 }
 
+// TestGoldfishWalk_Round2Slot129Rollback reproduces the topology and vote
+// denominator observed in the round-2 diagnostic run. The majority vote names
+// a real block, but that block is on a fork outside the justified subtree.
+func TestGoldfishWalk_Round2Slot129Rollback(t *testing.T) {
+	build := func(t *testing.T) (*ForkChoice, [32]byte, [32]byte, [32]byte) {
+		f := setupGoldfish(t, 0, 0)
+		zero := params.BeaconConfig().ZeroHash
+		justified117 := indexToHash(117)
+		old110 := indexToHash(110)
+		old123 := indexToHash(1230)
+		current := justified117
+
+		driftGenesisTime(f, 128, 0)
+		insertGoldfishBlockAtRound(t, f, 110, old110, zero, false, 13)
+		insertGoldfishBlockAtRound(t, f, 123, old123, old110, false, 13)
+		insertGoldfishBlockAtRound(t, f, 117, justified117, zero, false, 15)
+		for slot := primitives.Slot(118); slot <= 128; slot++ {
+			next := indexToHash(uint64(slot))
+			insertGoldfishBlockAtRound(t, f, slot, next, current, false, 15)
+			current = next
+		}
+		f.store.justifiedCheckpoint = &forkchoicetypes.Checkpoint{Epoch: 15, Root: justified117}
+
+		// Slot 128 is a round-start proposal and is admitted during its own slot.
+		head, err := f.Head(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, current, head)
+		return f, justified117, old123, current
+	}
+
+	t.Run("392 outside subtree dilute 120 current votes", func(t *testing.T) {
+		f, justified117, old123, current128 := build(t)
+		for index := primitives.ValidatorIndex(0); index < 392; index++ {
+			f.InsertAvailableAttestation(128, index, 1, old123, false)
+		}
+		for index := primitives.ValidatorIndex(392); index < 512; index++ {
+			f.InsertAvailableAttestation(128, index, 1, current128, false)
+		}
+		driftGenesisTime(f, 129, 0)
+		head, err := f.Head(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, justified117, head)
+	})
+
+	t.Run("without outside-subtree denominator current branch wins", func(t *testing.T) {
+		f, _, _, current128 := build(t)
+		for index := primitives.ValidatorIndex(0); index < 120; index++ {
+			f.InsertAvailableAttestation(128, index, 1, current128, false)
+		}
+		driftGenesisTime(f, 129, 0)
+		head, err := f.Head(t.Context())
+		require.NoError(t, err)
+		require.Equal(t, current128, head)
+	})
+}
+
 func TestGoldfishWalk_ColdStarts(t *testing.T) {
 	zero := params.BeaconConfig().ZeroHash
 	rootA, rootB := indexToHash(1), indexToHash(2)

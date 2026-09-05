@@ -62,7 +62,7 @@ def validator_lines(path: Path) -> list[str]:
     return []
 
 
-def index_archive(path: Path) -> list[dict[str, object]]:
+def index_archive(path: Path, min_slot: int, max_slot: int, genesis: dt.datetime | None) -> list[dict[str, object]]:
     identity = ARCHIVE.search(path.name)
     if not identity:
         return []
@@ -75,12 +75,16 @@ def index_archive(path: Path) -> list[dict[str, object]]:
         if not slot_match or not proposer_match:
             continue
         slot = int(slot_match.group("slot"))
-        if slot not in (1, 2, 3):
+        if not min_slot <= slot <= max_slot:
             continue
         observed = timestamp(line)
         duration_match = UNTIL.search(line)
         duration = parse_duration(duration_match.group("duration")) if duration_match else None
-        duty_time = observed + duration if observed is not None and duration is not None else None
+        duty_time = (
+            genesis + dt.timedelta(seconds=12 * slot)
+            if genesis is not None
+            else observed + duration if observed is not None and duration is not None else None
+        )
         nearby: list[dict[str, object]] = []
         for candidate_number, candidate in enumerate(lines, 1):
             # Schedule records contain very large attester pubkey lists.
@@ -91,12 +95,20 @@ def index_archive(path: Path) -> list[dict[str, object]]:
             candidate_time = timestamp(candidate)
             explicit_slot = SLOT.search(candidate)
             slot_matches = explicit_slot is not None and int(explicit_slot.group("slot")) == slot
-            time_matches = (
-                duty_time is not None
-                and candidate_time is not None
-                and -dt.timedelta(seconds=2) <= candidate_time - duty_time <= dt.timedelta(seconds=30)
-            )
-            if not slot_matches and not time_matches:
+            if genesis is not None:
+                time_matches = (
+                    duty_time is not None
+                    and candidate_time is not None
+                    and dt.timedelta(0) <= candidate_time - duty_time <= dt.timedelta(seconds=12.1)
+                )
+            else:
+                time_matches = (
+                    duty_time is not None
+                    and candidate_time is not None
+                    and -dt.timedelta(seconds=2) <= candidate_time - duty_time <= dt.timedelta(seconds=30)
+                )
+            matches = time_matches if genesis is not None else slot_matches or time_matches
+            if not matches:
                 continue
             nearby.append(
                 {
@@ -149,14 +161,25 @@ def main() -> int:
         default=[Path("/tmp/prysm-r2-extra-logs.Rd7MjT")],
     )
     parser.add_argument("--include-existing", action="store_true")
+    parser.add_argument("--min-slot", type=int, default=1)
+    parser.add_argument("--max-slot", type=int, default=3)
+    parser.add_argument("--round", choices=("round1", "round2"))
+    parser.add_argument(
+        "--genesis",
+        type=dt.datetime.fromisoformat,
+        help="exact genesis, for example 2026-09-05T01:30:00",
+    )
     args = parser.parse_args()
     directories = list(args.directories)
     if args.include_existing:
         directories.extend([Path("runs/round1"), Path("runs/round2")])
     result: list[dict[str, object]] = []
     for path in archives(directories):
+        identity = ARCHIVE.search(path.name)
+        if args.round and (not identity or identity.group("round") != args.round):
+            continue
         try:
-            result.extend(index_archive(path))
+            result.extend(index_archive(path, args.min_slot, args.max_slot, args.genesis))
         except (OSError, EOFError, tarfile.TarError) as error:
             print(f"warning: {path}: {error}", file=sys.stderr)
     result.sort(key=lambda row: (str(row["round"]), int(row["slot"]), int(row["node"])))
