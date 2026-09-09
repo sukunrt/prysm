@@ -318,29 +318,82 @@ func TestDelayedActivationExitEpoch_OK(t *testing.T) {
 }
 
 func TestActiveValidatorCount_Genesis(t *testing.T) {
-	helpers.ClearCache()
+	for _, tt := range []struct {
+		name          string
+		cachedIndices []primitives.ValidatorIndex
+		want          uint64
+	}{
+		{name: "cache miss", want: 1000},
+		{name: "cache hit", cachedIndices: []primitives.ValidatorIndex{1, 2, 3}, want: 3},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			helpers.ClearCache()
+			t.Cleanup(helpers.ClearCache)
 
-	c := 1000
-	validators := make([]*ethpb.Validator, c)
-	for i := range validators {
-		validators[i] = &ethpb.Validator{
-			ExitEpoch: params.BeaconConfig().FarFutureEpoch,
-		}
+			validators := make([]*ethpb.Validator, 1000)
+			for i := range validators {
+				validators[i] = &ethpb.Validator{
+					ExitEpoch: params.BeaconConfig().FarFutureEpoch,
+				}
+			}
+			beaconState, err := state_native.InitializeFromProtoPhase0(&ethpb.BeaconState{
+				Slot:        0,
+				Validators:  validators,
+				RandaoMixes: make([][]byte, params.BeaconConfig().EpochsPerHistoricalVector),
+			})
+			require.NoError(t, err)
+
+			if tt.cachedIndices != nil {
+				seed, err := helpers.Seed(beaconState, 0, params.BeaconConfig().DomainBeaconAttester)
+				require.NoError(t, err)
+				// A distinct cached count makes an unnecessary registry scan observable.
+				require.NoError(t, helpers.CommitteeCache().AddCommitteeShuffledList(t.Context(), &cache.Committees{
+					Seed:            seed,
+					ShuffledIndices: tt.cachedIndices,
+					SortedIndices:   tt.cachedIndices,
+				}))
+			}
+
+			validatorCount, err := helpers.ActiveValidatorCount(t.Context(), beaconState, 0)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, validatorCount)
+		})
 	}
+}
+
+func TestActiveValidatorCountAtGenesis(t *testing.T) {
+	helpers.ClearCache()
+	t.Cleanup(helpers.ClearCache)
+
 	beaconState, err := state_native.InitializeFromProtoPhase0(&ethpb.BeaconState{
-		Slot:        0,
-		Validators:  validators,
+		Slot: 0,
+		Validators: []*ethpb.Validator{
+			{ExitEpoch: params.BeaconConfig().FarFutureEpoch},
+			{ActivationEpoch: params.BeaconConfig().FarFutureEpoch, ExitEpoch: params.BeaconConfig().FarFutureEpoch},
+		},
 		RandaoMixes: make([][]byte, params.BeaconConfig().EpochsPerHistoricalVector),
 	})
 	require.NoError(t, err)
-
-	// Preset cache to a bad count.
 	seed, err := helpers.Seed(beaconState, 0, params.BeaconConfig().DomainBeaconAttester)
 	require.NoError(t, err)
-	require.NoError(t, helpers.CommitteeCache().AddCommitteeShuffledList(t.Context(), &cache.Committees{Seed: seed, ShuffledIndices: []primitives.ValidatorIndex{1, 2, 3}}))
-	validatorCount, err := helpers.ActiveValidatorCount(t.Context(), beaconState, time.CurrentEpoch(beaconState))
+	require.NoError(t, helpers.CommitteeCache().AddCommitteeShuffledList(t.Context(), &cache.Committees{
+		Seed:            seed,
+		ShuffledIndices: []primitives.ValidatorIndex{0},
+		SortedIndices:   []primitives.ValidatorIndex{0},
+	}))
+
+	validatorCount, err := helpers.ActiveValidatorCountAtGenesis(t.Context(), beaconState)
 	require.NoError(t, err)
-	assert.Equal(t, uint64(c), validatorCount, "Did not get the correct validator count")
+	assert.Equal(t, uint64(1), validatorCount)
+
+	validator, err := beaconState.ValidatorAtIndex(1)
+	require.NoError(t, err)
+	validator.ActivationEpoch = 0
+	require.NoError(t, beaconState.UpdateValidatorAtIndex(1, validator))
+
+	validatorCount, err = helpers.ActiveValidatorCountAtGenesis(t.Context(), beaconState)
+	require.NoError(t, err)
+	assert.Equal(t, uint64(2), validatorCount)
 }
 
 func TestChurnLimit_OK(t *testing.T) {

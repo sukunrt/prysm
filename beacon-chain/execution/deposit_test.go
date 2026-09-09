@@ -74,7 +74,7 @@ func TestProcessDeposit_OK(t *testing.T) {
 	err = web3Service.processDeposit(t.Context(), eth1Data, deposits[0])
 	require.NoError(t, err, "could not process deposit")
 
-	valcount, err := helpers.ActiveValidatorCount(t.Context(), web3Service.preGenesisState, 0)
+	valcount, err := helpers.ActiveValidatorCountAtGenesis(t.Context(), web3Service.preGenesisState)
 	require.NoError(t, err)
 	require.Equal(t, 1, int(valcount), "Did not get correct active validator count")
 }
@@ -295,7 +295,7 @@ func TestProcessDeposit_IncompleteDeposit(t *testing.T) {
 		err = web3Service.processDeposit(t.Context(), eth1Data, deposit)
 		require.NoError(t, err, fmt.Sprintf("Could not process deposit at %d", i))
 
-		valcount, err := helpers.ActiveValidatorCount(t.Context(), web3Service.preGenesisState, 0)
+		valcount, err := helpers.ActiveValidatorCountAtGenesis(t.Context(), web3Service.preGenesisState)
 		require.NoError(t, err)
 		require.Equal(t, 0, int(valcount), "Did not get correct active validator count")
 	}
@@ -325,7 +325,7 @@ func TestProcessDeposit_AllDepositedSuccessfully(t *testing.T) {
 		err = web3Service.processDeposit(t.Context(), eth1Data, deposits[i])
 		require.NoError(t, err, fmt.Sprintf("Could not process deposit at %d", i))
 
-		valCount, err := helpers.ActiveValidatorCount(t.Context(), web3Service.preGenesisState, 0)
+		valCount, err := helpers.ActiveValidatorCountAtGenesis(t.Context(), web3Service.preGenesisState)
 		require.NoError(t, err)
 		require.Equal(t, uint64(i+1), valCount, "Did not get correct active validator count")
 

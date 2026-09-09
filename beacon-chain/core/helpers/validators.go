@@ -142,7 +142,7 @@ func ActiveNonSlashedValidatorIndices(ctx context.Context, s state.ReadOnlyBeaco
 
 // ActiveValidatorCount returns the number of active validators in the state
 // at the given epoch.
-func ActiveValidatorCount(ctx context.Context, s state.ReadOnlyBeaconState, epoch primitives.Epoch) (uint64, error) {
+func ActiveValidatorCount(_ context.Context, s state.ReadOnlyBeaconState, epoch primitives.Epoch) (uint64, error) {
 	seed, err := Seed(s, epoch, params.BeaconConfig().DomainBeaconAttester)
 	if err != nil {
 		return 0, errors.Wrap(err, "could not get seed")
@@ -151,7 +151,7 @@ func ActiveValidatorCount(ctx context.Context, s state.ReadOnlyBeaconState, epoc
 	if err != nil {
 		return 0, errors.Wrap(err, "could not interface with committee cache")
 	}
-	if activeCount != 0 && s.Slot() != 0 {
+	if activeCount != 0 {
 		return uint64(activeCount), nil
 	}
 
@@ -171,6 +171,18 @@ func ActiveValidatorCount(ctx context.Context, s state.ReadOnlyBeaconState, epoc
 		}
 	}
 
+	return count, nil
+}
+
+// ActiveValidatorCountAtGenesis returns the number of active validators in the state
+// at the given epoch.
+func ActiveValidatorCountAtGenesis(_ context.Context, s state.ReadOnlyBeaconState) (uint64, error) {
+	count := uint64(0)
+	for _, val := range s.ValidatorsReadOnlySeq() {
+		if IsActiveValidatorUsingTrie(val, 0) {
+			count++
+		}
+	}
 	return count, nil
 }
 

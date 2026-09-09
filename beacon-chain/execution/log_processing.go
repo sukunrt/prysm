@@ -207,7 +207,7 @@ func (s *Service) ProcessDepositLog(ctx context.Context, depositLog *gethtypes.L
 		if !s.chainStartData.Chainstarted {
 			deposits := len(s.chainStartData.ChainstartDeposits)
 			if deposits%depositLoggingInterval == 0 {
-				valCount, err := helpers.ActiveValidatorCount(ctx, s.preGenesisState, 0)
+				valCount, err := helpers.ActiveValidatorCountAtGenesis(ctx, s.preGenesisState)
 				if err != nil {
 					log.WithError(err).Error("Could not determine active validator count from pre genesis state")
 				}
@@ -543,7 +543,7 @@ func (s *Service) currentCountAndTime(ctx context.Context, blockTime uint64) (ui
 	if s.preGenesisState.NumValidators() == 0 {
 		return 0, 0
 	}
-	valCount, err := helpers.ActiveValidatorCount(ctx, s.preGenesisState, 0)
+	valCount, err := helpers.ActiveValidatorCountAtGenesis(ctx, s.preGenesisState)
 	if err != nil {
 		log.WithError(err).Error("Could not determine active validator count from pre genesis state")
 		return 0, 0
