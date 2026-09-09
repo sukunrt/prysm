@@ -23,7 +23,16 @@ import (
 func (s *Service) getRecentPreState(ctx context.Context, c *ethpb.Checkpoint) state.ReadOnlyBeaconState {
 	headSlot := s.HeadSlot()
 	headRound := slots.RoundAt(headSlot)
-	if c.Epoch+1 < headRound || c.Epoch == 0 {
+	headEpoch := slots.ToEpoch(headSlot)
+
+	checkpointRound := c.Epoch // the att is for a finality round
+	checkpointSlot, err := slots.RoundStart(checkpointRound)
+	if err != nil {
+		return nil
+	}
+	checkpointEpoch := slots.ToEpoch(checkpointSlot)
+
+	if checkpointRound+1 < headRound || checkpointRound == 0 {
 		return nil
 	}
 	// Only use head state if the head state is compatible with the target checkpoint.
@@ -31,15 +40,8 @@ func (s *Service) getRecentPreState(ctx context.Context, c *ethpb.Checkpoint) st
 	if err != nil {
 		return nil
 	}
-	// The shuffling-compatibility check stays EPOCH-keyed: dependent roots are about
-	// shuffling, not FFG. The checkpoint's own epoch is the epoch containing its round's
-	// first slot, and we compare against the epoch just before the head's.
-	headEpoch := slots.ToEpoch(headSlot)
-	checkpointStart, err := slots.RoundStart(c.Epoch)
-	if err != nil {
-		return nil
-	}
-	if slots.ToEpoch(checkpointStart)+1 < headEpoch {
+	// Shuffling compatibility uses epochs, including the epoch containing the checkpoint's start slot.
+	if checkpointEpoch+1 < headEpoch {
 		return nil
 	}
 	headDependent, err := s.cfg.ForkChoiceStore.DependentRootForEpoch([32]byte(headRoot), headEpoch-1)
@@ -55,25 +57,21 @@ func (s *Service) getRecentPreState(ctx context.Context, c *ethpb.Checkpoint) st
 	}
 
 	// If the head state alone is enough, we can return it directly read only.
-	if c.Epoch <= headRound {
+	if checkpointRound <= headRound {
 		st, err := s.HeadStateReadOnly(ctx)
 		if err != nil {
 			return nil
 		}
 		return st
 	}
-	// At this point we can only have c.Epoch > headRound.
+	// At this point we can only have checkpointRound > headRound.
 	if !s.cfg.ForkChoiceStore.IsCanonical([32]byte(c.Root)) {
 		return nil
 	}
 	// Advance the head state to the start of the target round.
-	// This point can only be reached if c.Root == headRoot and c.Epoch > headRound.
-	slot, err := slots.RoundStart(c.Epoch)
-	if err != nil {
-		return nil
-	}
+	// This point can only be reached if c.Root == headRoot and checkpointRound > headRound.
 	// Try if we have already set the checkpoint cache. This will be tried again if we fail here but the check is cheap anyway.
-	roundKey := strconv.FormatUint(uint64(c.Epoch), 10 /* base 10 */)
+	roundKey := strconv.FormatUint(uint64(checkpointRound), 10 /* base 10 */)
 	lock := async.NewMultilock(string(c.Root) + roundKey)
 	lock.Lock()
 	defer lock.Unlock()
@@ -89,7 +87,7 @@ func (s *Service) getRecentPreState(ctx context.Context, c *ethpb.Checkpoint) st
 	if err != nil {
 		return nil
 	}
-	st, err = transition.ProcessSlotsUsingNextSlotCache(ctx, st, c.Root, slot)
+	st, err = transition.ProcessSlotsUsingNextSlotCache(ctx, st, c.Root, checkpointSlot)
 	if err != nil {
 		return nil
 	}
