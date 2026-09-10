@@ -133,21 +133,26 @@ func (s *Service) domainWithHeadState(ctx context.Context, slot primitives.Slot,
 // returns the head state that is advanced up to `slot`. It utilizes the cache `syncCommitteeHeadState` by retrieving using `slot` as key.
 // For the cache miss, it processes head state up to slot and fill the cache with `slot` as key.
 func (s *Service) getSyncCommitteeHeadState(ctx context.Context, slot primitives.Slot) (state.BeaconState, error) {
-	var headState state.BeaconState
-	var err error
+	// If there's already a head state exists with the request slot, we don't need to process slots.
+	cachedState, err := s.syncCommitteeHeadState.Get(slot)
+	if err == nil {
+		syncHeadStateHit.Inc()
+		return cachedState, nil
+	}
+	syncHeadStateMiss.Inc()
+
 	mLock := async.NewMultilock(fmt.Sprintf("%s-%d", "syncHeadState", slot))
 	mLock.Lock()
 	defer mLock.Unlock()
 
-	// If there's already a head state exists with the request slot, we don't need to process slots.
-	cachedState, err := s.syncCommitteeHeadState.Get(slot)
+	// check again in case it was cached concurrently
+	cachedState, err = s.syncCommitteeHeadState.Get(slot)
 	switch {
 	case err == nil:
 		syncHeadStateHit.Inc()
-		headState = cachedState
-		return headState, nil
+		return cachedState, nil
 	case errors.Is(err, cache.ErrNotFound):
-		headState, err = s.HeadState(ctx)
+		headState, err := s.HeadState(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -162,7 +167,7 @@ func (s *Service) getSyncCommitteeHeadState(ctx context.Context, slot primitives
 		if err != nil {
 			return nil, err
 		}
-		syncHeadStateMiss.Inc()
+		// don't increment cache miss here we've already incremented it once
 		err = s.syncCommitteeHeadState.Put(slot, headState)
 		return headState, err
 	default:
