@@ -6,7 +6,6 @@ import (
 	"math"
 	"sync"
 
-	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/altair"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
@@ -127,50 +126,10 @@ type syncSelectionProof struct {
 	pubkey [fieldparams.BLSPubkeyLength]byte
 }
 
-// signSyncSelectionProofs fetches subcommittee indices and signs selection data for a single pubkey.
-func (p *localSelector) signSyncSelectionProofs(ctx context.Context, slot primitives.Slot, pubKey [fieldparams.BLSPubkeyLength]byte) ([]syncSelectionProof, error) {
-	res, err := p.v.validatorClient.SyncSubcommitteeIndex(ctx, &ethpb.SyncSubcommitteeIndexRequest{
-		PublicKey: pubKey[:],
-		Slot:      slot,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "can't fetch sync subcommittee index")
-	}
-	proofs := make([]syncSelectionProof, 0, len(res.Indices))
-	for _, index := range res.Indices {
-		sig, err := p.v.signSyncSelectionData(ctx, pubKey, syncSubnet(uint64(index)), slot)
-		if err != nil {
-			return nil, errors.Wrap(err, "can't sign selection data")
-		}
-		proofs = append(proofs, syncSelectionProof{proof: sig, pubkey: pubKey})
-	}
-	return proofs, nil
-}
-
 func (p *localSelector) SyncCommitteeAggregators(ctx context.Context, slot primitives.Slot, pubkeys [][fieldparams.BLSPubkeyLength]byte) ([][fieldparams.BLSPubkeyLength]byte, error) {
-	ctx, span := trace.StartSpan(ctx, "localSelector.SyncCommitteeAggregators")
-	defer span.End()
-
-	var selections []syncSelectionProof
-	for _, pubKey := range pubkeys {
-		proofs, err := p.signSyncSelectionProofs(ctx, slot, pubKey)
-		if err != nil {
-			return nil, errors.Wrap(err, "sign sync selection proofs")
-		}
-		selections = append(selections, proofs...)
-	}
-
-	var aggregators [][fieldparams.BLSPubkeyLength]byte
-	for _, s := range selections {
-		isAggregator, err := altair.IsSyncCommitteeAggregator(s.proof)
-		if err != nil {
-			return nil, errors.Wrap(err, "can't detect sync committee aggregator")
-		}
-		if isAggregator {
-			aggregators = append(aggregators, s.pubkey)
-		}
-	}
-	return aggregators, nil
+	// There's no reason to select aggregators here and block the `RolesAt` method.
+	// We'll anyway compute if we're an aggregator in the SubmitSignedContributionAndProof method.
+	return pubkeys, nil
 }
 
 func (p *localSelector) SyncCommitteeSelectionProofs(ctx context.Context, slot primitives.Slot, pubKey [fieldparams.BLSPubkeyLength]byte, indexRes *ethpb.SyncSubcommitteeIndexResponse) ([][]byte, error) {

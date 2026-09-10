@@ -26,6 +26,24 @@ func testLocalSelector(t *testing.T, v *validator) *localSelector {
 	return s
 }
 
+func TestLocalSelector_SyncCommitteeAggregators_ReturnsAll(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		pubkeys [][fieldparams.BLSPubkeyLength]byte
+	}{
+		{name: "nil"},
+		{name: "empty", pubkeys: [][fieldparams.BLSPubkeyLength]byte{}},
+		{name: "multiple members", pubkeys: [][fieldparams.BLSPubkeyLength]byte{{1}, {2}, {3}}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s := testLocalSelector(t, &validator{})
+			aggregators, err := s.SyncCommitteeAggregators(t.Context(), 1, test.pubkeys)
+			require.NoError(t, err)
+			assert.DeepEqual(t, test.pubkeys, aggregators)
+		})
+	}
+}
+
 func TestLocalSelector_ClaimAggregateSlot(t *testing.T) {
 	s, err := newLocalSelector(&validator{})
 	require.NoError(t, err)

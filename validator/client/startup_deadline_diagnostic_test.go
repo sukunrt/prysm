@@ -50,10 +50,8 @@ func rolesAtWaitingInSingleflight(ctx context.Context) bool {
 	return false
 }
 
-// TestRolesAtDeadlineStageDifferentialDiagnostic demonstrates that the same
-// deadline category at the sync-index stage can represent either a long
-// sync-index RPC or an already-expired context after an earlier proof wait.
-func TestRolesAtDeadlineStageDifferentialDiagnostic(t *testing.T) {
+// Sync contribution deadlines can arise in the index RPC or an earlier attestation proof wait.
+func TestSyncContributionDeadlineStageDifferentialDiagnostic(t *testing.T) {
 	for _, test := range []struct {
 		name                  string
 		selectionPastDeadline bool
@@ -98,14 +96,11 @@ func TestRolesAtDeadlineStageDifferentialDiagnostic(t *testing.T) {
 							<-releaseSelection
 						}
 						return &ethpb.DomainResponse{SignatureDomain: make([]byte, fieldparams.RootLength)}, nil
-					case string(params.BeaconConfig().DomainRandao[:]):
-						require.ErrorIs(t, ctx.Err(), context.DeadlineExceeded)
-						return nil, ctx.Err()
 					default:
 						t.Fatalf("unexpected domain %#x", req.Domain)
 						return nil, errors.New("unexpected domain")
 					}
-				}).Times(2)
+				}).Times(1)
 
 			type syncObservation struct {
 				enteredWith error
@@ -167,6 +162,21 @@ func TestRolesAtDeadlineStageDifferentialDiagnostic(t *testing.T) {
 				t.Fatal("RolesAt error result did not return")
 			}
 			require.Contains(t, roles[pubkey], iface.RoleProposer)
+			require.Contains(t, roles[pubkey], iface.RoleSyncCommitteeAggregator)
+			rolesElapsed := time.Since(rolesStarted)
+			select {
+			case <-syncObserved:
+				t.Fatal("RolesAt performed a sync subcommittee lookup")
+			default:
+			}
+			if test.selectionPastDeadline {
+				require.ErrorIs(t, ctx.Err(), context.DeadlineExceeded)
+			} else {
+				require.NoError(t, ctx.Err(), "RolesAt should leave the budget available for duties")
+			}
+
+			v.SubmitSignedContributionAndProof(ctx, slot, pubkey)
+			require.Contains(t, hook.LastEntry().Message, "Could not get sync subcommittee index")
 			var observation syncObservation
 			select {
 			case observation = <-syncObserved:
@@ -187,15 +197,13 @@ func TestRolesAtDeadlineStageDifferentialDiagnostic(t *testing.T) {
 				require.GreaterOrEqual(t, observation.duration, 50*time.Millisecond)
 			}
 
-			v.ProposeBlock(ctx, slot, pubkey)
-			require.Contains(t, hook.LastEntry().Message, "Failed to sign randao reveal")
-			require.Equal(t, int32(2), domainCalls.Load())
-			t.Logf("roles_elapsed=%s sync_entered_with=%v sync_duration=%s", time.Since(rolesStarted), observation.enteredWith, observation.duration)
+			require.Equal(t, int32(1), domainCalls.Load())
+			t.Logf("roles_elapsed=%s sync_entered_with=%v sync_duration=%s", rolesElapsed, observation.enteredWith, observation.duration)
 		})
 	}
 }
 
-func TestRolesAtSyncSelectionDomainDeadlineDiagnostic(t *testing.T) {
+func TestSyncContributionSelectionDomainDeadlineDiagnostic(t *testing.T) {
 	hook := logTest.NewGlobal()
 	v, mocks, validatorKey, finish := setup(t, false)
 	defer finish()
@@ -227,16 +235,15 @@ func TestRolesAtSyncSelectionDomainDeadlineDiagnostic(t *testing.T) {
 				}
 				syncDomainObserved <- observation{enteredWith: atEntry, duration: time.Since(started)}
 				return nil, ctx.Err()
-			case string(params.BeaconConfig().DomainRandao[:]):
-				require.ErrorIs(t, ctx.Err(), context.DeadlineExceeded)
-				return nil, ctx.Err()
 			default:
 				t.Fatalf("unexpected domain %#x", req.Domain)
 				return nil, errors.New("unexpected domain")
 			}
-		}).Times(3)
+		}).Times(2)
+	rolesReturned := false
 	mocks.validatorClient.EXPECT().SyncSubcommitteeIndex(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, _ *ethpb.SyncSubcommitteeIndexRequest) (*ethpb.SyncSubcommitteeIndexResponse, error) {
+			require.True(t, rolesReturned, "sync selection must be deferred until the contribution duty")
 			require.NoError(t, ctx.Err())
 			return &ethpb.SyncSubcommitteeIndexResponse{Indices: []primitives.CommitteeIndex{0}}, nil
 		}).Times(1)
@@ -248,12 +255,22 @@ func TestRolesAtSyncSelectionDomainDeadlineDiagnostic(t *testing.T) {
 	roles, err := v.RolesAt(ctx, slot)
 	require.NoError(t, err)
 	require.Contains(t, roles[pubkey], iface.RoleProposer)
-	observed := <-syncDomainObserved
+	require.Contains(t, roles[pubkey], iface.RoleSyncCommitteeAggregator)
+	require.NoError(t, ctx.Err(), "RolesAt should leave the budget available for duties")
+	rolesElapsed := time.Since(started)
+	rolesReturned = true
+	v.SubmitSignedContributionAndProof(ctx, slot, pubkey)
+	var observed observation
+	select {
+	case observed = <-syncDomainObserved:
+	case <-time.After(time.Second):
+		t.Fatal("sync selection domain observation did not return")
+	}
 	require.NoError(t, observed.enteredWith)
 	require.GreaterOrEqual(t, observed.duration, 50*time.Millisecond)
-	v.ProposeBlock(ctx, slot, pubkey)
-	require.Contains(t, hook.LastEntry().Message, "Failed to sign randao reveal")
-	t.Logf("roles_elapsed=%s sync_selection_domain_entered_with=%v domain_duration=%s", time.Since(started), observed.enteredWith, observed.duration)
+	require.ErrorIs(t, ctx.Err(), context.DeadlineExceeded)
+	require.Contains(t, hook.LastEntry().Message, "Could not get selection proofs")
+	t.Logf("roles_elapsed=%s sync_selection_domain_entered_with=%v domain_duration=%s", rolesElapsed, observed.enteredWith, observed.duration)
 }
 
 func TestRolesAtLiveBudgetReachesBeaconBlockDiagnostic(t *testing.T) {
@@ -274,9 +291,7 @@ func TestRolesAtLiveBudgetReachesBeaconBlockDiagnostic(t *testing.T) {
 	mocks.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).Return(
 		&ethpb.DomainResponse{SignatureDomain: make([]byte, fieldparams.RootLength)}, nil,
 	).Times(2)
-	mocks.validatorClient.EXPECT().SyncSubcommitteeIndex(gomock.Any(), gomock.Any()).Return(
-		&ethpb.SyncSubcommitteeIndexResponse{}, nil,
-	).Times(1)
+	mocks.validatorClient.EXPECT().SyncSubcommitteeIndex(gomock.Any(), gomock.Any()).Times(0)
 	beaconBlockEntered := make(chan struct{})
 	mocks.validatorClient.EXPECT().BeaconBlock(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, _ *ethpb.BlockRequest) (*ethpb.GenericBeaconBlock, error) {
@@ -290,6 +305,7 @@ func TestRolesAtLiveBudgetReachesBeaconBlockDiagnostic(t *testing.T) {
 	roles, err := v.RolesAt(ctx, slot)
 	require.NoError(t, err)
 	require.Contains(t, roles[pubkey], iface.RoleProposer)
+	require.Contains(t, roles[pubkey], iface.RoleSyncCommitteeAggregator)
 	v.ProposeBlock(ctx, slot, pubkey)
 	select {
 	case <-beaconBlockEntered:

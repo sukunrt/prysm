@@ -1,6 +1,6 @@
 # Prysm — Ethereum Consensus Layer Client
 
-Bazel is the first-class build system — always build and test with Bazel.
+Bazel is the first-class build system. Prefer `go test` for unit tests; follow `/test`.
 
 ## Skills
 
