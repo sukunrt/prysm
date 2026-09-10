@@ -30,25 +30,24 @@ func (s *Service) getRecentPreState(ctx context.Context, c *ethpb.Checkpoint) st
 	if err != nil {
 		return nil
 	}
-	checkpointEpoch := slots.ToEpoch(checkpointSlot)
+	// 	checkpointEpoch := slots.ToEpoch(checkpointSlot)
 
-	if checkpointRound+1 < headRound || checkpointRound == 0 {
+	// the attestation is really stale
+	if checkpointRound+1 < headRound {
 		return nil
 	}
+
 	// Only use head state if the head state is compatible with the target checkpoint.
 	headRoot, err := s.HeadRoot(ctx)
 	if err != nil {
 		return nil
 	}
-	// Shuffling compatibility uses epochs, including the epoch containing the checkpoint's start slot.
-	if checkpointEpoch+1 < headEpoch {
-		return nil
-	}
-	headDependent, err := s.cfg.ForkChoiceStore.DependentRootForEpoch([32]byte(headRoot), headEpoch-1)
+
+	headDependent, err := s.cfg.ForkChoiceStore.DependentRootAtEpoch([32]byte(headRoot), headEpoch)
 	if err != nil {
 		return nil
 	}
-	targetDependent, err := s.cfg.ForkChoiceStore.DependentRootForEpoch([32]byte(c.Root), headEpoch-1)
+	targetDependent, err := s.cfg.ForkChoiceStore.DependentRootAtEpoch([32]byte(c.Root), headEpoch)
 	if err != nil {
 		return nil
 	}
@@ -57,6 +56,7 @@ func (s *Service) getRecentPreState(ctx context.Context, c *ethpb.Checkpoint) st
 	}
 
 	// If the head state alone is enough, we can return it directly read only.
+	// TODO: consider making this epoch based.
 	if checkpointRound <= headRound {
 		st, err := s.HeadStateReadOnly(ctx)
 		if err != nil {
@@ -181,7 +181,9 @@ func verifyAttTargetRound(_ context.Context, genesis, now time.Time, c *ethpb.Ch
 	if currentRound > 1 {
 		prevRound = currentRound - 1
 	}
-	if c.Epoch != prevRound && c.Epoch != currentRound {
+
+	checkpointRound := c.Epoch
+	if checkpointRound != prevRound && checkpointRound != currentRound {
 		return fmt.Errorf("target round %d does not match current round %d or prev round %d", c.Epoch, currentRound, prevRound)
 	}
 	return nil

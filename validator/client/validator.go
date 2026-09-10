@@ -585,6 +585,7 @@ func (v *validator) RolesAt(ctx context.Context, slot primitives.Slot) (map[[fie
 		}
 
 		// TODO(goldfish): wipe these when fork is Heze
+		// TODO(sukun): fix whatever this is
 		//
 		// The duty names one slot, the one the node found in the epoch's first round.
 		// Committees repeat at that offset in every later round of the epoch, so the
@@ -783,6 +784,7 @@ func (v *validator) getAttestationData(ctx context.Context, slot primitives.Slot
 
 	// head-at-round-start: reuse the head the node named for this round's first FFG
 	// vote, so a round's votes agree on the block they name.
+	// TODO(sukunrt): we probably need to remove this
 	if features.Get().DecoupledFFGHeadAtRoundStart {
 		if frozen := v.roundHead.frozen(slot); frozen != nil {
 			return frozen, nil

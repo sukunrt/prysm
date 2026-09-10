@@ -48,6 +48,7 @@ const (
 	gasLimitCalled
 	dependentRootCalled
 	dependentRootForEpochCalled
+	dependentRootAtEpochCalled
 	canonicalNodeAtSlotCalled
 	payloadWeightsCalled
 	hasPayloadBlockHashCalled
@@ -187,6 +188,11 @@ func TestROLocking(t *testing.T) {
 			name: "dependentRootCalled",
 			call: dependentRootCalled,
 			cb:   func(g FastGetter) { _, err := g.DependentRoot(0); _discard(t, err) },
+		},
+		{
+			name: "dependentRootAtEpochCalled",
+			call: dependentRootAtEpochCalled,
+			cb:   func(g FastGetter) { _, err := g.DependentRootAtEpoch([32]byte{}, 2); _discard(t, err) },
 		},
 		{
 			name: "canonicalNodeAtSlotCalled",
@@ -379,6 +385,12 @@ func (ro *mockROForkchoice) DependentRoot(_ primitives.Epoch) ([32]byte, error) 
 // DependentRootForEpoch implements FastGetter.
 func (ro *mockROForkchoice) DependentRootForEpoch(_ [32]byte, _ primitives.Epoch) ([32]byte, error) {
 	ro.calls = append(ro.calls, dependentRootForEpochCalled)
+	return [32]byte{}, nil
+}
+
+// DependentRootAtEpoch implements FastGetter.
+func (ro *mockROForkchoice) DependentRootAtEpoch(_ [32]byte, _ primitives.Epoch) ([32]byte, error) {
+	ro.calls = append(ro.calls, dependentRootAtEpochCalled)
 	return [32]byte{}, nil
 }
 

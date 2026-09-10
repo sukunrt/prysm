@@ -242,6 +242,39 @@ func TestDependentRootForEpoch_UnchangedByRoundTargets(t *testing.T) {
 	}
 }
 
+func TestDependentRootAtEpoch(t *testing.T) {
+	for _, offset := range []primitives.Slot{0, 1} {
+		t.Run("offset "+string(rune('0'+offset)), func(t *testing.T) {
+			setupRoundsConfig(t, offset)
+			f := New()
+			f.SetBalancesByRooter(func(context.Context, [32]byte) ([]uint64, error) { return nil, nil })
+			genesis := [32]byte{'g'}
+			// Slot 63 is missed, so epoch 3 depends on block 62.
+			insertChain(t, t.Context(), f, []chainBlock{
+				{0, genesis, [32]byte{}},
+				{31, [32]byte{31}, genesis},
+				{32, [32]byte{32}, [32]byte{31}},
+				{62, [32]byte{62}, [32]byte{32}},
+				{64, [32]byte{64}, [32]byte{62}},
+				{65, [32]byte{65}, [32]byte{64}},
+			})
+			for _, tc := range []struct {
+				epoch primitives.Epoch
+				want  [32]byte
+			}{
+				{0, genesis},
+				{1, genesis},
+				{2, [32]byte{31}},
+				{3, [32]byte{62}},
+			} {
+				got, err := f.DependentRootAtEpoch([32]byte{65}, tc.epoch)
+				require.NoError(t, err)
+				require.Equal(t, tc.want, got, "epoch %d", tc.epoch)
+			}
+		})
+	}
+}
+
 type chainBlock struct {
 	slot   primitives.Slot
 	root   [32]byte

@@ -81,7 +81,7 @@ func (s *Store) justifiedNode() (*Node, error) {
 // It then updates the new node's parent with the best child and descendant node.
 func (s *Store) insert(ctx context.Context,
 	roblock consensus_blocks.ROBlock,
-	justifiedEpoch, finalizedEpoch primitives.Round,
+	justifiedRound, finalizedRound primitives.Round,
 ) (*PayloadNode, error) {
 	ctx, span := trace.StartSpan(ctx, "doublyLinkedForkchoice.insert")
 	defer span.End()
@@ -124,10 +124,10 @@ func (s *Store) insert(ctx context.Context,
 		proposerIndex:               block.ProposerIndex(),
 		root:                        root,
 		parent:                      parent,
-		justifiedEpoch:              justifiedEpoch,
-		unrealizedJustifiedEpoch:    justifiedEpoch,
-		finalizedEpoch:              finalizedEpoch,
-		unrealizedFinalizedEpoch:    finalizedEpoch,
+		justifiedEpoch:              justifiedRound,
+		unrealizedJustifiedEpoch:    justifiedRound,
+		finalizedEpoch:              finalizedRound,
+		unrealizedFinalizedEpoch:    finalizedRound,
 		blockHash:                   *blockHash,
 		payloadAvailabilityVote:     bitfield.NewBitvector512(),
 		payloadDataAvailabilityVote: bitfield.NewBitvector512(),

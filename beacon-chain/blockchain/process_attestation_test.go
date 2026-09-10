@@ -242,6 +242,44 @@ func TestService_GetRecentPreState_Epoch_0(t *testing.T) {
 	require.IsNil(t, service.getRecentPreState(ctx, &ethpb.Checkpoint{}))
 }
 
+func TestService_GetRecentPreState_RoundZero(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		headSlot primitives.Slot
+		wantHead bool
+	}{
+		{"genesis head", 0, true},
+		{"later block in round zero", 1, true},
+		{"head in round one", params.BeaconConfig().SlotsPerRound, true},
+		{"stale checkpoint", 2 * params.BeaconConfig().SlotsPerRound, false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			service, _ := minimalTestService(t)
+			ctx := t.Context()
+			genesis := [32]byte{'g'}
+			checkpoint := &ethpb.Checkpoint{Root: genesis[:]}
+			st, blk, err := prepareForkchoiceState(ctx, 0, genesis, [32]byte{}, [32]byte{}, checkpoint, checkpoint)
+			require.NoError(t, err)
+			require.NoError(t, service.cfg.ForkChoiceStore.InsertNode(ctx, st, blk))
+			if tt.headSlot > 0 {
+				st, blk, err = prepareForkchoiceState(ctx, tt.headSlot, [32]byte{'h'}, genesis, [32]byte{}, checkpoint, checkpoint)
+				require.NoError(t, err)
+				require.NoError(t, service.cfg.ForkChoiceStore.InsertNode(ctx, st, blk))
+			}
+			service.head = &head{root: blk.Root(), state: st, block: blk, slot: tt.headSlot}
+
+			service.cfg.ForkChoiceStore.RLock()
+			defer service.cfg.ForkChoiceStore.RUnlock()
+			got := service.getRecentPreState(ctx, checkpoint)
+			if tt.wantHead {
+				require.Equal(t, st, got)
+			} else {
+				require.IsNil(t, got)
+			}
+		})
+	}
+}
+
 func TestService_GetRecentPreState_Old_Checkpoint(t *testing.T) {
 	service, _ := minimalTestService(t)
 	ctx := t.Context()

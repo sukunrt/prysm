@@ -70,6 +70,7 @@ type ForkchoiceFetcher interface {
 	RecentBlockSlot(root [32]byte) (primitives.Slot, error)
 	IsCanonical(ctx context.Context, blockRoot [32]byte) (bool, error)
 	DependentRoot(primitives.Epoch) ([32]byte, error)
+	DependentRootAtEpoch([32]byte, primitives.Epoch) ([32]byte, error)
 	CanonicalNodeAtSlot(primitives.Slot) ([32]byte, bool)
 	ShouldIgnoreData(parentRoot [32]byte, dataSlot primitives.Slot) bool
 	RecordBlockForEquivocation(primitives.Slot, primitives.ValidatorIndex, [32]byte)
@@ -103,6 +104,7 @@ type HeadFetcher interface {
 	ChainHeads() ([][32]byte, []primitives.Slot)
 	IsBidCompatibleWithHead(interfaces.ROExecutionPayloadBid) bool
 	DependentRootForEpoch([32]byte, primitives.Epoch) ([32]byte, error)
+	DependentRootAtEpoch([32]byte, primitives.Epoch) ([32]byte, error)
 	TargetRootForRound([32]byte, primitives.Round) ([32]byte, error)
 	HeadSyncCommitteeFetcher
 	HeadDomainFetcher
@@ -557,6 +559,13 @@ func (s *Service) DependentRootForEpoch(root [32]byte, epoch primitives.Epoch) (
 		return s.originBlockRoot, nil
 	}
 	return depRoot, nil
+}
+
+// DependentRootAtEpoch returns the shuffling dependent root for the given duty epoch.
+func (s *Service) DependentRootAtEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
+	s.cfg.ForkChoiceStore.RLock()
+	defer s.cfg.ForkChoiceStore.RUnlock()
+	return s.cfg.ForkChoiceStore.DependentRootAtEpoch(root, epoch)
 }
 
 // TargetRootForRound wraps the corresponding method in forkchoice

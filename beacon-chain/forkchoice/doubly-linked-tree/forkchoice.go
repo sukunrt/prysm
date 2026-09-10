@@ -844,6 +844,11 @@ func (f *ForkChoice) DependentRootForEpoch(root [32]byte, epoch primitives.Epoch
 	return f.store.dependentRootForEpoch(root, epoch)
 }
 
+// DependentRootAtEpoch returns the shuffling dependent root for the given duty epoch.
+func (f *ForkChoice) DependentRootAtEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
+	return f.store.dependentRootAtEpoch(root, epoch)
+}
+
 // TargetRootForRound returns the root of the target block for a given round.
 func (f *ForkChoice) TargetRootForRound(root [32]byte, round primitives.Round) ([32]byte, error) {
 	return f.store.targetRootForRound(root, round)
@@ -890,6 +895,41 @@ func (s *Store) dependentRootForEpoch(root [32]byte, epoch primitives.Epoch) ([3
 	return en.node.root, nil
 }
 
+// dependentRootAtEpoch returns the relevant dependent root for `epoch`
+func (s *Store) dependentRootAtEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
+	if epoch < 2 {
+		return s.targetRootForRound(root, 0) // we want the genesis block here
+	}
+	releventEpoch := epoch - 1
+	epochStartSlot, err := slots.EpochStart(releventEpoch)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	startRound := slots.RoundAt(epochStartSlot)
+	tr, err := s.targetRootForRound(root, startRound)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	if tr == [32]byte{} {
+		return [32]byte{}, nil
+	}
+	en, ok := s.emptyNodeByRoot[tr]
+	if !ok || en == nil {
+		return [32]byte{}, ErrNilNode
+	}
+	// IF we are working with offset 0 for the target vote, adjust the node to be the parent of the
+	// target node. The target node in this case would be the node for the first slot of epoch - 1
+	// For slot 64, target would be node for slot 32, and its parent will give us 31.
+	if slots.ToEpoch(en.node.slot) >= releventEpoch {
+		if en.node.parent != nil {
+			en = en.node.parent
+		} else {
+			return s.finalizedDependentRoot, nil
+		}
+	}
+	return en.node.root, nil
+}
+
 // targetRootForRound returns the root of the target block for a given round.
 // The round parameter is crucial to identify the correct target root. For example:
 // When inserting a block at slot 63 with block root 0xA and target root 0xB (pointing to the block at slot 32),
@@ -905,6 +945,7 @@ func (s *Store) targetRootForRound(root [32]byte, round primitives.Round) ([32]b
 	}
 	node := n.node
 	nodeRound := slots.RoundAt(node.slot)
+	// slots have been empty since the last block. return the last block as target
 	if round > nodeRound {
 		return node.root, nil
 	}

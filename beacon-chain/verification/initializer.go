@@ -28,6 +28,7 @@ type Forkchoicer interface {
 	IsCanonical(root [32]byte) bool
 	Slot([32]byte) (primitives.Slot, error)
 	DependentRootForEpoch([32]byte, primitives.Epoch) ([32]byte, error)
+	DependentRootAtEpoch([32]byte, primitives.Epoch) ([32]byte, error)
 	TargetRootForRound([32]byte, primitives.Round) ([32]byte, error)
 }
 

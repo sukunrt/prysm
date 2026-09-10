@@ -91,6 +91,7 @@ type FastGetter interface {
 	Slot([32]byte) (primitives.Slot, error)
 	DependentRoot(primitives.Epoch) ([32]byte, error)
 	DependentRootForEpoch([32]byte, primitives.Epoch) ([32]byte, error)
+	DependentRootAtEpoch([32]byte, primitives.Epoch) ([32]byte, error)
 	TargetRootForRound([32]byte, primitives.Round) ([32]byte, error)
 	UnrealizedJustifiedPayloadBlockHash() [32]byte
 	Weight(root [32]byte) (uint64, error)

@@ -534,6 +534,7 @@ type mockForkchoicer struct {
 	IsCanonicalCB           func(root [32]byte) bool
 	SlotCB                  func([32]byte) (primitives.Slot, error)
 	DependentRootForEpochCB func([32]byte, primitives.Epoch) ([32]byte, error)
+	DependentRootAtEpochCB  func([32]byte, primitives.Epoch) ([32]byte, error)
 	TargetRootForRoundCB    func([32]byte, primitives.Round) ([32]byte, error)
 }
 
@@ -557,6 +558,10 @@ func (m *mockForkchoicer) Slot(root [32]byte) (primitives.Slot, error) {
 
 func (m *mockForkchoicer) DependentRootForEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
 	return m.DependentRootForEpochCB(root, epoch)
+}
+
+func (m *mockForkchoicer) DependentRootAtEpoch(root [32]byte, epoch primitives.Epoch) ([32]byte, error) {
+	return m.DependentRootAtEpochCB(root, epoch)
 }
 
 func (m *mockForkchoicer) TargetRootForRound(root [32]byte, round primitives.Round) ([32]byte, error) {
