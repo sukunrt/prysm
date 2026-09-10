@@ -81,7 +81,7 @@ type validator struct {
 	cachedAttestationData        *ethpb.AttestationData
 	submittedPrefSlotsLock       sync.RWMutex
 	signedRequestAuthsLock       sync.Mutex
-	domainDataLock               sync.RWMutex
+	domainDataLock               multiLock
 	graffitiOrderedIndex         uint64
 	walletInitializedFeed        *event.Feed
 	walletInitializedChan        chan *wallet.Wallet
@@ -722,7 +722,8 @@ func (v *validator) domainData(ctx context.Context, epoch primitives.Epoch, doma
 	ctx, span := trace.StartSpan(ctx, "validator.domainData")
 	defer span.End()
 
-	v.domainDataLock.RLock()
+	domainKey := string(domain)
+	v.domainDataLock.RLock(domainKey)
 
 	req := &ethpb.DomainRequest{
 		Epoch:  epoch,
@@ -732,14 +733,14 @@ func (v *validator) domainData(ctx context.Context, epoch primitives.Epoch, doma
 	key := strings.Join([]string{strconv.FormatUint(uint64(req.Epoch), 10), hex.EncodeToString(req.Domain)}, ",")
 
 	if val, ok := v.domainDataCache.Get(key); ok {
-		v.domainDataLock.RUnlock()
+		v.domainDataLock.RUnlock(domainKey)
 		return proto.Clone(val).(*ethpb.DomainResponse), nil
 	}
-	v.domainDataLock.RUnlock()
+	v.domainDataLock.RUnlock(domainKey)
 
 	// Lock as we are about to perform an expensive request to the beacon node.
-	v.domainDataLock.Lock()
-	defer v.domainDataLock.Unlock()
+	v.domainDataLock.Lock(domainKey)
+	defer v.domainDataLock.Unlock(domainKey)
 
 	// We check the cache again as in the event there are multiple inflight requests for
 	// the same domain data, the cache might have been filled while we were waiting

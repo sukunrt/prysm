@@ -53,12 +53,7 @@ func TestDomainDataCacheInternalCostDiagnostic(t *testing.T) {
 	t.Logf("retained domains: production=%d ignore-internal-cost=%d", productionRetained, controlRetained)
 }
 
-// TestDomainDataCanceledWaiterDiagnostic records a property of the real
-// domainData locking path that matters when interpreting historical deadline
-// logs. A detached cache miss can hold domainDataLock across its RPC. A second
-// caller cannot abandon the RWMutex wait when its context is canceled; it
-// returns the cancellation only after the holder releases the lock and the
-// second RPC observes the canceled context.
+// Same-domain callers across epochs still wait for the RPC holder despite cancellation.
 func TestDomainDataCanceledWaiterDiagnostic(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	client := validatormock.NewMockValidatorClient(ctrl)
@@ -94,16 +89,16 @@ func TestDomainDataCanceledWaiterDiagnostic(t *testing.T) {
 	})
 	client.EXPECT().DomainData(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, req *ethpb.DomainRequest) (*ethpb.DomainResponse, error) {
-			switch string(req.Domain) {
-			case string(params.BeaconConfig().DomainSelectionProof[:]):
+			switch req.Epoch {
+			case 0:
 				close(holderEntered)
 				<-releaseHolder
 				return &ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil
-			case string(params.BeaconConfig().DomainRandao[:]):
+			case 1:
 				close(randaoRPCEntered)
 				return nil, ctx.Err()
 			default:
-				return nil, fmt.Errorf("unexpected domain %#x", req.Domain)
+				return nil, fmt.Errorf("unexpected epoch %d", req.Epoch)
 			}
 		}).Times(2)
 
@@ -115,7 +110,7 @@ func TestDomainDataCanceledWaiterDiagnostic(t *testing.T) {
 		_, err := v.domainData(
 			context.Background(),
 			primitives.Epoch(0),
-			params.BeaconConfig().DomainSelectionProof[:],
+			params.BeaconConfig().DomainRandao[:],
 		)
 		holderResult <- err
 	}()
@@ -133,7 +128,7 @@ func TestDomainDataCanceledWaiterDiagnostic(t *testing.T) {
 	workers.Add(1)
 	go func() {
 		defer workers.Done()
-		_, err := v.domainData(randaoCtx, primitives.Epoch(0), params.BeaconConfig().DomainRandao[:])
+		_, err := v.domainData(randaoCtx, primitives.Epoch(1), params.BeaconConfig().DomainRandao[:])
 		randaoResult <- err
 	}()
 	cancelRandao()
@@ -146,7 +141,7 @@ func TestDomainDataCanceledWaiterDiagnostic(t *testing.T) {
 	}
 	select {
 	case <-randaoRPCEntered:
-		t.Fatal("RANDAO RPC began while the selection-domain holder still held domainDataLock")
+		t.Fatal("next-epoch RANDAO RPC began while the current-epoch holder still held the domain lock")
 	default:
 	}
 
