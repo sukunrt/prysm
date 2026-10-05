@@ -1,0 +1,54 @@
+{
+  "beacon_errors_after_first_proposal_slot_started": [
+    {
+      "node": "cl-04-prysm-geth",
+      "seconds_after_genesis": 12.626,
+      "message": "2026-10-05T20:20:06.625958195Z [2026-10-05 20:20:06.62] ERROR execution: Beacon node is not respecting the follow distance. EL client is syncing. lastBlockNumber=0"
+    }
+  ],
+  "startup_error_lines": 162,
+  "startup_error_kinds": {
+    "unknown_yaml_fields": 10,
+    "el_follow_distance": 152
+  },
+  "goldfish_summaries_checked": 310,
+  "goldfish_min_fraction": 1.0,
+  "goldfish_max_fraction": 1.0,
+  "goldfish_examples": [
+    {
+      "node": "cl-10-prysm-geth",
+      "slot": 29,
+      "seats": 512,
+      "unique_validators": 412,
+      "recorded_messages": 412
+    },
+    {
+      "node": "cl-10-prysm-geth",
+      "slot": 30,
+      "seats": 512,
+      "unique_validators": 391,
+      "recorded_messages": 391
+    },
+    {
+      "node": "cl-10-prysm-geth",
+      "slot": 31,
+      "seats": 512,
+      "unique_validators": 398,
+      "recorded_messages": 398
+    }
+  ],
+  "beacon_errors_after_first_payload_import": [],
+  "first_payload_imports": {
+    "cl-01-prysm-geth": "2026-10-05T20:20:06.326269+00:00",
+    "cl-02-prysm-geth": "2026-10-05T20:20:07.010920+00:00",
+    "cl-03-prysm-geth": "2026-10-05T20:20:06.101858+00:00",
+    "cl-04-prysm-geth": "2026-10-05T20:20:06.806107+00:00",
+    "cl-05-prysm-geth": "2026-10-05T20:20:06.110379+00:00",
+    "cl-06-prysm-geth": "2026-10-05T20:20:06.437751+00:00",
+    "cl-07-prysm-geth": "2026-10-05T20:20:06.110107+00:00",
+    "cl-08-prysm-geth": "2026-10-05T20:20:06.106088+00:00",
+    "cl-09-prysm-geth": "2026-10-05T20:20:06.105815+00:00",
+    "cl-10-prysm-geth": "2026-10-05T20:20:06.120319+00:00"
+  },
+  "goldfish_counter_checks_passed": true
+}

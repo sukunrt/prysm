@@ -1,6 +1,6 @@
 # Three-slot attestation retention for Heze
 
-Status: implemented and validated remotely, uncommitted. Updated 2026-10-05. This extends the
+Status: implemented, unit/race and 50-node Shadow validation passed, uncommitted. Updated 2026-10-06. This extends the
 completed packing CPU fix; preserve its existing uncommitted changes.
 
 ## Objective and policy
@@ -92,9 +92,8 @@ The baseline source snapshot, including the completed packing optimization, is
 `/home/sukun/.cache/prysm-attestation-retention/2026-10-05/baseline/`.
 Use source overlays or an isolated copy for paired measurements and preserve
 raw commands/results under the same task cache. Report when compared outputs
-differ because of the intended retention policy. No additional network run is
-required for the implementation/review pass; previous network results apply
-to the earlier build until the changed binaries are exercised again.
+differ because of the intended retention policy. The subsequently requested
+50-node Shadow verification of these changed binaries is recorded below.
 
 ## Implementation and review sequence
 
@@ -177,5 +176,77 @@ Earlier iterations had an aggregate-order assertion failure that passed on
 retry, ticker configuration/scheduling failures that were fixed, and a historical
 fixture expecting an age-seven vote that was updated for the agreed policy.
 The final narrowed checks above all passed on their first remote run. Bazel was
-not run because its executable is unavailable. No new network simulation was
-run for this change; earlier network results apply to the earlier build.
+not run because its executable is unavailable.
+
+## 50-node Shadow verification
+
+The final narrowed implementation passed the requested remote eight-slot run:
+50 nodes, 10,000 active validators, 200 per node, 40 home nodes and 10 supernodes.
+Fresh beacon, validator and genesis-tool binaries were built with Go 1.26.5
+after verifying all 4,882 source hashes. The run used Heze from genesis, the
+classic pool, seed 1, eight-slot rounds and 12-second slots. Home bandwidth was
+25 Mbit/s up and 50 down; supernodes used 1,024 Mbit/s both ways. The network's
+committee size was 1,250 per slot, distinct from the ten-committee CPU fixture.
+
+Shadow, the retention verifier's 19 checks, and the repository summary verifier
+all exited 0. All 50 nodes agreed on slot 8, with zero sync distance, no optimistic
+heads, and their execution clients online. Every node imported all eight blocks
+and payloads: 400/400 of each. There were no proposal failures or positive-depth
+reorgs. All 50 final metrics and pool captures completed before shutdown.
+
+| Block | FFG aggregates | Included attestation slots | Fresh participants | Payload attestations | EL transactions | Blobs |
+| ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 1 | 1 | 0 | 27 / 1,250 | 1 | 0 | 0 |
+| 2 | 3 | 1, 1, 0 | 1,250 / 1,250 | 1 | 6 | 3 |
+| 3 | 3 | 2, 2, 0 | 1,250 / 1,250 | 1 | 7 | 3 |
+| 4 | 2 | 3, 3 | 1,250 / 1,250 | 1 | 10 | 6 |
+| 5 | 2 | 4, 4 | 1,250 / 1,250 | 1 | 5 | 0 |
+| 6 | 2 | 5, 5 | 1,250 / 1,250 | 1 | 10 | 6 |
+| 7 | 2 | 6, 6 | 1,250 / 1,250 | 1 | 6 | 0 |
+| 8 | 1 | 7 | 1,250 / 1,250 | 1 | 9 | 6 |
+
+Every included attestation met the three-slot window. Node1's pool retained
+slot-zero entries through slot 3 and had none at slot 4; its slot-4 capture
+contained only current-slot entries. All 50 final pool captures contained only
+slot-8 entries. Expiry counters recorded 47 deletions summed across nodes
+(per-node events, not unique network votes). This directly verifies deletion
+from the pool as well as the packing cutoff.
+
+The slot-8 end-to-end check matched its nine execution transactions and six
+blobs to the payload envelope. Its one FFG aggregate covered all 1,250 slot-7
+participants and matched 42 aggregate-ledger observations. Its payload
+attestation covered all 512 seats, with both payload-present and data-available
+flags true, matching 20,825 PTC ledger observations from 425 distinct validators.
+Ledger observations repeat across nodes; committee seats can repeat validators.
+The common slot-8 beacon root was
+`0xafa1fd056a762f72a755e9fd4e9f9dc508886f1b71d231b54ebe9994e30c9eec`.
+
+The separate startup/slot-zero issue remains: block 1 included only 27 slot-zero
+participants. Six beacon nodes logged an EL follow-distance error after genesis;
+all were online and synced at the final capture. Eight startup eth1data fallback
+warnings appeared, with no post-genesis validator errors. Metrics recorded
+2,202 undeliverable payload-attestation and 333 sync-committee delivery events;
+no positive FFG or available-attestation undeliverable counter was present.
+These gossip-queue issues remain outside this fix, and the run does not establish
+a change in their rate. Complete Goldfish summaries for slots 1–7 had all 512
+seats on every node. Worst observed payload arrival was 4.629 seconds on home
+nodes and 2.401 seconds on supernodes, within the slot. Finality remained at
+round zero; eight startup slots do not establish longer-term finalization.
+Shadow results are network checks, not CPU benchmark measurements.
+
+The run stopped at virtual second 408, after blocks 1–8; genesis was second 300.
+The invocation took 902.99 seconds of wall time including generation. All of
+this run's Shadow/beacon/validator processes have exited. No local simulation
+was started and no production source changes were needed during verification.
+
+Remote run and reusable build/capture scripts:
+`/home/sukun/dev/prysm-retention-20261005/shadow/runs/retention-n50-v10000-home40-super10-s1-8slots/`
+and `shadow/retention-evidence/` under that source root. Invoke `run.py 8` only
+with a fresh output name; the wrapper refuses to overwrite an existing run.
+
+Local evidence:
+`/home/sukun/.cache/prysm-attestation-retention/2026-10-05/shadow-remote/result/evidence/`.
+It contains raw REST/EL/pool captures, `analysis.json`,
+`retention-verification.json`, verifier logs, configuration and build provenance.
+The adjacent `evidence.tar.gz` also retains all 50 nodes' full logs. Its verified
+SHA256 is `c35b70c7138ea2b7b92577a17d3a2f2db69c49279fe0a4f01ccd7de22f9b1a8b`.

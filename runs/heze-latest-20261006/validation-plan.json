@@ -1,0 +1,70 @@
+{
+  "nodes": 10,
+  "validators": 1000,
+  "slots": 32,
+  "slots_per_round": 8,
+  "seconds_per_slot": 12,
+  "heze_fork_epoch": 0,
+  "historical_rollback": "deterministic unit test only",
+  "implementation_review_rounds": 1,
+  "status": "completed: both simulation runs and requested audits passed",
+  "go_toolchain": "go1.26.5",
+  "simulation_access": {
+    "host": "sukun@ethp2p",
+    "access": "restored",
+    "root": "/home/sukun/dev/prysm-heze-latest-20261006"
+  },
+  "candidate_build": "static beacon-chain, validator, prysmctl and dynamic Shadow beacon/validator succeeded; container image creation denied",
+  "build_targets": [
+    "beacon-chain (static)",
+    "validator (static)",
+    "prysmctl (static)",
+    "prysm-beacon (Shadow)",
+    "prysm-validator (Shadow)"
+  ],
+  "buildvcs": false,
+  "simulations": {
+    "shadow": {
+      "heads_agree_slot32": true,
+      "all_blocks_verified": true,
+      "nonoptimistic": true,
+      "justified_round": 3,
+      "finalized_round": 2,
+      "slot32_transactions": 10,
+      "slot32_attestations": 2,
+      "slot32_payload_attestations": 1,
+      "matching_ffg_log_entries": 10,
+      "matching_ptc_unique_validators": 124,
+      "goldfish_summaries_checked": 310,
+      "all_goldfish_summaries_have_512_seats": true,
+      "post_genesis_errors": 0,
+      "proposal_failures": 0
+    },
+    "kurtosis": {
+      "heads_agree_slot32": true,
+      "all_blocks_with_attestations": true,
+      "justified_round": 3,
+      "finalized_round": 2,
+      "slot32_transactions": 5,
+      "slot32_attestations": 1,
+      "slot32_payload_attestations": 1,
+      "matching_ffg_log_entries": 10,
+      "matching_ptc_unique_validators": 121,
+      "goldfish_summaries_checked": 310,
+      "all_goldfish_summaries_have_512_seats": true,
+      "errors_after_first_payload_import": 0,
+      "startup_messages": {
+        "unknown_yaml_fields": 10,
+        "el_follow_distance": 152
+      },
+      "proposal_failures": 0
+    }
+  },
+  "unit_tests": {
+    "requested_regressions": "passed",
+    "broader_failures": "reproduced on pre-change source baseline",
+    "network_access": "restored; slashing network tests passed after test-only clock fixture correction"
+  },
+  "final_build": "All five binaries built and hash-verified remotely; all three container images built successfully",
+  "cleanup": "Shadow exited normally; Kurtosis enclave stopped after collecting evidence"
+}

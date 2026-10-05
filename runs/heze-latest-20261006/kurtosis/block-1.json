@@ -1,0 +1,88 @@
+{
+  "version": "gloas",
+  "execution_optimistic": false,
+  "finalized": false,
+  "data": {
+    "message": {
+      "slot": "1",
+      "proposer_index": "230",
+      "parent_root": "0xd1b79dd2fbb42a8a3d7179aaa09f1719eb57c3ed44e7b5a0363c0348a717f2fc",
+      "state_root": "0x5c98d51290f58d1027e0eccfb469a9c301c533417ae439eaee5fd8183e1295a8",
+      "body": {
+        "randao_reveal": "0xb1d22ef69bb59bd8fd0607e68ee3f6c20db0b2264964a89263a2119dc73c9022e4faee8eeb03d300d59cce38bb99c9220f6a95aa4fc0b7d771bfd25b75ea056dcd778e8d65626ad7afe8730bf6bc7dcb5a348eefc7e4dad8523d80ac8bd4200a",
+        "eth1_data": {
+          "deposit_root": "0xd70a234731285c6804c2a4f56711ddb8c82c99740f207854891028af34e27e5e",
+          "deposit_count": "0",
+          "block_hash": "0xbdeddf7cf776d6cd260ecf7941ebd3e43759fc0826b6264c0e07947cf8a84ecc"
+        },
+        "graffiti": "0x474561613166504d4c6f63610000000000000000000000000000000000000000",
+        "proposer_slashings": [],
+        "attester_slashings": [],
+        "attestations": [
+          {
+            "aggregation_bits": "0x22040c12010024000000480400008120",
+            "data": {
+              "slot": "0",
+              "index": "0",
+              "beacon_block_root": "0xd1b79dd2fbb42a8a3d7179aaa09f1719eb57c3ed44e7b5a0363c0348a717f2fc",
+              "source": {
+                "epoch": "0",
+                "root": "0x0000000000000000000000000000000000000000000000000000000000000000"
+              },
+              "target": {
+                "epoch": "0",
+                "root": "0xd1b79dd2fbb42a8a3d7179aaa09f1719eb57c3ed44e7b5a0363c0348a717f2fc"
+              }
+            },
+            "signature": "0xb88ea96450a3af9089b29fc3952683851240cdd9d090865cea01f28135450c04171338c4c109ad065387fddf2c19253f16e37aff561b3735c4fc9b2e0ae3c079bcacae5e72479ffecf3859cd53a0ab8e0f5fefe0372a9ff770615c148e60cccf",
+            "committee_bits": "0x0100000000000000"
+          }
+        ],
+        "deposits": [],
+        "voluntary_exits": [],
+        "sync_aggregate": {
+          "sync_committee_bits": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "sync_committee_signature": "0xb927aa2d627e543faed809581b7c90a7a11a8d5facbf3382b9069b43386241d0e0f7881562be30eca1b1b9f01017cc44079493a2221f6a365cfe328177081e888e988296f462ac20c462b95a3e52f098eb6fd77fe080f1de312205f0e443ee69"
+        },
+        "bls_to_execution_changes": [],
+        "signed_execution_payload_bid": {
+          "message": {
+            "parent_block_hash": "0xbdeddf7cf776d6cd260ecf7941ebd3e43759fc0826b6264c0e07947cf8a84ecc",
+            "parent_block_root": "0xd1b79dd2fbb42a8a3d7179aaa09f1719eb57c3ed44e7b5a0363c0348a717f2fc",
+            "block_hash": "0xc4e8886869c7f40e09c923cbd61e017a7f47b91199415631389784191de69143",
+            "prev_randao": "0xbdeddf7cf776d6cd260ecf7941ebd3e43759fc0826b6264c0e07947cf8a84ecc",
+            "fee_recipient": "0x8943545177806ed17b9f23f0a21ee5948ecaa776",
+            "gas_limit": "9000000",
+            "builder_index": "18446744073709551615",
+            "slot": "1",
+            "value": "0",
+            "execution_payment": "0",
+            "blob_kzg_commitments": [],
+            "execution_requests_root": "0x87b69a306c8e430d0857f7c4ac5e27cecffa1108d43c2e5df7388056fea7a423"
+          },
+          "signature": "0xc00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "payload_attestations": [
+          {
+            "aggregation_bits": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+            "data": {
+              "beacon_block_root": "0xd1b79dd2fbb42a8a3d7179aaa09f1719eb57c3ed44e7b5a0363c0348a717f2fc",
+              "slot": "0",
+              "payload_present": false,
+              "blob_data_available": true
+            },
+            "signature": "0x8ce150594111d94bfc5758381a77fa9f67166887146fa6be44a0aa7770483c0bd15d18a0553fca075be081ccff03b3ac0dde819677cdd517f2a9fa577064c502ad1507f2cb8c77d03777a9a5ed93e7d09b953e742fe714c124fa17f11f686a81"
+          }
+        ],
+        "parent_execution_requests": {
+          "deposits": [],
+          "withdrawals": [],
+          "consolidations": [],
+          "builder_deposits": [],
+          "builder_exits": []
+        }
+      }
+    },
+    "signature": "0xb76fe01b8f4eea75b30204f4fcc3964492a8845b40b5fb7bc722689ea1503b10aaa05851cce3183d554e2f9736c45f3304cea6c6016cb5c266ec5631c3c740b2736517807d457c7ea9bc8739e69ce5c83a0917c1d7dc312ee64a313c0a0f170e"
+  }
+}

@@ -91,7 +91,7 @@ func (s *Service) postBlockProcess(cfg *postBlockProcessConfig) error {
 		return errors.Wrap(err, "could not handle block's payload attestations")
 	}
 
-	s.InsertSlashingsToForkChoiceStore(ctx, cfg.roblock.Block().Body().AttesterSlashings())
+	s.InsertSlashingsToForkChoiceStore(ctx, cfg.roblock.Block().Body().AttesterSlashings(), cfg.roblock.Block().Slot())
 	if cfg.isValidPayload {
 		if err := s.cfg.ForkChoiceStore.SetOptimisticToValid(ctx, cfg.roblock.Root()); err != nil {
 			return errors.Wrap(err, "could not set optimistic block to valid")
@@ -680,7 +680,10 @@ func (s *Service) handleBlockPayloadAttestations(ctx context.Context, blk interf
 // InsertSlashingsToForkChoiceStore inserts attester slashing indices to fork choice store.
 // To call this function, it's caller's responsibility to ensure the slashing object is valid.
 // This function requires a write lock on forkchoice.
-func (s *Service) InsertSlashingsToForkChoiceStore(ctx context.Context, slashings []ethpb.AttSlashing) {
+func (s *Service) InsertSlashingsToForkChoiceStore(ctx context.Context, slashings []ethpb.AttSlashing, containingSlot primitives.Slot) {
+	if slots.ToEpoch(containingSlot) >= params.BeaconConfig().HezeForkEpoch {
+		return
+	}
 	for _, slashing := range slashings {
 		indices := blocks.SlashableAttesterIndices(slashing)
 		for _, index := range indices {

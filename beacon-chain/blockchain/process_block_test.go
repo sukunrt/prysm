@@ -1250,7 +1250,7 @@ func TestService_insertSlashingsToForkChoiceStore(t *testing.T) {
 	b.Block.Body.AttesterSlashings = slashings
 	wb, err := consensusblocks.NewSignedBeaconBlock(b)
 	require.NoError(t, err)
-	service.InsertSlashingsToForkChoiceStore(ctx, wb.Block().Body().AttesterSlashings())
+	service.InsertSlashingsToForkChoiceStore(ctx, wb.Block().Body().AttesterSlashings(), wb.Block().Slot())
 }
 
 func TestService_insertSlashingsToForkChoiceStoreElectra(t *testing.T) {
@@ -1292,7 +1292,7 @@ func TestService_insertSlashingsToForkChoiceStoreElectra(t *testing.T) {
 	b.Block.Body.AttesterSlashings = slashings
 	wb, err := consensusblocks.NewSignedBeaconBlock(b)
 	require.NoError(t, err)
-	service.InsertSlashingsToForkChoiceStore(ctx, wb.Block().Body().AttesterSlashings())
+	service.InsertSlashingsToForkChoiceStore(ctx, wb.Block().Body().AttesterSlashings(), wb.Block().Slot())
 }
 
 func TestOnBlock_ProcessBlocksParallel(t *testing.T) {

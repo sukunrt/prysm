@@ -1,0 +1,1427 @@
+[
+  {
+    "service": "spamoor",
+    "id": "c8e3676c172d2bedd2465104fa9db1a58a95dd16ffb35135ccb79894419372b3",
+    "image_id": "sha256:5f731b20ec50735f4c5b54144883a55c29e9767e50759e4c6f7d0ddddc1f2066",
+    "image": "ethpandaops/spamoor:v1.2.3",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 627466,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:40.180837033Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--702970c5d157406a9500483512229f9b--c64ade30309542249c58a15912650b6e",
+    "id": "910d52974da78d865cca66dac9d1f752b1f03f59771276c31e6b071e7afc470f",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:39.82719384Z",
+      "FinishedAt": "2026-10-05T20:16:39.987205039Z"
+    }
+  },
+  {
+    "service": "generate-validator-ranges",
+    "id": "1f9075628eb04cb03e74f14648769d872e5306d4b0fe65bc82e0ac0fe3061c86",
+    "image_id": "sha256:9a91e000c8602aa35078b85ab76a02601795ebf903f99330fce9180c96d19a33",
+    "image": "prysm-genesis-gen:heze-latest-20261006",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 143,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:38.96682835Z",
+      "FinishedAt": "2026-10-05T20:16:39.4793742Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--5040e8ccd932481db4deb4935e54cfc1--c64ade30309542249c58a15912650b6e",
+    "id": "6460869bf58e9b028c2ae5bd6dac8392d5a02346d93fca2d29a601cebafee772",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:38.488497904Z",
+      "FinishedAt": "2026-10-05T20:16:38.712175363Z"
+    }
+  },
+  {
+    "service": "vc-04-geth-prysm",
+    "id": "b6df121b5b94c197a5319e34d39614b1e78b45b34b1d8836094ea2842fa384ce",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 626890,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:37.603986522Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "vc-02-geth-prysm",
+    "id": "4046150fc192797cb8de576d80e61768ae928388f82cbff39daf472d89795e8d",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 626882,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:37.582335728Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--868da61a066a43279a7db9198a5cdee3--c64ade30309542249c58a15912650b6e",
+    "id": "0bab817462d1a5e9b0a0afe32b3280aac3a3fca8bb6589077ef50b7e0bd89894",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:37.129307854Z",
+      "FinishedAt": "2026-10-05T20:16:37.373470095Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--db6123f332db48e898b08faf0e5cfbaf--c64ade30309542249c58a15912650b6e",
+    "id": "490111885ab80543983bdba38452ea4492e720687d9747cb3a0014677fc97c22",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:37.116107331Z",
+      "FinishedAt": "2026-10-05T20:16:37.322839459Z"
+    }
+  },
+  {
+    "service": "vc-08-geth-prysm",
+    "id": "8d5ce34344ded20058e8e196458fa9420ec5e31f7e22eb62ccd82749992d4186",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 626315,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:36.34892038Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "vc-07-geth-prysm",
+    "id": "0b1afb0e30797b2264f8f4ae80e8e9c1e2fed9e9892168edc7102d8aed6982d6",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 626206,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:36.275838727Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "vc-03-geth-prysm",
+    "id": "e524321d7f87b7ff3256f8daba89292adaf9a2fb891323494ee7e0de11751ffa",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 626162,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:36.247340146Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "vc-10-geth-prysm",
+    "id": "aa7d5dfcd1c8f5db8177dbca454e3eb4b9c4cf8d714c633ad9ea49bd4ab9fa3b",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 626159,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:36.234182133Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--7eeb7d7865774959916ffd015e71ba74--c64ade30309542249c58a15912650b6e",
+    "id": "4cf5e01cb1e895d0a0409f914b155ec212b5fabbb116d7198ce976e5a36ed59e",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:35.746498231Z",
+      "FinishedAt": "2026-10-05T20:16:36.02916635Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--97dcc1eff61141279f16353c66e48412--c64ade30309542249c58a15912650b6e",
+    "id": "4d882f4e1fb245f45ed3d9f6c6af2f32e6d952a8942c484d1b7731e1b47fc2c9",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:35.730311071Z",
+      "FinishedAt": "2026-10-05T20:16:35.963348525Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--b0e744a110af49dfa3a7396fb7c5b3df--c64ade30309542249c58a15912650b6e",
+    "id": "ef64ae32d0daec74eedd428f613fe8a177992ff72d3a0f9758fb05560dcabcbc",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:35.701086578Z",
+      "FinishedAt": "2026-10-05T20:16:35.906076901Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--5f6861e4def54e98946604c82e537328--c64ade30309542249c58a15912650b6e",
+    "id": "6b4acb49e24203db9a721b91a014964b2412b7b6da9900dbb7c7fd6018c34ddf",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:35.688904437Z",
+      "FinishedAt": "2026-10-05T20:16:35.943572565Z"
+    }
+  },
+  {
+    "service": "vc-09-geth-prysm",
+    "id": "0805201924db0f669a712b8d9046377fd43813fcfe542ba35b38bd617a76c7fc",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 625331,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:34.923130118Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "vc-06-geth-prysm",
+    "id": "d9a4b7082b393fb27e610b709222f45642951bc55169dbcee1251b66693e9af3",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 625239,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:34.878685646Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "vc-01-geth-prysm",
+    "id": "1a46f99b93cdece5128ef5a79071a3ad69c4a5b0d608cea84752bede146905a0",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 625177,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:34.830353785Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "vc-05-geth-prysm",
+    "id": "c97981edec6f4f3b59bf2064085c25be0f899a8a5695b2eb01bb14fc9e30f63e",
+    "image_id": "sha256:c75d0d332853f21d361858fcd39c9fe2872eaf339392df4ac82e471226e89d11",
+    "image": "prysm-validator:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 625176,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:34.803497238Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--21a8e4a26474417b816d8633dcb0a53f--c64ade30309542249c58a15912650b6e",
+    "id": "61c1dd765c5c41cccbe888ad959af321abb6a1fd441bec48fb79a820d7244b96",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:34.301791219Z",
+      "FinishedAt": "2026-10-05T20:16:34.523432535Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--9d93e19a9fee4c15bea94844987a8c06--c64ade30309542249c58a15912650b6e",
+    "id": "89fbedd349cf6dc6c5049eba6851c9e59c4291a1dc0746ec7bc818df528f7cec",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:34.30216798Z",
+      "FinishedAt": "2026-10-05T20:16:34.571027405Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--5ea7dc7692ee4facb5c6d52c76b5d50c--c64ade30309542249c58a15912650b6e",
+    "id": "9333ddd2fd5035acd379b3084a3e01b967681a0ba6983a2d20a11ca0e856a988",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:34.301670989Z",
+      "FinishedAt": "2026-10-05T20:16:34.606156043Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--918ff8d1d30a4195aeb9bc4f417a69e5--c64ade30309542249c58a15912650b6e",
+    "id": "727efd54127fc77aaf6dded182d237daecf926480eab4efd020fe4f62d4ccd49",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:34.303458834Z",
+      "FinishedAt": "2026-10-05T20:16:34.592603079Z"
+    }
+  },
+  {
+    "service": "cl-03-prysm-geth",
+    "id": "9f63d8a59b1311c308415cd3eb4c00587cc80e3d113b77313f89a2a473b51d4f",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 624091,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:30.127444732Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--db3dd0b6aa6042a798d93f7f3f24cafd--c64ade30309542249c58a15912650b6e",
+    "id": "ed9727eb174c2202f08909add6f3a2d7332efdb0a7ceafa2b456c6e39702941e",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:29.707032204Z",
+      "FinishedAt": "2026-10-05T20:16:29.914861227Z"
+    }
+  },
+  {
+    "service": "cl-08-prysm-geth",
+    "id": "93839d8bac5c68d2aadee6a363b7eadf9b1ec473b7696c9db27acca3e51e85b4",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 623230,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:26.42842217Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "cl-06-prysm-geth",
+    "id": "91c651a19d0faca3fee914243ac1bbd7de84b98ef614f49db8c35bf45bcd6c50",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 623152,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:26.385572041Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "cl-02-prysm-geth",
+    "id": "0e985d1c65819c67709480913c9d51b94a2730a908045a903533e73b42997d9d",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 622979,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:26.256237895Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "cl-07-prysm-geth",
+    "id": "dca6e4f89d1d2b4c5c4feaded37f405a093da27e9af14f9e2a3cdb47615bcf1b",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 622884,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:26.086261036Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--3b6c522d766e44118ff22fe94165b7ec--c64ade30309542249c58a15912650b6e",
+    "id": "e06c89947bcd9354d88b5273bb94cdf0d8b757f8d5be659533f0b432cc36ffdf",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:25.893980051Z",
+      "FinishedAt": "2026-10-05T20:16:26.180588494Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--6178b31379224a5ca2d9e866cae08024--c64ade30309542249c58a15912650b6e",
+    "id": "dd0438624abbbfcd79be439e6252b7d540ec2a6d5a00ed140377812e11b18198",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:25.806032309Z",
+      "FinishedAt": "2026-10-05T20:16:26.140871674Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--8456a842f9cb4d18bbcd59bfaed6b177--c64ade30309542249c58a15912650b6e",
+    "id": "24a0bdb29d46aa9c60a39b906847d83f2ab15309a55a724a439d7f1f17f2a48b",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:25.764921135Z",
+      "FinishedAt": "2026-10-05T20:16:26.015519578Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--6c8168c5f42a4c8299f64433bb21af8a--c64ade30309542249c58a15912650b6e",
+    "id": "467362b50ae0261611aeded44bbebaca7356fa101e05b7e99ee59eae5b33df6d",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:25.650861217Z",
+      "FinishedAt": "2026-10-05T20:16:25.852586946Z"
+    }
+  },
+  {
+    "service": "cl-09-prysm-geth",
+    "id": "5ee12e579c47c8b1066458142c7e4b5fadc273badf407e9e0c197a147f3c904e",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 621445,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:22.328851937Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "cl-05-prysm-geth",
+    "id": "a961afc53f299a742f5d3eb0f691ce9a022e778a5c7b68782c301acf3a40f920",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 621342,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:22.285213266Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "cl-04-prysm-geth",
+    "id": "3047f20482d682b7387a79e85c12142f8bd26703d1f792be3cc975fb176e05d3",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 621288,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:22.244477003Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "cl-10-prysm-geth",
+    "id": "5eee216154ee3be4c56736f97caf113f4772eee4e9f1a734c0cd4bb4a2db0917",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 621245,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:22.176365971Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--5cf6365c20e8434eab8cab007eb01ea8--c64ade30309542249c58a15912650b6e",
+    "id": "10900e6030fbcdf25fa0c31a2af7983da49e4e9703e3497d9b3928508e15f26b",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:21.680562155Z",
+      "FinishedAt": "2026-10-05T20:16:21.972739445Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--ced2a2c2e35d48bc8c011ce80c370f87--c64ade30309542249c58a15912650b6e",
+    "id": "1b531b5c48c144224aeb31d8b6c3695d9a5660dc7c40073984f0cd8f50894475",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:21.681623718Z",
+      "FinishedAt": "2026-10-05T20:16:21.895883441Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--b33e658c15e54159ad4ffe0cd58e42d2--c64ade30309542249c58a15912650b6e",
+    "id": "e795f78adbfc4b871298c8acfd3ddcd310426244fac2eb89744a29abfd2b14c3",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:21.681634838Z",
+      "FinishedAt": "2026-10-05T20:16:21.935023189Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--dda465fd06384bd9be4d21b6c032c9ea--c64ade30309542249c58a15912650b6e",
+    "id": "27445ce5fc86e749d24dedddd417649ec098aa43b6ed328a9a1fdf8e06b458ab",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:21.681912118Z",
+      "FinishedAt": "2026-10-05T20:16:22.012229085Z"
+    }
+  },
+  {
+    "service": "cl-01-prysm-geth",
+    "id": "2c04832665370473b43509fae7f4721562e264392dd1b1863a35ed8f6ccc5899",
+    "image_id": "sha256:6c39be3c545b83accafcb9855d7293d780b71cfc29bf1401399ebccfb53d4876",
+    "image": "prysm-beacon-chain:heze-latest-20261006",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 620340,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:18.148692196Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--356250c5458d47c5b6b7a75ab965cef4--c64ade30309542249c58a15912650b6e",
+    "id": "665c6e9b781cceb988e5bc439246f3ec3cc2f36ce81511f3756bcfeb726839b4",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:17.722790554Z",
+      "FinishedAt": "2026-10-05T20:16:17.923864974Z"
+    }
+  },
+  {
+    "service": "el-08-geth-prysm",
+    "id": "a4d0f4f0bcf39029368086435502e44e5f38c21d787d69fed03099925c8f3d26",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 619931,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:16.355582337Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--b2ff6e0f79484dbab91030f10d1741bb--c64ade30309542249c58a15912650b6e",
+    "id": "05b5a0eaf9f2918d73e4b9cd7a3c2d1b1024a4880b900d47c624e8c2b77dfc24",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:15.927283108Z",
+      "FinishedAt": "2026-10-05T20:16:16.149137282Z"
+    }
+  },
+  {
+    "service": "el-09-geth-prysm",
+    "id": "ef09c591bd139a898a624691c3ff356223bb90197d05658b75d018f66750692a",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 619570,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:15.490203005Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "el-02-geth-prysm",
+    "id": "957a032d3dbc79dbca98bc6454b63df07bb4d73d6f70e0d96cb941c13cf825c7",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 619100,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:15.195738015Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "el-10-geth-prysm",
+    "id": "e8bced201663a7116146d997c1fc5bd98b5b279363ffd842e543f9955a2deb1c",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 618890,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:15.054161175Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "el-04-geth-prysm",
+    "id": "51c4cd4a1a13b2f18f2fd369e30f3ee59d1b3b780fb4520d16b5de671bb453ef",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 618799,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:14.91873198Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--3d31a92618d84c92b23c5c9a59ffe0ee--c64ade30309542249c58a15912650b6e",
+    "id": "29974e1cd8aaacae65d349370d10a2d1da45de0c5662236e4ac693738c865f17",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:14.751730065Z",
+      "FinishedAt": "2026-10-05T20:16:15.238145983Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--4114c5249add4b188dda8cbdf81a7e9c--c64ade30309542249c58a15912650b6e",
+    "id": "bfd23d38ea1a46bb10f48b19dddf8bd899ef3279e37847a6c559803173d0254d",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:14.638960127Z",
+      "FinishedAt": "2026-10-05T20:16:14.992177187Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--70c95c8707bf4d20a263a67d0b11070e--c64ade30309542249c58a15912650b6e",
+    "id": "4309e3c3277af37af4af3f7dc62cbb1010c593e58c74887c4f9e8f66457f1e8b",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:14.584061237Z",
+      "FinishedAt": "2026-10-05T20:16:14.808417879Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--41986399159745b3aa25d156ba70694d--c64ade30309542249c58a15912650b6e",
+    "id": "d89d453fc166b948ac99151914790fd108b7d870276c52d553c2a797ffef88f0",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:14.502823741Z",
+      "FinishedAt": "2026-10-05T20:16:14.700545774Z"
+    }
+  },
+  {
+    "service": "el-05-geth-prysm",
+    "id": "b72de8e76b5d6fffbd0d1df918ec20676797cdf2de37c015ae5c5ff23aba8672",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 617660,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:13.673186726Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "el-06-geth-prysm",
+    "id": "a0a86ffdf22d86613551f29dbfcda4437e11d8f7272c1b89a592242ac585dc0f",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 617548,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:13.622309917Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "el-03-geth-prysm",
+    "id": "e50f81c3ebcee38b07a9c802031ebe290461c80ef2aeee70d9ef9eae0736b472",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 617508,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:13.594196825Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "el-07-geth-prysm",
+    "id": "f63a71a07da96dafb0e6516d87624102dc17e5eeca83aa3f7658685331816361",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 617501,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:13.575918238Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--80d97dd118cd475f99b73511cf9fbff9--c64ade30309542249c58a15912650b6e",
+    "id": "0325de3952d4b6542530ede519c882081f03d2a2ac3ee5236bae46a981b0b15c",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:13.07077596Z",
+      "FinishedAt": "2026-10-05T20:16:13.404819942Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--0e58a61ea4d54c498d2a67e8574e6afd--c64ade30309542249c58a15912650b6e",
+    "id": "84568c74b0efbeea4f52f66b1f5b3d317e3acdb5471941940b9cfc683de36db7",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:13.068530675Z",
+      "FinishedAt": "2026-10-05T20:16:13.275252862Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--feb37659c1f34bcfb2fcc4c8c25f144b--c64ade30309542249c58a15912650b6e",
+    "id": "f6e3e3539cd6b4196293b54ee7fef1a7367bca597a164c3c9b1af315964207ab",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:13.066455919Z",
+      "FinishedAt": "2026-10-05T20:16:13.338408563Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--a6a6fe7dccf943578062eb7025000d4b--c64ade30309542249c58a15912650b6e",
+    "id": "4192a5b02ce55b3c8e7998cdacd3254f2a68abef56a6c0a9df2a94ec352aa879",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:13.070822311Z",
+      "FinishedAt": "2026-10-05T20:16:13.320066896Z"
+    }
+  },
+  {
+    "service": "el-01-geth-prysm",
+    "id": "a15d9c173c65c54898c8573661f5f25bdcef9c5ccfd7a4ef4aa6ba45b54fa138",
+    "image_id": "sha256:50fad280c7e2a2d7df835b46753c7633882824fbf545efb63c03451f910090e8",
+    "image": "ethpandaops/geth:glamsterdam-devnet-8",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 616745,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:12.062839279Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--cae9789c25fe4b19bc59b25ae7f5aed1--c64ade30309542249c58a15912650b6e",
+    "id": "084d3354a8a17f1820b6bff8f13157b138427bddf05e01c245f159b251f72879",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:11.621872423Z",
+      "FinishedAt": "2026-10-05T20:16:11.830200214Z"
+    }
+  },
+  {
+    "service": "read-osaka-time",
+    "id": "447e9dd982800d09f51213f67607a3eeab1643c5c198c3a6e70f9a88e306a18c",
+    "image_id": "sha256:3670578737d1d2019b10a4f9e607284101feb9fdd6b0478e78ea87bf61d96145",
+    "image": "badouralix/curl-jq:latest",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 143,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:11.051447796Z",
+      "FinishedAt": "2026-10-05T20:16:11.290342566Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--d46a3713dfe4470c9540aa7e5c3d5f89--c64ade30309542249c58a15912650b6e",
+    "id": "3d725547b1e32a0bdb909c33de81c009355f180145b1051d15972daf9f202b03",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:10.612814065Z",
+      "FinishedAt": "2026-10-05T20:16:10.825147118Z"
+    }
+  },
+  {
+    "service": "read-genesis-validators-root",
+    "id": "ab92b0b61437c0e7d57690ebec79af893525ff8eca8ec559ad131ecf765b943f",
+    "image_id": "sha256:3670578737d1d2019b10a4f9e607284101feb9fdd6b0478e78ea87bf61d96145",
+    "image": "badouralix/curl-jq:latest",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 143,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:10.048432203Z",
+      "FinishedAt": "2026-10-05T20:16:10.277787299Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--83f3f96863994e4eb79d58736d65d3f1--c64ade30309542249c58a15912650b6e",
+    "id": "b1f4b5fe8716386a194aedaa7cd7599b6880e814b71ecf6fbae872c448b23bab",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:09.699112329Z",
+      "FinishedAt": "2026-10-05T20:16:09.854988418Z"
+    }
+  },
+  {
+    "service": "run-generate-genesis",
+    "id": "4787850f072741b825438c3b8a39a659a0419f61e0770edeebb130e95991b729",
+    "image_id": "sha256:9a91e000c8602aa35078b85ab76a02601795ebf903f99330fce9180c96d19a33",
+    "image": "prysm-genesis-gen:heze-latest-20261006",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 143,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:16:00.264371289Z",
+      "FinishedAt": "2026-10-05T20:16:09.356428423Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--e8331c090cd245008212e721510961c7--c64ade30309542249c58a15912650b6e",
+    "id": "55c3c67083480aeae709a891dfbbb29af060c09177166bfd485b86b40696ffc2",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:15:59.854208412Z",
+      "FinishedAt": "2026-10-05T20:16:00.00853872Z"
+    }
+  },
+  {
+    "service": "read-genesis-timestamp",
+    "id": "56acccb2d40530b8133c23ee97dd04213a25a1ee2f68354201c7b54a4733456a",
+    "image_id": "sha256:3670578737d1d2019b10a4f9e607284101feb9fdd6b0478e78ea87bf61d96145",
+    "image": "badouralix/curl-jq:latest",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 143,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:15:59.284929105Z",
+      "FinishedAt": "2026-10-05T20:15:59.521087284Z"
+    }
+  },
+  {
+    "service": "validator-key-generation-cl-validator-keystore",
+    "id": "ecf819d85538895cbfea031b4eaa1237007dcffe706a5f7ad43bae13d9f06f63",
+    "image_id": "sha256:97b3a82f3b69babe7096188ec991bccd83139b4ce42a2f63625116b771e0bdcd",
+    "image": "protolambda/eth2-val-tools:latest",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 613814,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:15:55.730016454Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "files-artifacts-expander--7cc8229f88a945f1a6fcbf460c15ea2c--c64ade30309542249c58a15912650b6e",
+    "id": "3d3aa8438bd82b89263e8f103e091aa20e5b7016b5f80014cceecdd8c7daa118",
+    "image_id": "sha256:a309d24be941bff12b17eb55148d03af7a26428ef589ee7451407380500e94f2",
+    "image": "kurtosistech/files-artifacts-expander:1.18.2",
+    "state": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:15:55.39987793Z",
+      "FinishedAt": "2026-10-05T20:15:55.551663622Z"
+    }
+  },
+  {
+    "service": "kurtosis-api--c64ade30309542249c58a15912650b6e",
+    "id": "4587df32ce74f3f3ac453100d90d7c495c11701c219576f5b4a2a4e3ca5b0874",
+    "image_id": "sha256:fa02d0f28dd0a76ac6f279b1f809e076500e389192e09c86235f7fe2399bbb89",
+    "image": "kurtosistech/core:1.18.2",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 608484,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:11:42.663350504Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  {
+    "service": "kurtosis-logs-collector--c64ade30309542249c58a15912650b6e",
+    "id": "d5afc6a48bf0063aa8a7001b623c0d8f29df9e334823e9c1e62bfbbddc1da21b",
+    "image_id": "sha256:3cabd4bd59596931cd99d812c99200e12fa08758fd08dfb0549c96ae97a70ddd",
+    "image": "fluent/fluent-bit:4.0.0",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 608230,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-10-05T20:11:42.256939714Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  }
+]

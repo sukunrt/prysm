@@ -64,7 +64,8 @@ func recordVote(
 	// A queued vote is counted when it is replayed, a dropped one never.
 	if outcome == voteAccepted || outcome == voteReplayed || outcome == voteLocal {
 		goldfishVoteArrival.Observe(msIntoSlot(genesis, slot, arrived))
-		voteSeats.add(slot, att.AggregationBits.Count())
+		voteSeats.add(slot, decoupled.AvailableAttestationSeatsToValidatorIndices(
+			slot, att.AggregationBits.BitIndices(), decoupled.TotalValidatorCount()))
 	}
 	if !features.Get().GoldfishVoteLedger {
 		return

@@ -28,10 +28,9 @@ func (s *Store) head(ctx context.Context) ([32]byte, error) {
 		return [32]byte{}, err
 	}
 
-	// After Heze the head is the Goldfish walk over the available attestation
-	// votes, not the best descendant of the justified node.
+	// Heze selects the highest imported block compatible with the justified anchor.
 	if s.goldfishActive() {
-		return s.goldfishHead()
+		return s.hezeHead()
 	}
 
 	jn, err := s.justifiedNode()

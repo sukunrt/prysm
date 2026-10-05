@@ -1,0 +1,873 @@
+{
+  "enclave": "heze-latest-20261006",
+  "slots": [
+    {
+      "slot": 1,
+      "proposer": "230",
+      "attestations": 1,
+      "attestation_slots": [
+        "0"
+      ],
+      "payload_attestations": 1,
+      "transactions": 0,
+      "envelope_transactions": 0,
+      "blob_gas_used": 0,
+      "execution_hash": "0xc4e8886869c7f40e09c923cbd61e017a7f47b91199415631389784191de69143"
+    },
+    {
+      "slot": 2,
+      "proposer": "497",
+      "attestations": 2,
+      "attestation_slots": [
+        "1",
+        "0"
+      ],
+      "payload_attestations": 1,
+      "transactions": 0,
+      "envelope_transactions": 0,
+      "blob_gas_used": 0,
+      "execution_hash": "0x3290575c4357502eff69a2bcb86f0bebfdb4b13a4ca8c788afdbc3e127c64cb8"
+    },
+    {
+      "slot": 3,
+      "proposer": "484",
+      "attestations": 2,
+      "attestation_slots": [
+        "2",
+        "2"
+      ],
+      "payload_attestations": 1,
+      "transactions": 0,
+      "envelope_transactions": 0,
+      "blob_gas_used": 0,
+      "execution_hash": "0x9e3dc51537ab9121fc9d88fb157ba6406c0a70b92eda5d97ce6c12f5a356f982"
+    },
+    {
+      "slot": 4,
+      "proposer": "674",
+      "attestations": 1,
+      "attestation_slots": [
+        "3"
+      ],
+      "payload_attestations": 1,
+      "transactions": 0,
+      "envelope_transactions": 0,
+      "blob_gas_used": 0,
+      "execution_hash": "0x0f12204e5f0fbe9a18cbe52b6c678bcd761fa0132b9637cd50f979d7e3b4fe35"
+    },
+    {
+      "slot": 5,
+      "proposer": "195",
+      "attestations": 1,
+      "attestation_slots": [
+        "4"
+      ],
+      "payload_attestations": 1,
+      "transactions": 0,
+      "envelope_transactions": 0,
+      "blob_gas_used": 0,
+      "execution_hash": "0x458a0a8437555bfacc5ba3620c9c1b61a6e9ade64943aff89a2fdc63f328981a"
+    },
+    {
+      "slot": 6,
+      "proposer": "368",
+      "attestations": 2,
+      "attestation_slots": [
+        "5",
+        "5"
+      ],
+      "payload_attestations": 1,
+      "transactions": 8,
+      "envelope_transactions": 8,
+      "blob_gas_used": 0,
+      "execution_hash": "0x2c67359b5b656c48f1235d77f5790d11444832ee31eaa13569bb1ce33014fb28"
+    },
+    {
+      "slot": 7,
+      "proposer": "971",
+      "attestations": 1,
+      "attestation_slots": [
+        "6"
+      ],
+      "payload_attestations": 1,
+      "transactions": 21,
+      "envelope_transactions": 21,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x5c748d61895982569e0c650a741efd48035f62a8e75e8bbaef877c6eb7d30dc5"
+    },
+    {
+      "slot": 8,
+      "proposer": "224",
+      "attestations": 1,
+      "attestation_slots": [
+        "7"
+      ],
+      "payload_attestations": 1,
+      "transactions": 4,
+      "envelope_transactions": 4,
+      "blob_gas_used": 131072,
+      "execution_hash": "0xc7be33f684468a4ac1dd8fe8c7762d9bd557eec20b84b302fb41e7a4accde685"
+    },
+    {
+      "slot": 9,
+      "proposer": "836",
+      "attestations": 1,
+      "attestation_slots": [
+        "8"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0xe79026d845dc6decac83a5c36b0079656c8a8f8a51c88c4c4660bbd0f26f85a4"
+    },
+    {
+      "slot": 10,
+      "proposer": "550",
+      "attestations": 1,
+      "attestation_slots": [
+        "9"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x713eb5c1cfa72d6bf5487a452270b5ae4c789ab31e1c4ccdbf87f26da4d02ccb"
+    },
+    {
+      "slot": 11,
+      "proposer": "946",
+      "attestations": 1,
+      "attestation_slots": [
+        "10"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0xabe178de4330eea1225a9196a45ccdee13788951fd26297bbb87399ba6ce48f8"
+    },
+    {
+      "slot": 12,
+      "proposer": "618",
+      "attestations": 1,
+      "attestation_slots": [
+        "11"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x08470c48b2a6143211e0b9474e86acba93e990775641d2fe4265660d14b4463f"
+    },
+    {
+      "slot": 13,
+      "proposer": "399",
+      "attestations": 1,
+      "attestation_slots": [
+        "12"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x06472ab7d734a277aeeb27473b6d440cebb1ecba6d94d6d0ac87c453e766b41c"
+    },
+    {
+      "slot": 14,
+      "proposer": "561",
+      "attestations": 1,
+      "attestation_slots": [
+        "13"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x446e58da3de98963e3f3422e5fc4e243b38ef57333f665c67824cf5425b1bd52"
+    },
+    {
+      "slot": 15,
+      "proposer": "864",
+      "attestations": 1,
+      "attestation_slots": [
+        "14"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x139a14998fac4ec3c5a5e89a37b2c067adf917d9764f75451fae3685e7783e24"
+    },
+    {
+      "slot": 16,
+      "proposer": "404",
+      "attestations": 1,
+      "attestation_slots": [
+        "15"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0xc30700e9dc698e8379cf6dfe25966e0e1621a77546443bfffb2d44acffa93930"
+    },
+    {
+      "slot": 17,
+      "proposer": "556",
+      "attestations": 1,
+      "attestation_slots": [
+        "16"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x2dfb3d83d66374f85eb5c3ad618136e11efcb896ac3c2ff9effb9559f8d67c1b"
+    },
+    {
+      "slot": 18,
+      "proposer": "31",
+      "attestations": 2,
+      "attestation_slots": [
+        "17",
+        "17"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0xeda28aa141af83bf24858e2a3859d0759d9b359ef8164dc56d5c1e40273ed6dd"
+    },
+    {
+      "slot": 19,
+      "proposer": "9",
+      "attestations": 1,
+      "attestation_slots": [
+        "18"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x83e94538922a660592c6b651d79e0e5ad8a1e31da9eccd8504307183a7e502eb"
+    },
+    {
+      "slot": 20,
+      "proposer": "325",
+      "attestations": 1,
+      "attestation_slots": [
+        "19"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0xc9c015a9049221994d94c618f5230d569d74e5f96e787b931789f73b0ccc2137"
+    },
+    {
+      "slot": 21,
+      "proposer": "46",
+      "attestations": 1,
+      "attestation_slots": [
+        "20"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x99a2551cfe489da0c9e95969315a7da50b1d56cbcc747d2d30a38985349f5ad6"
+    },
+    {
+      "slot": 22,
+      "proposer": "101",
+      "attestations": 1,
+      "attestation_slots": [
+        "21"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x2b59465bda8b8bf7d497e33f56d1f29d551fc14e2964ca3a62818cbc4e8b73a0"
+    },
+    {
+      "slot": 23,
+      "proposer": "20",
+      "attestations": 1,
+      "attestation_slots": [
+        "22"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x4aa29d0ea293870a9ac24555a446369e1c47c377ed471714d28a9e9e4aa0af06"
+    },
+    {
+      "slot": 24,
+      "proposer": "889",
+      "attestations": 1,
+      "attestation_slots": [
+        "23"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x72c4deb782350841ed4f9cd6a1a1a6c3bd60843414433a37faa71225b6aebc46"
+    },
+    {
+      "slot": 25,
+      "proposer": "271",
+      "attestations": 1,
+      "attestation_slots": [
+        "24"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x52408c9d580b478ef94af5683f932d6c6713c65834508f5b0d151cc5e71c20be"
+    },
+    {
+      "slot": 26,
+      "proposer": "767",
+      "attestations": 1,
+      "attestation_slots": [
+        "25"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x4dc38349656fb901bd8e1fd5bde1d09872132749e1fadbc742805eeb49cca88a"
+    },
+    {
+      "slot": 27,
+      "proposer": "32",
+      "attestations": 1,
+      "attestation_slots": [
+        "26"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x71d2dd5bf910a98425801ed536572a7720b3622d717e80d91e4381d267dd3a98"
+    },
+    {
+      "slot": 28,
+      "proposer": "249",
+      "attestations": 1,
+      "attestation_slots": [
+        "27"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0xdfca6dff499374cfe316d3220ca27b58a9698bb9273ac4091c58c24b469f8e96"
+    },
+    {
+      "slot": 29,
+      "proposer": "202",
+      "attestations": 1,
+      "attestation_slots": [
+        "28"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x6921478a9ade8490797ff566196df486c1967f1d1577e7397583478b097ab1e1"
+    },
+    {
+      "slot": 30,
+      "proposer": "570",
+      "attestations": 1,
+      "attestation_slots": [
+        "29"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0xd1929bcc24b92bab14a2ced20c9ed07f73d3f10d5ef9e6b71ee932777b5666f5"
+    },
+    {
+      "slot": 31,
+      "proposer": "549",
+      "attestations": 1,
+      "attestation_slots": [
+        "30"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0x032e3e7ac3e61ccbe0e562f1b406a94b3e8dc3f9cf14cba31cf0df4d65d0cbfa"
+    },
+    {
+      "slot": 32,
+      "proposer": "918",
+      "attestations": 1,
+      "attestation_slots": [
+        "31"
+      ],
+      "payload_attestations": 1,
+      "transactions": 5,
+      "envelope_transactions": 5,
+      "blob_gas_used": 131072,
+      "execution_hash": "0xc4441a9d3501a8fbbd0e1c60838ee5a0bc2fe1b9133cc59625fe3fb441aa1c9c"
+    }
+  ],
+  "nodes": [
+    {
+      "node": "cl-01-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    },
+    {
+      "node": "cl-02-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    },
+    {
+      "node": "cl-03-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    },
+    {
+      "node": "cl-04-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    },
+    {
+      "node": "cl-05-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    },
+    {
+      "node": "cl-06-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    },
+    {
+      "node": "cl-07-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    },
+    {
+      "node": "cl-08-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    },
+    {
+      "node": "cl-09-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    },
+    {
+      "node": "cl-10-prysm-geth",
+      "slot32_root": {
+        "data": {
+          "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+        },
+        "execution_optimistic": false,
+        "finalized": false
+      },
+      "syncing": {
+        "data": {
+          "head_slot": "32",
+          "sync_distance": "0",
+          "is_syncing": false,
+          "is_optimistic": false,
+          "el_offline": false
+        }
+      },
+      "finality": {
+        "execution_optimistic": false,
+        "finalized": false,
+        "data": {
+          "previous_justified": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          },
+          "current_justified": {
+            "epoch": "0",
+            "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+            "round": "3",
+            "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+          },
+          "finalized": {
+            "epoch": "0",
+            "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+            "round": "2",
+            "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+          }
+        }
+      },
+      "active_validators": 1000
+    }
+  ],
+  "errors": [],
+  "ten_nodes_agree_slot32": true,
+  "all_have_1000_active": true,
+  "all_blocks_with_attestations": true,
+  "nonempty_execution": true,
+  "blob_execution": true
+}

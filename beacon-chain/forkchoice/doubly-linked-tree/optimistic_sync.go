@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/OffchainLabs/prysm/v7/config/params"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
 )
 
@@ -88,16 +89,12 @@ func (s *Store) removeNode(ctx context.Context, pn *PayloadNode) ([][32]byte, er
 	if !pn.optimistic || pn.node.parent == nil {
 		return invalidRoots, errInvalidOptimisticStatus
 	}
-	children := pn.node.parent.children
-	if len(children) == 1 {
-		pn.node.parent.children = []*Node{}
-	} else {
+	// Removing a full payload leaves its empty beacon block and branch intact.
+	if !pn.full || slots.ToEpoch(pn.node.slot) < params.BeaconConfig().GloasForkEpoch {
+		children := pn.node.parent.children
 		for i, n := range children {
 			if n == pn.node {
-				if i != len(children)-1 {
-					children[i] = children[len(children)-1]
-				}
-				pn.node.parent.children = children[:len(children)-1]
+				pn.node.parent.children = append(children[:i], children[i+1:]...)
 				break
 			}
 		}

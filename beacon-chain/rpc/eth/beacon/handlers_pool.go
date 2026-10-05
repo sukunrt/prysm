@@ -897,6 +897,13 @@ func (s *Server) submitAttesterSlashing(
 		httputil.HandleError(w, "Could not get head state: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	currentSlot := headState.Slot()
+	if s.TimeFetcher != nil {
+		currentSlot = s.TimeFetcher.CurrentSlot()
+	}
+	if slots.ToEpoch(currentSlot) >= params.BeaconConfig().HezeForkEpoch {
+		return
+	}
 	headState, err = transition.ProcessSlotsIfPossible(ctx, headState, slashing.FirstAttestation().GetData().Slot)
 	if err != nil {
 		httputil.HandleError(w, "Could not process slots: "+err.Error(), http.StatusInternalServerError)

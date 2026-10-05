@@ -36,6 +36,31 @@ func TestSlashableAttestationData_CanSlash(t *testing.T) {
 	assert.Equal(t, true, blocks.IsSlashableAttestationData(att1, att2), "Atts should have been slashable")
 }
 
+func TestAttesterSlashingEvidenceIgnoredInHezeState(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.HezeForkEpoch = 0
+	params.OverrideBeaconConfig(cfg)
+	st, err := util.NewBeaconStateHeze()
+	require.NoError(t, err)
+	for _, apply := range []func() (state.BeaconState, error){
+		func() (state.BeaconState, error) {
+			return blocks.ProcessAttesterSlashings(t.Context(), st, []ethpb.AttSlashing{nil}, nil)
+		},
+		func() (state.BeaconState, error) {
+			return blocks.ProcessAttesterSlashingsNoVerify(t.Context(), st, []ethpb.AttSlashing{nil}, nil)
+		},
+		func() (state.BeaconState, error) { return blocks.ProcessAttesterSlashing(t.Context(), st, nil, nil) },
+		func() (state.BeaconState, error) {
+			return blocks.ProcessAttesterSlashingNoVerify(t.Context(), st, nil, nil)
+		},
+	} {
+		got, err := apply()
+		require.NoError(t, err)
+		require.Equal(t, st, got)
+	}
+}
+
 func TestProcessAttesterSlashings_DataNotSlashable(t *testing.T) {
 	slashings := []*ethpb.AttesterSlashing{{
 		Attestation_1: util.HydrateIndexedAttestation(&ethpb.IndexedAttestation{}),

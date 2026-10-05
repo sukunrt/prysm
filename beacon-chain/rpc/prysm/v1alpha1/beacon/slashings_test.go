@@ -7,13 +7,34 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/operations/slashings"
 	mockp2p "github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/testing"
 	"github.com/OffchainLabs/prysm/v7/config/features"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"google.golang.org/protobuf/proto"
 )
+
+func TestSubmitAttesterSlashing_HezeOperationalSlotWithOldHead(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.HezeForkEpoch = 1
+	params.OverrideBeaconConfig(cfg)
+	st, err := util.NewBeaconState()
+	require.NoError(t, err)
+	current, err := slots.EpochStart(1)
+	require.NoError(t, err)
+	bs := &Server{
+		HeadFetcher:        &mock.ChainService{State: st},
+		GenesisTimeFetcher: &mock.ChainService{Slot: &current},
+	}
+	response, err := bs.submitAttesterSlashing(t.Context(), nil)
+	require.NoError(t, err)
+	require.NotNil(t, response)
+	require.Equal(t, 0, len(response.SlashedIndices))
+}
 
 func TestServer_SubmitProposerSlashing(t *testing.T) {
 	ctx := t.Context()

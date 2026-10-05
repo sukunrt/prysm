@@ -476,9 +476,12 @@ func (s *Service) HasBlock(ctx context.Context, root [32]byte) bool {
 
 // ReceiveAttesterSlashing receives an attester slashing and inserts it to forkchoice
 func (s *Service) ReceiveAttesterSlashing(ctx context.Context, slashing ethpb.AttSlashing) {
+	if slots.ToEpoch(s.CurrentSlot()) >= params.BeaconConfig().HezeForkEpoch {
+		return
+	}
 	s.cfg.ForkChoiceStore.Lock()
 	defer s.cfg.ForkChoiceStore.Unlock()
-	s.InsertSlashingsToForkChoiceStore(ctx, []ethpb.AttSlashing{slashing})
+	s.InsertSlashingsToForkChoiceStore(ctx, []ethpb.AttSlashing{slashing}, s.CurrentSlot())
 }
 
 // prunePostBlockOperationPools only runs on new head otherwise should return a nil.

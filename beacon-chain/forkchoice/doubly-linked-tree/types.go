@@ -42,7 +42,7 @@ type Store struct {
 	fullNodeByRoot                map[[fieldparams.RootLength]byte]*PayloadNode // full nodes (the payload was present) indexed by beacon block root.
 	slashedIndices                map[primitives.ValidatorIndex]bool            // the list of equivocating validator indices
 	blockRootsBySlotProposer      map[proposerSlotKey][][32]byte                // up to two block roots observed for a (slot, proposer); pruned at finalization.
-	goldfishVotes                 *goldfishVotes                                // available attestation votes, per slot, that drive the Goldfish head walk after Heze.
+	goldfishVotes                 *goldfishVotes                                // available attestation counters, per slot.
 	goldfishProposals             *goldfishProposals                            // round start blocks, per round, that can start the Goldfish walk after Heze.
 	originRoot                    [fieldparams.RootLength]byte                  // The genesis block root
 	genesisTime                   time.Time

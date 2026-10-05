@@ -7,6 +7,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/feed/operation"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/container/slice"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing"
@@ -21,6 +22,9 @@ import (
 // Clients who receive an attester slashing on this topic MUST validate the conditions within VerifyAttesterSlashing before
 // forwarding it across the network.
 func (s *Service) validateAttesterSlashing(ctx context.Context, pid peer.ID, msg *pubsub.Message) (pubsub.ValidationResult, error) {
+	if slots.ToEpoch(s.cfg.clock.CurrentSlot()) >= params.BeaconConfig().HezeForkEpoch {
+		return pubsub.ValidationIgnore, nil
+	}
 	// Validation runs on publish (not just subscriptions), so we should approve any message from
 	// ourselves.
 	if pid == s.cfg.p2p.PeerID() {

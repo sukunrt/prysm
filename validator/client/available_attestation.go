@@ -57,7 +57,7 @@ func (v *validator) waitUntilAvailableAttestationDueOrValidBlock(ctx context.Con
 	for {
 		select {
 		case s := <-ch:
-			if features.Get().AttestTimely {
+			if features.Get().AttestTimely || slots.ToEpoch(slot) >= params.BeaconConfig().HezeForkEpoch {
 				if slot <= s {
 					return
 				}

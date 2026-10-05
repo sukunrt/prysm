@@ -128,7 +128,7 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 	// attestation after the epoch's first round would read as a double vote. Only the
 	// first round's attestation is checked and recorded. With SLOTS_PER_ROUND equal to
 	// SLOTS_PER_EPOCH the epoch is one round and every attestation is still checked.
-	if slots.SinceEpochStarts(slot) < params.BeaconConfig().SlotsPerRound {
+	if slots.ToEpoch(slot) < params.BeaconConfig().HezeForkEpoch && slots.SinceEpochStarts(slot) < params.BeaconConfig().SlotsPerRound {
 		// Send the attestation to the beacon node.
 		if err := v.db.SlashableAttestationCheck(ctx, indexedAtt, pubKey, signingRoot, v.emitAccountMetrics, ValidatorAttestFailVec); err != nil {
 			log.WithError(err).Error("Failed attestation slashing protection check")

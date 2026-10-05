@@ -1,0 +1,44 @@
+{
+  "node": "cl-05-prysm-geth",
+  "slot32_root": {
+    "data": {
+      "root": "0xfd911b8aa87cc7177fe8ff4b51b1b956016f9e2874bdddb41f72fe4d6aa405bf"
+    },
+    "execution_optimistic": false,
+    "finalized": false
+  },
+  "syncing": {
+    "data": {
+      "head_slot": "32",
+      "sync_distance": "0",
+      "is_syncing": false,
+      "is_optimistic": false,
+      "el_offline": false
+    }
+  },
+  "finality": {
+    "execution_optimistic": false,
+    "finalized": false,
+    "data": {
+      "previous_justified": {
+        "epoch": "0",
+        "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+        "round": "2",
+        "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+      },
+      "current_justified": {
+        "epoch": "0",
+        "root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290",
+        "round": "3",
+        "round_root": "0xa356fa4794687c975a436d6451e07ffd1b358f6277dab08c877ac4cc39b48290"
+      },
+      "finalized": {
+        "epoch": "0",
+        "root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2",
+        "round": "2",
+        "round_root": "0xcdf1eaa6fb6053854cba884b5819e10da219d6e63ee572db40c66d8079ea5dc2"
+      }
+    }
+  },
+  "active_validators": 1000
+}

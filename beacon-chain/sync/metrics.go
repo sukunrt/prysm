@@ -80,8 +80,7 @@ var (
 	goldfishVoteSeats = promauto.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "goldfish_vote_seats",
-			Help: "Goldfish head vote seats of a slot, counted at the next slot start, as fork " +
-				"choice reads them.",
+			Help: "Unique Goldfish committee seats recorded by this node before the next slot start cutoff.",
 		},
 	)
 	ffgVoteArrival = promauto.NewHistogram(

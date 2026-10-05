@@ -1,0 +1,28 @@
+{
+  "beacons": {
+    "cl-01-prysm-geth": "http://127.0.0.1:32844",
+    "cl-02-prysm-geth": "http://127.0.0.1:32874",
+    "cl-03-prysm-geth": "http://127.0.0.1:32889",
+    "cl-04-prysm-geth": "http://127.0.0.1:32854",
+    "cl-05-prysm-geth": "http://127.0.0.1:32859",
+    "cl-06-prysm-geth": "http://127.0.0.1:32879",
+    "cl-07-prysm-geth": "http://127.0.0.1:32869",
+    "cl-08-prysm-geth": "http://127.0.0.1:32884",
+    "cl-09-prysm-geth": "http://127.0.0.1:32864",
+    "cl-10-prysm-geth": "http://127.0.0.1:32849"
+  },
+  "metrics": {
+    "cl-01-prysm-geth": "http://127.0.0.1:32847",
+    "cl-02-prysm-geth": "http://127.0.0.1:32877",
+    "cl-03-prysm-geth": "http://127.0.0.1:32892",
+    "cl-04-prysm-geth": "http://127.0.0.1:32857",
+    "cl-05-prysm-geth": "http://127.0.0.1:32862",
+    "cl-06-prysm-geth": "http://127.0.0.1:32882",
+    "cl-07-prysm-geth": "http://127.0.0.1:32872",
+    "cl-08-prysm-geth": "http://127.0.0.1:32887",
+    "cl-09-prysm-geth": "http://127.0.0.1:32867",
+    "cl-10-prysm-geth": "http://127.0.0.1:32852"
+  },
+  "execution": "http://127.0.0.1:32794",
+  "spamoor": "http://127.0.0.1:32904"
+}

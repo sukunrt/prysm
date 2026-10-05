@@ -7,6 +7,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/validators"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/container/slice"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
@@ -45,6 +46,9 @@ func ProcessAttesterSlashings(
 ) (state.BeaconState, error) {
 	ctx, span := trace.StartSpan(ctx, "blocks.ProcessAttesterSlashings")
 	defer span.End()
+	if slots.ToEpoch(beaconState.Slot()) >= params.BeaconConfig().HezeForkEpoch {
+		return beaconState, nil
+	}
 
 	span.SetAttributes(trace.Int64Attribute("count", int64(len(slashings))))
 
@@ -70,6 +74,9 @@ func ProcessAttesterSlashingsNoVerify(
 	slashings []ethpb.AttSlashing,
 	exitInfo *validators.ExitInfo,
 ) (state.BeaconState, error) {
+	if slots.ToEpoch(beaconState.Slot()) >= params.BeaconConfig().HezeForkEpoch {
+		return beaconState, nil
+	}
 	if exitInfo == nil && len(slashings) > 0 {
 		return nil, errors.New("exit info required to process attester slashings")
 	}
@@ -90,6 +97,9 @@ func ProcessAttesterSlashing(
 	slashing ethpb.AttSlashing,
 	exitInfo *validators.ExitInfo,
 ) (state.BeaconState, error) {
+	if slots.ToEpoch(beaconState.Slot()) >= params.BeaconConfig().HezeForkEpoch {
+		return beaconState, nil
+	}
 	if exitInfo == nil {
 		return nil, errors.New("exit info is required to process attester slashing")
 	}
@@ -108,6 +118,9 @@ func ProcessAttesterSlashingNoVerify(
 	slashing ethpb.AttSlashing,
 	exitInfo *validators.ExitInfo,
 ) (state.BeaconState, error) {
+	if slots.ToEpoch(beaconState.Slot()) >= params.BeaconConfig().HezeForkEpoch {
+		return beaconState, nil
+	}
 	if exitInfo == nil {
 		return nil, errors.New("exit info is required to process attester slashing")
 	}

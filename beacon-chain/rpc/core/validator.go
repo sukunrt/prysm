@@ -583,9 +583,35 @@ func (s *Service) GetAttestationData(
 		return nil, &RpcError{Reason: Unavailable, Err: errOptimisticMode}
 	}
 
-	headRoot, err := s.HeadFetcher.HeadRoot(ctx)
-	if err != nil {
-		return nil, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not get head root")}
+	var headRoot []byte
+	var headState beaconState.BeaconState
+	var isPayloadFull bool
+	for attempt := 0; attempt < 3; attempt++ {
+		headRoot, err = s.HeadFetcher.HeadRoot(ctx)
+		if err != nil {
+			return nil, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not get head root")}
+		}
+		headState, err = s.HeadFetcher.HeadState(ctx)
+		if err != nil {
+			return nil, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not get head state")}
+		}
+		afterRoot, afterFull := s.HeadFetcher.HeadRootAndFull()
+		coherent := bytesutil.ToBytes32(headRoot) == afterRoot
+		if coherent && slots.ToEpoch(req.Slot) >= params.BeaconConfig().HezeForkEpoch {
+			fcRoot, full := s.ChainInfoFetcher.CanonicalNodeAtSlot(req.Slot)
+			latestRoot, latestFull := s.HeadFetcher.HeadRootAndFull()
+			coherent = fcRoot == afterRoot && latestRoot == afterRoot && latestFull == afterFull
+			if coherent {
+				isPayloadFull = full
+			}
+		}
+		if coherent {
+			currentHeadFull = afterFull
+			break
+		}
+		if attempt == 2 {
+			return nil, &RpcError{Reason: Unavailable, Err: errors.New("head changed while preparing attestation data")}
+		}
 	}
 	targetRound := slots.RoundAt(req.Slot)
 	targetRoot, err := s.HeadFetcher.TargetRootForRound(bytesutil.ToBytes32(headRoot), targetRound)
@@ -593,10 +619,6 @@ func (s *Service) GetAttestationData(
 		return nil, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not get target root")}
 	}
 
-	headState, err := s.HeadFetcher.HeadState(ctx)
-	if err != nil {
-		return nil, &RpcError{Reason: Internal, Err: errors.Wrap(err, "could not get head state")}
-	}
 	// Ensure justified checkpoint safety by processing head state across the ROUND boundary:
 	// the source a validator signs would otherwise go a round stale at every round boundary.
 	if coreTime.CurrentRound(headState) < targetRound {
@@ -606,8 +628,8 @@ func (s *Service) GetAttestationData(
 		}
 	}
 	justifiedCheckpoint := headState.CurrentJustifiedCheckpoint()
-	var isPayloadFull bool
-	if slots.ToEpoch(req.Slot) >= params.BeaconConfig().GloasForkEpoch {
+	if slots.ToEpoch(req.Slot) >= params.BeaconConfig().GloasForkEpoch &&
+		slots.ToEpoch(req.Slot) < params.BeaconConfig().HezeForkEpoch {
 		fcRoot, full := s.ChainInfoFetcher.CanonicalNodeAtSlot(req.Slot)
 		if fcRoot != bytesutil.ToBytes32(headRoot) {
 			log.WithFields(logrus.Fields{

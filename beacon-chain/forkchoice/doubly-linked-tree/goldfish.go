@@ -14,18 +14,17 @@ import (
 // the extra slack absorbs late arrivals and clock disparity.
 const goldfishVoteRetention = primitives.Slot(3)
 
-// goldfishVote is one validator's available attestation vote for one slot.
+// goldfishVote is one validator's available attestation counter for one slot.
 type goldfishVote struct {
 	root           [32]byte
 	payloadPresent bool
 	// seats is the number of available committee seats the signer holds in the
 	// vote's slot. The committee is a fixed size list with repeats, so a
-	// validator holding k seats counts k in both score and denominator.
+	// validator holding k seats contributes k unique committee seats.
 	seats uint64
 }
 
-// goldfishVotes holds the available attestation votes that drive the Goldfish
-// head walk, keyed by slot and then by validator index.
+// goldfishVotes holds available attestation participation by slot and validator.
 //
 // This is deliberately NOT the `f.votes` store: those are epoch granular and
 // never expire, while an available attestation vote is only read during the
@@ -33,7 +32,8 @@ type goldfishVote struct {
 //
 // The caller must hold the forkchoice write lock for every method here.
 type goldfishVotes struct {
-	votes map[primitives.Slot]map[primitives.ValidatorIndex]goldfishVote
+	votes    map[primitives.Slot]map[primitives.ValidatorIndex]goldfishVote
+	messages map[primitives.Slot]uint64
 	// equivocators are validators that signed two different available
 	// attestations for the same slot. Their first vote stays in `votes` so
 	// they keep counting in the viability denominator.
@@ -43,6 +43,7 @@ type goldfishVotes struct {
 func newGoldfishVotes() *goldfishVotes {
 	return &goldfishVotes{
 		votes:        make(map[primitives.Slot]map[primitives.ValidatorIndex]goldfishVote),
+		messages:     make(map[primitives.Slot]uint64),
 		equivocators: make(map[primitives.Slot]map[primitives.ValidatorIndex]bool),
 	}
 }
@@ -53,6 +54,7 @@ func newGoldfishVotes() *goldfishVotes {
 func (g *goldfishVotes) insert(
 	slot primitives.Slot, index primitives.ValidatorIndex, v goldfishVote,
 ) {
+	g.messages[slot]++
 	if g.equivocators[slot][index] {
 		return
 	}
@@ -86,6 +88,7 @@ func (g *goldfishVotes) prune(current primitives.Slot) {
 	for slot := range g.votes {
 		if slot+goldfishVoteRetention < current {
 			delete(g.votes, slot)
+			delete(g.messages, slot)
 			delete(g.equivocators, slot)
 		}
 	}
@@ -189,6 +192,10 @@ func (f *ForkChoice) InsertAvailableAttestation(
 		return
 	}
 	s := f.store
+	if slot+goldfishVoteRetention < s.currentSlot() {
+		goldfishLateVoteCount.Inc()
+		return
+	}
 	if slot < s.currentSlot() {
 		goldfishLateVoteCount.Inc()
 	}
@@ -221,8 +228,10 @@ func (s *Store) goldfishNewSlot(slot primitives.Slot) {
 		seats := s.goldfishVotes.seats(slot - 1)
 		goldfishSeatFraction.Set(float64(seats) / float64(decoupled.AvailableAttestationCommitteeSize))
 		fields := decoupled.SummaryFields(slot - 1)
-		fields["votes"] = s.goldfishVotes.voters(slot - 1)
+		fields["uniqueValidators"] = s.goldfishVotes.voters(slot - 1)
+		fields["recordedMessages"] = s.goldfishVotes.messages[slot-1]
 		fields["seats"] = seats
+		fields["cutoff"] = "next_slot_start"
 		fields["committeeSeats"] = uint64(decoupled.AvailableAttestationCommitteeSize)
 		log.WithFields(fields).Info("Goldfish votes")
 	}
@@ -497,41 +506,79 @@ func (s *Store) goldfishDescend(
 	}
 }
 
-// goldfishHead returns the head chosen by the Goldfish walk. It replaces the
-// best descendant walk once the Heze fork is active.
-func (s *Store) goldfishHead() ([32]byte, error) {
+// hezeHead selects the highest imported block below the current slot from
+// both payload branches of the justified tree. An equal slot keeps the head.
+func (s *Store) hezeHead() ([32]byte, error) {
 	justified, err := s.justifiedNode()
 	if err != nil {
 		return [32]byte{}, err
 	}
+	targetSlot, err := slots.FFGTargetSlot(s.justifiedCheckpoint.Epoch)
+	if err != nil {
+		return [32]byte{}, err
+	}
 	current := s.currentSlot()
-	// The walk reads the previous slot's votes. At genesis there is no previous
-	// slot, so there is no electorate and the gate does not veto.
-	sc := &goldfishScores{
-		pending: map[*Node]uint64{},
-		payload: map[*PayloadNode]uint64{},
-		noVotes: true,
+	head := justified
+	// A stale or pruned cached head must not win a tie.
+	if s.headNode != nil && s.headNode.slot >= justified.slot && s.headNode.slot <= current &&
+		hezeCheckpointCompatible(s.headNode, justified, targetSlot) {
+		for n := s.headNode; n != nil; {
+			if n == justified {
+				head = s.headNode
+				break
+			}
+			if n.parent == nil || n.parent.node == nil ||
+				(s.emptyNodeByRoot[n.root] == nil && s.fullNodeByRoot[n.root] == nil) {
+				break
+			}
+			n = n.parent.node
+		}
 	}
-	if current > 0 {
-		sc = s.goldfishScoresForSlot(current-1, justified)
+	seen := make(map[*Node]bool)
+	stack := []*Node{justified}
+	for len(stack) > 0 {
+		n := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if seen[n] || n.slot > current || !hezeCheckpointCompatible(n, justified, targetSlot) {
+			continue
+		}
+		seen[n] = true
+		if n.slot > head.slot {
+			head = n
+		}
+		for _, pn := range []*PayloadNode{s.emptyNodeByRoot[n.root], s.fullNodeByRoot[n.root]} {
+			if pn == nil || pn.node != n {
+				continue
+			}
+			for _, child := range pn.children {
+				if child != nil && child.parent == pn && s.emptyNodeByRoot[child.root] != nil {
+					stack = append(stack, child)
+				}
+			}
+		}
 	}
-	start := justified
-	if proposal := s.goldfishRoundProposal(justified, current); proposal != nil {
-		start = proposal
-		goldfishRoundProposalCount.Inc()
-	}
-	head := s.goldfishDescend(start, sc, current)
 	s.allTipsAreInvalid = false
 	previous := s.headNode
 	if head != previous {
-		if previous != nil && isGoldfishAncestor(previous, head) {
-			goldfishGateRetreatCount.Inc()
-		}
 		headChangesCount.Inc()
 		headSlotNumber.Set(float64(head.slot))
 		s.headNode = head
 	}
 	return head.root, nil
+}
+
+// A skipped checkpoint slot still fixes the latest ancestor at or before it.
+func hezeCheckpointCompatible(n, justified *Node, targetSlot primitives.Slot) bool {
+	if justified.slot >= targetSlot {
+		return true
+	}
+	for n != nil && n.slot > targetSlot {
+		if n.parent == nil {
+			return false
+		}
+		n = n.parent.node
+	}
+	return n == justified
 }
 
 // isGoldfishAncestor reports whether ancestor is n or one of its ancestors.

@@ -1,0 +1,363 @@
+[
+  {
+    "id": 101,
+    "name": "heze-blobs",
+    "description": "",
+    "scenario": "blobs",
+    "status": 1,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  },
+  {
+    "id": 100,
+    "name": "heze-transactions",
+    "description": "",
+    "scenario": "eoatx",
+    "status": 1,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  },
+  {
+    "id": 33,
+    "name": "Invalid Transaction Fuzzing",
+    "description": "Fires deliberately-invalid transactions (bad chainid/nonce/gas/fees, malformed RLP, empty 7702 auth, blobless blob tx) from a small reused pool of burner wallets, out-of-pool and fire-and-forget. A node accepting one is a potential validation gap.",
+    "scenario": "tx-fuzz-invalid",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 30,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 2
+    }
+  },
+  {
+    "id": 32,
+    "name": "Transaction Layer Fuzzing",
+    "description": "Sends well-formed transactions across all types (legacy/2930/1559/4844/7702) with randomized calldata, access lists, authorizations, blobs and targets.",
+    "scenario": "tx-fuzz",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 30,
+    "member_config": {
+      "weight": 2,
+      "enabled": true,
+      "sort_order": 1
+    }
+  },
+  {
+    "id": 31,
+    "name": "EVM Execution Fuzzing",
+    "description": "Deploys contracts with randomly generated, stack-aware bytecode exercising opcodes and precompiles.",
+    "scenario": "evm-fuzz",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 30,
+    "member_config": {
+      "weight": 2,
+      "enabled": true,
+      "sort_order": 0
+    }
+  },
+  {
+    "id": 30,
+    "name": "Fuzzing",
+    "description": "A mix of fuzzing scenarios - EVM execution fuzzing (random bytecode deployments) and transaction-layer fuzzing (randomized tx types, calldata, access lists, authorizations and blobs) - sharing a global budget of 10 tx/slot to surface consensus and validation bugs.",
+    "scenario": "group",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": true,
+    "group_id": 0,
+    "group_config": {
+      "throughput_mode": "shared",
+      "total_throughput": 10,
+      "total_count": 0,
+      "total_max_pending": 0,
+      "auto_restart_failed": false,
+      "auto_restart_cooldown": 0
+    }
+  },
+  {
+    "id": 23,
+    "name": "Seaport NFT Trades",
+    "description": "Deploys Seaport 1.6 and fulfills signed NFT buy and sell orders against a market counterparty.",
+    "scenario": "seaport-trades",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 12
+    }
+  },
+  {
+    "id": 22,
+    "name": "ENS Name Registrations",
+    "description": "Deploys the real ENS contract stack and organically registers, renews, updates and churns names, naming all spamoor wallets on the host.",
+    "scenario": "ens-names",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 11
+    }
+  },
+  {
+    "id": 21,
+    "name": "Aave V3 Lending",
+    "description": "Deploys a full Aave V3 market and organically supplies, borrows, repays and withdraws two tokens, with oracle price moves and occasional liquidations.",
+    "scenario": "aave-lending",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 10
+    }
+  },
+  {
+    "id": 20,
+    "name": "Blob Transactions",
+    "description": "Sends type-3 blob transactions as part of the shared chain load.",
+    "scenario": "blobs",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 9
+    }
+  },
+  {
+    "id": 19,
+    "name": "Uniswap V3 Swaps",
+    "description": "Swaps tokens across Uniswap V3 pools (0.3% fee tier).",
+    "scenario": "uniswap-swaps",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 8
+    }
+  },
+  {
+    "id": 18,
+    "name": "Uniswap V2 Swaps",
+    "description": "Swaps tokens across Uniswap V2 pairs.",
+    "scenario": "uniswap-swaps",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 7
+    }
+  },
+  {
+    "id": 17,
+    "name": "Curve StableSwap Swaps",
+    "description": "Performs token swaps on Curve StableSwap pools.",
+    "scenario": "curve-swaps",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 6
+    }
+  },
+  {
+    "id": 16,
+    "name": "Safe Multisig Executions",
+    "description": "Executes transactions through Safe (Gnosis) multisig wallets.",
+    "scenario": "safe-multisig",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 5
+    }
+  },
+  {
+    "id": 15,
+    "name": "ERC-4337 Account Abstraction",
+    "description": "Submits ERC-4337 UserOperations through the EntryPoint via a bundler.",
+    "scenario": "erc4337",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 4
+    }
+  },
+  {
+    "id": 14,
+    "name": "ERC-1155 Multi-Token Activityit' already pa",
+    "description": "",
+    "scenario": "erc1155tx",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  },
+  {
+    "id": 13,
+    "name": "ERC-721 NFT Activity",
+    "description": "Mints and transfers ERC-721 non-fungible tokens.",
+    "scenario": "erc721tx",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 2
+    }
+  },
+  {
+    "id": 12,
+    "name": "ERC-20 Token Transfers",
+    "description": "Deploys an ERC-20 token and continuously transfers it between wallets.",
+    "scenario": "erc20tx",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 1,
+      "enabled": true,
+      "sort_order": 1
+    }
+  },
+  {
+    "id": 11,
+    "name": "EOA Transfers",
+    "description": "Plain ETH value transfers between externally-owned accounts.",
+    "scenario": "eoatx",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 10,
+    "member_config": {
+      "weight": 2,
+      "enabled": true,
+      "sort_order": 0
+    }
+  },
+  {
+    "id": 10,
+    "name": "Regular Chain Load",
+    "description": "A balanced mix of everyday transaction types - EOA transfers, ERC-20/721/1155 tokens, ERC-4337 account abstraction, Safe multisig, Curve / Uniswap V2+V3 swaps, blobs, Aave V3 lending, ENS name registrations and Seaport NFT trades - sharing a global budget of 100 tx/slot to emulate organic chain activity.",
+    "scenario": "group",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": true,
+    "group_id": 0,
+    "group_config": {
+      "throughput_mode": "shared",
+      "total_throughput": 100,
+      "total_count": 0,
+      "total_max_pending": 0,
+      "auto_restart_failed": false,
+      "auto_restart_cooldown": 0
+    }
+  },
+  {
+    "id": 7,
+    "name": "EVM Fuzz Spammer",
+    "description": "Opcode & Precompile fuzzer, 50tx/block, gas limit 1M, ~20M gas usage",
+    "scenario": "evm-fuzz",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  },
+  {
+    "id": 6,
+    "name": "Uniswap V2 Swap Spammer",
+    "description": "200 type-2 swap transactions with uniswap v2 pools, gas limit 20 gwei, ~15M gas usage",
+    "scenario": "uniswap-swaps",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  },
+  {
+    "id": 5,
+    "name": "Gas Burner Spammer",
+    "description": "20 gas-burner transactions per slot, burning 2M gas each, gas limit 20 gwei, up to 40M gas usage",
+    "scenario": "gasburnertx",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  },
+  {
+    "id": 4,
+    "name": "Big Block Spammer",
+    "description": "200 type-2 eoa transactions per slot with 25k zero bytes calldata each",
+    "scenario": "eoatx",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  },
+  {
+    "id": 3,
+    "name": "Blob Average Spammer",
+    "description": "Maintains a steady average of ~3 blobs per block",
+    "scenario": "blob-average",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  },
+  {
+    "id": 2,
+    "name": "ERC20 Transaction Spammer",
+    "description": "215 type-2 erc20 transactions per slot, gas limit 20 gwei, 8.4M gas usage",
+    "scenario": "erc20tx",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  },
+  {
+    "id": 1,
+    "name": "EOA Transaction Spammer",
+    "description": "400 type-2 eoa transactions per slot, gas limit 20 gwei, 8.4M gas usage",
+    "scenario": "eoatx",
+    "status": 0,
+    "created_at": "2026-10-05T20:16:40Z",
+    "is_group": false,
+    "group_id": 0
+  }
+]

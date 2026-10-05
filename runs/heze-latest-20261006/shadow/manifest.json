@@ -1,0 +1,88 @@
+{
+  "run_name": "heze-n10-v1000-super10-s1-32slots",
+  "source_root": "/home/sukun/dev/prysm-heze-latest-20261006",
+  "nodes": 10,
+  "validators": 1000,
+  "validators_per_node": 100,
+  "home_nodes": 0,
+  "supernodes": 10,
+  "slots": 32,
+  "seed": 1,
+  "placement": [
+    {
+      "node": "node1",
+      "country": "united states",
+      "class": "super",
+      "validators": 100
+    },
+    {
+      "node": "node2",
+      "country": "ireland",
+      "class": "super",
+      "validators": 100
+    },
+    {
+      "node": "node3",
+      "country": "south korea",
+      "class": "super",
+      "validators": 100
+    },
+    {
+      "node": "node4",
+      "country": "united states",
+      "class": "super",
+      "validators": 100
+    },
+    {
+      "node": "node5",
+      "country": "france",
+      "class": "super",
+      "validators": 100
+    },
+    {
+      "node": "node6",
+      "country": "france",
+      "class": "super",
+      "validators": 100
+    },
+    {
+      "node": "node7",
+      "country": "singapore",
+      "class": "super",
+      "validators": 100
+    },
+    {
+      "node": "node8",
+      "country": "austria",
+      "class": "super",
+      "validators": 100
+    },
+    {
+      "node": "node9",
+      "country": "united states",
+      "class": "super",
+      "validators": 100
+    },
+    {
+      "node": "node10",
+      "country": "united states",
+      "class": "super",
+      "validators": 100
+    }
+  ],
+  "home_bandwidth": "25 Mbit up / 50 Mbit down",
+  "super_bandwidth": "1024 Mbit up/down",
+  "duration_after_genesis_seconds": 404,
+  "chain_config": {
+    "HEZE_FORK_EPOCH": 0,
+    "SLOTS_PER_EPOCH": null,
+    "SLOTS_PER_ROUND": 8,
+    "TARGET_COMMITTEE_SIZE": 3000,
+    "TARGET_AGGREGATORS_PER_COMMITTEE": 64,
+    "ATTESTATION_SUBNET_COUNT": 1,
+    "SUBNETS_PER_NODE": 2,
+    "AGGREGATE_DUE_BPS_GLOAS": 5000
+  },
+  "cpu_model": "Shadow models network, not real CPU cost",
+  "observations": "final heads/roots/sync/finality/metrics on all nodes; each requested block/envelope and matching EL block number on node1"
+}

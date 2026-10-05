@@ -1,0 +1,79 @@
+# Heze latest-block integration: 10 nodes, 100 keys each, 1,000 validators.
+# Build the working tree with the run-specific image tag below before starting.
+participants:
+  - el_type: geth
+    el_image: ethpandaops/geth:glamsterdam-devnet-8
+    cl_type: prysm
+    cl_image: prysm-beacon-chain:heze-latest-20261006
+    vc_type: prysm
+    vc_image: prysm-validator:heze-latest-20261006
+    vc_extra_params:
+      - --decoupled-ffg-vote-at-slot-start
+    use_separate_vc: true
+    # Required for PeerDAS with fewer than 128 keys per node and <16 nodes.
+    supernode: true
+    count: 10
+    cl_extra_params:
+      - --goldfish-vote-ledger
+    cl_extra_env_vars:
+      GOMEMLIMIT: 1024MiB
+
+network_params:
+  network: kurtosis
+  network_id: "3151911"
+  preset: mainnet
+  seconds_per_slot: 12
+  slot_duration_ms: 12000
+  num_validator_keys_per_node: 100
+  genesis_gaslimit: 9000000
+  gas_limit: 9000000
+  genesis_delay: 180
+  deneb_fork_epoch: 0
+  electra_fork_epoch: 0
+  fulu_fork_epoch: 0
+  gloas_fork_epoch: 0
+  heze_fork_epoch: 0
+  bpo_1_epoch: 0
+  bpo_1_max_blobs: 21
+  bpo_1_target_blobs: 14
+  bpo_2_epoch: 18446744073709551615
+
+ethereum_genesis_generator_params:
+  image: prysm-genesis-gen:heze-latest-20261006
+  extra_env:
+    SLOTS_PER_ROUND: 8
+    AVAILABLE_ATTESTATION_DUE_BPS_HEZE: 2500
+    TARGET_COMMITTEE_SIZE: 3000
+    ATTESTATION_SUBNET_COUNT: 1
+    SUBNETS_PER_NODE: 2
+    HEZE_FORK_VERSION: "0x90000000"
+
+spamoor_params:
+  image: ethpandaops/spamoor:v1.2.3
+  extra_args:
+    - --without-batcher
+  start_chainload: false
+  spammers:
+    - name: heze-transactions
+      scenario: eoatx
+      config:
+        throughput: 4
+        max_pending: 16
+        max_wallets: 20
+        gas_limit: 1100000
+        data: random:16384
+        client_group: 01-geth-prysm
+    - name: heze-blobs
+      scenario: blobs
+      config:
+        throughput: 1
+        sidecars: 1
+        max_pending: 4
+        max_wallets: 8
+        client_group: 01-geth-prysm
+
+additional_services:
+  - spamoor
+
+wait_for_finalization: false
+global_log_level: info

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"encoding/binary"
 	"errors"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	mockChain "github.com/OffchainLabs/prysm/v7/beacon-chain/blockchain/testing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/cache"
 	p2pmock "github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/testing"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	mockstategen "github.com/OffchainLabs/prysm/v7/beacon-chain/state/stategen/mock"
 	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
@@ -26,6 +28,60 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 )
+
+type changingAttestationHead struct {
+	*mockChain.ChainService
+	nextRoot  [32]byte
+	nextState state.BeaconState
+	reads     int
+}
+
+func (h *changingAttestationHead) CanonicalNodeAtSlot(_ primitives.Slot) ([32]byte, bool) {
+	h.reads++
+	if h.reads == 1 {
+		h.Root = h.nextRoot[:]
+		h.State = h.nextState
+		h.Full = true
+	}
+	return bytesutil.ToBytes32(h.Root), h.Full
+}
+
+func TestGetAttestationData_HezeRetriesHeadChangeDuringPayloadRead(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.ElectraForkEpoch = 0
+	cfg.GloasForkEpoch = 0
+	cfg.HezeForkEpoch = 0
+	params.OverrideBeaconConfig(cfg)
+	const slot = primitives.Slot(1)
+	stateA, err := util.NewBeaconStateHeze()
+	require.NoError(t, err)
+	require.NoError(t, stateA.SetSlot(slot))
+	stateB := stateA.Copy()
+	rootA, rootB := [32]byte{'a'}, [32]byte{'b'}
+	require.NoError(t, stateA.SetCurrentJustifiedCheckpoint(&ethpb.Checkpoint{Root: rootA[:]}))
+	require.NoError(t, stateB.SetCurrentJustifiedCheckpoint(&ethpb.Checkpoint{Root: rootB[:]}))
+	head := &changingAttestationHead{
+		ChainService: &mockChain.ChainService{Root: rootA[:], State: stateA},
+		nextRoot:     rootB,
+		nextState:    stateB,
+	}
+	current := slot
+	clock := &mockChain.ChainService{Slot: &current, Genesis: time.Now().Add(-time.Duration(cfg.SecondsPerSlot) * time.Second)}
+	s := &Service{
+		HeadFetcher:           head,
+		ChainInfoFetcher:      head,
+		GenesisTimeFetcher:    clock,
+		OptimisticModeFetcher: &mockChain.ChainService{},
+		AttestationCache:      cache.NewAttestationDataCache(),
+	}
+	data, rpcErr := s.GetAttestationData(context.Background(), &ethpb.AttestationDataRequest{Slot: slot})
+	require.Equal(t, (*RpcError)(nil), rpcErr)
+	require.Equal(t, 2, head.reads)
+	assert.DeepEqual(t, rootB[:], data.BeaconBlockRoot)
+	assert.DeepEqual(t, rootB[:], data.Source.Root)
+	require.Equal(t, primitives.CommitteeIndex(1), data.CommitteeIndex)
+}
 
 func TestRegisterSyncSubnetProto(t *testing.T) {
 	k := pubKey(3)

@@ -1,0 +1,27 @@
+Go test evidence, 2026-10-06. Toolchain: GOTOOLCHAIN=go1.26.5; cache: GOCACHE=/tmp/heze-go-build; all commands include -mod=readonly -count=1.
+
+PASS: go test ./beacon-chain/forkchoice/doubly-linked-tree (7.120s)
+PASS: go test ./beacon-chain/rpc/core -run TestGetAttestationData_HezeRetriesHeadChangeDuringPayloadRead (0.022s)
+PASS: go test ./validator/client -run '^TestAvailableAttestationDataUsesGoldfishDueHint$' (0.017s)
+PASS: go test ./beacon-chain/rpc/prysm/v1alpha1/beacon -run TestSubmitAttesterSlashing_HezeOperationalSlotWithOldHead (0.018s)
+PASS: go test ./beacon-chain/rpc/eth/beacon -run '^TestSubmitAttesterSlashingsV2$' (0.086s)
+PASS: go test -tags minimal ./beacon-chain/rpc/prysm/v1alpha1/validator -run '^TestServer_getSlashings$' (0.145s)
+PASS: go test -tags develop ./beacon-chain/blockchain -run '^TestService_insertSlashingsToForkChoiceStore' (5.933s)
+PASS: go test ./beacon-chain/sync -run 'TestHezeHead|TestGoldfishNewSlot|TestSlotSeatCounter|TestAttesterSlashingEvidenceIgnored' (0.022s). The regex matches TestSlotSeatCounter_TakeReadsTheSlotAndForgetsIt and TestSlotSeatCounter_DeduplicatesValidatorParticipation; sync package passed.
+PASS: broad affected-package run: core/blocks, operations/slashings, validator/client, rpc/core, slasher, rpc/prysm/v1alpha1/validator. Full forkchoice rerun passed after a test fixture clock correction.
+
+Broad API runs failed. Assignment failures belong to ./beacon-chain/rpc/prysm/v1alpha1/beacon; attestation failures belong to ./beacon-chain/rpc/eth/beacon. Observed failures in truncated output included:
+- TestServer_ListAssignments_Pagination_InputOutOfRange: "bytes array does not have the correct length".
+- TestServer_ListAssignments_Pagination_DefaultPageSize_NoArchive: same error.
+- TestServer_ListAssignments_FilterPubkeysIndices_NoPagination: same error.
+- TestServer_ListAssignments_CanFilterPubkeysIndices_WithPagination: same error.
+- TestSubmitAttestationsV2/post-electra/single: expected 1 attestation in pool, waited 1s.
+- TestSubmitAttestationsV2/post-electra/ssz: expected 2 attestations in pool, waited 1s.
+- TestSubmitAttestationsV2/post-electra/multiple: expected 2 attestations in pool, waited 1s.
+The captured tool output was truncated, so this is not an exhaustive failure list. These failures were NOT verified against an unchanged baseline; their relationship to this patch is undetermined. The focused attester-slashing RPC test above passed.
+
+The broad ./beacon-chain/sync run failed at tests requiring libp2p listeners: "socket: operation not permitted". Later duplicate-metric errors occurred in that run. The broad tagged blockchain Head test run failed at TestHeadRoot_Nil because httptest could not listen on [::1]:0: "socket: operation not permitted". Neither broad run was retried. The default Go 1.27.1 run failed compiling cockroachdb/swiss; Go 1.26.5 was used for valid results.
+
+Parent verification: the three post-Electra attestation-pool failures and four assignment failures reproduce both in the current code and with pre-change source overlaid from jj parent 7dbca16c. Failed test names match. See baseline-comparison.json, api-{current,baseline}.log and assignments-{current,baseline}.log. The overlay did not modify working source files. No attempt was made to fix these pre-existing failures.
+
+After network access was restored, full sync and tagged blockchain tests ran. A missing clock in TestValidateAttesterSlashing_Syncing was fixed in the test fixture only. Focused TestValidateAttesterSlashing_ tests PASS (0.091s); production binaries unchanged. The two remaining full sync failures (GossipStartupActiveValidatorCountSlotZeroCacheBypass and beaconBlockSubscriber/invalid_block_does_not_remove_attestations) and the two blockchain NoViableHead failures all reproduce on the pre-change source overlay. See network-enabled-sync-fixed.log, network-baseline.log, startup-baseline.log and slashing-network-enabled.log.

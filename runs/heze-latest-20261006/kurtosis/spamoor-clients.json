@@ -1,0 +1,202 @@
+[
+  {
+    "index": 0,
+    "name": "01-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "01",
+      "prysm",
+      "geth",
+      "prysm-geth-01",
+      "01-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.10:8545",
+    "enabled": true,
+    "name_override": "01-geth-prysm"
+  },
+  {
+    "index": 1,
+    "name": "02-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "02",
+      "prysm",
+      "geth",
+      "prysm-geth-02",
+      "02-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.15:8545",
+    "enabled": true,
+    "name_override": "02-geth-prysm"
+  },
+  {
+    "index": 2,
+    "name": "03-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "03",
+      "prysm",
+      "geth",
+      "prysm-geth-03",
+      "03-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.11:8545",
+    "enabled": true,
+    "name_override": "03-geth-prysm"
+  },
+  {
+    "index": 3,
+    "name": "04-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "04",
+      "prysm",
+      "geth",
+      "prysm-geth-04",
+      "04-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.12:8545",
+    "enabled": true,
+    "name_override": "04-geth-prysm"
+  },
+  {
+    "index": 4,
+    "name": "05-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "05",
+      "prysm",
+      "geth",
+      "prysm-geth-05",
+      "05-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.13:8545",
+    "enabled": true,
+    "name_override": "05-geth-prysm"
+  },
+  {
+    "index": 5,
+    "name": "06-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "06",
+      "prysm",
+      "geth",
+      "prysm-geth-06",
+      "06-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.19:8545",
+    "enabled": true,
+    "name_override": "06-geth-prysm"
+  },
+  {
+    "index": 6,
+    "name": "07-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "07",
+      "prysm",
+      "geth",
+      "prysm-geth-07",
+      "07-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.17:8545",
+    "enabled": true,
+    "name_override": "07-geth-prysm"
+  },
+  {
+    "index": 7,
+    "name": "08-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "08",
+      "prysm",
+      "geth",
+      "prysm-geth-08",
+      "08-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.18:8545",
+    "enabled": true,
+    "name_override": "08-geth-prysm"
+  },
+  {
+    "index": 8,
+    "name": "09-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "09",
+      "prysm",
+      "geth",
+      "prysm-geth-09",
+      "09-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.16:8545",
+    "enabled": true,
+    "name_override": "09-geth-prysm"
+  },
+  {
+    "index": 9,
+    "name": "10-geth-prysm",
+    "group": "default",
+    "groups": [
+      "default",
+      "10",
+      "prysm",
+      "geth",
+      "prysm-geth-10",
+      "10-geth-prysm"
+    ],
+    "type": "client",
+    "version": "Geth/v1.17.6-unstable-aa1f2fcf-20260813/linux-amd64/go1.26.5",
+    "block_height": 0,
+    "ready": true,
+    "rpc_host": "http://172.16.8.14:8545",
+    "enabled": true,
+    "name_override": "10-geth-prysm"
+  }
+]

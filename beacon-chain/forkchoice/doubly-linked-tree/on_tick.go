@@ -34,8 +34,7 @@ func (f *ForkChoice) NewSlot(ctx context.Context, slot primitives.Slot) error {
 	f.store.proposerBoostRoot = [32]byte{}
 
 	// Report and prune the available attestation votes for the slot that just
-	// ended. The Goldfish walk reads the previous slot's votes, so the slot
-	// boundary is both the reporting cutoff and the pruning point.
+	// ended. The slot boundary is the reporting cutoff and pruning point.
 	if goldfishActiveAt(slot) {
 		f.store.goldfishNewSlot(slot)
 	}

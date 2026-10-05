@@ -11,24 +11,34 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 )
 
 // voteSeats counts the head vote seats of a slot as they are taken in. It is
 // package level because a node's own vote is recorded by the RPC, which has no
-// *Service. It counts messages, not validators, so an equivocator counts twice.
-var voteSeats = &slotSeatCounter{m: make(map[primitives.Slot]uint64)}
+// *Service. Each validator's committee seats count once per slot.
+var voteSeats = &slotSeatCounter{m: make(map[primitives.Slot]map[primitives.ValidatorIndex]uint64)}
 
 type slotSeatCounter struct {
-	mu sync.Mutex
-	m  map[primitives.Slot]uint64
+	mu     sync.Mutex
+	m      map[primitives.Slot]map[primitives.ValidatorIndex]uint64
+	cutoff primitives.Slot
 }
 
-func (c *slotSeatCounter) add(slot primitives.Slot, seats uint64) {
+func (c *slotSeatCounter) add(slot primitives.Slot, indices []primitives.ValidatorIndex) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.m[slot] += seats
+	if slot <= c.cutoff && c.cutoff != 0 {
+		return
+	}
+	if c.m[slot] == nil {
+		c.m[slot] = make(map[primitives.ValidatorIndex]uint64)
+	}
+	for _, index := range indices {
+		c.m[slot][index] = uint64(len(decoupled.AvailableAttestationSeats(slot, index, decoupled.TotalValidatorCount())))
+	}
 }
 
 // take reads a slot's count and forgets it and everything older: the slot has
@@ -36,7 +46,13 @@ func (c *slotSeatCounter) add(slot primitives.Slot, seats uint64) {
 func (c *slotSeatCounter) take(slot primitives.Slot) uint64 {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	seats := c.m[slot]
+	var seats uint64
+	for _, n := range c.m[slot] {
+		seats += n
+	}
+	if slot > c.cutoff {
+		c.cutoff = slot
+	}
 	for s := range c.m {
 		if s <= slot {
 			delete(c.m, s)

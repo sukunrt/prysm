@@ -11,6 +11,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	payloadattestation "github.com/OffchainLabs/prysm/v7/consensus-types/payload-attestation"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
@@ -195,12 +196,28 @@ func TestDropVote_AlwaysCountsTheDrop(t *testing.T) {
 }
 
 func TestSlotSeatCounter_TakeReadsTheSlotAndForgetsIt(t *testing.T) {
-	c := &slotSeatCounter{m: make(map[primitives.Slot]uint64)}
-	c.add(3, 2)
-	c.add(3, 5)
-	c.add(4, 1)
+	c := &slotSeatCounter{m: make(map[primitives.Slot]map[primitives.ValidatorIndex]uint64)}
+	c.m[3] = map[primitives.ValidatorIndex]uint64{1: 2, 2: 5}
+	c.m[4] = map[primitives.ValidatorIndex]uint64{3: 1}
 	require.Equal(t, uint64(7), c.take(3))
+	require.Equal(t, uint64(0), c.take(3))
+	c.add(3, []primitives.ValidatorIndex{1})
 	require.Equal(t, uint64(0), c.take(3))
 	require.Equal(t, uint64(1), c.take(4))
 	require.Equal(t, 0, len(c.m))
+}
+
+func TestSlotSeatCounter_DeduplicatesValidatorParticipation(t *testing.T) {
+	c := &slotSeatCounter{m: make(map[primitives.Slot]map[primitives.ValidatorIndex]uint64)}
+	slot := primitives.Slot(3)
+	var index primitives.ValidatorIndex
+	for len(decoupled.AvailableAttestationSeats(slot, index, decoupled.TotalValidatorCount())) == 0 {
+		index++
+	}
+	seats := uint64(len(decoupled.AvailableAttestationSeats(slot, index, decoupled.TotalValidatorCount())))
+	c.add(slot, []primitives.ValidatorIndex{index})
+	c.add(slot, []primitives.ValidatorIndex{index})
+	require.Equal(t, seats, c.take(slot))
+	c.add(slot, []primitives.ValidatorIndex{index})
+	require.Equal(t, uint64(0), c.take(slot))
 }

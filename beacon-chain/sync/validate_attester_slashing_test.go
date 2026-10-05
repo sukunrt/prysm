@@ -322,11 +322,13 @@ func TestValidateAttesterSlashing_Syncing(t *testing.T) {
 	ctx := t.Context()
 
 	slashing, s := setupValidAttesterSlashing(t)
+	chain := &mock.ChainService{State: s, Genesis: time.Now()}
 
 	r := &Service{
 		cfg: &config{
 			p2p:         p,
-			chain:       &mock.ChainService{State: s},
+			chain:       chain,
+			clock:       startup.NewClock(chain.Genesis, chain.ValidatorsRoot),
 			initialSync: &mockSync.Sync{IsSyncing: true},
 		},
 	}

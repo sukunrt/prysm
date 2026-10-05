@@ -1,0 +1,88 @@
+{
+  "block": {
+    "slot": 32,
+    "proposer": "110",
+    "attestations": 2,
+    "payload_attestations": 1,
+    "fresh_participants": 125,
+    "fresh_committee_size": 125,
+    "transactions": 10,
+    "blob_gas_used": 786432,
+    "el_hash_matches_envelope": true,
+    "el_tx_count_matches_envelope": true,
+    "execution_hash": "0x38d7d62b62c5292610cf8d9d335f751a05c276df53228b6ebd8fefec705b237c"
+  },
+  "ffg_matching_log_lines": 10,
+  "ptc_matching_log_lines": 1116,
+  "ptc_unique_validators": 124,
+  "ffg_examples": [
+    {
+      "node": 1,
+      "line": 25181,
+      "time": "2000-01-01 00:11:18.00",
+      "level": "info",
+      "msg": "FFG aggregate",
+      "aggregatorIndex": "67",
+      "arrivedMs": "6000",
+      "attSlot": "31",
+      "blockRoot": "0xea61301eb220e321b4f10f4a3ce7e715f49df4f0b2111932de0039a876db67bc",
+      "committeeIndex": "0",
+      "dataRoot": "0x7eb99e2a68d0500a37ed5308973b6c924206a709754be3f3b451b201b64214",
+      "outcome": "local",
+      "package": "beacon-chain/rpc/core",
+      "seats": "102",
+      "targetRound": "3",
+      "validators": "2,4,16,19,36,37,47,51,58,67,76,91,96,98,99,120,132,133,140,145,150,153,157,160,183,303,305,307,321,325,339,362,364,370,378,383,386,413,414,415,435,436,457,469,470,473,480,487,492,507,508,514,516,528,536,550,556,566,569,585,589,591,705,709,710,712,721,730,740,747,755,756,763,783,788,792,797,806,807,820,821,825,828,842,853,857,862,871,896,907,912,924,931,941,945,950,963,973,974,976,980,993"
+    },
+    {
+      "node": 2,
+      "line": 24948,
+      "time": "2000-01-01 00:11:18.00",
+      "level": "info",
+      "msg": "FFG aggregate",
+      "aggregatorIndex": "133",
+      "arrivedMs": "6000",
+      "attSlot": "31",
+      "blockRoot": "0xea61301eb220e321b4f10f4a3ce7e715f49df4f0b2111932de0039a876db67bc",
+      "committeeIndex": "0",
+      "dataRoot": "0x7eb99e2a68d0500a37ed5308973b6c924206a709754be3f3b451b201b64214",
+      "outcome": "local",
+      "package": "beacon-chain/rpc/core",
+      "seats": "102",
+      "targetRound": "3",
+      "validators": "2,4,16,19,36,37,47,51,58,67,76,91,96,98,99,120,132,133,140,145,150,153,157,160,183,303,305,307,321,325,339,362,364,370,378,383,386,413,414,415,435,436,457,469,470,473,480,487,492,507,508,514,516,528,536,550,556,566,569,585,589,591,705,709,710,712,721,730,740,747,755,756,763,783,788,792,797,806,807,820,821,825,828,842,853,857,862,871,896,907,912,924,931,941,945,950,963,973,974,976,980,993"
+    }
+  ],
+  "ptc_examples": [
+    {
+      "node": 1,
+      "line": 24692,
+      "time": "2000-01-01 00:11:12.19",
+      "level": "info",
+      "msg": "PTC vote",
+      "arrivedMs": "196",
+      "blobDataAvailable": "true",
+      "blockRoot": "0xd7b8271ef017fa83d33b248d1f212e6ed0ca7f1d088e0c13757180e8e63a9890",
+      "outcome": "gossip",
+      "package": "beacon-chain/sync",
+      "payloadPresent": "true",
+      "slot": "31",
+      "validatorIndex": "666"
+    },
+    {
+      "node": 1,
+      "line": 24693,
+      "time": "2000-01-01 00:11:12.19",
+      "level": "info",
+      "msg": "PTC vote",
+      "arrivedMs": "196",
+      "blobDataAvailable": "true",
+      "blockRoot": "0xd7b8271ef017fa83d33b248d1f212e6ed0ca7f1d088e0c13757180e8e63a9890",
+      "outcome": "gossip",
+      "package": "beacon-chain/sync",
+      "payloadPresent": "true",
+      "slot": "31",
+      "validatorIndex": "677"
+    }
+  ]
+}

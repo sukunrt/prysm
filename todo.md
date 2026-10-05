@@ -31,7 +31,7 @@ Updated: 2026-10-05. This tracks the fixes and decisions from our discussion, in
 
 ## Completed or settled
 
-- [x] **Bound Heze attestation retention at slot start.** Retain current-slot candidates and the preceding three slots; delete older singles and aggregates, reject expired reinsertion, and restrict packing to the preceding three slots. Existing fork-choice processing stays unchanged. Remote pool/cache, proposer and race checks passed; see [the retention spec and results](task-attestation-retention.md).
+- [x] **Bound Heze attestation retention at slot start.** Retain current-slot candidates and the preceding three slots; delete older singles and aggregates, reject expired reinsertion, and restrict packing to the preceding three slots. Existing fork-choice processing stays unchanged. Remote unit/race checks and the 50-node, 10,000-validator, eight-slot Shadow run passed; see [the retention spec and results](task-attestation-retention.md).
 - [x] Reduce proposer attestation packing CPU for large mixed classic pools. Use count-aware deduplication above 32 candidates per data group and iterate Electra reward participants directly; see [paired measurements](task-proposal-packing.md). Cancellation and pool lock scope remain in the unchecked work above.
 - [x] Count each validated FFG subnet vote as one in `countFFGVote(slot, subnet)`; remove the attestation parameter and the redundant aggregation-bit scan from the summary counter.
 - [x] Restore the original `getAttPreState` structure; keep the compatibility checks on `DependentRootAtEpoch`. The broader refactor was deliberately dropped because the expected benefit was small.

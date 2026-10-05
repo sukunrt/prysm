@@ -1,0 +1,47 @@
+{
+  "status": "passed requested simulation checks",
+  "host": "sukun@ethp2p",
+  "nodes_per_run": 10,
+  "validators_per_run": 1000,
+  "slots_per_run": 32,
+  "binary_hashes": "final-binaries.json",
+  "implementation_review_rounds": 1,
+  "historical_392_vs_120_case": "covered by passing unit tests, not a distributed reproduction",
+  "shadow": {
+    "heads_agree_slot32": true,
+    "all_blocks_verified": true,
+    "nonoptimistic": true,
+    "justified_round": 3,
+    "finalized_round": 2,
+    "slot32_transactions": 10,
+    "slot32_attestations": 2,
+    "slot32_payload_attestations": 1,
+    "matching_ffg_log_entries": 10,
+    "matching_ptc_unique_validators": 124,
+    "goldfish_summaries_checked": 310,
+    "all_goldfish_summaries_have_512_seats": true,
+    "post_genesis_errors": 0,
+    "proposal_failures": 0
+  },
+  "kurtosis": {
+    "heads_agree_slot32": true,
+    "all_blocks_with_attestations": true,
+    "justified_round": 3,
+    "finalized_round": 2,
+    "slot32_transactions": 5,
+    "slot32_attestations": 1,
+    "slot32_payload_attestations": 1,
+    "matching_ffg_log_entries": 10,
+    "matching_ptc_unique_validators": 121,
+    "goldfish_summaries_checked": 310,
+    "all_goldfish_summaries_have_512_seats": true,
+    "errors_after_first_payload_import": 0,
+    "startup_messages": {
+      "unknown_yaml_fields": 10,
+      "el_follow_distance": 152
+    },
+    "proposal_failures": 0
+  },
+  "unit_tests": "focused regressions passed; remaining broader test failures reproduced on pre-change baseline; see tests/go-test-evidence.txt",
+  "cleanup": "Shadow exited normally; Kurtosis enclave stopped after collecting evidence"
+}

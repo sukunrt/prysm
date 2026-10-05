@@ -785,7 +785,7 @@ func (v *validator) getAttestationData(ctx context.Context, slot primitives.Slot
 	// head-at-round-start: reuse the head the node named for this round's first FFG
 	// vote, so a round's votes agree on the block they name.
 	// TODO(sukunrt): we probably need to remove this
-	if features.Get().DecoupledFFGHeadAtRoundStart {
+	if features.Get().DecoupledFFGHeadAtRoundStart && slots.ToEpoch(slot) < params.BeaconConfig().HezeForkEpoch {
 		if frozen := v.roundHead.frozen(slot); frozen != nil {
 			return frozen, nil
 		}
@@ -818,7 +818,7 @@ func (v *validator) getAttestationData(ctx context.Context, slot primitives.Slot
 	}
 
 	v.cachedAttestationData = data
-	if features.Get().DecoupledFFGHeadAtRoundStart {
+	if features.Get().DecoupledFFGHeadAtRoundStart && slots.ToEpoch(slot) < params.BeaconConfig().HezeForkEpoch {
 		v.roundHead.freeze(slot, data)
 	}
 
@@ -832,7 +832,7 @@ func (v *validator) getAvailableAttestationData(ctx context.Context, slot primit
 	ctx, span := trace.StartSpan(ctx, "validator.getAvailableAttestationData")
 	defer span.End()
 
-	ctx, err := v.withHeadHint(ctx, slot, attestationDueComponent(slot))
+	ctx, err := v.withHeadHint(ctx, slot, availableAttestationDueComponent(slot))
 	if err != nil {
 		return nil, fmt.Errorf("attach freshness hint: %w", err)
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
 	"github.com/trailofbits/go-mutexasserts"
 )
@@ -32,6 +33,9 @@ func NewPool() *Pool {
 // This method will return the amount of pending attester slashings for a block transition unless parameter `noLimit` is true
 // to indicate the request is for noLimit pending items.
 func (p *Pool) PendingAttesterSlashings(ctx context.Context, state state.ReadOnlyBeaconState, noLimit bool) []ethpb.AttSlashing {
+	if slots.ToEpoch(state.Slot()) >= params.BeaconConfig().HezeForkEpoch {
+		return nil
+	}
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	_, span := trace.StartSpan(ctx, "operations.PendingAttesterSlashing")
@@ -129,6 +133,9 @@ func (p *Pool) InsertAttesterSlashing(
 	state state.ReadOnlyBeaconState,
 	slashing ethpb.AttSlashing,
 ) error {
+	if slots.ToEpoch(state.Slot()) >= params.BeaconConfig().HezeForkEpoch {
+		return nil
+	}
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	ctx, span := trace.StartSpan(ctx, "operations.InsertAttesterSlashing")

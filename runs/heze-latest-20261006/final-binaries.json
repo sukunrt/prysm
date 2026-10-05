@@ -1,0 +1,7 @@
+{
+  "runs/heze-latest-20261006/images/beacon-chain": "7768ef472f5f38be38894879951e36f55bf36ed61f3e84f6615581ab211fc8fb",
+  "runs/heze-latest-20261006/images/validator": "20814bdd640f917d42712b18080a1bd770edc8b039683bc58ddb05194de52b7a",
+  "runs/heze-latest-20261006/images/prysmctl": "031d12cd3eadd5c0a8b04c6dcabea1774ee6b02f2d688ab5bc063ed999758a6f",
+  "shadow/bin/prysm-beacon": "980920117e788e92a1ed809804b70d701942bb42bc674d90a9432f0957cd847f",
+  "shadow/bin/prysm-validator": "f81ea64792841bb7731ca413a36b5f7b6d96b0040c2c6db403d07d189b588af5"
+}

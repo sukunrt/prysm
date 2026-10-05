@@ -1,0 +1,24 @@
+{
+  "model": "gpt-6-astra",
+  "reasoning_effort": "xhigh",
+  "implementation_review_round": 1,
+  "status": "four review fixes implemented; focused regression tests passed",
+  "findings": [
+    {
+      "priority": "P1",
+      "issue": "Heze head must respect skipped checkpoint boundary, including cached head"
+    },
+    {
+      "priority": "P2",
+      "issue": "Canonical payload bit must belong to captured FFG head snapshot"
+    },
+    {
+      "priority": "P2",
+      "issue": "Available attestation freshness must use its own deadline"
+    },
+    {
+      "priority": "P2",
+      "issue": "Live attester slashing guards must use operational current slot"
+    }
+  ]
+}

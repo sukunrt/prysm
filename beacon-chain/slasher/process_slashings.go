@@ -5,8 +5,10 @@ import (
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/blocks"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/pkg/errors"
 )
 
@@ -26,6 +28,13 @@ func (s *Service) processAttesterSlashings(
 	beaconState, err := s.serviceCfg.HeadStateFetcher.HeadState(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not get head state")
+	}
+	currentSlot := beaconState.Slot()
+	if !s.genesisTime.IsZero() {
+		currentSlot = slots.CurrentSlot(s.genesisTime)
+	}
+	if slots.ToEpoch(currentSlot) >= params.BeaconConfig().HezeForkEpoch {
+		return processedSlashings, nil
 	}
 
 	for root, slashing := range slashings {

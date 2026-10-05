@@ -14,6 +14,7 @@ import (
 	validatorpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/validator-client"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
+	"github.com/OffchainLabs/prysm/v7/validator/client/iface"
 	"go.uber.org/mock/gomock"
 )
 
@@ -78,4 +79,29 @@ func TestSubmitAvailableAttestation_Ok(t *testing.T) {
 		Data:            attData,
 		Signature:       sig.Marshal(),
 	}, submitted)
+}
+
+func TestAvailableAttestationDataUsesGoldfishDueHint(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.HezeForkEpoch = 0
+	cfg.AvailableAttestationDueBPSHeze = 3333
+	cfg.AttestationDueBPS = 7777
+	cfg.AttestationDueBPSGloas = 5555
+	params.OverrideBeaconConfig(cfg)
+	require.Equal(t, false, availableAttestationDueComponent(1) == attestationDueComponent(1))
+	v, m, _, finish := setup(t, false)
+	defer finish()
+	const slot = primitives.Slot(1)
+	m.validatorClient.EXPECT().AvailableAttestationData(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, _ *ethpb.AvailableAttestationDataRequest) (*ethpb.AvailableAttestationData, error) {
+			hint, ok := iface.FromContext(ctx)
+			require.Equal(t, true, ok)
+			want, err := v.slotComponentDeadline(slot, cfg.AvailableAttestationDueBPSHeze)
+			require.NoError(t, err)
+			require.Equal(t, want, hint.Deadline)
+			return &ethpb.AvailableAttestationData{Slot: slot}, nil
+		})
+	_, err := v.getAvailableAttestationData(t.Context(), slot)
+	require.NoError(t, err)
 }

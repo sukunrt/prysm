@@ -1,0 +1,34 @@
+{
+  "api": {
+    "current": [
+      "--- FAIL: TestSubmitAttestationsV2",
+      "--- FAIL: TestSubmitAttestationsV2/post-electra",
+      "--- FAIL: TestSubmitAttestationsV2/post-electra/single",
+      "--- FAIL: TestSubmitAttestationsV2/post-electra/ssz",
+      "--- FAIL: TestSubmitAttestationsV2/post-electra/multiple"
+    ],
+    "baseline": [
+      "--- FAIL: TestSubmitAttestationsV2",
+      "--- FAIL: TestSubmitAttestationsV2/post-electra",
+      "--- FAIL: TestSubmitAttestationsV2/post-electra/single",
+      "--- FAIL: TestSubmitAttestationsV2/post-electra/ssz",
+      "--- FAIL: TestSubmitAttestationsV2/post-electra/multiple"
+    ],
+    "same_failed_tests": true
+  },
+  "assignments": {
+    "current": [
+      "--- FAIL: TestServer_ListAssignments_Pagination_InputOutOfRange",
+      "--- FAIL: TestServer_ListAssignments_Pagination_DefaultPageSize_NoArchive",
+      "--- FAIL: TestServer_ListAssignments_FilterPubkeysIndices_NoPagination",
+      "--- FAIL: TestServer_ListAssignments_CanFilterPubkeysIndices_WithPagination"
+    ],
+    "baseline": [
+      "--- FAIL: TestServer_ListAssignments_Pagination_InputOutOfRange",
+      "--- FAIL: TestServer_ListAssignments_Pagination_DefaultPageSize_NoArchive",
+      "--- FAIL: TestServer_ListAssignments_FilterPubkeysIndices_NoPagination",
+      "--- FAIL: TestServer_ListAssignments_CanFilterPubkeysIndices_WithPagination"
+    ],
+    "same_failed_tests": true
+  }
+}

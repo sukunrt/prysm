@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/OffchainLabs/prysm/v7/config/features"
+	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/container/slice"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -56,6 +58,13 @@ func (bs *Server) submitAttesterSlashing(ctx context.Context, slashing ethpb.Att
 	beaconState, err := bs.HeadFetcher.HeadStateReadOnly(ctx)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Could not retrieve head state: %v", err)
+	}
+	currentSlot := beaconState.Slot()
+	if bs.GenesisTimeFetcher != nil {
+		currentSlot = bs.GenesisTimeFetcher.CurrentSlot()
+	}
+	if slots.ToEpoch(currentSlot) >= params.BeaconConfig().HezeForkEpoch {
+		return &ethpb.SubmitSlashingResponse{}, nil
 	}
 	if err := bs.SlashingsPool.InsertAttesterSlashing(ctx, beaconState, slashing); err != nil {
 		return nil, status.Errorf(codes.Internal, "Could not insert attester slashing into pool: %v", err)

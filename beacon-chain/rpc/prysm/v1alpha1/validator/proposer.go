@@ -230,6 +230,9 @@ func (vs *Server) setPreGloasConsensusFields(ctx context.Context, sBlk interface
 	}
 
 	validProposerSlashings, validAttSlashings := vs.getSlashings(ctx, head)
+	if slots.ToEpoch(sBlk.Block().Slot()) >= params.BeaconConfig().HezeForkEpoch {
+		validAttSlashings = nil
+	}
 	sBlk.SetProposerSlashings(validProposerSlashings)
 	if err := sBlk.SetAttesterSlashings(validAttSlashings); err != nil {
 		log.WithError(err).Error("Could not set attester slashings on block")
