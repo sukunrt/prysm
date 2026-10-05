@@ -91,6 +91,7 @@ type Flags struct {
 	// DecoupledFFGHeadAtRoundStart makes every FFG vote of a round name the head the
 	// beacon node returned for the round's first vote, instead of asking again.
 	DecoupledFFGVoteAtSlotStart  bool
+	DecoupledFFGVoteSpread       bool // Only applies with DecoupledFFGVoteAtSlotStart.
 	DecoupledFFGHeadAtRoundStart bool
 
 	SaveInvalidBlock bool // SaveInvalidBlock saves invalid block to temp.
@@ -407,6 +408,10 @@ func ConfigureValidator(ctx *cli.Context) error {
 	if ctx.Bool(DecoupledFFGVoteAtSlotStart.Name) {
 		logEnabled(DecoupledFFGVoteAtSlotStart)
 		cfg.DecoupledFFGVoteAtSlotStart = true
+	}
+	if ctx.Bool(DecoupledFFGVoteSpread.Name) {
+		logEnabled(DecoupledFFGVoteSpread)
+		cfg.DecoupledFFGVoteSpread = true
 	}
 	cfg.DecoupledFFGVoteJitter = ctx.Duration(decoupledFFGVoteJitter.Name)
 	switch source := ctx.String(DecoupledFFGHeadSource.Name); source {

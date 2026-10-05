@@ -12,6 +12,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/crypto/rand"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
+	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	prysmTime "github.com/OffchainLabs/prysm/v7/time"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/sirupsen/logrus"
@@ -94,6 +95,48 @@ func (v *validator) waitSlotStartJitter(ctx context.Context, slot primitives.Slo
 	case <-ctx.Done():
 		tracing.AnnotateError(span, ctx.Err())
 	case <-t.C:
+	}
+}
+
+func ffgVoteSpreadDelay(slot primitives.Slot, duty *ethpb.ValidatorDuty) (time.Duration, bool) {
+	cfg := params.BeaconConfig()
+	component := cfg.AggregateDueBPS
+	if slots.ToEpoch(slot) >= cfg.GloasForkEpoch {
+		component = cfg.AggregateDueBPSGloas
+	}
+	available := cfg.SlotComponentDuration(component) - 3*time.Second
+	if available <= 0 {
+		return 0, false
+	}
+	groups := uint64(available / time.Second)
+	if groups == 0 {
+		return 0, false
+	}
+	group := duty.ValidatorCommitteeIndex * groups / duty.CommitteeLength
+	return time.Duration(group) * time.Second, true
+}
+
+func (v *validator) waitFFGVoteSpread(ctx context.Context, slot primitives.Slot, duty *ethpb.ValidatorDuty) bool {
+	delay, spread := ffgVoteSpreadDelay(slot, duty)
+	if !spread {
+		return ctx.Err() == nil
+	}
+	startTime, err := slots.StartTime(v.genesisTime, slot)
+	if err != nil {
+		log.WithError(err).WithField("slot", slot).Error("Slot overflows, unable to spread the FFG vote")
+		return ctx.Err() == nil
+	}
+	wait := prysmTime.Until(startTime.Add(delay + ffgVoteJitter(features.Get().DecoupledFFGVoteJitter)))
+	if wait <= 0 {
+		return ctx.Err() == nil
+	}
+	t := time.NewTimer(wait)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-t.C:
+		return ctx.Err() == nil
 	}
 }
 

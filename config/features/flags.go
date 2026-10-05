@@ -249,6 +249,11 @@ var (
 		Usage: "(Decoupled research): Casts the FFG attestation at the start of the slot instead of " +
 			"waiting for a block or the attestation due time.",
 	}
+	DecoupledFFGVoteSpread = &cli.BoolFlag{
+		Name: "decoupled-ffg-vote-spread",
+		Usage: "(Decoupled research): Spreads FFG attestation publication across the committee. " +
+			"Only takes effect with --decoupled-ffg-vote-at-slot-start.",
+	}
 	// decoupledFFGVoteJitter bounds the random delay added to a slot-start FFG vote.
 	decoupledFFGVoteJitter = &cli.DurationFlag{
 		Name: "decoupled-ffg-vote-jitter",
@@ -310,6 +315,7 @@ var ValidatorFlags = append(deprecatedFlags, []cli.Flag{
 	DisableDutiesV2,
 	EnableWebFlag,
 	DecoupledFFGVoteAtSlotStart,
+	DecoupledFFGVoteSpread,
 	decoupledFFGVoteJitter,
 	DecoupledFFGHeadSource,
 	DecoupledLateBlockPublishBPS,

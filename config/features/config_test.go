@@ -187,6 +187,22 @@ func TestConfigureValidator_DecoupledFFGHeadSource(t *testing.T) {
 	require.ErrorContains(t, "unknown --decoupled-ffg-head-source value", err)
 }
 
+func TestConfigureValidator_DecoupledFFGVoteSpread(t *testing.T) {
+	defer Init(&Flags{})
+	app := cli.App{}
+	set := flag.NewFlagSet("test", 0)
+	set.Bool(DecoupledFFGVoteAtSlotStart.Name, false, "test")
+	set.Bool(DecoupledFFGVoteSpread.Name, false, "test")
+	ctx := cli.NewContext(&app, set, nil)
+
+	require.NoError(t, ConfigureValidator(ctx))
+	assert.Equal(t, false, Get().DecoupledFFGVoteSpread)
+	require.NoError(t, set.Set(DecoupledFFGVoteSpread.Name, "true"))
+	require.NoError(t, ConfigureValidator(ctx))
+	assert.Equal(t, true, Get().DecoupledFFGVoteSpread)
+	assert.Equal(t, false, Get().DecoupledFFGVoteAtSlotStart)
+}
+
 func TestConfigureValidator_DecoupledLateBlockPublishBPS(t *testing.T) {
 	defer Init(&Flags{})
 	app := cli.App{}

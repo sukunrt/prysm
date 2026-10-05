@@ -147,6 +147,81 @@ func TestWaitSlotStartJitterCancelled(t *testing.T) {
 	assert.Equal(t, true, time.Since(start) < time.Second, "cancellation ignored")
 }
 
+func TestFFGVoteSpreadDelay(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 12000
+	cfg.GloasForkEpoch = 1
+	cfg.AggregateDueBPS = 5000
+	cfg.AggregateDueBPSGloas = 7500
+	params.OverrideBeaconConfig(cfg)
+
+	tests := []struct {
+		name   string
+		slot   primitives.Slot
+		index  uint64
+		length uint64
+		want   time.Duration
+	}{
+		{name: "first third", slot: 0, index: 0, length: 12, want: 0},
+		{name: "second third boundary", slot: 0, index: 4, length: 12, want: time.Second},
+		{name: "last third", slot: 0, index: 11, length: 12, want: 2 * time.Second},
+		{name: "first sixth", slot: primitives.Slot(cfg.SlotsPerEpoch), index: 1, length: 12, want: 0},
+		{name: "second sixth boundary", slot: primitives.Slot(cfg.SlotsPerEpoch), index: 2, length: 12, want: time.Second},
+		{name: "last sixth", slot: primitives.Slot(cfg.SlotsPerEpoch), index: 11, length: 12, want: 5 * time.Second},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, spread := ffgVoteSpreadDelay(tt.slot, &ethpb.ValidatorDuty{
+				ValidatorCommitteeIndex: tt.index,
+				CommitteeLength:         tt.length,
+			})
+			require.Equal(t, true, spread)
+			require.Equal(t, tt.want, got)
+		})
+	}
+
+	cfg.AggregateDueBPS = 2917
+	params.OverrideBeaconConfig(cfg)
+	got, spread := ffgVoteSpreadDelay(0, &ethpb.ValidatorDuty{CommitteeLength: 12})
+	require.Equal(t, false, spread)
+	require.Equal(t, time.Duration(0), got)
+}
+
+func TestWaitFFGVoteSpreadZeroGroups(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.AggregateDueBPS = 2917
+	cfg.GloasForkEpoch = 1
+	params.OverrideBeaconConfig(cfg)
+	reset := features.InitWithReset(&features.Flags{DecoupledFFGVoteJitter: time.Hour})
+	defer reset()
+
+	v := &validator{genesisTime: time.Now().Add(time.Hour)}
+	start := time.Now()
+	require.Equal(t, true, v.waitFFGVoteSpread(t.Context(), 0, &ethpb.ValidatorDuty{CommitteeLength: 12}))
+	require.Equal(t, true, time.Since(start) < 100*time.Millisecond)
+}
+
+func TestWaitFFGVoteSpreadCancelled(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 12000
+	cfg.AggregateDueBPS = 7500
+	cfg.GloasForkEpoch = 1
+	params.OverrideBeaconConfig(cfg)
+	reset := features.InitWithReset(&features.Flags{DecoupledFFGVoteJitter: 100 * time.Millisecond})
+	defer reset()
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	v := &validator{genesisTime: time.Now()}
+	require.Equal(t, false, v.waitFFGVoteSpread(ctx, 0, &ethpb.ValidatorDuty{
+		ValidatorCommitteeIndex: 11,
+		CommitteeLength:         12,
+	}))
+}
+
 func TestLatePublishDelay(t *testing.T) {
 	params.SetupTestConfigCleanup(t)
 	cfg := params.BeaconConfig().Copy()

@@ -36,9 +36,9 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 	defer span.End()
 	span.SetAttributes(trace.StringAttribute("validator", fmt.Sprintf("%#x", pubKey)))
 
-	if features.Get().DecoupledFFGVoteAtSlotStart {
+	if features.Get().DecoupledFFGVoteAtSlotStart && !features.Get().DecoupledFFGVoteSpread {
 		v.waitSlotStartJitter(ctx, slot)
-	} else {
+	} else if !features.Get().DecoupledFFGVoteAtSlotStart {
 		v.waitUntilAttestationDueOrValidBlock(ctx, slot)
 	}
 
@@ -151,6 +151,11 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 			Signature:     sig,
 		}
 		attestation = sa
+		if features.Get().DecoupledFFGVoteAtSlotStart && features.Get().DecoupledFFGVoteSpread {
+			if !v.waitFFGVoteSpread(ctx, slot, duty) {
+				return
+			}
+		}
 		attResp, err = v.validatorClient.ProposeAttestationElectra(ctx, sa)
 	} else {
 		aggregationBitfield = bitfield.NewBitlist(duty.CommitteeLength)
@@ -161,6 +166,11 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 			Signature:       sig,
 		}
 		attestation = a
+		if features.Get().DecoupledFFGVoteAtSlotStart && features.Get().DecoupledFFGVoteSpread {
+			if !v.waitFFGVoteSpread(ctx, slot, duty) {
+				return
+			}
+		}
 		attResp, err = v.validatorClient.ProposeAttestation(ctx, a)
 	}
 	if err != nil {

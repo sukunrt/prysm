@@ -225,6 +225,94 @@ func TestSubmitAttestation_ElectraCommitteeIndex(t *testing.T) {
 	}
 }
 
+func TestSubmitAttestation_SpreadWaitsAfterPreparation(t *testing.T) {
+	for _, postElectra := range []bool{false, true} {
+		t.Run(fmt.Sprintf("postElectra:%v", postElectra), func(t *testing.T) {
+			params.SetupTestConfigCleanup(t)
+			cfg := params.BeaconConfig().Copy()
+			cfg.SlotDurationMilliseconds = 12000
+			cfg.AggregateDueBPS = 7500
+			cfg.GloasForkEpoch = 1
+			cfg.HezeForkEpoch = 1
+			if postElectra {
+				cfg.ElectraForkEpoch = 0
+			} else {
+				cfg.ElectraForkEpoch = 1
+			}
+			params.OverrideBeaconConfig(cfg)
+			reset := features.InitWithReset(&features.Flags{
+				DecoupledFFGVoteAtSlotStart: true,
+				DecoupledFFGVoteSpread:      true,
+				DecoupledFFGVoteJitter:      100 * time.Millisecond,
+			})
+			defer reset()
+
+			v, m, key, finish := setup(t, false)
+			defer finish()
+			v.genesisTime = time.Now().Add(750 * time.Millisecond)
+			var pubKey [fieldparams.BLSPubkeyLength]byte
+			copy(pubKey[:], key.PublicKey().Marshal())
+			v.duties = testDutyStore(&ethpb.ValidatorDuty{
+				PublicKey:       key.PublicKey().Marshal(),
+				CommitteeLength: 12,
+			})
+
+			var dataAt, publishedAt time.Time
+			m.validatorClient.EXPECT().AttestationData(gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, _ *ethpb.AttestationDataRequest) (*ethpb.AttestationData, error) {
+					dataAt = time.Now()
+					return &ethpb.AttestationData{
+						BeaconBlockRoot: make([]byte, fieldparams.RootLength),
+						Target:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+						Source:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+					}, nil
+				})
+			m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).Times(2).
+				Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
+			if postElectra {
+				m.validatorClient.EXPECT().ProposeAttestationElectra(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(_ context.Context, _ *ethpb.SingleAttestation) (*ethpb.AttestResponse, error) {
+						publishedAt = time.Now()
+						return &ethpb.AttestResponse{}, nil
+					})
+			} else {
+				m.validatorClient.EXPECT().ProposeAttestation(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(_ context.Context, _ *ethpb.Attestation) (*ethpb.AttestResponse, error) {
+						publishedAt = time.Now()
+						return &ethpb.AttestResponse{}, nil
+					})
+			}
+
+			v.SubmitAttestation(t.Context(), 0, pubKey)
+			require.Equal(t, true, dataAt.Before(v.genesisTime), "data fetch was delayed to publication")
+			require.Equal(t, true, !publishedAt.Before(v.genesisTime), "published before slot start")
+			require.Equal(t, true, publishedAt.Before(v.genesisTime.Add(500*time.Millisecond)), "publication waited beyond one jitter")
+		})
+	}
+}
+
+func TestSubmitAttestation_SpreadAloneKeepsConventionalWait(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 12000
+	cfg.AttestationDueBPS = 1000
+	cfg.GloasForkEpoch = 1
+	params.OverrideBeaconConfig(cfg)
+	reset := features.InitWithReset(&features.Flags{
+		DecoupledFFGVoteSpread: true,
+		DecoupledFFGVoteJitter: 50 * time.Millisecond,
+	})
+	defer reset()
+
+	v, _, _, finish := setup(t, false)
+	defer finish()
+	v.slotFeed = new(event.Feed)
+	v.genesisTime = time.Now().Add(-12600 * time.Millisecond)
+	start := time.Now()
+	v.SubmitAttestation(t.Context(), 1, [fieldparams.BLSPubkeyLength]byte{})
+	require.Equal(t, true, time.Since(start) >= 300*time.Millisecond, "spread alone skipped the conventional wait")
+}
+
 func TestAttestToBlockHead_AttestsCorrectly(t *testing.T) {
 	for _, isSlashingProtectionMinimal := range [...]bool{false, true} {
 		t.Run(fmt.Sprintf("Phase 0 (SlashingProtectionMinimal:%v)", isSlashingProtectionMinimal), func(t *testing.T) {
