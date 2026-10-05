@@ -1,8 +1,10 @@
 package helpers_test
 
 import (
+	"errors"
 	"strconv"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
@@ -233,6 +235,67 @@ func Test_ValidateAttestationTime(t *testing.T) {
 				assert.ErrorContains(t, tt.wantedErr, err)
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_ValidateAttestationTime_Heze(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.DenebForkEpoch = 1
+	cfg.HezeForkEpoch = 5
+	cfg.SlotsPerEpoch = 32
+	cfg.SlotDurationMilliseconds = 1250
+	params.OverrideBeaconConfig(cfg)
+
+	slotDuration := cfg.SlotDuration()
+	t.Run("pre-Heze slot keeps epoch window after fork", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			genesis := time.Now().Add(-160*slotDuration - slotDuration/2)
+			require.NoError(t, helpers.ValidateAttestationTime(159, genesis, cfg.MaximumGossipClockDisparityDuration()))
+		})
+	})
+	for _, attSlot := range []primitives.Slot{160, 191, 192} {
+		t.Run("slot_"+strconv.FormatUint(uint64(attSlot), 10), func(t *testing.T) {
+			for _, disparity := range []time.Duration{0, cfg.MaximumGossipClockDisparityDuration()} {
+				t.Run("disparity_"+disparity.String(), func(t *testing.T) {
+					tests := []struct {
+						name    string
+						offset  time.Duration
+						wantErr string
+						tooLate bool
+					}{
+						{name: "before window", offset: -5*disparity - time.Nanosecond, wantErr: "too early"},
+						{name: "window start", offset: -5 * disparity},
+						{name: "just inside early window", offset: -5*disparity + time.Nanosecond},
+						{name: "early within expanded allowance", offset: -3 * disparity},
+						{name: "early within disparity", offset: -disparity / 2},
+						{name: "slot start", offset: 0},
+						{name: "slot middle", offset: slotDuration / 2},
+						{name: "slot end", offset: slotDuration},
+						{name: "late within disparity", offset: slotDuration + disparity/2},
+						{name: "window end", offset: slotDuration + disparity},
+						{name: "after window", offset: slotDuration + disparity + time.Nanosecond, wantErr: "too late", tooLate: true},
+						{name: "previous slot", offset: slotDuration + slotDuration/2, wantErr: "too late", tooLate: true},
+						{name: "previous epoch", offset: time.Duration(cfg.SlotsPerEpoch) * slotDuration, wantErr: "too late", tooLate: true},
+						{name: "future slot beyond allowance", offset: -slotDuration - 5*disparity, wantErr: "too early"},
+					}
+					for _, tt := range tests {
+						t.Run(tt.name, func(t *testing.T) {
+							synctest.Test(t, func(t *testing.T) {
+								genesis := time.Now().Add(-time.Duration(attSlot)*slotDuration - tt.offset)
+								err := helpers.ValidateAttestationTime(attSlot, genesis, disparity)
+								if tt.wantErr == "" {
+									require.NoError(t, err)
+								} else {
+									assert.ErrorContains(t, tt.wantErr, err)
+								}
+								assert.Equal(t, tt.tooLate, errors.Is(err, helpers.ErrTooLate))
+							})
+						})
+					}
+				})
 			}
 		})
 	}

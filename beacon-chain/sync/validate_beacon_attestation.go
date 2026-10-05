@@ -81,6 +81,7 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 	data := att.GetData()
 
 	// Do not process slot 0 attestations.
+	// TODO(sukunrt): remove this?
 	if data.Slot == 0 {
 		return pubsub.ValidationIgnore, nil
 	}

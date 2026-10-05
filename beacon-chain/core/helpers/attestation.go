@@ -113,25 +113,25 @@ func ComputeSubnetForCommitteesPerSlot(committeesPerSlot uint64, comIdx primitiv
 	return (commsSinceStart + uint64(comIdx)) % params.BeaconConfig().AttestationSubnetCount
 }
 
-// ValidateAttestationTime Validates that the incoming attestation is in the desired time range.
-// An attestation is valid only if received within the last ATTESTATION_PROPAGATION_SLOT_RANGE
-// slots.
-//
-// Example:
-//
-//	ATTESTATION_PROPAGATION_SLOT_RANGE = 5
-//	clockDisparity = 24 seconds
-//	current_slot = 100
-//	invalid_attestation_slot = 92
-//	invalid_attestation_slot = 103
-//	valid_attestation_slot = 98
-//	valid_attestation_slot = 101
-//
-// In the attestation must be within the range of 95 to 102 in the example above.
+// ValidateAttestationTime validates the fork-specific gossip window with clock disparity.
 func ValidateAttestationTime(attSlot primitives.Slot, genesis time.Time, clockDisparity time.Duration) error {
 	attTime, err := slots.StartTime(genesis, attSlot)
 	if err != nil {
 		return err
+	}
+	attEpoch := slots.ToEpoch(attSlot)
+	if attEpoch >= params.BeaconConfig().HezeForkEpoch {
+		slotEnd := attTime.Add(params.BeaconConfig().SlotDuration())
+		now := time.Now()
+		if now.Before(attTime.Add(-5 * clockDisparity)) {
+			attReceivedTooEarlyCount.Inc()
+			return fmt.Errorf("attestation slot %d is too early", attSlot)
+		}
+		if now.After(slotEnd.Add(clockDisparity)) {
+			attReceivedTooLateCount.Inc()
+			return fmt.Errorf("attestation slot %d: %w", attSlot, ErrTooLate)
+		}
+		return nil
 	}
 	currentSlot := slots.CurrentSlot(genesis)
 
@@ -165,7 +165,6 @@ func ValidateAttestationTime(attSlot primitives.Slot, genesis time.Time, clockDi
 		return attError
 	}
 
-	attEpoch := slots.ToEpoch(attSlot)
 	if attEpoch < params.BeaconConfig().DenebForkEpoch {
 		if attTime.Before(lowerBounds) {
 			attReceivedTooLateCount.Inc()
