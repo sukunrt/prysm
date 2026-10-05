@@ -37,7 +37,8 @@ type attGroup struct {
 type AttestationCache struct {
 	atts map[attestation.Id]*attGroup
 	sync.RWMutex
-	forkchoiceAtts *attmap.Attestations
+	forkchoiceAtts  *attmap.Attestations
+	retentionCutoff primitives.Slot
 }
 
 // NewAttestationCache creates a new cache instance.
@@ -65,6 +66,9 @@ func (c *AttestationCache) Add(att ethpb.Att) error {
 
 	c.Lock()
 	defer c.Unlock()
+	if att.GetData().Slot < c.retentionCutoff {
+		return nil
+	}
 
 	id, err := attestation.NewId(att, attestation.Data)
 	if err != nil {
@@ -183,6 +187,25 @@ func (c *AttestationCache) PruneBefore(slot primitives.Slot) uint64 {
 			delete(c.atts, id)
 		}
 	}
+	return uint64(pruneCount)
+}
+
+// PruneRetainedBefore applies Heze proposal retention.
+func (c *AttestationCache) PruneRetainedBefore(slot primitives.Slot) uint64 {
+	c.Lock()
+	defer c.Unlock()
+	if slot <= c.retentionCutoff {
+		return 0
+	}
+	var pruneCount int
+	for id, group := range c.atts {
+		if group.slot >= slot {
+			continue
+		}
+		pruneCount += len(group.atts)
+		delete(c.atts, id)
+	}
+	c.retentionCutoff = slot
 	return uint64(pruneCount)
 }
 

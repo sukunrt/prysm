@@ -75,6 +75,7 @@ go_test(
         "active_balance_test.go",
         "attestation_data_test.go",
         "attestation_test.go",
+		"attestation_retention_test.go",
         "cache_test.go",
         "checkpoint_state_test.go",
         "committee_fuzz_test.go",

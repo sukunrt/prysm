@@ -322,11 +322,14 @@ func TestDiagnosticFullPackingFixtureRoundSemantics(t *testing.T) {
 			}
 			packed, err := server.packAttestations(t.Context(), fixture.state, 14)
 			require.NoError(t, err)
-			if wantValid {
+			if shape == fullPackingMixed {
 				require.NotEqual(t, 0, len(packed))
 			} else {
+				// Slot-7 votes are consensus-valid at slot 14 but outside Heze's proposal window.
 				require.Equal(t, 0, len(packed))
-				require.Equal(t, 0, len(server.AttPool.UnaggregatedAttestations()))
+				if !wantValid {
+					require.Equal(t, 0, len(server.AttPool.UnaggregatedAttestations()))
+				}
 			}
 		})
 	}

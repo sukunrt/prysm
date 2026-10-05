@@ -13,6 +13,7 @@ import (
 // are used by proposer actor. Unaggregated attestations are used by
 // aggregator actor.
 type Pool interface {
+	PruneBefore(slot primitives.Slot) (kv.PrunedCounts, error)
 	// For Aggregated attestations
 	AggregateUnaggregatedAttestations(ctx context.Context) error
 	SaveAggregatedAttestation(att ethpb.Att) error

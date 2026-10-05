@@ -17,6 +17,9 @@ func (c *AttCaches) SaveUnaggregatedAttestation(att ethpb.Att) error {
 	if att == nil || att.IsNil() {
 		return nil
 	}
+	if c.BeforeRetentionCutoff(att.GetData().Slot) {
+		return nil
+	}
 	if att.IsAggregated() {
 		return errors.New("attestation is aggregated")
 	}
@@ -37,6 +40,10 @@ func (c *AttCaches) SaveUnaggregatedAttestation(att ethpb.Att) error {
 			return errors.Wrap(err, "could not create attestation ID")
 		}
 		c.unAggregateAttLock.Lock()
+		if c.BeforeRetentionCutoff(att.GetData().Slot) {
+			c.unAggregateAttLock.Unlock()
+			return nil
+		}
 		c.unAggregatedAtt[fullID] = att.Clone()
 		c.unAggregateAttLock.Unlock()
 		return nil
@@ -48,6 +55,10 @@ func (c *AttCaches) SaveUnaggregatedAttestation(att ethpb.Att) error {
 
 	for {
 		c.lockSingleState()
+		if c.BeforeRetentionCutoff(att.GetData().Slot) {
+			c.unlockSingleState()
+			return nil
+		}
 		covered, err := c.singleCoveredLocked(id, bit)
 		if err != nil || covered {
 			c.unlockSingleState()
@@ -84,12 +95,19 @@ func (c *AttCaches) SaveUnaggregatedAttestation(att ethpb.Att) error {
 		}
 		c.unlockSingleState()
 
+		if c.beforeSingleAggregate != nil {
+			c.beforeSingleAggregate()
+		}
 		next, nextSig, err := addSingleToRunning(base, baseSig, att, bit)
 		if err != nil {
 			return err
 		}
 
 		c.lockSingleState()
+		if c.BeforeRetentionCutoff(att.GetData().Slot) {
+			c.unlockSingleState()
+			return nil
+		}
 		covered, err = c.singleCoveredLocked(id, bit)
 		if err != nil || covered {
 			c.unlockSingleState()

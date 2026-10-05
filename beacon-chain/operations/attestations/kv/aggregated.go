@@ -25,6 +25,9 @@ func (c *AttCaches) SaveAggregatedAttestation(att ethpb.Att) error {
 	if err := helpers.ValidateNilAttestation(att); err != nil {
 		return err
 	}
+	if c.BeforeRetentionCutoff(att.GetData().Slot) {
+		return nil
+	}
 	if !att.IsAggregated() {
 		return errors.New("attestation is not aggregated")
 	}
@@ -49,9 +52,15 @@ func (c *AttCaches) SaveAggregatedAttestation(att ethpb.Att) error {
 		return errors.Wrap(err, "could not create attestation ID")
 	}
 	copiedAtt := att.Clone()
+	if c.beforePeerCommit != nil {
+		c.beforePeerCommit()
+	}
 
 	c.aggregatedAttLock.Lock()
 	defer c.aggregatedAttLock.Unlock()
+	if c.BeforeRetentionCutoff(att.GetData().Slot) {
+		return nil
+	}
 	atts, ok := c.aggregatedAtt[id]
 	if !ok {
 		atts := []ethpb.Att{copiedAtt}

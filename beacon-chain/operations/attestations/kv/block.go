@@ -21,6 +21,9 @@ func (c *AttCaches) SaveBlockAttestation(att ethpb.Att) error {
 
 	c.blockAttLock.Lock()
 	defer c.blockAttLock.Unlock()
+	if c.BeforeRetentionCutoff(att.GetData().Slot) {
+		return nil
+	}
 	atts, ok := c.blockAtt[id]
 	if !ok {
 		atts = make([]ethpb.Att, 0, 1)

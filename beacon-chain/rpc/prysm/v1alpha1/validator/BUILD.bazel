@@ -227,6 +227,8 @@ go_test(
         "proposer_altair_test.go",
         "proposer_attestations_electra_test.go",
         "proposer_attestations_test.go",
+		"proposal_packing_bench_test.go",
+		"proposal_packing_dedup_test.go",
         "proposer_bid_builder_test.go",
         "proposer_bid_test.go",
         "proposer_bellatrix_test.go",
@@ -270,12 +272,17 @@ go_test(
     srcs = [
         "attester_mainnet_test.go",
         "historical_state_root_diagnostic_test.go",
+		"proposal_packing_large_bench_test.go",
+		"proposal_window_test.go",
+		"proposal_packing_reward_test.go",
         "proposer_utils_bench_test.go",
         "server_mainnet_test.go",
         "status_mainnet_test.go",
     ],
     embed = [":go_default_library"],
     deps = common_deps + [
+		"//beacon-chain/core/electra:go_default_library",
+		"//beacon-chain/core/gloas:go_default_library",
         "//proto/prysm/v1alpha1/attestation/aggregation/testing:go_default_library",
     ],
 )

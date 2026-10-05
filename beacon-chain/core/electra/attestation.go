@@ -14,6 +14,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
+	"github.com/OffchainLabs/prysm/v7/runtime/version"
 )
 
 var (
@@ -49,11 +50,6 @@ func GetProposerRewardNumerator(
 		return 0, err
 	}
 
-	indices, err := attestation.AttestingIndices(att, committees...)
-	if err != nil {
-		return 0, err
-	}
-
 	var participation customtypes.ReadOnlyParticipation
 	if data.Target.Epoch == time.CurrentRound(st) {
 		participation, err = st.CurrentEpochParticipationReadOnly()
@@ -66,14 +62,14 @@ func GetProposerRewardNumerator(
 
 	cfg := params.BeaconConfig()
 	var rewardNumerator uint64
-	for _, index := range indices {
+	addReward := func(index uint64) error {
 		if index >= uint64(participation.Len()) {
-			return 0, fmt.Errorf("index %d exceeds participation length %d", index, participation.Len())
+			return fmt.Errorf("index %d exceeds participation length %d", index, participation.Len())
 		}
 
 		br, err := altair.BaseRewardWithTotalBalance(st, primitives.ValidatorIndex(index), totalBalance)
 		if err != nil {
-			return 0, err
+			return err
 		}
 
 		for _, entry := range []struct {
@@ -87,13 +83,53 @@ func GetProposerRewardNumerator(
 			if flags[entry.flagIndex] { // If set, the validator voted correctly for the attestation given flag index.
 				hasVoted, err := altair.HasValidatorFlag(participation.At(index), entry.flagIndex)
 				if err != nil {
-					return 0, err
+					return err
 				}
 				if !hasVoted { // If set, the validator has already voted in the beacon state so we don't double count.
 					rewardNumerator += br * entry.weight
 				}
 			}
 		}
+		return nil
+	}
+
+	if att.Version() < version.Electra {
+		indices, err := attestation.AttestingIndices(att, committees...)
+		if err != nil {
+			return 0, err
+		}
+		for _, index := range indices {
+			if err := addReward(index); err != nil {
+				return 0, err
+			}
+		}
+		return rewardNumerator, nil
+	}
+
+	bits := att.GetAggregationBits()
+	committeeLen := 0
+	for _, committee := range committees {
+		committeeLen += len(committee)
+	}
+	if bits.Len() != uint64(committeeLen) {
+		return 0, fmt.Errorf("bitfield length %d is not equal to committee length %d", bits.Len(), committeeLen)
+	}
+	offset := uint64(0)
+	for ci, committee := range committees {
+		hasAttester := false
+		for position, index := range committee {
+			if !bits.BitAt(offset + uint64(position)) {
+				continue
+			}
+			hasAttester = true
+			if err := addReward(uint64(index)); err != nil {
+				return 0, err
+			}
+		}
+		if !hasAttester {
+			return 0, fmt.Errorf("no attesting indices found for committee index %d", ci)
+		}
+		offset += uint64(len(committee))
 	}
 
 	return rewardNumerator, nil

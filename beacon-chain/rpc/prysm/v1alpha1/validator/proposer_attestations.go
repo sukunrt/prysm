@@ -37,12 +37,15 @@ func (vs *Server) packAttestations(ctx context.Context, latestState state.Beacon
 
 	if features.Get().EnableExperimentalAttestationPool {
 		atts = vs.AttestationCache.GetAll()
+		atts = proposalWindow(atts, blkSlot)
 		atts = vs.validateAndDeleteAttsInPool(ctx, latestState, atts)
 	} else {
 		atts = vs.AttPool.AggregatedAttestations()
+		atts = proposalWindow(atts, blkSlot)
 		atts = vs.validateAndDeleteAttsInPool(ctx, latestState, atts)
 
 		uAtts := vs.AttPool.UnaggregatedAttestations()
+		uAtts = proposalWindow(uAtts, blkSlot)
 		uAtts = vs.validateAndDeleteAttsInPool(ctx, latestState, uAtts)
 		atts = append(atts, uAtts...)
 	}
@@ -127,6 +130,24 @@ func (vs *Server) packAttestations(ctx context.Context, latestState state.Beacon
 
 	atts = sorted.limitToMaxAttestations()
 	return vs.filterAttestationBySignature(ctx, atts, latestState)
+}
+
+func proposalWindow(atts []ethpb.Att, blockSlot primitives.Slot) []ethpb.Att {
+	if slots.ToEpoch(blockSlot) < params.BeaconConfig().HezeForkEpoch {
+		return atts
+	}
+	lower := primitives.Slot(0)
+	if blockSlot > 3 {
+		lower = blockSlot - 3
+	}
+	kept := atts[:0]
+	for _, att := range atts {
+		slot := att.GetData().Slot
+		if slot >= lower && slot < blockSlot {
+			kept = append(kept, att)
+		}
+	}
+	return kept
 }
 
 func onChainAggregates(attsById map[attestation.Id][]ethpb.Att) (proposerAtts, error) {
@@ -385,31 +406,87 @@ func (a proposerAtts) dedup() (proposerAtts, error) {
 
 	uniqAtts := make([]ethpb.Att, 0, len(a))
 	for _, atts := range attsByDataRoot {
-		for i := 0; i < len(atts); i++ {
-			a := atts[i]
-			for j := i + 1; j < len(atts); j++ {
-				b := atts[j]
-				if c, err := a.GetAggregationBits().Contains(b.GetAggregationBits()); err != nil {
+		if len(atts) == 1 {
+			uniqAtts = append(uniqAtts, atts[0])
+			continue
+		}
+		if len(atts) <= 32 {
+			for i := 0; i < len(atts); i++ {
+				for j := i + 1; j < len(atts); j++ {
+					contains, err := atts[i].GetAggregationBits().Contains(atts[j].GetAggregationBits())
+					if err != nil {
+						return nil, err
+					}
+					if contains {
+						atts[j] = atts[len(atts)-1]
+						atts = atts[:len(atts)-1]
+						j--
+						continue
+					}
+					contains, err = atts[j].GetAggregationBits().Contains(atts[i].GetAggregationBits())
+					if err != nil {
+						return nil, err
+					}
+					if contains {
+						atts[i] = atts[len(atts)-1]
+						atts = atts[:len(atts)-1]
+						i--
+						break
+					}
+				}
+			}
+			uniqAtts = append(uniqAtts, atts...)
+			continue
+		}
+		bitLen := atts[0].GetAggregationBits().Len()
+		for _, att := range atts[1:] {
+			if att.GetAggregationBits().Len() != bitLen {
+				return nil, bitfield.ErrBitlistDifferentLength
+			}
+		}
+		type candidate struct {
+			att   ethpb.Att
+			count uint64
+		}
+		candidates := make([]candidate, 0, len(atts))
+		seen := make(map[string]struct{}, len(atts))
+		for _, att := range atts {
+			bits := att.GetAggregationBits()
+			key := string(bits)
+			if _, duplicate := seen[key]; duplicate {
+				continue
+			}
+			seen[key] = struct{}{}
+			candidates = append(candidates, candidate{att: att, count: bits.Count()})
+		}
+		if len(candidates) == 1 {
+			uniqAtts = append(uniqAtts, candidates[0].att)
+			continue
+		}
+		sort.SliceStable(candidates, func(i, j int) bool {
+			return candidates[i].count > candidates[j].count
+		})
+		retained := make([]candidate, 0, len(candidates))
+		for _, candidate := range candidates {
+			contained := false
+			for _, larger := range retained {
+				if larger.count == candidate.count {
+					break
+				}
+				contains, err := larger.att.GetAggregationBits().Contains(candidate.att.GetAggregationBits())
+				if err != nil {
 					return nil, err
-				} else if c {
-					// a contains b, b is redundant.
-					atts[j] = atts[len(atts)-1]
-					atts[len(atts)-1] = nil
-					atts = atts[:len(atts)-1]
-					j--
-				} else if c, err := b.GetAggregationBits().Contains(a.GetAggregationBits()); err != nil {
-					return nil, err
-				} else if c {
-					// b contains a, a is redundant.
-					atts[i] = atts[len(atts)-1]
-					atts[len(atts)-1] = nil
-					atts = atts[:len(atts)-1]
-					i--
+				}
+				if contains {
+					contained = true
 					break
 				}
 			}
+			if !contained {
+				retained = append(retained, candidate)
+				uniqAtts = append(uniqAtts, candidate.att)
+			}
 		}
-		uniqAtts = append(uniqAtts, atts...)
 	}
 
 	return uniqAtts, nil

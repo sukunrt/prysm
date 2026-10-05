@@ -3,6 +3,7 @@ package attestations
 import (
 	"time"
 
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
@@ -14,9 +15,17 @@ func (s *Service) pruneExpired() {
 	offset := time.Duration(secondsPerSlot-1) * time.Second
 	slotTicker := slots.NewSlotTickerWithOffset(s.genesisTime, offset, secondsPerSlot)
 	defer slotTicker.Done()
+	startTicker := slots.NewSlotTickerWithOffset(s.genesisTime, 0, secondsPerSlot)
+	defer startTicker.Done()
 	for {
 		select {
+		case <-startTicker.C():
+			s.pruneCurrentSlot()
 		case <-slotTicker.C():
+			if s.hezeActive() {
+				s.updateMetrics()
+				continue
+			}
 			s.pruneExpiredAtts()
 			s.updateMetrics()
 		case <-s.ctx.Done():
@@ -26,13 +35,24 @@ func (s *Service) pruneExpired() {
 	}
 }
 
+func (s *Service) hezeActive() bool {
+	return slots.ToEpoch(slots.CurrentSlot(s.genesisTime)) >= params.BeaconConfig().HezeForkEpoch
+}
+
 // pruneExpiredExperimental prunes attestations on every prune interval.
 func (s *Service) pruneExpiredExperimental() {
 	ticker := time.NewTicker(s.cfg.pruneInterval)
 	defer ticker.Stop()
+	slotTicker := slots.NewSlotTickerWithOffset(s.genesisTime, 0, params.BeaconConfig().SecondsPerSlot)
+	defer slotTicker.Done()
 	for {
 		select {
+		case <-slotTicker.C():
+			s.pruneCurrentSlot()
 		case <-ticker.C:
+			if s.hezeActive() {
+				continue
+			}
 			expirySlot, err := s.expirySlot()
 			if err != nil {
 				log.WithError(err).Error("Could not get expiry slot")
@@ -47,8 +67,36 @@ func (s *Service) pruneExpiredExperimental() {
 	}
 }
 
+// pruneCurrentSlot applies Heze's short proposal retention at slot start.
+func (s *Service) pruneCurrentSlot() bool {
+	current := slots.CurrentSlot(s.genesisTime)
+	if !s.hezeActive() {
+		return false
+	}
+	cutoff := primitives.Slot(0)
+	if current > 3 {
+		cutoff = current - 3
+	}
+	if features.Get().EnableExperimentalAttestationPool {
+		numExpired := s.cfg.Cache.PruneRetainedBefore(cutoff)
+		s.updateMetricsExperimental(numExpired)
+	} else {
+		counts, err := s.cfg.Pool.PruneBefore(cutoff)
+		if err != nil {
+			log.WithError(err).Error("Could not prune old proposal attestations")
+		}
+		expiredAggregatedAtts.Add(float64(counts.Aggregated))
+		expiredUnaggregatedAtts.Add(float64(counts.Unaggregated))
+		expiredBlockAtts.Add(float64(counts.Block))
+	}
+	return true
+}
+
 // This prunes expired attestations from the pool.
 func (s *Service) pruneExpiredAtts() {
+	if s.pruneCurrentSlot() {
+		return
+	}
 	aggregatedAtts := s.cfg.Pool.AggregatedAttestations()
 	for _, att := range aggregatedAtts {
 		if s.expired(att.GetData().Slot) {

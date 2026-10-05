@@ -61,6 +61,7 @@ func (s *Service) Start() {
 		return
 	}
 	go s.prepareForkChoiceAtts()
+	s.pruneCurrentSlot()
 
 	if features.Get().EnableExperimentalAttestationPool {
 		go s.pruneExpiredExperimental()

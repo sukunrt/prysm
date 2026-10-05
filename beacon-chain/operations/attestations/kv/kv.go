@@ -5,6 +5,7 @@ package kv
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/OffchainLabs/go-bitfield"
@@ -20,6 +21,9 @@ import (
 // These caches are KV store for various attestations
 // such are unaggregated, aggregated or attestations within a block.
 type AttCaches struct {
+	retentionCutoff        atomic.Uint64
+	beforeSingleAggregate  func()
+	beforePeerCommit       func()
 	aggregatedAttLock      sync.RWMutex
 	aggregatedAtt          map[attestation.Id][]ethpb.Att
 	runningAtt             map[attestation.Id]ethpb.Att
