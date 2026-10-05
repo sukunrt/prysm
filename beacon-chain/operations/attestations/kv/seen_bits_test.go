@@ -55,3 +55,25 @@ func TestAttCaches_insertSeenBitDuplicates(t *testing.T) {
 	require.Equal(t, true, ok)
 	require.Equal(t, true, expirationprysmTime.After(expirationTime1), "Expiration time is not updated")
 }
+
+func TestAttCaches_SeenSinglesUseCompactCoverage(t *testing.T) {
+	c := NewAttCaches()
+	processed := util.HydrateAttestation(&ethpb.Attestation{AggregationBits: bitfield.Bitlist{0b10000011}})
+	id, err := attestation.NewId(processed, attestation.Data)
+	require.NoError(t, err)
+	require.NoError(t, c.insertSeenBit(processed))
+	first := util.HydrateAttestation(&ethpb.Attestation{AggregationBits: bitfield.Bitlist{0b10000001}})
+	third := util.HydrateAttestation(&ethpb.Attestation{AggregationBits: bitfield.Bitlist{0b10000100}})
+	c.seenAtt.Set(id.String(), "invalid aggregate list", -1)
+	has, err := c.hasSeenBit(first)
+	require.NoError(t, err)
+	require.Equal(t, true, has)
+	has, err = c.hasSeenBit(third)
+	require.NoError(t, err)
+	require.Equal(t, false, has)
+	require.NoError(t, c.insertSeenBit(third))
+	require.Equal(t, 1, c.seenSingleAtt.ItemCount())
+	has, err = c.hasSeenBit(third)
+	require.NoError(t, err)
+	require.Equal(t, true, has)
+}

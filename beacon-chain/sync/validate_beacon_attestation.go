@@ -15,7 +15,6 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/signing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p"
-	"github.com/OffchainLabs/prysm/v7/beacon-chain/slasher/types"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
@@ -26,7 +25,6 @@ import (
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	eth "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
-	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
 	"github.com/OffchainLabs/prysm/v7/runtime/version"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -106,6 +104,7 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 		return pubsub.ValidationIgnore, nil
 	}
 
+	// TODO(sukunrt): remove slashing
 	if !s.slasherEnabled {
 		// Verify this the first attestation received for the participating validator for the slot. This verification is here to return early if we've already seen this attestation.
 		// This verification is carried again later after all other validations to avoid TOCTOU issues.
@@ -197,33 +196,34 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 		return validationRes, wrapAttestationError(err, att)
 	}
 
+	// TODO(sukunrt): delete this path. don't want slashing in stubbing.
 	if s.slasherEnabled {
-		// Feed the indexed attestation to slasher if enabled. This action
-		// is done in the background to avoid adding more load to this critical code path.
-		go func() {
-			// Using a different context to prevent timeouts as this operation can be expensive
-			// and we want to avoid affecting the critical code path.
-			ctx := context.TODO()
-			preState, err := s.cfg.chain.AttestationTargetState(ctx, data.Target)
-			if err != nil {
-				log.WithError(err).Error("Could not retrieve pre state")
-				tracing.AnnotateError(span, err)
-				return
-			}
-			committee, err := helpers.BeaconCommitteeFromState(ctx, preState, data.Slot, committeeIndex)
-			if err != nil {
-				log.WithError(err).Error("Could not get attestation committee")
-				tracing.AnnotateError(span, err)
-				return
-			}
-			indexedAtt, err := attestation.ConvertToIndexed(ctx, attForValidation, committee)
-			if err != nil {
-				log.WithError(err).Error("Could not convert to indexed attestation")
-				tracing.AnnotateError(span, err)
-				return
-			}
-			s.cfg.slasherAttestationsFeed.Send(&types.WrappedIndexedAtt{IndexedAtt: indexedAtt})
-		}()
+		// // Feed the indexed attestation to slasher if enabled. This action
+		// // is done in the background to avoid adding more load to this critical code path.
+		// go func() {
+		// 	// Using a different context to prevent timeouts as this operation can be expensive
+		// 	// and we want to avoid affecting the critical code path.
+		// 	ctx := context.TODO()
+		// 	preState, err := s.cfg.chain.AttestationTargetState(ctx, data.Target)
+		// 	if err != nil {
+		// 		log.WithError(err).Error("Could not retrieve pre state")
+		// 		tracing.AnnotateError(span, err)
+		// 		return
+		// 	}
+		// 	committee, err := helpers.BeaconCommitteeFromState(ctx, preState, data.Slot, committeeIndex)
+		// 	if err != nil {
+		// 		log.WithError(err).Error("Could not get attestation committee")
+		// 		tracing.AnnotateError(span, err)
+		// 		return
+		// 	}
+		// 	indexedAtt, err := attestation.ConvertToIndexed(ctx, attForValidation, committee)
+		// 	if err != nil {
+		// 		log.WithError(err).Error("Could not convert to indexed attestation")
+		// 		tracing.AnnotateError(span, err)
+		// 		return
+		// 	}
+		// 	s.cfg.slasherAttestationsFeed.Send(&types.WrappedIndexedAtt{IndexedAtt: indexedAtt})
+		// }()
 	}
 
 	// Notify other services in the beacon node
@@ -241,7 +241,7 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 	msg.ValidatorData = attForValidation
 
 	s.recordFFGVote(att, start)
-	s.countFFGVote(att, subnet)
+	s.countFFGVote(data.Slot, subnet)
 
 	return pubsub.ValidationAccept, nil
 }

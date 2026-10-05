@@ -36,6 +36,7 @@ func (c *AttCaches) SaveBlockAttestation(att ethpb.Att) error {
 	}
 
 	c.blockAtt[id] = append(atts, att.Clone())
+	addCoverage(c.blockCoverage, id, att)
 
 	return nil
 }
@@ -66,15 +67,12 @@ func (c *AttCaches) DeleteBlockAttestation(att ethpb.Att) error {
 	c.blockAttLock.Lock()
 	defer c.blockAttLock.Unlock()
 
-	// Insert all attestations into the seen aggregated cache before deleting
-	if cacheAtts, ok := c.blockAtt[id]; ok {
-		for _, cacheAtt := range cacheAtts {
-			if err := c.insertSeenAggregatedAtt(cacheAtt); err != nil {
-				return fmt.Errorf("insert seen aggregated att: %w", err)
-			}
+	for _, cacheAtt := range c.blockAtt[id] {
+		if err := c.insertSeenAggregatedAtt(cacheAtt); err != nil {
+			return fmt.Errorf("insert seen aggregated att: %w", err)
 		}
 	}
-
+	delete(c.blockCoverage, id)
 	delete(c.blockAtt, id)
 
 	return nil

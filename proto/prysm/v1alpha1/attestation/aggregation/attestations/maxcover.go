@@ -12,8 +12,7 @@ import (
 )
 
 // MaxCoverAttestationAggregation relies on Maximum Coverage greedy algorithm for aggregation.
-// Aggregation occurs in many rounds, up until no more aggregation is possible (all attestations
-// are overlapping).
+// Aggregation occurs in up to three rounds, stopping earlier when no more aggregation is possible.
 // See https://hackmd.io/@farazdagi/in-place-attagg for design and rationale.
 func MaxCoverAttestationAggregation(atts []ethpb.Att) ([]ethpb.Att, error) {
 	if len(atts) < 2 {
@@ -34,8 +33,6 @@ func MaxCoverAttestationAggregation(atts []ethpb.Att) ([]ethpb.Att, error) {
 			return nil, err
 		}
 	}
-	coveredBitsSoFar := bitfield.NewBitlist64(candidates[0].Len())
-
 	// In order not to re-allocate anything we rely on the very same underlying array, which
 	// can only shrink (while the `aggregated` slice length can increase).
 	// The `aggregated` slice grows by combining individual attestations and appending to that slice.
@@ -43,9 +40,7 @@ func MaxCoverAttestationAggregation(atts []ethpb.Att) ([]ethpb.Att, error) {
 	aggregated := atts[:0]
 	unaggregated := atts
 
-	// Aggregation over n/2 rounds is enough to find all aggregatable items (exits earlier if there
-	// are many items that can be aggregated).
-	for i := 0; i < len(atts)/2; i++ {
+	for i := 0; i < 3; i++ {
 		if len(unaggregated) < 2 {
 			break
 		}
@@ -53,7 +48,7 @@ func MaxCoverAttestationAggregation(atts []ethpb.Att) ([]ethpb.Att, error) {
 		// Find maximum non-overlapping coverage for subset of still non-processed candidates.
 		roundCandidates := candidates[len(aggregated) : len(aggregated)+len(unaggregated)]
 		selectedKeys, coverage, err := aggregation.MaxCover(
-			roundCandidates, len(roundCandidates), false /* allowOverlaps */)
+			roundCandidates, 3, false /* allowOverlaps */)
 		if err != nil {
 			// Return aggregated attestations, and attestations that couldn't be aggregated.
 			return append(aggregated, unaggregated...), err
@@ -67,17 +62,24 @@ func MaxCoverAttestationAggregation(atts []ethpb.Att) ([]ethpb.Att, error) {
 		// Pad selected key indexes, as `roundCandidates` is a subset of `candidates`.
 		keys := padSelectedKeys(selectedKeys.BitIndices(), len(aggregated))
 
-		// Create aggregated attestation and update solution lists. Process aggregates only if they
-		// feature at least one unknown bit i.e. can increase the overall coverage.
-		xc, err := coveredBitsSoFar.XorCount(coverage)
-		if err != nil {
-			return nil, err
+		// Only skip an aggregate when a single existing aggregate already contains it.
+		contained := false
+		for _, candidate := range candidates[:len(aggregated)] {
+			contains, err := candidate.Contains(coverage)
+			if err != nil {
+				return nil, err
+			}
+			if contains {
+				contained = true
+				break
+			}
 		}
-		if xc > 0 {
+		if !contained {
 			aggIdx, err := aggregateAttestations(atts, keys, coverage)
 			if err != nil {
 				return append(aggregated, unaggregated...), err
 			}
+			candidates[aggIdx] = coverage
 
 			// Unless we are already at the right position, swap aggregation and the first non-aggregated item.
 			idx0 := len(aggregated)
@@ -92,10 +94,6 @@ func MaxCoverAttestationAggregation(atts []ethpb.Att) ([]ethpb.Att, error) {
 			// Shift the starting point of the slice to the right.
 			unaggregated = unaggregated[1:]
 
-			// Update covered bits map.
-			if err := coveredBitsSoFar.NoAllocOr(coverage, coveredBitsSoFar); err != nil {
-				return nil, err
-			}
 			keys = keys[1:]
 		}
 

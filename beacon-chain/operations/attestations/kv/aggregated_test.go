@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"sort"
 	"strconv"
+	"sync"
 	"testing"
 
 	"github.com/OffchainLabs/go-bitfield"
@@ -11,6 +12,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
+	attaggregation "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation/attestations"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
@@ -82,6 +84,15 @@ func aggregatedSeats(c *AttCaches) (union, largest, ids int) {
 			for _, i := range a.GetAggregationBits().BitIndices() {
 				seats[i] = true
 			}
+		}
+	}
+	for _, a := range c.runningAtt {
+		ids++
+		if n := int(a.GetAggregationBits().Count()); n > largest {
+			largest = n
+		}
+		for _, i := range a.GetAggregationBits().BitIndices() {
+			seats[i] = true
 		}
 	}
 	c.aggregatedAttLock.RUnlock()
@@ -158,6 +169,260 @@ func TestKV_Aggregated_SinglesSplitByDataAggregatePerID(t *testing.T) {
 	assert.Equal(t, committeeSize, union, "seats went missing")
 	assert.Equal(t, groups[0].size, largest, "largest aggregate is not the largest group")
 	assert.Equal(t, len(groups), ids, "one ID per attestation data")
+}
+
+func TestKV_IncrementalSinglesRemoveOriginalAndPreserveSignature(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	atts := electraSingles(t, priv, 8, []uint64{0, 1, 2}, 0xee)
+	pool := NewAttCaches()
+	require.NoError(t, pool.SaveUnaggregatedAttestation(atts[0]))
+	require.Equal(t, 1, pool.UnaggregatedAttestationCount())
+	require.Equal(t, 0, len(pool.AggregatedAttestations()))
+	require.NoError(t, pool.SaveUnaggregatedAttestation(atts[1]))
+	require.Equal(t, 0, pool.UnaggregatedAttestationCount())
+	require.Equal(t, 1, len(pool.AggregatedAttestations()))
+	require.Equal(t, 1, len(pool.runningSig))
+	firstSnapshot := pool.AggregatedAttestations()[0]
+	require.Equal(t, uint64(2), firstSnapshot.GetAggregationBits().Count())
+	require.NoError(t, pool.SaveUnaggregatedAttestation(atts[2]))
+	require.Equal(t, uint64(2), firstSnapshot.GetAggregationBits().Count())
+	got := pool.AggregatedAttestations()[0]
+	require.Equal(t, uint64(3), got.GetAggregationBits().Count())
+	sigs := make([]bls.Signature, 0, len(atts))
+	for _, att := range atts {
+		sig, err := bls.SignatureFromBytesNoValidation(att.GetSignature())
+		require.NoError(t, err)
+		sigs = append(sigs, sig)
+	}
+	require.DeepEqual(t, bls.AggregateSignatures(sigs).Marshal(), got.GetSignature())
+	for _, decoded := range pool.runningSig {
+		require.DeepEqual(t, got.GetSignature(), decoded.Marshal())
+	}
+	got.GetAggregationBits().SetBitAt(3, true)
+	require.Equal(t, uint64(3), pool.AggregatedAttestations()[0].GetAggregationBits().Count())
+	for _, att := range atts {
+		has, err := pool.HasAggregatedAttestation(att)
+		require.NoError(t, err)
+		require.Equal(t, true, has)
+	}
+}
+
+func TestKV_IncrementalSinglesConcurrentAndRollback(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	atts := electraSingles(t, priv, 64, []uint64{0, 1, 2, 3}, 0xef)
+	pool := NewAttCaches()
+	require.NoError(t, pool.SaveUnaggregatedAttestation(atts[0]))
+	bad := atts[1].Clone()
+	bad.SetSignature([]byte{1})
+	require.ErrorContains(t, "could not decode single signature", pool.SaveUnaggregatedAttestation(bad))
+	require.Equal(t, 1, pool.UnaggregatedAttestationCount())
+	require.Equal(t, 0, len(pool.AggregatedAttestations()))
+	var wg sync.WaitGroup
+	for _, att := range atts {
+		for range 8 {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := pool.SaveUnaggregatedAttestation(att); err != nil {
+					t.Errorf("save single: %v", err)
+				}
+			}()
+		}
+	}
+	wg.Wait()
+	require.Equal(t, 0, pool.UnaggregatedAttestationCount())
+	require.Equal(t, 1, len(pool.AggregatedAttestations()))
+	require.Equal(t, uint64(4), pool.AggregatedAttestations()[0].GetAggregationBits().Count())
+	before := pool.AggregatedAttestations()[0]
+	bad = electraSingles(t, priv, 64, []uint64{4}, 0xef)[0]
+	bad.SetSignature([]byte{1})
+	require.ErrorContains(t, "could not decode single signature", pool.SaveUnaggregatedAttestation(bad))
+	require.DeepEqual(t, before.GetSignature(), pool.AggregatedAttestations()[0].GetSignature())
+	require.Equal(t, 1, len(pool.runningSig))
+}
+
+func TestKV_IncrementalSinglesConcurrentIngressReadAndPrune(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	seats := make([]uint64, 16)
+	for i := range seats {
+		seats[i] = uint64(i)
+	}
+	atts := electraSingles(t, priv, 32, seats, 0xf7)
+	pool := NewAttCaches()
+	require.NoError(t, pool.SaveUnaggregatedAttestation(atts[0]))
+	dummy := atts[0].Clone()
+	dummy.SetSignature(make([]byte, 96))
+	var wg sync.WaitGroup
+	for _, att := range atts {
+		for range 2 {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				if err := pool.SaveUnaggregatedAttestation(att); err != nil {
+					t.Errorf("save single: %v", err)
+				}
+			}()
+		}
+	}
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		if err := pool.DeleteUnaggregatedAttestation(dummy); err != nil {
+			t.Errorf("prune single: %v", err)
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		for range 64 {
+			for _, got := range pool.AggregatedAttestations() {
+				got.GetAggregationBits().SetBitAt(31, true)
+			}
+			_ = pool.UnaggregatedAttestations()
+			if _, err := pool.HasAggregatedAttestation(atts[1]); err != nil {
+				t.Errorf("has single: %v", err)
+			}
+		}
+	}()
+	wg.Wait()
+	aggregates := pool.AggregatedAttestations()
+	require.Equal(t, 1, len(aggregates))
+	got := aggregates[0]
+	require.Equal(t, false, got.GetAggregationBits().BitAt(31))
+	sigs := make([]bls.Signature, 0, got.GetAggregationBits().Count())
+	for _, bit := range got.GetAggregationBits().BitIndices() {
+		sig, err := bls.SignatureFromBytesNoValidation(atts[bit].GetSignature())
+		require.NoError(t, err)
+		sigs = append(sigs, sig)
+	}
+	require.DeepEqual(t, bls.AggregateSignatures(sigs).Marshal(), got.GetSignature())
+}
+
+func TestKV_IncrementalSinglesSeparateDataIDs(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	short := electraSingles(t, priv, 8, []uint64{0, 1}, 0xf0)
+	long := electraSingles(t, priv, 16, []uint64{2}, 0xf1)
+	pool := NewAttCaches()
+	require.NoError(t, pool.SaveUnaggregatedAttestation(short[0]))
+	require.NoError(t, pool.SaveUnaggregatedAttestation(long[0]))
+	require.NoError(t, pool.SaveUnaggregatedAttestation(short[1]))
+	require.Equal(t, 1, pool.UnaggregatedAttestationCount())
+	require.Equal(t, 1, len(pool.AggregatedAttestations()))
+	require.Equal(t, uint64(8), pool.AggregatedAttestations()[0].GetAggregationBits().Len())
+}
+
+func TestKV_IncrementalSinglesRespectAllCoverageSources(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	atts := electraSingles(t, priv, 8, []uint64{0, 1}, 0xf1)
+	aggregate, err := attaggregation.Aggregate([]ethpb.Att{atts[0].Clone(), atts[1].Clone()})
+	require.NoError(t, err)
+	for _, source := range []string{"aggregate", "block", "processed block", "processed aggregate"} {
+		t.Run(source, func(t *testing.T) {
+			pool := NewAttCaches()
+			switch source {
+			case "aggregate":
+				require.NoError(t, pool.SaveAggregatedAttestation(aggregate[0]))
+			case "block", "processed block":
+				require.NoError(t, pool.SaveBlockAttestation(aggregate[0]))
+				if source == "processed block" {
+					require.NoError(t, pool.DeleteBlockAttestation(aggregate[0]))
+				}
+			case "processed aggregate":
+				require.NoError(t, pool.DeleteAggregatedAttestation(aggregate[0]))
+			}
+			has, err := pool.HasAggregatedAttestation(atts[0])
+			require.NoError(t, err)
+			require.Equal(t, true, has)
+			require.NoError(t, pool.SaveUnaggregatedAttestation(atts[0]))
+			require.Equal(t, 0, pool.UnaggregatedAttestationCount())
+		})
+	}
+}
+
+func TestKV_IncrementalSinglesRetireDataIDsIndependently(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	pool := NewAttCaches()
+	for _, size := range []uint64{8, 16} {
+		for _, att := range electraSingles(t, priv, size, []uint64{0, 1}, byte(size)) {
+			require.NoError(t, pool.SaveUnaggregatedAttestation(att))
+		}
+	}
+	require.Equal(t, 2, len(pool.AggregatedAttestations()))
+	for i, att := range pool.AggregatedAttestations() {
+		require.NoError(t, pool.DeleteAggregatedAttestation(att))
+		require.Equal(t, 1-i, len(pool.AggregatedAttestations()))
+		require.Equal(t, 1-i, len(pool.runningSig))
+	}
+	require.Equal(t, 0, len(pool.AggregatedAttestations()))
+	require.Equal(t, 0, len(pool.runningSig))
+}
+
+func TestKV_Aggregated_DataIDsStayIndependent(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	pool := NewAttCaches()
+	for _, size := range []uint64{8, 16} {
+		atts := electraSingles(t, priv, size, []uint64{0, 1}, byte(size))
+		merged, err := attaggregation.Aggregate([]ethpb.Att{atts[0].Clone(), atts[1].Clone()})
+		require.NoError(t, err)
+		require.NoError(t, pool.SaveAggregatedAttestation(merged[0]))
+	}
+	require.Equal(t, 2, len(pool.AggregatedAttestations()))
+	for _, att := range pool.AggregatedAttestations() {
+		require.NoError(t, pool.DeleteAggregatedAttestation(att))
+	}
+	require.Equal(t, 0, len(pool.AggregatedAttestations()))
+}
+
+func TestKV_IncrementalSinglesRetireCoveredLone(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	atts := electraSingles(t, priv, 8, []uint64{0, 1, 2}, 0xf3)
+	pool := NewAttCaches()
+	require.NoError(t, pool.SaveUnaggregatedAttestation(atts[0]))
+	aggregate, err := attaggregation.Aggregate([]ethpb.Att{atts[0].Clone(), atts[1].Clone()})
+	require.NoError(t, err)
+	require.NoError(t, pool.DeleteAggregatedAttestation(aggregate[0]))
+	require.Equal(t, 0, pool.UnaggregatedAttestationCount())
+	require.NoError(t, pool.SaveUnaggregatedAttestation(atts[2]))
+	require.Equal(t, 0, len(pool.AggregatedAttestations()))
+	remaining := pool.UnaggregatedAttestations()
+	require.Equal(t, 1, len(remaining))
+	require.Equal(t, true, remaining[0].GetAggregationBits().BitAt(2))
+}
+
+func TestKV_IncrementalSinglesProcessedSinglePreflight(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	att := electraSingles(t, priv, 8, []uint64{0}, 0xf4)[0]
+	pool := NewAttCaches()
+	require.NoError(t, pool.SaveUnaggregatedAttestation(att))
+	require.NoError(t, pool.DeleteUnaggregatedAttestation(att))
+	has, err := pool.HasAggregatedAttestation(att)
+	require.NoError(t, err)
+	require.Equal(t, true, has)
+	require.NoError(t, pool.SaveUnaggregatedAttestation(att))
+	require.Equal(t, 0, pool.UnaggregatedAttestationCount())
+}
+
+func TestKV_IncrementalSinglesDummySignatureRetiresLone(t *testing.T) {
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	atts := electraSingles(t, priv, 8, []uint64{0, 2}, 0xf6)
+	pool := NewAttCaches()
+	require.NoError(t, pool.SaveUnaggregatedAttestation(atts[0]))
+	dummy := atts[0].Clone()
+	dummy.SetSignature(make([]byte, 96))
+	require.NoError(t, pool.DeleteUnaggregatedAttestation(dummy))
+	require.Equal(t, 0, pool.UnaggregatedAttestationCount())
+	require.NoError(t, pool.SaveUnaggregatedAttestation(atts[1]))
+	require.Equal(t, 0, len(pool.AggregatedAttestations()))
+	require.Equal(t, 1, pool.UnaggregatedAttestationCount())
 }
 
 func TestKV_Aggregated_SaveAggregatedAttestation(t *testing.T) {
@@ -553,6 +818,7 @@ func TestKV_Aggregated_HasAggregatedAttestation(t *testing.T) {
 		},
 		{
 			name: "attestations with different bitlist lengths",
+			err:  errors.New("bitlists are different lengths"),
 			existing: []ethpb.Att{
 				&ethpb.Attestation{
 					Data: util.HydrateAttestationData(&ethpb.AttestationData{
@@ -568,7 +834,6 @@ func TestKV_Aggregated_HasAggregatedAttestation(t *testing.T) {
 				AggregationBits: bitfield.Bitlist{0b1111},
 			},
 			want: false,
-			err:  bitfield.ErrBitlistDifferentLength,
 		},
 	}
 

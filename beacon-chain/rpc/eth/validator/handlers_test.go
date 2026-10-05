@@ -61,6 +61,39 @@ func TestGetAggregateAttestationV2(t *testing.T) {
 	key, err := bls.RandKey()
 	require.NoError(t, err)
 	sig := key.Sign([]byte("sig"))
+	promotedSig := bls.AggregateSignatures([]common.Signature{sig, sig}).Marshal()
+	checkPromotedSingletons := func(t *testing.T, pool attestations.Pool, wantType ethpbalpha.Att) {
+		unaggregated := pool.UnaggregatedAttestations()
+		require.Equal(t, 2, len(unaggregated), "Expected 2 unaggregated attestations after singleton aggregation")
+		seen := make(map[primitives.Slot]bool)
+		for _, att := range unaggregated {
+			slot := att.GetData().Slot
+			require.Equal(t, false, seen[slot], "Duplicate unaggregated slot")
+			seen[slot] = true
+			assert.DeepEqual(t, bitfield.Bitlist{0b11000}, att.GetAggregationBits())
+			assert.DeepEqual(t, sig.Marshal(), att.GetSignature())
+			assert.Equal(t, wantType.Version(), att.Version())
+			switch slot {
+			case 3:
+				assert.DeepEqual(t, root2, att.GetData().BeaconBlockRoot)
+			case 4:
+				assert.DeepEqual(t, root1, att.GetData().BeaconBlockRoot)
+			default:
+				t.Fatalf("Unexpected unaggregated slot %d", slot)
+			}
+		}
+		require.Equal(t, true, seen[3])
+		require.Equal(t, true, seen[4])
+
+		promoted := pool.AggregatedAttestations()
+		require.Equal(t, 1, len(promoted), "Expected slot 3 aggregate after singleton aggregation")
+		assert.Equal(t, wantType.Version(), promoted[0].Version())
+		assert.DeepEqual(t, wantType.CommitteeBitsVal().Bytes(), promoted[0].CommitteeBitsVal().Bytes())
+		assert.Equal(t, primitives.Slot(3), promoted[0].GetData().Slot)
+		assert.DeepEqual(t, root1, promoted[0].GetData().BeaconBlockRoot)
+		assert.DeepEqual(t, bitfield.Bitlist{0b11100}, promoted[0].GetAggregationBits())
+		assert.DeepEqual(t, promotedSig, promoted[0].GetSignature())
+	}
 
 	// It is important to use 0 as the index because that's the only way
 	// pre and post-Electra attestations can both match,
@@ -132,11 +165,10 @@ func TestGetAggregateAttestationV2(t *testing.T) {
 
 		pool := attestations.NewPool()
 		require.NoError(t, pool.SaveUnaggregatedAttestations([]ethpbalpha.Att{unaggSlot3_Root1_1, unaggSlot3_Root1_2, unaggSlot3_Root2, unaggSlot4}), "Failed to save unaggregated attestations")
-		unagg := pool.UnaggregatedAttestations()
-		require.Equal(t, 4, len(unagg), "Expected 4 unaggregated attestations")
+		checkPromotedSingletons(t, pool, unaggSlot3_Root1_1)
 		require.NoError(t, pool.SaveAggregatedAttestations([]ethpbalpha.Att{aggSlot1_Root1_1, aggSlot1_Root1_2, aggSlot1_Root2, aggSlot2, postElectraAtt}), "Failed to save aggregated attestations")
 		agg := pool.AggregatedAttestations()
-		require.Equal(t, 5, len(agg), "Expected 5 aggregated attestations, 4 pre electra and 1 post electra")
+		require.Equal(t, 6, len(agg), "Expected 6 aggregated attestations, 5 pre electra and 1 post electra")
 		s := &Server{
 			AttestationsPool: pool,
 		}
@@ -171,6 +203,23 @@ func TestGetAggregateAttestationV2(t *testing.T) {
 			require.NoError(t, json.Unmarshal(resp.Data, &attestation), "Failed to unmarshal attestation data")
 
 			compareResult(t, attestation, "2", hexutil.Encode(aggSlot2.AggregationBits), root1, sig.Marshal())
+		})
+		t.Run("promoted singleton aggregate is returned", func(t *testing.T) {
+			reqRoot, err := unaggSlot3_Root1_1.Data.HashTreeRoot()
+			require.NoError(t, err)
+			url := "http://example.com?attestation_data_root=" + hexutil.Encode(reqRoot[:]) + "&slot=3&committee_index=0"
+			request := httptest.NewRequest(http.MethodGet, url, nil)
+			writer := httptest.NewRecorder()
+
+			s.GetAggregateAttestationV2(writer, request)
+			require.Equal(t, http.StatusOK, writer.Code)
+
+			var resp structs.AggregateAttestationResponse
+			require.NoError(t, json.Unmarshal(writer.Body.Bytes(), &resp))
+			require.NotNil(t, resp.Data)
+			var attestation structs.Attestation
+			require.NoError(t, json.Unmarshal(resp.Data, &attestation))
+			compareResult(t, attestation, "3", hexutil.Encode(bitfield.Bitlist{0b11100}), root1, promotedSig)
 		})
 		t.Run("1 matching aggregated attestation - SSZ", func(t *testing.T) {
 			reqRoot, err := aggSlot2.Data.HashTreeRoot()
@@ -270,11 +319,10 @@ func TestGetAggregateAttestationV2(t *testing.T) {
 
 		pool := attestations.NewPool()
 		require.NoError(t, pool.SaveUnaggregatedAttestations([]ethpbalpha.Att{unaggSlot3_Root1_1, unaggSlot3_Root1_2, unaggSlot3_Root2, unaggSlot4}), "Failed to save unaggregated attestations")
-		unagg := pool.UnaggregatedAttestations()
-		require.Equal(t, 4, len(unagg), "Expected 4 unaggregated attestations")
+		checkPromotedSingletons(t, pool, unaggSlot3_Root1_1)
 		require.NoError(t, pool.SaveAggregatedAttestations([]ethpbalpha.Att{aggSlot1_Root1_1, aggSlot1_Root1_2, aggSlot1_Root2, aggSlot2, preElectraAtt}), "Failed to save aggregated attestations")
 		agg := pool.AggregatedAttestations()
-		require.Equal(t, 5, len(agg), "Expected 5 aggregated attestations, 4 electra and 1 pre electra")
+		require.Equal(t, 6, len(agg), "Expected 6 aggregated attestations, 5 electra and 1 pre electra")
 		bs, err := util.NewBeaconState()
 		require.NoError(t, err)
 
@@ -410,7 +458,7 @@ func TestGetAggregateAttestationV2(t *testing.T) {
 
 			compareResult(t, *structs.AttElectraFromConsensus(&resp), "4", hexutil.Encode(unaggSlot4.AggregationBits), root1, sig.Marshal(), hexutil.Encode(unaggSlot4.CommitteeBits))
 		})
-		t.Run("multiple matching unaggregated attestations - their aggregate is returned", func(t *testing.T) {
+		t.Run("promoted singleton aggregate is returned", func(t *testing.T) {
 			reqRoot, err := unaggSlot3_Root1_1.Data.HashTreeRoot()
 			require.NoError(t, err, "Failed to generate attestation data hash tree root")
 			attDataRoot := hexutil.Encode(reqRoot[:])
@@ -434,7 +482,7 @@ func TestGetAggregateAttestationV2(t *testing.T) {
 			expectedSig := bls.AggregateSignatures([]common.Signature{sig1, sig2})
 			compareResult(t, attestation, "3", hexutil.Encode(bitfield.Bitlist{0b11100}), root1, expectedSig.Marshal(), hexutil.Encode(unaggSlot3_Root1_1.CommitteeBits))
 		})
-		t.Run("multiple matching unaggregated attestations - their aggregate is returned - SSZ", func(t *testing.T) {
+		t.Run("promoted singleton aggregate is returned - SSZ", func(t *testing.T) {
 			reqRoot, err := unaggSlot3_Root1_1.Data.HashTreeRoot()
 			require.NoError(t, err, "Failed to generate attestation data hash tree root")
 			attDataRoot := hexutil.Encode(reqRoot[:])

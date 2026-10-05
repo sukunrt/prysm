@@ -92,26 +92,8 @@ func TestBatchAttestations_Multiple(t *testing.T) {
 	}
 	require.NoError(t, s.batchForkChoiceAtts(t.Context()))
 
-	wanted, err := attaggregation.Aggregate([]ethpb.Att{aggregatedAtts[0], blockAtts[0]})
-	require.NoError(t, err)
-	aggregated, err := attaggregation.Aggregate([]ethpb.Att{aggregatedAtts[1], blockAtts[1]})
-	require.NoError(t, err)
-	wanted = append(wanted, aggregated...)
-	aggregated, err = attaggregation.Aggregate([]ethpb.Att{aggregatedAtts[2], blockAtts[2]})
-	require.NoError(t, err)
-
-	wanted = append(wanted, aggregated...)
-	require.NoError(t, s.cfg.Pool.AggregateUnaggregatedAttestations(t.Context()))
 	received := s.cfg.Pool.ForkchoiceAttestations()
-
-	sort.Slice(received, func(i, j int) bool {
-		return received[i].GetData().Slot < received[j].GetData().Slot
-	})
-	sort.Slice(wanted, func(i, j int) bool {
-		return wanted[i].GetData().Slot < wanted[j].GetData().Slot
-	})
-
-	assert.DeepSSZEqual(t, wanted, received)
+	assert.DeepEqual(t, attestationBitsBySlot(append(append(unaggregatedAtts, aggregatedAtts...), toAtts(blockAtts)...)), attestationBitsBySlot(received))
 }
 
 func TestBatchAttestations_Single(t *testing.T) {
@@ -149,14 +131,47 @@ func TestBatchAttestations_Single(t *testing.T) {
 	}
 	require.NoError(t, s.batchForkChoiceAtts(t.Context()))
 
-	wanted, err := attaggregation.Aggregate(append(aggregatedAtts, unaggregatedAtts...))
-	require.NoError(t, err)
-
-	wanted, err = attaggregation.Aggregate(append(wanted, blockAtts...))
-	require.NoError(t, err)
-
 	got := s.cfg.Pool.ForkchoiceAttestations()
-	assert.DeepEqual(t, wanted, got)
+	assert.DeepEqual(t, attestationBitsBySlot(append(append(unaggregatedAtts, aggregatedAtts...), blockAtts...)), attestationBitsBySlot(got))
+}
+
+func TestBatchAttestations_LoneSingleReachesForkChoice(t *testing.T) {
+	s, err := NewService(t.Context(), &Config{Pool: NewPool()})
+	require.NoError(t, err)
+	priv, err := bls.RandKey()
+	require.NoError(t, err)
+	att := util.HydrateAttestation(&ethpb.Attestation{
+		Data:            &ethpb.AttestationData{Slot: 1},
+		AggregationBits: bitfield.Bitlist{0b1001},
+		Signature:       priv.Sign([]byte("single")).Marshal(),
+	})
+	require.NoError(t, s.cfg.Pool.SaveUnaggregatedAttestation(att))
+	require.NoError(t, s.batchForkChoiceAtts(t.Context()))
+	got := s.cfg.Pool.ForkchoiceAttestations()
+	require.Equal(t, 1, len(got))
+	assert.DeepSSZEqual(t, att, got[0])
+}
+
+func toAtts(atts []*ethpb.Attestation) []ethpb.Att {
+	result := make([]ethpb.Att, len(atts))
+	for i, att := range atts {
+		result[i] = att
+	}
+	return result
+}
+
+func attestationBitsBySlot(atts []ethpb.Att) map[uint64]map[int]bool {
+	result := make(map[uint64]map[int]bool)
+	for _, att := range atts {
+		slot := uint64(att.GetData().Slot)
+		if result[slot] == nil {
+			result[slot] = make(map[int]bool)
+		}
+		for _, bit := range att.GetAggregationBits().BitIndices() {
+			result[slot][bit] = true
+		}
+	}
+	return result
 }
 
 func TestAggregateAndSaveForkChoiceAtts_Single(t *testing.T) {

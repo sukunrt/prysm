@@ -11,7 +11,6 @@ import (
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/decoupled"
-	eth "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 )
 
@@ -67,16 +66,12 @@ func (c *ffgVoteCounters) take(slot primitives.Slot) map[uint64]ffgSubnetCount {
 	return taken
 }
 
-func (s *Service) countFFGVote(att eth.Att, subnet uint64) {
-	slot := att.GetData().Slot
+func (s *Service) countFFGVote(slot primitives.Slot, subnet uint64) {
 	if !decoupled.SummaryActive(slot) {
 		return
 	}
-	seats := uint64(1)
-	if bits := att.GetAggregationBits(); bits != nil {
-		seats = bits.Count()
-	}
-	s.ffgVotes.count(slot, subnet, seats)
+	// Gossip validation has already established this is a single-validator vote.
+	s.ffgVotes.count(slot, subnet, 1)
 }
 
 // runFFGVoteSummary writes one FFG votes line per slot, at the aggregation

@@ -93,10 +93,12 @@ func TestAggregateAttestations_Aggregate(t *testing.T) {
 	// Each test defines the aggregation bitfield inputs and the wanted output result.
 	bitlistLen := params.BeaconConfig().MaxValidatorsPerCommittee
 	tests := []struct {
-		name   string
-		inputs []bitfield.Bitlist
-		want   []bitfield.Bitlist
-		err    error
+		name      string
+		inputs    []bitfield.Bitlist
+		want      []bitfield.Bitlist
+		wantCount int
+		wantUnion bitfield.Bitlist
+		err       error
 	}{
 		{
 			name:   "empty list",
@@ -123,18 +125,16 @@ func TestAggregateAttestations_Aggregate(t *testing.T) {
 			},
 		},
 		{
-			name:   "256 attestations with single bit set",
-			inputs: aggtesting.BitlistsWithSingleBitSet(256, bitlistLen),
-			want: []bitfield.Bitlist{
-				aggtesting.BitlistWithAllBitsSet(256),
-			},
+			name:      "256 attestations with single bit set",
+			inputs:    aggtesting.BitlistsWithSingleBitSet(256, bitlistLen),
+			wantCount: 250,
+			wantUnion: aggtesting.BitlistWithAllBitsSet(256),
 		},
 		{
-			name:   "1024 attestations with single bit set",
-			inputs: aggtesting.BitlistsWithSingleBitSet(1024, bitlistLen),
-			want: []bitfield.Bitlist{
-				aggtesting.BitlistWithAllBitsSet(1024),
-			},
+			name:      "1024 attestations with single bit set",
+			inputs:    aggtesting.BitlistsWithSingleBitSet(1024, bitlistLen),
+			wantCount: 1018,
+			wantUnion: aggtesting.BitlistWithAllBitsSet(1024),
 		},
 		{
 			name: "two attestations with overlap",
@@ -216,6 +216,16 @@ func TestAggregateAttestations_Aggregate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+			if tt.wantUnion != nil {
+				assert.Equal(t, tt.wantCount, len(got))
+				union := bitfield.NewBitlist(bitlistLen)
+				for _, att := range got {
+					union, err = union.Or(att.GetAggregationBits())
+					require.NoError(t, err)
+				}
+				assert.DeepEqual(t, tt.wantUnion.Bytes(), union.Bytes())
+				return
+			}
 			sort.Slice(got, func(i, j int) bool {
 				return got[i].GetAggregationBits().Bytes()[0] < got[j].GetAggregationBits().Bytes()[0]
 			})

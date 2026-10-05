@@ -70,6 +70,7 @@ func (s *Service) batchForkChoiceAtts(ctx context.Context) error {
 			return err
 		}
 		atts = append(s.cfg.Pool.AggregatedAttestations(), s.cfg.Pool.BlockAttestations()...)
+		atts = append(atts, s.cfg.Pool.UnaggregatedAttestations()...)
 		atts = append(atts, s.cfg.Pool.ForkchoiceAttestations()...)
 	}
 
@@ -157,6 +158,6 @@ func (s *Service) seen(att ethpb.Att) (bool, error) {
 		}
 	}
 
-	s.forkChoiceProcessedAtts.Add(id, incomingBits)
+	s.forkChoiceProcessedAtts.Add(id, append(bitfield.Bitlist(nil), incomingBits...))
 	return false, nil
 }

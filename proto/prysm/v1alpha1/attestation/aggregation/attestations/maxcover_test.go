@@ -6,11 +6,126 @@ import (
 	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/bls"
+	"github.com/OffchainLabs/prysm/v7/crypto/bls/common"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation/aggregation/attestations"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
+	"github.com/OffchainLabs/prysm/v7/testing/require"
 )
+
+func TestMaxCoverAttestationAggregation_BoundedWork(t *testing.T) {
+	const bitCount = 16
+	message := [32]byte{1, 2, 3}
+	keys := make([]common.SecretKey, bitCount)
+	for i := range keys {
+		var err error
+		keys[i], err = bls.RandKey()
+		require.NoError(t, err)
+	}
+
+	makeAtt := func(indices ...uint64) ethpb.Att {
+		bits := bitfield.NewBitlist(bitCount)
+		signatures := make([]bls.Signature, 0, len(indices))
+		for _, idx := range indices {
+			bits.SetBitAt(idx, true)
+			signatures = append(signatures, keys[idx].Sign(message[:]))
+		}
+		return &ethpb.Attestation{
+			AggregationBits: bits,
+			Data:            &ethpb.AttestationData{},
+			Signature:       bls.AggregateSignatures(signatures).Marshal(),
+		}
+	}
+
+	tests := []struct {
+		name         string
+		inputs       []ethpb.Att
+		wantCount    int
+		maxBits      uint64
+		mergedCount  int
+		unionCovered bool
+	}{
+		{
+			name: "at most three inputs per aggregate",
+			inputs: []ethpb.Att{
+				makeAtt(0), makeAtt(1), makeAtt(2), makeAtt(3), makeAtt(4),
+			},
+			wantCount:   2,
+			maxBits:     3,
+			mergedCount: 1,
+		},
+		{
+			name: "at most three rounds with unprocessed inputs returned",
+			inputs: []ethpb.Att{
+				makeAtt(0, 2), makeAtt(1, 3),
+				makeAtt(0, 4), makeAtt(1, 5),
+				makeAtt(0, 6), makeAtt(1, 7),
+				makeAtt(0, 8), makeAtt(1, 9),
+			},
+			wantCount:   5,
+			maxBits:     4,
+			mergedCount: 3,
+		},
+		{
+			name: "aggregate covered by union of earlier aggregates is retained",
+			inputs: []ethpb.Att{
+				makeAtt(0, 2), makeAtt(1, 3),
+				makeAtt(0, 3), makeAtt(1, 4),
+				makeAtt(0, 2), makeAtt(1, 4),
+			},
+			wantCount:    3,
+			maxBits:      4,
+			mergedCount:  3,
+			unionCovered: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			wantUnion := bitfield.NewBitlist(bitCount)
+			for _, att := range tt.inputs {
+				var err error
+				wantUnion, err = wantUnion.Or(att.GetAggregationBits())
+				require.NoError(t, err)
+			}
+			got, err := attestations.MaxCoverAttestationAggregation(tt.inputs)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantCount, len(got))
+			gotUnion := bitfield.NewBitlist(bitCount)
+			mergedCount := 0
+			for _, att := range got {
+				bits := att.GetAggregationBits()
+				assert.Equal(t, true, bits.Count() <= tt.maxBits)
+				if bits.Count() > 2 {
+					mergedCount++
+				}
+				gotUnion, err = gotUnion.Or(bits)
+				require.NoError(t, err)
+				pubkeys := make([]common.PublicKey, 0, bits.Count())
+				for _, idx := range bits.BitIndices() {
+					pubkeys = append(pubkeys, keys[idx].PublicKey())
+				}
+				sig, err := bls.SignatureFromBytes(att.GetSignature())
+				require.NoError(t, err)
+				assert.Equal(t, true, sig.FastAggregateVerify(pubkeys, message))
+			}
+			assert.Equal(t, tt.mergedCount, mergedCount)
+			assert.DeepEqual(t, wantUnion.Bytes(), gotUnion.Bytes())
+			if tt.unionCovered {
+				firstTwo, err := got[0].GetAggregationBits().Or(got[1].GetAggregationBits())
+				require.NoError(t, err)
+				contains, err := firstTwo.Contains(got[2].GetAggregationBits())
+				require.NoError(t, err)
+				assert.Equal(t, true, contains)
+				for _, att := range got[:2] {
+					contains, err := att.GetAggregationBits().Contains(got[2].GetAggregationBits())
+					require.NoError(t, err)
+					assert.Equal(t, false, contains)
+				}
+			}
+		})
+	}
+}
 
 func TestAggregateAttestations_MaxCover_NewMaxCover(t *testing.T) {
 	type args struct {

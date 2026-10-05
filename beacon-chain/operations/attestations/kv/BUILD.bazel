@@ -18,6 +18,7 @@ go_library(
         "//beacon-chain/operations/attestations/attmap:go_default_library",
         "//config/params:go_default_library",
         "//consensus-types/primitives:go_default_library",
+        "//crypto/bls:go_default_library",
         "//monitoring/tracing/trace:go_default_library",
         "//proto/prysm/v1alpha1:go_default_library",
         "//proto/prysm/v1alpha1/attestation:go_default_library",
@@ -37,6 +38,7 @@ go_test(
     srcs = [
         "aggregated_test.go",
         "block_test.go",
+        "classic_pool_perf_test.go",
         "forkchoice_test.go",
         "seen_bits_test.go",
         "unaggregated_test.go",
@@ -48,6 +50,7 @@ go_test(
         "//crypto/bls:go_default_library",
         "//proto/prysm/v1alpha1:go_default_library",
         "//proto/prysm/v1alpha1/attestation:go_default_library",
+        "//proto/prysm/v1alpha1/attestation/aggregation/attestations:go_default_library",
         "//testing/assert:go_default_library",
         "//testing/require:go_default_library",
         "//testing/util:go_default_library",

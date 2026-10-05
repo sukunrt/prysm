@@ -3,8 +3,6 @@ package kv
 import (
 	"context"
 	"fmt"
-	"runtime"
-	"sync"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
@@ -16,100 +14,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AggregateUnaggregatedAttestations aggregates the unaggregated attestations and saves the
-// newly aggregated attestations in the pool.
-// It tracks the unaggregated attestations that weren't able to aggregate to prevent
-// the deletion of unaggregated attestations in the pool.
+// AggregateUnaggregatedAttestations is retained for callers that process the pool on a tick.
+// Singles are now aggregated as they arrive.
 func (c *AttCaches) AggregateUnaggregatedAttestations(ctx context.Context) error {
-	ctx, span := trace.StartSpan(ctx, "operations.attestations.kv.AggregateUnaggregatedAttestations")
-	defer span.End()
-	unaggregatedAtts := c.UnaggregatedAttestations()
-	return c.aggregateUnaggregatedAtts(ctx, unaggregatedAtts)
-}
-
-func (c *AttCaches) aggregateUnaggregatedAtts(ctx context.Context, unaggregatedAtts []ethpb.Att) error {
-	_, span := trace.StartSpan(ctx, "operations.attestations.kv.aggregateUnaggregatedAtts")
-	defer span.End()
-
-	attsByVerAndDataRoot := make(map[attestation.Id][]ethpb.Att, len(unaggregatedAtts))
-	for _, att := range unaggregatedAtts {
-		id, err := attestation.NewId(att, attestation.Data)
-		if err != nil {
-			return errors.Wrap(err, "could not create attestation ID")
-		}
-		attsByVerAndDataRoot[id] = append(attsByVerAndDataRoot[id], att)
-	}
-
-	// Aggregate unaggregated attestations from the pool and save them in the pool.
-	// Track the unaggregated attestations that aren't able to aggregate.
-	leftOverUnaggregatedAtt := make(map[attestation.Id]bool)
-
-	leftOverUnaggregatedAtt = c.aggregateParallel(attsByVerAndDataRoot, leftOverUnaggregatedAtt)
-
-	// Remove the unaggregated attestations from the pool that were successfully aggregated.
-	for _, att := range unaggregatedAtts {
-		id, err := attestation.NewId(att, attestation.Full)
-		if err != nil {
-			return errors.Wrap(err, "could not create attestation ID")
-		}
-		if leftOverUnaggregatedAtt[id] {
-			continue
-		}
-		if err := c.DeleteUnaggregatedAttestation(att); err != nil {
-			return err
-		}
-	}
 	return nil
-}
-
-// aggregateParallel aggregates attestations in parallel for `atts` and saves them in the pool,
-// returns the unaggregated attestations that weren't able to aggregate.
-// Given `n` CPU cores, it creates a channel of size `n` and spawns `n` goroutines to aggregate attestations
-func (c *AttCaches) aggregateParallel(atts map[attestation.Id][]ethpb.Att, leftOver map[attestation.Id]bool) map[attestation.Id]bool {
-	var leftoverLock sync.Mutex
-	wg := sync.WaitGroup{}
-
-	n := runtime.GOMAXPROCS(0) // defaults to the value of runtime.NumCPU
-	ch := make(chan []ethpb.Att, n)
-	for range n {
-		wg.Go(func() {
-			for as := range ch {
-				aggregated, err := attaggregation.AggregateDisjointOneBitAtts(as)
-				if err != nil {
-					log.WithError(err).Error("Could not aggregate unaggregated attestations")
-					continue
-				}
-				if aggregated == nil {
-					log.Error("Nil aggregated attestation")
-					continue
-				}
-				if aggregated.IsAggregated() {
-					if err := c.SaveAggregatedAttestations([]ethpb.Att{aggregated}); err != nil {
-						log.WithError(err).Error("Could not save aggregated attestation")
-						continue
-					}
-				} else {
-					id, err := attestation.NewId(aggregated, attestation.Full)
-					if err != nil {
-						log.WithError(err).Error("Could not create attestation ID")
-						continue
-					}
-					leftoverLock.Lock()
-					leftOver[id] = true
-					leftoverLock.Unlock()
-				}
-			}
-		})
-	}
-
-	for _, as := range atts {
-		ch <- as
-	}
-
-	close(ch)
-	wg.Wait()
-
-	return leftOver
 }
 
 // SaveAggregatedAttestation saves an aggregated attestation in cache.
@@ -148,14 +56,20 @@ func (c *AttCaches) SaveAggregatedAttestation(att ethpb.Att) error {
 	if !ok {
 		atts := []ethpb.Att{copiedAtt}
 		c.aggregatedAtt[id] = atts
+		addCoverage(c.aggregatedCoverage, id, copiedAtt)
 		return nil
 	}
 
-	atts, err = attaggregation.Aggregate(append(atts, copiedAtt))
+	candidates := make([]ethpb.Att, 0, len(atts)+1)
+	for _, candidate := range atts {
+		candidates = append(candidates, candidate.Clone())
+	}
+	merged, err := attaggregation.Aggregate(append(candidates, copiedAtt))
 	if err != nil {
 		return err
 	}
-	c.aggregatedAtt[id] = atts
+	c.aggregatedAtt[id] = merged
+	rebuildCoverage(c.aggregatedCoverage, id, merged)
 
 	return nil
 }
@@ -181,7 +95,12 @@ func (c *AttCaches) AggregatedAttestations() []ethpb.Att {
 	atts := make([]ethpb.Att, 0)
 
 	for _, a := range c.aggregatedAtt {
-		atts = append(atts, a...)
+		for _, att := range a {
+			atts = append(atts, att.Clone())
+		}
+	}
+	for _, att := range c.runningAtt {
+		atts = append(atts, att.Clone())
 	}
 
 	return atts
@@ -207,8 +126,15 @@ func (c *AttCaches) AggregatedAttestationsBySlotIndex(
 				att, ok := a.(*ethpb.Attestation)
 				// This will never fail in practice because we asserted the version
 				if ok {
-					atts = append(atts, att)
+					atts = append(atts, att.Copy())
 				}
+			}
+		}
+	}
+	for _, a := range c.runningAtt {
+		if a.Version() == version.Phase0 && slot == a.GetData().Slot && committeeIndex == a.GetData().CommitteeIndex {
+			if att, ok := a.(*ethpb.Attestation); ok {
+				atts = append(atts, att.Copy())
 			}
 		}
 	}
@@ -235,8 +161,15 @@ func (c *AttCaches) AggregatedAttestationsBySlotIndexElectra(
 			for _, a := range as {
 				att, ok := ethpb.AttestationElectraFromAtt(a)
 				if ok {
-					atts = append(atts, att)
+					atts = append(atts, att.Copy())
 				}
+			}
+		}
+	}
+	for _, a := range c.runningAtt {
+		if a.Version() >= version.Electra && slot == a.GetData().Slot && a.CommitteeBitsVal().BitAt(uint64(committeeIndex)) {
+			if att, ok := ethpb.AttestationElectraFromAtt(a); ok {
+				atts = append(atts, att.Copy())
 			}
 		}
 	}
@@ -253,17 +186,39 @@ func (c *AttCaches) DeleteAggregatedAttestation(att ethpb.Att) error {
 		return errors.New("attestation is not aggregated")
 	}
 
-	if err := c.insertSeenBit(att); err != nil {
-		return err
-	}
-
 	id, err := attestation.NewId(att, attestation.Data)
 	if err != nil {
 		return errors.Wrap(err, "could not create attestation ID")
 	}
 
+	c.unAggregateAttLock.Lock()
+	defer c.unAggregateAttLock.Unlock()
+	if err := c.insertSeenBit(att); err != nil {
+		return err
+	}
 	c.aggregatedAttLock.Lock()
 	defer c.aggregatedAttLock.Unlock()
+	if fullID, ok := c.singleByData[id]; ok {
+		if single := c.unAggregatedAtt[fullID]; single != nil {
+			if bit, ok := singleBit(single); ok && att.GetAggregationBits().BitAt(bit) {
+				delete(c.unAggregatedAtt, fullID)
+				delete(c.singleByData, id)
+			}
+		}
+	}
+	if running := c.runningAtt[id]; running != nil {
+		contains, err := att.GetAggregationBits().Contains(running.GetAggregationBits())
+		if err != nil {
+			return fmt.Errorf("running aggregation bits contain: %w", err)
+		}
+		if contains {
+			if err := c.insertSeenAggregatedAtt(running); err != nil {
+				return fmt.Errorf("insert running att: %w", err)
+			}
+			delete(c.runningAtt, id)
+			delete(c.runningSig, id)
+		}
+	}
 	attList, ok := c.aggregatedAtt[id]
 	if !ok {
 		return nil
@@ -290,10 +245,12 @@ func (c *AttCaches) DeleteAggregatedAttestation(att ethpb.Att) error {
 
 	if len(filtered) == 0 {
 		delete(c.aggregatedAtt, id)
+		delete(c.aggregatedCoverage, id)
 		return nil
 	}
 
 	c.aggregatedAtt[id] = filtered
+	rebuildCoverage(c.aggregatedCoverage, id, filtered)
 	return nil
 }
 
@@ -301,6 +258,32 @@ func (c *AttCaches) DeleteAggregatedAttestation(att ethpb.Att) error {
 func (c *AttCaches) HasAggregatedAttestation(att ethpb.Att) (bool, error) {
 	if err := helpers.ValidateNilAttestation(att); err != nil {
 		return false, err
+	}
+	if bit, single := singleBit(att); single {
+		id, err := attestation.NewId(att, attestation.Data)
+		if err != nil {
+			return false, fmt.Errorf("could not create attestation ID: %w", err)
+		}
+		c.aggregatedAttLock.RLock()
+		running := c.runningAtt[id]
+		has := (running != nil && running.GetAggregationBits().BitAt(bit)) || c.aggregatedCoverage[id].BitAt(bit)
+		c.aggregatedAttLock.RUnlock()
+		if has {
+			return true, nil
+		}
+		c.blockAttLock.RLock()
+		has = c.blockCoverage[id].BitAt(bit)
+		c.blockAttLock.RUnlock()
+		if has {
+			return true, nil
+		}
+		c.seenAggregatedAttLock.RLock()
+		has = c.seenAggregatedCoverage[id].BitAt(bit)
+		c.seenAggregatedAttLock.RUnlock()
+		if has {
+			return true, nil
+		}
+		return c.hasSeenSingleBit(id, bit)
 	}
 
 	has, err := c.hasAggregatedAtt(att)
@@ -345,6 +328,18 @@ func (c *AttCaches) hasAggregatedAtt(att ethpb.Att) (bool, error) {
 	defer c.aggregatedAttLock.RUnlock()
 
 	cacheAtts, ok := c.aggregatedAtt[id]
+	if running := c.runningAtt[id]; running != nil {
+		contains, err := running.GetAggregationBits().Contains(att.GetAggregationBits())
+		if err != nil {
+			return false, fmt.Errorf("running aggregation bits contains: %w", err)
+		}
+		if contains {
+			return true, nil
+		}
+	}
+	if bit, single := singleBit(att); single {
+		return c.aggregatedCoverage[id].BitAt(bit), nil
+	}
 	if !ok {
 		return false, nil
 	}
@@ -374,6 +369,9 @@ func (c *AttCaches) hasBlockAtt(att ethpb.Att) (bool, error) {
 	defer c.blockAttLock.RUnlock()
 
 	cacheAtts, ok := c.blockAtt[id]
+	if bit, single := singleBit(att); single {
+		return c.blockCoverage[id].BitAt(bit), nil
+	}
 	if !ok {
 		return false, nil
 	}
@@ -403,6 +401,9 @@ func (c *AttCaches) hasSeenAggregatedAtt(att ethpb.Att) (bool, error) {
 	defer c.seenAggregatedAttLock.RUnlock()
 
 	cacheAtts, ok := c.seenAggregatedAtt[id]
+	if bit, single := singleBit(att); single {
+		return c.seenAggregatedCoverage[id].BitAt(bit), nil
+	}
 	if !ok {
 		return false, nil
 	}
@@ -421,11 +422,17 @@ func (c *AttCaches) hasSeenAggregatedAtt(att ethpb.Att) (bool, error) {
 	return false, nil
 }
 
-// AggregatedAttestationCount returns the number of aggregated attestations key in the pool.
+// AggregatedAttestationCount returns the number of aggregated attestation keys in the pool.
 func (c *AttCaches) AggregatedAttestationCount() int {
 	c.aggregatedAttLock.RLock()
 	defer c.aggregatedAttLock.RUnlock()
-	return len(c.aggregatedAtt)
+	count := len(c.aggregatedAtt)
+	for id := range c.runningAtt {
+		if _, ok := c.aggregatedAtt[id]; !ok {
+			count++
+		}
+	}
+	return count
 }
 
 // insertSeenAggregatedAtt inserts an attestation into the seen aggregated cache.
@@ -441,6 +448,7 @@ func (c *AttCaches) insertSeenAggregatedAtt(att ethpb.Att) error {
 	cacheAtts, ok := c.seenAggregatedAtt[id]
 	if !ok {
 		c.seenAggregatedAtt[id] = []ethpb.Att{att.Clone()}
+		addCoverage(c.seenAggregatedCoverage, id, att)
 		return nil
 	}
 
@@ -457,6 +465,7 @@ func (c *AttCaches) insertSeenAggregatedAtt(att ethpb.Att) error {
 	}
 
 	c.seenAggregatedAtt[id] = append(cacheAtts, att.Clone())
+	addCoverage(c.seenAggregatedCoverage, id, att)
 	return nil
 }
 
@@ -479,6 +488,7 @@ func (c *AttCaches) DeleteSeenAggregatedAttestationsBefore(expirySlot primitives
 	for id, atts := range c.seenAggregatedAtt {
 		if len(atts) == 0 || atts[0].GetData().Slot < expirySlot {
 			delete(c.seenAggregatedAtt, id)
+			delete(c.seenAggregatedCoverage, id)
 		}
 	}
 }
