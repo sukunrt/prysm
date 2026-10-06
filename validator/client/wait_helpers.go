@@ -104,15 +104,11 @@ func ffgVoteSpreadDelay(slot primitives.Slot, duty *ethpb.ValidatorDuty) (time.D
 	if slots.ToEpoch(slot) >= cfg.GloasForkEpoch {
 		component = cfg.AggregateDueBPSGloas
 	}
-	available := cfg.SlotComponentDuration(component) - 3*time.Second
-	if available <= 0 {
+	groups := (cfg.SlotComponentDuration(component) - 2*time.Second) / time.Second
+	if groups <= 0 {
 		return 0, false
 	}
-	groups := uint64(available / time.Second)
-	if groups == 0 {
-		return 0, false
-	}
-	group := duty.ValidatorCommitteeIndex * groups / duty.CommitteeLength
+	group := duty.ValidatorCommitteeIndex * uint64(groups) / duty.CommitteeLength
 	return time.Duration(group) * time.Second, true
 }
 

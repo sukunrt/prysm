@@ -163,12 +163,12 @@ func TestFFGVoteSpreadDelay(t *testing.T) {
 		length uint64
 		want   time.Duration
 	}{
-		{name: "first third", slot: 0, index: 0, length: 12, want: 0},
-		{name: "second third boundary", slot: 0, index: 4, length: 12, want: time.Second},
-		{name: "last third", slot: 0, index: 11, length: 12, want: 2 * time.Second},
-		{name: "first sixth", slot: primitives.Slot(cfg.SlotsPerEpoch), index: 1, length: 12, want: 0},
-		{name: "second sixth boundary", slot: primitives.Slot(cfg.SlotsPerEpoch), index: 2, length: 12, want: time.Second},
-		{name: "last sixth", slot: primitives.Slot(cfg.SlotsPerEpoch), index: 11, length: 12, want: 5 * time.Second},
+		{name: "first quarter", slot: 0, index: 2, length: 12, want: 0},
+		{name: "second quarter boundary", slot: 0, index: 3, length: 12, want: time.Second},
+		{name: "last quarter", slot: 0, index: 11, length: 12, want: 3 * time.Second},
+		{name: "first seventh", slot: primitives.Slot(cfg.SlotsPerEpoch), index: 1, length: 12, want: 0},
+		{name: "second seventh boundary", slot: primitives.Slot(cfg.SlotsPerEpoch), index: 2, length: 12, want: time.Second},
+		{name: "last seventh", slot: primitives.Slot(cfg.SlotsPerEpoch), index: 11, length: 12, want: 6 * time.Second},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestFFGVoteSpreadDelay(t *testing.T) {
 		})
 	}
 
-	cfg.AggregateDueBPS = 2917
+	cfg.AggregateDueBPS = 2083
 	params.OverrideBeaconConfig(cfg)
 	got, spread := ffgVoteSpreadDelay(0, &ethpb.ValidatorDuty{CommitteeLength: 12})
 	require.Equal(t, false, spread)
@@ -191,7 +191,7 @@ func TestFFGVoteSpreadDelay(t *testing.T) {
 func TestWaitFFGVoteSpreadZeroGroups(t *testing.T) {
 	params.SetupTestConfigCleanup(t)
 	cfg := params.BeaconConfig().Copy()
-	cfg.AggregateDueBPS = 2917
+	cfg.AggregateDueBPS = 2083
 	cfg.GloasForkEpoch = 1
 	params.OverrideBeaconConfig(cfg)
 	reset := features.InitWithReset(&features.Flags{DecoupledFFGVoteJitter: time.Hour})
