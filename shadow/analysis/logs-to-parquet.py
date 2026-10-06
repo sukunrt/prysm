@@ -92,7 +92,11 @@ data_columns -- msg="Data column", one row per data column sidecar
 
 ffg_aggregates -- msg="FFG aggregate", one row per aggregate seen or produced
     att_slot, target_round, committee_index, aggregator_index, seats,
-    outcome, arrived_ms, validators.  outcome is gossip | local; validators is
+    outcome, reason, arrived_ms, decided_ms, validators.  outcome is gossip |
+    local | ignored; ignored records distinguish already_known pool coverage
+    from redundant experimental-cache coverage and do not count as accepted.
+    Ignored aggregates are logged even without --goldfish-vote-ledger.
+    validators is absent for ignored records; otherwise it is
     the comma-separated validator indices the aggregation bits name, so the
     seats of an aggregate can be joined back to the votes that filled them.
 
@@ -286,7 +290,9 @@ TABLES = {
             ("aggregator_index", "aggregatorIndex", "INTEGER"),
             ("seats", "seats", "INTEGER"),
             ("outcome", "outcome", "VARCHAR"),
+            ("reason", "reason", "VARCHAR"),
             ("arrived_ms", "arrivedMs", "INTEGER"),
+            ("decided_ms", "decidedMs", "INTEGER"),
             ("data_root", "dataRoot", "VARCHAR"),
             ("block_root", "blockRoot", "VARCHAR"),
             ("validators", "validators", "VARCHAR"),

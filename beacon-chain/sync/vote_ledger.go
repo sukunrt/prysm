@@ -176,6 +176,27 @@ func (s *Service) recordFFGAggregate(
 	}).Info("FFG aggregate")
 }
 
+// logIgnoredFFGAggregate always logs covered aggregates without counting them as accepted.
+func (s *Service) logIgnoredFFGAggregate(signed ethpb.SignedAggregateAttAndProof, reason string, arrived time.Time) {
+	aggregateAndProof := signed.AggregateAttestationAndProof()
+	att := aggregateAndProof.AggregateVal()
+	data := att.GetData()
+	genesis := s.cfg.clock.GenesisTime()
+	log.WithFields(logrus.Fields{
+		"outcome":         "ignored",
+		"reason":          reason,
+		"attSlot":         data.Slot,
+		"targetRound":     data.Target.Epoch,
+		"committeeIndex":  att.GetCommitteeIndex(),
+		"aggregatorIndex": aggregateAndProof.GetAggregatorIndex(),
+		"seats":           att.GetAggregationBits().Count(),
+		"arrivedMs":       int64(msIntoSlot(genesis, data.Slot, arrived)),
+		"decidedMs":       int64(msIntoSlot(genesis, data.Slot, time.Now())),
+		"blockRoot":       fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
+		"dataRoot":        decoupled.VoteLedgerDataRoot(att),
+	}).Info("FFG aggregate")
+}
+
 // logDataColumn writes one line per data column sidecar the node takes in.
 // outcome says how it arrived: "gossip" for one accepted off a column subnet,
 // "local" for one the node built itself by reconstruction or from the execution

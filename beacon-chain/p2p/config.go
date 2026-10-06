@@ -12,7 +12,7 @@ import (
 )
 
 // This is the default queue size used if we have specified an invalid one.
-const defaultPubsubQueueSize = 600
+const defaultPubsubQueueSize = 20000
 const (
 	// defaultConnManagerPruneAbove sets the number of peers where ConnectionManager
 	// will begin to internally prune peers. This value is set based on the internal

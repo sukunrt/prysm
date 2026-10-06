@@ -124,6 +124,7 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 			return pubsub.ValidationIgnore, err
 		}
 		if isRedundant {
+			s.logIgnoredFFGAggregate(m, "redundant", receivedTime)
 			return pubsub.ValidationIgnore, nil
 		}
 	} else {
@@ -134,6 +135,7 @@ func (s *Service) validateAggregateAndProof(ctx context.Context, pid peer.ID, ms
 			return pubsub.ValidationIgnore, err
 		}
 		if seen {
+			s.logIgnoredFFGAggregate(m, "already_known", receivedTime)
 			return pubsub.ValidationIgnore, nil
 		}
 	}
