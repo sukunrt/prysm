@@ -25,8 +25,8 @@ network_params:
   seconds_per_slot: 12
   slot_duration_ms: 12000
   num_validator_keys_per_node: 100
-  genesis_gaslimit: 9000000
-  gas_limit: 9000000
+  genesis_gaslimit: 200000000
+  gas_limit: 200000000
   genesis_delay: 180
   deneb_fork_epoch: 0
   electra_fork_epoch: 0

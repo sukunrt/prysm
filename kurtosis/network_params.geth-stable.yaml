@@ -1,9 +1,9 @@
-# network_params.yaml on geth master: the newer-geth shakeout. Run-scoped;
-# the baseline file keeps its pin.
+# network_params.yaml on the latest stable geth release. Run-scoped; the
+# baseline file keeps its pin.
 #
-#   IMAGE_TAG=geth-master ./kurtosis/build-images.sh
-#   kurtosis run --enclave geth-master ~/dev/ethereum-package \
-#       --args-file kurtosis/network_params.geth-master.yaml
+#   IMAGE_TAG=geth-stable ./kurtosis/build-images.sh
+#   kurtosis run --enclave geth-stable ~/dev/ethereum-package \
+#       --args-file kurtosis/network_params.geth-stable.yaml
 #
 # 5 nodes x 50 keys = 250 validators, 12s slots: the chain config and client
 # flags of the Shadow goldfish sims on a plain meshed devnet. Node count and
@@ -14,16 +14,16 @@
 
 participants:
   - el_type: geth
-    # geth master, pinned build fd07354 (2026-08-26). Works only with the
-    # 6.2.1-based prysm-genesis-gen, which predeploys the EIP-8282 builder
-    # deposit/exit contracts geth master reads.
-    el_image: ethpandaops/geth:master-fd07354
+    # geth v1.17.7 (2026-09-30), the latest stable release. Works only with
+    # the 6.2.1-based prysm-genesis-gen, which predeploys the EIP-8282 builder
+    # deposit/exit contracts geth reads.
+    el_image: ethereum/client-go:v1.17.7
     cl_type: prysm
     # Built by kurtosis/build-images.sh from this tree. Also tagged with the
-    # jj change id; :geth-master is what a run uses so the file does not churn.
-    cl_image: prysm-beacon-chain:geth-master
+    # jj change id; :geth-stable is what a run uses so the file does not churn.
+    cl_image: prysm-beacon-chain:geth-stable
     vc_type: prysm
-    vc_image: prysm-validator:geth-master
+    vc_image: prysm-validator:geth-stable
     # The package defaults a 1:1 Prysm BN/VC pair to gRPC
     # (--beacon-rpc-provider) since ethereum-package 04988b4. The REST client
     # now supports the fork's duties, available attestations included, so both
@@ -59,13 +59,13 @@ participants:
   # round(0.3 x 5) = 2 nodes whose EL takes no peers: their transactions
   # reach a block only through their own proposer. Same CL config as above.
   - el_type: geth
-    el_image: ethpandaops/geth:master-fd07354
+    el_image: ethereum/client-go:v1.17.7
     el_extra_params:
       - --maxpeers=0
     cl_type: prysm
-    cl_image: prysm-beacon-chain:geth-master
+    cl_image: prysm-beacon-chain:geth-stable
     vc_type: prysm
-    vc_image: prysm-validator:geth-master
+    vc_image: prysm-validator:geth-stable
     vc_extra_params:
       - --decoupled-ffg-vote-at-slot-start
     use_separate_vc: true
@@ -116,7 +116,7 @@ ethereum_genesis_generator_params:
   # genesis state built by prysmctl instead of eth-genesis-state-generator.
   # The patches are commits on sukunrt/ethereum-genesis-generator, branch
   # `decoupled`; this image is that branch plus this tree's prysmctl.
-  image: prysm-genesis-gen:geth-master
+  image: prysm-genesis-gen:geth-stable
   extra_env:
     # Four rounds to the 32-slot epoch: the attestation-traffic multiplier
     # the measurements are about.

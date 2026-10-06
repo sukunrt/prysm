@@ -42,6 +42,7 @@ INFRA_COUNTRY = "germany"
 SIM_EPOCH = 946684800  # Shadow's clock starts at 2000-01-01
 GENESIS_AT_S = 300
 SLOT_S = 12
+GAS_LIMIT = 200_000_000
 PREMINE_BEGIN = "    # BEGIN spamoor child wallets"
 PREMINE_END = "    # END spamoor child wallets"
 
@@ -151,7 +152,8 @@ def sim_config(args, country, supers, vals):
     beacon_args = (f"--p2p-max-peers {args.max_peers} --goldfish-vote-ledger "
                    "--pprof --pprofaddr=0.0.0.0")
     vc_args = ("--decoupled-ffg-vote-at-slot-start --enable-beacon-rest-api "
-               "--beacon-rest-api-provider=http://127.0.0.1:31001")
+               "--beacon-rest-api-provider=http://127.0.0.1:31001 "
+               f"--suggested-gas-limit={GAS_LIMIT}")
     if args.ffg_committees_per_subnet_per_slot > 1:
         ffg = f" --ffg-committees-per-subnet-per-slot={args.ffg_committees_per_subnet_per_slot}"
         beacon_args += ffg
@@ -167,7 +169,8 @@ def sim_config(args, country, supers, vals):
         "lighthouse_bootnode": {"type": "lighthouse_bootnode",
                                 "executable": str(LIGHTHOUSE / "lighthouse"),
                                 "lcli_executable": str(LIGHTHOUSE / "lcli")},
-        "geth": {"type": "geth", "executable": str(BIN / "geth")},
+        "geth": {"type": "geth", "executable": str(BIN / "geth"),
+                 "extra_args": f"--miner.gaslimit={GAS_LIMIT}"},
         "geth_bootnode": {"type": "geth_bootnode", "executable": str(BIN / "bootnode")},
         # 16 KiB calldata transfers: 21000 + 64 x 16384 gas on this chain, 7 % over.
         "spamoor_eoatx": {
@@ -208,8 +211,7 @@ def sim_config(args, country, supers, vals):
             "use_builtin_locations": False,
             "use_builtin_reliabilities": False,
             "genesis": {
-                # 9 M fits eight 16 KiB transfers plus the blob transactions.
-                "gaslimit": 9000000,
+                "gaslimit": GAS_LIMIT,
                 "generator_image": "prysm-genesis-gen:local",
                 "electra_epoch": 0,
                 "fulu_epoch": 0,

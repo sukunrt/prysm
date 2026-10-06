@@ -88,10 +88,10 @@ network_params:
   # 5 x 50 = 250 validators: 250 / SLOTS_PER_ROUND = 31 attesters per slot.
   num_validator_keys_per_node: 50
   # As the Shadow genesis carries it.
-  genesis_gaslimit: 9000000
-  # genesis_gaslimit only seeds block 0; the package's default 200M target
-  # then lets the limit climb 1/1024 per block. This holds it at 9M.
-  gas_limit: 9000000
+  genesis_gaslimit: 200000000
+  # geth --miner.gaslimit and the Prysm VC --suggested-gas-limit. The VC's
+  # proposer preferences carry it to the EL as the target gas limit.
+  gas_limit: 200000000
   # Enough for five nodes' images, keys and genesis before slot 0.
   genesis_delay: 180
 
