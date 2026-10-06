@@ -69,10 +69,13 @@ def parse_args():
     ap.add_argument("--slots-per-round", type=int, default=8,
                     help="SLOTS_PER_ROUND; the per-slot pool is validators / this")
     ap.add_argument("--target-committee-size", type=int, default=3000,
-                    help="TARGET_COMMITTEE_SIZE; committees per slot = pool / this, min 1")
+                    help="TARGET_COMMITTEE_SIZE; committees per slot = pool / this, min 1; "
+                         "with X > 1, min(64, X * subnets)")
     ap.add_argument("--aggregators-per-committee", type=int, default=64,
                     help="TARGET_AGGREGATORS_PER_COMMITTEE; expected aggregators in a committee")
     ap.add_argument("--subnets", type=int, default=1, help="ATTESTATION_SUBNET_COUNT")
+    ap.add_argument("--ffg-committees-per-subnet-per-slot", type=int, default=1,
+                    help="X; with X > 1, the X committees of a subnet send one after the other")
     ap.add_argument("--subnets-per-node", type=int, default=2, help="SUBNETS_PER_NODE")
     ap.add_argument("--aggregate-due-bps", type=int, default=5000,
                     help="AGGREGATE_DUE_BPS_GLOAS; FFG votes count at this point of the slot")
@@ -147,6 +150,10 @@ def sim_config(args, country, supers, vals):
                    "--pprof --pprofaddr=0.0.0.0")
     vc_args = ("--decoupled-ffg-vote-at-slot-start --enable-beacon-rest-api "
                "--beacon-rest-api-provider=http://127.0.0.1:31001")
+    if args.ffg_committees_per_subnet_per_slot > 1:
+        ffg = f" --ffg-committees-per-subnet-per-slot={args.ffg_committees_per_subnet_per_slot}"
+        beacon_args += ffg
+        vc_args += ffg
     clients = {
         "prysm": {"type": "prysm", "executable": str(BIN / "prysm-beacon"),
                   "lower_target_peers": False, "extra_args": beacon_args},
@@ -257,6 +264,8 @@ def main():
               f"{vals[i]} validators")
     pool = args.validators // args.slots_per_round
     committees = max(1, pool // args.target_committee_size)
+    if args.ffg_committees_per_subnet_per_slot > 1:
+        committees = min(64, args.ffg_committees_per_subnet_per_slot * args.subnets)
     print(f"  {len(set(country))} countries, {len(supers)} supernodes, "
           f"{sum(vals)} validators, seed {args.seed}")
     print(f"  pool {pool} seats a slot, {committees} committees of "

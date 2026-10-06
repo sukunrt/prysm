@@ -10,8 +10,10 @@ import (
 
 	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/gloas"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/signing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
@@ -398,6 +400,30 @@ func TestProcessPTCWindow_GoldenVector(t *testing.T) {
 	}
 	const expected = "bfdb357dbb3f2abe4bba9a0d5d0d6d8ae9e19335e83f64f21b5a2f727a0f3ee9"
 	require.Equal(t, expected, hex.EncodeToString(h.Sum(nil)))
+}
+
+func TestProcessPTCWindow_FFGCommitteesPerSubnetPerSlot(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	c := params.BeaconConfig().Copy()
+	c.AttestationSubnetCount = 2
+	params.OverrideBeaconConfig(c)
+	t.Cleanup(helpers.ClearCache)
+
+	fuluSt, _ := testutil.DeterministicGenesisStateFulu(t, 256)
+	st, err := gloas.UpgradeToGloas(fuluSt)
+	require.NoError(t, err)
+	require.NoError(t, st.SetSlot(params.BeaconConfig().SlotsPerEpoch))
+
+	window := func(x uint64) []*eth.PTCs {
+		defer features.InitWithReset(&features.Flags{FFGCommitteesPerSubnetPerSlot: x})()
+		helpers.ClearCache()
+		s := st.Copy()
+		require.NoError(t, gloas.ProcessPTCWindow(t.Context(), s))
+		w, err := s.PTCWindow()
+		require.NoError(t, err)
+		return w
+	}
+	require.DeepEqual(t, window(1), window(3))
 }
 
 type validatorLookupErrState struct {

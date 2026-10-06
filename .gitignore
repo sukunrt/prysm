@@ -64,3 +64,4 @@ testing/spectest/methodical
 # stray build/gen binary built at the repo root
 /gen
 /interop-wallet
+__pycache__/

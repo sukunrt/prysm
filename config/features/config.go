@@ -109,6 +109,7 @@ type Flags struct {
 	DecoupledFFGVoteJitter            time.Duration
 	DecoupledLateBlockPublishBPS      uint64
 	DecoupledLateBlockPublishEveryNth uint64
+	FFGCommitteesPerSubnetPerSlot     uint64
 
 	// AggregateIntervals specifies the time durations at which we aggregate attestations preparing for forkchoice.
 	AggregateIntervals [3]time.Duration
@@ -327,6 +328,7 @@ func ConfigureBeaconChain(ctx *cli.Context) error {
 		logEnabled(GoldfishVoteLedger)
 		cfg.GoldfishVoteLedger = true
 	}
+	cfg.FFGCommitteesPerSubnetPerSlot = ctx.Uint64(FFGCommitteesPerSubnetPerSlot.Name)
 	if ctx.IsSet(EnableStateDiff.Name) {
 		logEnabled(EnableStateDiff)
 		cfg.EnableStateDiff = true
@@ -414,6 +416,7 @@ func ConfigureValidator(ctx *cli.Context) error {
 		cfg.DecoupledFFGVoteSpread = true
 	}
 	cfg.DecoupledFFGVoteJitter = ctx.Duration(decoupledFFGVoteJitter.Name)
+	cfg.FFGCommitteesPerSubnetPerSlot = ctx.Uint64(FFGCommitteesPerSubnetPerSlot.Name)
 	switch source := ctx.String(DecoupledFFGHeadSource.Name); source {
 	case "", HeadAtVoteTime:
 	case HeadAtRoundStart:

@@ -252,14 +252,23 @@ var (
 	DecoupledFFGVoteSpread = &cli.BoolFlag{
 		Name: "decoupled-ffg-vote-spread",
 		Usage: "(Decoupled research): Spreads FFG attestation publication across the committee. " +
-			"Only takes effect with --decoupled-ffg-vote-at-slot-start.",
+			"Only takes effect with --decoupled-ffg-vote-at-slot-start. " +
+			"Ignored when --ffg-committees-per-subnet-per-slot is 2 or more.",
 	}
 	// decoupledFFGVoteJitter bounds the random delay added to a slot-start FFG vote.
 	decoupledFFGVoteJitter = &cli.DurationFlag{
 		Name: "decoupled-ffg-vote-jitter",
 		Usage: "(Decoupled research): Upper bound of the random delay added to a slot-start FFG " +
-			"vote. Only read when --decoupled-ffg-vote-at-slot-start is set.",
+			"vote. Only read when --decoupled-ffg-vote-at-slot-start is set or " +
+			"--ffg-committees-per-subnet-per-slot is 2 or more.",
 		Value: 200 * time.Millisecond,
+	}
+	FFGCommitteesPerSubnetPerSlot = &cli.Uint64Flag{
+		Name: "ffg-committees-per-subnet-per-slot",
+		Usage: "(Decoupled research): FFG committees per subnet per slot. With 2 or more, " +
+			"committees per slot is this value times the subnet count, and the committees " +
+			"of a subnet vote one after the other before the aggregate due.",
+		Value: 1,
 	}
 	// DecoupledFFGHeadSource picks which slot's head answer the FFG attestation
 	// names: the one the node returns at vote time, or the one it returned at the
@@ -317,6 +326,7 @@ var ValidatorFlags = append(deprecatedFlags, []cli.Flag{
 	DecoupledFFGVoteAtSlotStart,
 	DecoupledFFGVoteSpread,
 	decoupledFFGVoteJitter,
+	FFGCommitteesPerSubnetPerSlot,
 	DecoupledFFGHeadSource,
 	DecoupledLateBlockPublishBPS,
 	DecoupledLateBlockPublishEveryNth,
@@ -345,6 +355,7 @@ var BeaconChainFlags = combinedFlags([]cli.Flag{
 	ignoreUnviableAttestations,
 	disableTrackEquivocations,
 	GoldfishVoteLedger,
+	FFGCommitteesPerSubnetPerSlot,
 	enableFullSSZDataLogging,
 	disableVerboseSigVerification,
 	enableProposerPreprocessing,

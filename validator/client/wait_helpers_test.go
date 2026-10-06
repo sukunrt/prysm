@@ -222,6 +222,47 @@ func TestWaitFFGVoteSpreadCancelled(t *testing.T) {
 	}))
 }
 
+func TestFFGCommitteeOffsets(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 12000
+	cfg.AggregateDueBPS = 5000
+	cfg.AggregateDueBPSGloas = 7500
+	cfg.GloasForkEpoch = 1
+	cfg.AttestationSubnetCount = 2
+	params.OverrideBeaconConfig(cfg)
+	gloas := primitives.Slot(cfg.SlotsPerEpoch)
+
+	tests := []struct {
+		slot primitives.Slot
+		x    uint64
+		b    []time.Duration
+	}{
+		{slot: 0, x: 2, b: []time.Duration{0, 3000, 6000}},
+		{slot: 0, x: 3, b: []time.Duration{0, 2000, 4000, 6000}},
+		{slot: 0, x: 4, b: []time.Duration{0, 1500, 3000, 4500, 6000}},
+		{slot: 0, x: 7, b: []time.Duration{0, 857, 1714, 2571, 3428, 4285, 5142, 6000}},
+		{slot: gloas, x: 2, b: []time.Duration{0, 4500, 9000}},
+		{slot: gloas, x: 3, b: []time.Duration{0, 3000, 6000, 9000}},
+		{slot: gloas, x: 4, b: []time.Duration{0, 2250, 4500, 6750, 9000}},
+		{slot: gloas, x: 7, b: []time.Duration{0, 1285, 2571, 3857, 5142, 6428, 7714, 9000}},
+	}
+	for _, tt := range tests {
+		reset := features.InitWithReset(&features.Flags{FFGCommitteesPerSubnetPerSlot: tt.x})
+		for i := range tt.x {
+			for subnet := range cfg.AttestationSubnetCount {
+				c := primitives.CommitteeIndex(i*cfg.AttestationSubnetCount + subnet)
+				send, aggregate := ffgCommitteeOffsets(tt.slot, c)
+				assert.Equal(t, tt.b[i]*time.Millisecond, send,
+					"slot %d x %d c %d", tt.slot, tt.x, c)
+				assert.Equal(t, tt.b[i+1]*time.Millisecond, aggregate,
+					"slot %d x %d c %d", tt.slot, tt.x, c)
+			}
+		}
+		reset()
+	}
+}
+
 func TestLatePublishDelay(t *testing.T) {
 	params.SetupTestConfigCleanup(t)
 	cfg := params.BeaconConfig().Copy()

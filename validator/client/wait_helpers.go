@@ -140,6 +140,40 @@ func (v *validator) waitFFGVoteSpread(ctx context.Context, slot primitives.Slot,
 	}
 }
 
+func ffgCommitteeOffsets(
+	slot primitives.Slot,
+	committeeIndex primitives.CommitteeIndex,
+) (time.Duration, time.Duration) {
+	cfg := params.BeaconConfig()
+	component := cfg.AggregateDueBPS
+	if slots.ToEpoch(slot) >= cfg.GloasForkEpoch {
+		component = cfg.AggregateDueBPSGloas
+	}
+	d := uint64(cfg.SlotComponentDuration(component).Milliseconds())
+	x := features.Get().FFGCommitteesPerSubnetPerSlot
+	i := uint64(committeeIndex) / cfg.AttestationSubnetCount
+	return time.Duration(i*d/x) * time.Millisecond, time.Duration((i+1)*d/x) * time.Millisecond
+}
+
+func (v *validator) waitSlotOffset(
+	ctx context.Context,
+	slot primitives.Slot,
+	offset time.Duration,
+) {
+	startTime, err := slots.StartTime(v.genesisTime, slot)
+	if err != nil {
+		log.WithError(err).WithField("slot", slot).
+			Error("Slot overflows, unable to wait for the FFG committee")
+		return
+	}
+	t := time.NewTimer(prysmTime.Until(startTime.Add(offset)))
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+	case <-t.C:
+	}
+}
+
 // latePublishDelay returns how far into the slot the given proposer holds its block
 // back. A zero bps disables the knob; everyNth selects the subset of proposer
 // indices that publish late, 1 (the default) meaning every proposer.

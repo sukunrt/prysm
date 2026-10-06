@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staggered FFG committees</title>
+  <style>
+    :root { color-scheme: light; --ink: #182737; --muted: #526171; --line: #d9e1e8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f5f7f9; color: var(--ink); font: 16px/1.6 system-ui, sans-serif; }
+    main { max-width: 1000px; margin: 36px auto; padding: 36px 44px; background: white; border: 1px solid var(--line); border-radius: 12px; }
+    h1 { font-size: 30px; line-height: 1.2; margin: 8px 0 16px; }
+    h2 { font-size: 21px; margin: 30px 0 10px; }
+    p { margin: 10px 0; }
+    .eyebrow, .caption { color: var(--muted); font-size: 14px; }
+    .eyebrow { font-weight: 650; }
+    .note { border-left: 4px solid #6478cb; background: #f3f5ff; padding: 12px 18px; margin: 18px 0; }
+    code { font: .92em ui-monospace, monospace; background: #eef2f6; padding: 2px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+    pre { overflow-x: auto; padding: 16px; background: #eef2f6; border-radius: 6px; line-height: 1.6; }
+    pre code { padding: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 15px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { background: #f2f5f8; }
+    li { margin: 7px 0; }
+    a { color: #245a9d; }
+    figure { margin: 22px 0; }
+    svg { width: 100%; height: auto; display: block; }
+    .diagram { overflow-x: auto; }
+    .diagram svg { min-width: 650px; }
+    @media (max-width: 700px) { main { margin: 0; padding: 22px 18px; border: 0; } h1 { font-size: 25px; } }
+    @media print { body { background: white; } main { margin: 0; max-width: none; padding: 0; border: 0; } figure, table { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">NETWORK SIMULATION · SPEC · 6 OCTOBER 2026</div>
+  <h1>Staggered FFG committees</h1>
+  <p class="caption"><a href="ffg-committee-schedule-implementation.md">Implementation plan</a></p>
+  <p>Today, with committees per slot = <code>S</code> as in the recorded runs, each subnet has one FFG committee per slot. All members of that committee send their vote at the same time, so the subnet gets a burst of single votes. This change puts <code>X</code> committees on each subnet in each slot and sends them one after the other. Each committee has its own aggregators. The last committee's aggregate publishes at the existing aggregate due.</p>
+  <div class="note"><strong>Scope.</strong> In scope: one flag, the committee count, the send and aggregate times in the validator client, and forwarding the flag in the Shadow harness. Out of scope: new deadlines or late-vote checks in the pool, RPC, gossip or P2P code; new message formats or topics; changes to aggregator selection; changes to blocks, payloads, blobs, PTC, Goldfish votes or other traffic; new validation checks or limits; new metrics or logs; unrelated refactors. <code>X &lt;= 1</code> keeps current behavior.</div>
+
+  <h2>Flag</h2>
+  <pre><code>--ffg-committees-per-subnet-per-slot=X</code></pre>
+  <p>The beacon node, the validator client and the Shadow harness accept the flag. The default is <code>1</code>. The value is an unsigned integer; <code>0</code> and <code>1</code> both mean disabled. The beacon nodes and validator clients of one simulation must use the same value. The harness forwards one value to all of them.</p>
+
+  <h2>Committees</h2>
+  <p>Let <code>S = ATTESTATION_SUBNET_COUNT</code>. When <code>X &gt;= 2</code>, the committees-per-slot count is <code>X * S</code>. The existing clamp to <code>MAX_COMMITTEES_PER_SLOT</code> stays, so use <code>X * S &lt;= 64</code> (<code>committee_bits</code> is a <code>Bitvector[64]</code>). The existing shuffle and committee construction use this count. Do not build the old committees and then split them.</p>
+  <p>The existing subnet mapping gives <code>subnet = c % S</code> for committee index <code>c</code>, because the count is a multiple of <code>S</code>. The position of the committee on its subnet is <code>i = floor(c / S)</code>. Example: with <code>S = 2</code> and <code>X = 3</code>, subnet 0 has committees 0, 2, 4 and subnet 1 has committees 1, 3, 5. Each validator still votes once per round. Validators move into more, smaller committees.</p>
+
+  <h2>Schedule</h2>
+  <p>Let <code>D</code> be the existing aggregate due in milliseconds from slot start: <code>AGGREGATE_DUE_BPS_GLOAS</code> from the Gloas fork, <code>AGGREGATE_DUE_BPS</code> before it. The committees share the time before <code>D</code> equally:</p>
+  <pre><code>B[i] = floor(i * D / X), for i = 0 .. X
+
+position i sends at:          slot_start + B[i] + jitter
+position i aggregates at:     slot_start + B[i + 1]
+last aggregate (i = X - 1):   slot_start + B[X] = slot_start + D</code></pre>
+  <p>All subnets use the same schedule. After <code>D</code> there are no scheduled single votes. That time is for aggregate propagation. Other traffic continues for the whole slot.</p>
+
+  <figure>
+    <div class="diagram">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 375" role="img" aria-labelledby="slot-title slot-description">
+        <title id="slot-title">Three FFG committees per subnet, aggregate due at nine seconds</title>
+        <desc id="slot-description">Committee one sends at zero seconds and aggregates at three. Committee two sends at three seconds and aggregates at six. Committee three sends at six seconds and aggregates at nine, which is the aggregate due. After nine seconds there are no scheduled single votes; aggregates propagate. Other traffic continues for the whole slot.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="#24805a"/></marker>
+        </defs>
+        <rect x="720" y="45" width="180" height="285" rx="8" fill="#eeeaff"/>
+        <g font-family="system-ui, sans-serif" font-size="15" fill="#182737">
+          <text x="180" y="27" text-anchor="middle">0 s</text>
+          <text x="360" y="27" text-anchor="middle">3 s</text>
+          <text x="540" y="27" text-anchor="middle">6 s</text>
+          <text x="720" y="27" text-anchor="middle">9 s = D</text>
+          <text x="900" y="27" text-anchor="middle">12 s</text>
+          <g stroke="#cbd4df" stroke-dasharray="4 5">
+            <line x1="180" y1="40" x2="180" y2="330"/>
+            <line x1="360" y1="40" x2="360" y2="330"/>
+            <line x1="540" y1="40" x2="540" y2="330"/>
+            <line x1="720" y1="40" x2="720" y2="330"/>
+            <line x1="900" y1="40" x2="900" y2="330"/>
+          </g>
+          <text x="15" y="85">Position 0</text>
+          <text x="15" y="133">Position 1</text>
+          <text x="15" y="181">Position 2</text>
+          <rect x="180" y="62" width="180" height="34" rx="5" fill="#dceafb"/>
+          <rect x="360" y="110" width="180" height="34" rx="5" fill="#dceafb"/>
+          <rect x="540" y="158" width="180" height="34" rx="5" fill="#dceafb"/>
+          <g fill="#245a9d">
+            <circle cx="180" cy="79" r="6"/>
+            <circle cx="360" cy="127" r="6"/>
+            <circle cx="540" cy="175" r="6"/>
+          </g>
+          <text x="270" y="84" text-anchor="middle">Votes arrive</text>
+          <text x="450" y="132" text-anchor="middle">Votes arrive</text>
+          <text x="630" y="180" text-anchor="middle">Votes arrive</text>
+          <text x="810" y="104" text-anchor="middle" fill="#534391">Aggregate</text>
+          <text x="810" y="128" text-anchor="middle" fill="#534391">propagation</text>
+          <text x="810" y="156" text-anchor="middle" font-size="13" fill="#534391">No scheduled singles</text>
+          <text x="15" y="232">Pos 0 aggregates</text>
+          <text x="15" y="274">Pos 1 aggregates</text>
+          <text x="15" y="316">Pos 2 aggregates</text>
+          <g stroke="#24805a" stroke-width="3" marker-end="url(#arrow)">
+            <line x1="360" y1="227" x2="891" y2="227"/>
+            <line x1="540" y1="269" x2="891" y2="269"/>
+            <line x1="720" y1="311" x2="891" y2="311"/>
+          </g>
+          <g fill="#24805a">
+            <circle cx="360" cy="227" r="5"/>
+            <circle cx="540" cy="269" r="5"/>
+            <circle cx="720" cy="311" r="5"/>
+            <text x="375" y="217" font-size="13">Publish; overlaps positions 1 and 2</text>
+            <text x="555" y="259" font-size="13">Publish; overlaps position 2</text>
+            <text x="735" y="301" font-size="13">Publish at D</text>
+          </g>
+          <text x="180" y="356" font-size="13" fill="#526171">Blue dots: votes send. Green dots: aggregators publish.</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption class="caption">Example: <code>X = 3</code>, <code>--aggregate-due-bps=7500</code> (<code>D = 9 s</code>), jitter 0. Green arrows show time for delivery. All subnets use this schedule.</figcaption>
+  </figure>
+
+  <table>
+    <thead><tr><th>X</th><th>D = 6000 ms (5000 bps, harness default): sends / aggregates</th><th>D = 9000 ms (7500 bps): sends / aggregates</th></tr></thead>
+    <tbody>
+      <tr><td>0, 1</td><td colspan="2">Existing behavior</td></tr>
+      <tr><td>2</td><td>0, 3000 / 3000, 6000</td><td>0, 4500 / 4500, 9000</td></tr>
+      <tr><td>3</td><td>0, 2000, 4000 / 2000, 4000, 6000</td><td>0, 3000, 6000 / 3000, 6000, 9000</td></tr>
+      <tr><td>4</td><td>0, 1500, 3000, 4500 / 1500, 3000, 4500, 6000</td><td>0, 2250, 4500, 6750 / 2250, 4500, 6750, 9000</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Rules when X &gt;= 2</h2>
+  <ol>
+    <li><strong>Send.</strong> Wait until <code>slot_start + B[i]</code> plus the existing <code>--decoupled-ffg-vote-jitter</code> delay. Then run the existing attest path: get the attestation data, sign, publish once. Do not get the attestation data or sign before this time. The duty lookup that gives <code>i</code> can come first. A block arrival does not release the vote early. <code>--decoupled-ffg-vote-spread</code> and the wait for the attestation due or a block do not apply.</li>
+    <li><strong>Data.</strong> The existing per-slot attestation data cache in the validator client does not change. If the validator client already got data in this slot, a later position uses that data.</li>
+    <li><strong>Aggregate.</strong> Each committee uses the existing aggregator selection and target. Each selected aggregator waits until <code>slot_start + B[i + 1]</code>, then gets its committee's aggregate from its beacon node, signs and publishes on the existing aggregate topic. The existing empty-pool, candidate-selection and duplicate-duty behavior stays. There are about <code>X</code> times more aggregates per slot.</li>
+    <li><strong>Late votes.</strong> No new rule. Gossip validation keeps its existing slot window. A vote that arrives after its aggregator got the aggregate still goes into the pool; it is not in that aggregate. The validator client does not skip a late send.</li>
+    <li><strong>Beacon node diagnostics.</strong> The FFG summary and vote seats tick at <code>D</code>, which is now the last aggregate trigger. They do not change.</li>
+  </ol>
+
+  <h2>Evaluate</h2>
+  <p>Compare the baseline (<code>X = 1</code>) with <code>X = 2, 3, 4</code>. Use the same <code>D</code> in all arms, so the last aggregate publishes at the same time. Keep validators, round length, topology, bandwidth, latency, other traffic and seeds the same. In the baseline, set <code>--target-committee-size</code> so that committees per slot = <code>S</code>.</p>
+  <ul>
+    <li>Peak single-vote messages and bytes per 100 ms per subnet.</li>
+    <li>Aggregate publish time and publish-to-receive latency (p50, p95, p99).</li>
+    <li>At slot end, distinct voters covered by the aggregates each node received. Count each signer once.</li>
+    <li>Latency of other traffic, to see contention move to the aggregate topic.</li>
+  </ul>
+  <p>A larger <code>X</code> gives smaller bursts, but each committee has less time and there are more aggregates. Some analysis scripts assume one aggregate due (<code>shadow/analysis/latency-report.sql</code> uses 6000 ms). If a measurement is not available from existing output, report that. Changes to analysis tools are a separate task.</p>
+  <p class="caption">References: <a href="n100-v40000-2sub-arrival.md">recorded arrival measurements</a>; <a href="../shadow/README.md">Shadow harness</a>; <a href="../plan/plan-finality-round.md">Casper FFG scope</a>.</p>
+</main>
+</body>
+</html>

@@ -9,6 +9,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/helpers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/time"
 	state_native "github.com/OffchainLabs/prysm/v7/beacon-chain/state/state-native"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/container/slice"
@@ -995,6 +996,73 @@ func TestBeaconCommittees_CacheAgreesWithRoundMath(t *testing.T) {
 			want, err := helpers.ComputeCommittee(activeIndices, seed, offset, count)
 			require.NoError(t, err)
 			got, err := helpers.BeaconCommitteeFromCache(ctx, state, slot, primitives.CommitteeIndex(idx))
+			require.NoError(t, err)
+			assert.DeepEqual(t, want, got, "slot %d committee %d", slot, idx)
+		}
+	}
+}
+
+func TestSlotCommitteeCount_FFGCommitteesPerSubnetPerSlotUnset(t *testing.T) {
+	c := params.BeaconConfig()
+	for _, x := range []uint64{0, 1} {
+		reset := features.InitWithReset(&features.Flags{FFGCommitteesPerSubnetPerSlot: x})
+		for _, active := range []uint64{0, 1 << 16, 1 << 20, 1 << 24} {
+			want := active / uint64(c.SlotsPerRound) / c.TargetCommitteeSize
+			want = max(1, min(c.MaxCommitteesPerSlot, want))
+			assert.Equal(t, want, helpers.SlotCommitteeCount(active), "x %d active %d", x, active)
+		}
+		reset()
+	}
+}
+
+func TestBeaconCommittees_FFGCommitteesPerSubnetPerSlot(t *testing.T) {
+	ctx := t.Context()
+
+	params.SetupTestConfigCleanup(t)
+	c := params.BeaconConfig().Copy()
+	c.MinGenesisActiveValidatorCount = 128
+	c.SlotsPerEpoch = 32
+	c.SlotsPerRound = 8
+	c.TargetCommitteeSize = 16
+	c.AttestationSubnetCount = 2
+	params.OverrideBeaconConfig(c)
+	defer features.InitWithReset(&features.Flags{FFGCommitteesPerSubnetPerSlot: 3})()
+	helpers.ClearCache()
+	t.Cleanup(helpers.ClearCache)
+
+	state, _ := util.DeterministicGenesisState(t, 256)
+	activeIndices, err := helpers.ActiveValidatorIndices(ctx, state, 0)
+	require.NoError(t, err)
+	activeCount := uint64(len(activeIndices))
+	require.Equal(t, uint64(6), helpers.SlotCommitteeCount(activeCount))
+
+	seen := make(map[primitives.ValidatorIndex]bool, activeCount)
+	for slot := range c.SlotsPerRound {
+		committees, err := helpers.BeaconCommittees(ctx, state, slot)
+		require.NoError(t, err)
+		require.Equal(t, 6, len(committees))
+		for idx, committee := range committees {
+			ci := primitives.CommitteeIndex(idx)
+			subnet := helpers.ComputeSubnetFromCommitteeAndSlot(activeCount, ci, slot)
+			assert.Equal(t, uint64(idx%2), subnet, "slot %d committee %d", slot, idx)
+			for _, v := range committee {
+				require.Equal(t, false, seen[v], "validator %d twice in round", v)
+				seen[v] = true
+			}
+		}
+	}
+	require.Equal(t, len(activeIndices), len(seen))
+
+	seed, err := helpers.Seed(state, 0, c.DomainBeaconAttester)
+	require.NoError(t, err)
+	require.NoError(t, helpers.UpdateCommitteeCache(ctx, state, 0))
+	for slot := range c.SlotsPerRound {
+		for idx := range uint64(6) {
+			want, err := helpers.ComputeCommittee(
+				activeIndices, seed, idx+uint64(slot)*6, 6*uint64(c.SlotsPerRound))
+			require.NoError(t, err)
+			got, err := helpers.BeaconCommitteeFromCache(
+				ctx, state, slot, primitives.CommitteeIndex(idx))
 			require.NoError(t, err)
 			assert.DeepEqual(t, want, got, "slot %d committee %d", slot, idx)
 		}

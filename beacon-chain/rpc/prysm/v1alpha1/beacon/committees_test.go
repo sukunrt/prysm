@@ -13,10 +13,12 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state/stategen"
 	mockstategen "github.com/OffchainLabs/prysm/v7/beacon-chain/state/stategen/mock"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/blocks"
 	blocktest "github.com/OffchainLabs/prysm/v7/consensus-types/blocks/testing"
+	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/testing/util"
@@ -153,6 +155,32 @@ func TestServer_ListBeaconCommittees_PreviousEpoch(t *testing.T) {
 			diff, _ := messagediff.PrettyDiff(res, test.res)
 			t.Errorf("%d/ Diff between responses %s", i, diff)
 		}
+	}
+}
+
+func TestComputeCommittees_SlotCommitteeCount(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotsPerRound = 2
+	cfg.TargetCommitteeSize = 4
+	cfg.MaxCommitteesPerSlot = 64
+	cfg.AttestationSubnetCount = 2
+	params.OverrideBeaconConfig(cfg)
+	t.Cleanup(helpers.ClearCache)
+
+	indices := make([]primitives.ValidatorIndex, 128)
+	for i := range indices {
+		indices[i] = primitives.ValidatorIndex(i)
+	}
+	for x, want := range map[uint64]int{1: 16, 3: 6} {
+		reset := features.InitWithReset(&features.Flags{FFGCommitteesPerSubnetPerSlot: x})
+		helpers.ClearCache()
+		committees, err := computeCommittees(t.Context(), 0, indices, [32]byte{})
+		require.NoError(t, err)
+		for slot, c := range committees {
+			require.Equal(t, want, len(c.Committees), "x %d slot %d", x, slot)
+		}
+		reset()
 	}
 }
 

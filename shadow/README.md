@@ -70,9 +70,10 @@ Options:
 | `--duration` | 120 | seconds of chain time after genesis; genesis is at 300 s |
 | `--seed` | 1 | the country and supernode draw |
 | `--slots-per-round` | 8 | `SLOTS_PER_ROUND`; the per-slot pool is validators / this |
-| `--target-committee-size` | 3000 | `TARGET_COMMITTEE_SIZE`; committees per slot = pool / this, minimum 1 |
+| `--target-committee-size` | 3000 | `TARGET_COMMITTEE_SIZE`; committees per slot = pool / this, minimum 1; with X > 1, min(64, X * subnets) |
 | `--aggregators-per-committee` | 64 | `TARGET_AGGREGATORS_PER_COMMITTEE`; expected aggregators in a committee |
 | `--subnets` | 1 | `ATTESTATION_SUBNET_COUNT` |
+| `--ffg-committees-per-subnet-per-slot` | 1 | X; with X > 1, set on each beacon node and validator client; the X committees of a subnet send one after the other |
 | `--subnets-per-node` | 2 | `SUBNETS_PER_NODE` |
 | `--aggregate-due-bps` | 5000 | `AGGREGATE_DUE_BPS_GLOAS`; FFG votes count at this point of the slot |
 | `--block-scratch` | 0 | `CONSENSUS_BLOCK_SCRATCH_SPACE`, bytes on each gossiped block |
@@ -112,7 +113,7 @@ Deadlines, as the code counts them:
 | --- | --- |
 | Goldfish head vote | the next slot start, 12 000 ms |
 | FFG vote | the aggregate due, `AGGREGATE_DUE_BPS_GLOAS` |
-| FFG aggregate | published at the aggregate due |
+| FFG aggregate | published at the aggregate due; with X >= 2, position i publishes at (i + 1) * D / X ms, the last at the aggregate due |
 
 The monitoring host records prometheus data in
 `runs/<name>/data/node<N>monitoring/prometheus`. Serve that directory with

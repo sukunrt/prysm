@@ -12,6 +12,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/cache"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/time"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/state"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/container/slice"
@@ -55,6 +56,9 @@ type beaconCommitteeFunc = func(
 func SlotCommitteeCount(activeValidatorCount uint64) uint64 {
 	committeesPerSlot := activeValidatorCount / uint64(params.BeaconConfig().SlotsPerRound) /
 		params.BeaconConfig().TargetCommitteeSize
+	if x := features.Get().FFGCommitteesPerSubnetPerSlot; x >= 2 {
+		committeesPerSlot = x * params.BeaconConfig().AttestationSubnetCount
+	}
 
 	if committeesPerSlot > params.BeaconConfig().MaxCommitteesPerSlot {
 		return params.BeaconConfig().MaxCommitteesPerSlot

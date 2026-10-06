@@ -17,6 +17,7 @@ import (
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	"github.com/OffchainLabs/prysm/v7/crypto/bls"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	validatorpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/validator-client"
@@ -311,6 +312,80 @@ func TestSubmitAttestation_SpreadAloneKeepsConventionalWait(t *testing.T) {
 	start := time.Now()
 	v.SubmitAttestation(t.Context(), 1, [fieldparams.BLSPubkeyLength]byte{})
 	require.Equal(t, true, time.Since(start) >= 300*time.Millisecond, "spread alone skipped the conventional wait")
+}
+
+func TestSubmitAttestation_FFGCommitteeSchedule(t *testing.T) {
+	for _, decoupled := range []bool{true, false} {
+		t.Run(fmt.Sprintf("decoupled:%v", decoupled), func(t *testing.T) {
+			params.SetupTestConfigCleanup(t)
+			cfg := params.BeaconConfig().Copy()
+			cfg.SlotDurationMilliseconds = 2400
+			cfg.AggregateDueBPS = 7500
+			cfg.AttestationSubnetCount = 2
+			params.OverrideBeaconConfig(cfg)
+			reset := features.InitWithReset(&features.Flags{
+				FFGCommitteesPerSubnetPerSlot: 3,
+				DecoupledFFGVoteAtSlotStart:   decoupled,
+				DecoupledFFGVoteSpread:        decoupled,
+				DecoupledFFGVoteJitter:        100 * time.Millisecond,
+			})
+			defer reset()
+			b := []time.Duration{0, 600, 1200, 1800}
+
+			v, m, _, finish := setup(t, false)
+			defer finish()
+			pubKeys := make([][fieldparams.BLSPubkeyLength]byte, 3)
+			duties := make([]*ethpb.ValidatorDuty, 3)
+			for i := range pubKeys {
+				key, err := bls.RandKey()
+				require.NoError(t, err)
+				copy(pubKeys[i][:], key.PublicKey().Marshal())
+				require.NoError(t, v.km.(*mockKeymanager).add(keypair{pub: pubKeys[i], pri: key}))
+				duties[i] = &ethpb.ValidatorDuty{
+					PublicKey:       pubKeys[i][:],
+					CommitteeIndex:  primitives.CommitteeIndex(2 * i),
+					CommitteeLength: 4,
+				}
+			}
+			v.duties = testDutyStore(duties...)
+
+			var mu sync.Mutex
+			dataAt := make(map[primitives.CommitteeIndex]time.Time)
+			publishedAt := make(map[primitives.CommitteeIndex]time.Time)
+			m.validatorClient.EXPECT().AttestationData(gomock.Any(), gomock.Any()).Times(3).
+				DoAndReturn(func(_ context.Context, r *ethpb.AttestationDataRequest,
+				) (*ethpb.AttestationData, error) {
+					mu.Lock()
+					defer mu.Unlock()
+					dataAt[r.CommitteeIndex] = time.Now()
+					data := &ethpb.AttestationData{CommitteeIndex: r.CommitteeIndex}
+					return util.HydrateAttestationData(data), nil
+				})
+			m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).AnyTimes().
+				Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
+			m.validatorClient.EXPECT().ProposeAttestation(gomock.Any(), gomock.Any()).Times(3).
+				Do(func(_ context.Context, a *ethpb.Attestation) {
+					mu.Lock()
+					defer mu.Unlock()
+					publishedAt[a.Data.CommitteeIndex] = time.Now()
+				}).Return(&ethpb.AttestResponse{}, nil)
+
+			v.genesisTime = time.Now().Add(300 * time.Millisecond)
+			var wg sync.WaitGroup
+			for _, pubKey := range pubKeys {
+				wg.Go(func() { v.SubmitAttestation(t.Context(), 0, pubKey) })
+			}
+			wg.Wait()
+			for i := range 3 {
+				c := primitives.CommitteeIndex(2 * i)
+				start := v.genesisTime.Add(b[i] * time.Millisecond)
+				end := v.genesisTime.Add(b[i+1] * time.Millisecond)
+				require.Equal(t, false, dataAt[c].Before(start), "position %d data early", i)
+				require.Equal(t, false, publishedAt[c].Before(start), "position %d early", i)
+				require.Equal(t, true, publishedAt[c].Before(end), "position %d late", i)
+			}
+		})
+	}
 }
 
 func TestAttestToBlockHead_AttestsCorrectly(t *testing.T) {

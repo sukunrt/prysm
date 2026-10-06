@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/signing"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
@@ -48,7 +49,12 @@ func (v *validator) SubmitAggregateAndProof(ctx context.Context, slot primitives
 	// As specified in spec, an aggregator should wait until two thirds of the way through slot
 	// to broadcast the best aggregate to the global aggregate channel.
 	// https://github.com/ethereum/consensus-specs/blob/v0.9.3/specs/validator/0_beacon-chain-validator.md#broadcast-aggregate
-	v.waitUntilAggregateDue(ctx, slot)
+	if features.Get().FFGCommitteesPerSubnetPerSlot >= 2 {
+		_, aggregateAt := ffgCommitteeOffsets(slot, duty.CommitteeIndex)
+		v.waitSlotOffset(ctx, slot, aggregateAt)
+	} else {
+		v.waitUntilAggregateDue(ctx, slot)
+	}
 
 	slotSig, err := v.aggSelector.AttestationSelectionProof(ctx, slot, pubKey)
 	if err != nil {

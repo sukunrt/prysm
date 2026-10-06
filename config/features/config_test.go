@@ -220,3 +220,19 @@ func TestConfigureValidator_DecoupledLateBlockPublishBPS(t *testing.T) {
 	err := ConfigureValidator(newCtx(10000))
 	require.ErrorContains(t, "--decoupled-late-block-publish-bps must be below", err)
 }
+
+func TestConfigure_FFGCommitteesPerSubnetPerSlot(t *testing.T) {
+	defer Init(&Flags{})
+	app := cli.App{}
+	for _, configure := range []func(*cli.Context) error{ConfigureBeaconChain, ConfigureValidator} {
+		set := flag.NewFlagSet("test", 0)
+		require.NoError(t, FFGCommitteesPerSubnetPerSlot.Apply(set))
+		ctx := cli.NewContext(&app, set, nil)
+
+		require.NoError(t, configure(ctx))
+		assert.Equal(t, uint64(1), Get().FFGCommitteesPerSubnetPerSlot)
+		require.NoError(t, set.Set(FFGCommitteesPerSubnetPerSlot.Name, "3"))
+		require.NoError(t, configure(ctx))
+		assert.Equal(t, uint64(3), Get().FFGCommitteesPerSubnetPerSlot)
+	}
+}

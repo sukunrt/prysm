@@ -36,9 +36,11 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 	defer span.End()
 	span.SetAttributes(trace.StringAttribute("validator", fmt.Sprintf("%#x", pubKey)))
 
-	if features.Get().DecoupledFFGVoteAtSlotStart && !features.Get().DecoupledFFGVoteSpread {
+	staggered := features.Get().FFGCommitteesPerSubnetPerSlot >= 2
+	spread := features.Get().DecoupledFFGVoteAtSlotStart && features.Get().DecoupledFFGVoteSpread
+	if !staggered && features.Get().DecoupledFFGVoteAtSlotStart && !spread {
 		v.waitSlotStartJitter(ctx, slot)
-	} else if !features.Get().DecoupledFFGVoteAtSlotStart {
+	} else if !staggered && !features.Get().DecoupledFFGVoteAtSlotStart {
 		v.waitUntilAttestationDueOrValidBlock(ctx, slot)
 	}
 
@@ -73,6 +75,10 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 	if duty.CommitteeLength == 0 {
 		log.Debug("Empty committee for validator duty, not attesting")
 		return
+	}
+	if staggered {
+		send, _ := ffgCommitteeOffsets(slot, duty.CommitteeIndex)
+		v.waitSlotOffset(ctx, slot, send+ffgVoteJitter(features.Get().DecoupledFFGVoteJitter))
 	}
 
 	postElectra := slots.ToEpoch(slot) >= params.BeaconConfig().ElectraForkEpoch
@@ -151,7 +157,7 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 			Signature:     sig,
 		}
 		attestation = sa
-		if features.Get().DecoupledFFGVoteAtSlotStart && features.Get().DecoupledFFGVoteSpread {
+		if spread && !staggered {
 			if !v.waitFFGVoteSpread(ctx, slot, duty) {
 				return
 			}
@@ -166,7 +172,7 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 			Signature:       sig,
 		}
 		attestation = a
-		if features.Get().DecoupledFFGVoteAtSlotStart && features.Get().DecoupledFFGVoteSpread {
+		if spread && !staggered {
 			if !v.waitFFGVoteSpread(ctx, slot, duty) {
 				return
 			}

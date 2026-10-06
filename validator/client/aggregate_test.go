@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/OffchainLabs/go-bitfield"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/core/signing"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
@@ -431,6 +433,73 @@ func TestSubmitAggregateAndProof_Distributed(t *testing.T) {
 
 			validator.SubmitAggregateAndProof(ctx, slot, pubKey)
 		})
+	}
+}
+
+func TestSubmitAggregateAndProof_FFGCommitteeSchedule(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 2400
+	cfg.AggregateDueBPS = 7500
+	cfg.AttestationSubnetCount = 2
+	params.OverrideBeaconConfig(cfg)
+	reset := features.InitWithReset(&features.Flags{FFGCommitteesPerSubnetPerSlot: 3})
+	defer reset()
+	b := []time.Duration{0, 600, 1200, 1800}
+
+	v, m, _, finish := setup(t, false)
+	defer finish()
+	pubKeys := make([][fieldparams.BLSPubkeyLength]byte, 2)
+	duties := make([]*ethpb.ValidatorDuty, 2)
+	for i := range pubKeys {
+		key, err := bls.RandKey()
+		require.NoError(t, err)
+		copy(pubKeys[i][:], key.PublicKey().Marshal())
+		require.NoError(t, v.km.(*mockKeymanager).add(keypair{pub: pubKeys[i], pri: key}))
+		v.pubkeyToStatus[pubKeys[i]] = &validatorStatus{index: primitives.ValidatorIndex(i + 1)}
+		duties[i] = &ethpb.ValidatorDuty{
+			PublicKey:      pubKeys[i][:],
+			CommitteeIndex: primitives.CommitteeIndex(2*i + 1),
+		}
+	}
+	v.duties = testDutyStore(duties...)
+
+	var mu sync.Mutex
+	requestedAt := make(map[primitives.CommitteeIndex]time.Time)
+	aggregate := util.HydrateAttestation(&ethpb.Attestation{AggregationBits: make([]byte, 1)})
+	m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).AnyTimes().
+		Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
+	m.validatorClient.EXPECT().AttestationData(gomock.Any(), gomock.Any()).Times(2).
+		Return(util.HydrateAttestationData(&ethpb.AttestationData{}), nil)
+	m.validatorClient.EXPECT().SubmitAggregateSelectionProof(
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Times(2).Do(func(_ context.Context, r *ethpb.AggregateSelectionRequest,
+		_ primitives.ValidatorIndex, _ uint64, _ []byte) {
+		mu.Lock()
+		defer mu.Unlock()
+		requestedAt[r.CommitteeIndex] = time.Now()
+	}).Return(&ethpb.AggregateSelectionResponse{
+		AggregateAndProof: &ethpb.AggregateAttestationAndProof{
+			Aggregate:      aggregate,
+			SelectionProof: make([]byte, 96),
+		},
+	}, nil)
+	m.validatorClient.EXPECT().SubmitSignedAggregateSelectionProof(gomock.Any(), gomock.Any()).
+		Times(2).
+		Return(&ethpb.SignedAggregateSubmitResponse{AttestationDataRoot: make([]byte, 32)}, nil)
+
+	v.genesisTime = time.Now()
+	var wg sync.WaitGroup
+	for _, pubKey := range pubKeys {
+		wg.Go(func() { v.SubmitAggregateAndProof(t.Context(), 0, pubKey) })
+	}
+	wg.Wait()
+	due := v.genesisTime.Add(b[3] * time.Millisecond)
+	for i := range 2 {
+		at := requestedAt[primitives.CommitteeIndex(2*i+1)]
+		start := v.genesisTime.Add(b[i+1] * time.Millisecond)
+		require.Equal(t, false, at.Before(start), "position %d early", i)
+		require.Equal(t, true, at.Before(due), "position %d late", i)
 	}
 }
 
