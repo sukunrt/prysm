@@ -45,3 +45,9 @@ Prysm implements the [Ethereum consensus specs](https://github.com/ethereum/cons
 - A run is not verified until one slot is checked end to end: transactions
   in the EL block, attestations and `payload_attestations` in the beacon
   block, FFG aggregates and PTC votes in the beacon log. Report the numbers.
+
+## Go toolchain
+- `go test` needs Go 1.26 (go.mod pins 1.26.5). With Go 1.27, the test dependency
+  `cockroachdb/swiss` fails to build (`undefined: fastrand64`, `hashFn`): its runtime
+  hooks build only for `go1.20 && !go1.27`. Run `GOTOOLCHAIN=go1.26.5 go test ...`.
+  Bazel uses its own pinned Go and is not affected.
