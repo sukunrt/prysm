@@ -1,8 +1,11 @@
 # Fixes discussed
 
-Updated: 2026-10-05. This tracks the fixes and decisions from our discussion, including completed work and items explicitly deferred. Checkboxes describe implementation status, not commit status.
+Updated: 2026-10-07. This tracks the fixes and decisions from our discussion, including completed work and items explicitly deferred. Checkboxes describe implementation status, not commit status.
 
 ## Remaining fixes
+
+- [ ] **Add a per-slot `FFG aggregates` summary line.** No summary line covers aggregates. The per-aggregate `FFG aggregate` line needs `--goldfish-vote-ledger`, and the histograms `ffg_aggregate_arrival_milliseconds` and `ffg_aggregate_seat_fraction` give no per-slot view. Log once per slot after the aggregate due, with `purpose=decoupled-consensus-summary`: `slot`, accepted `aggregates`, `ignored`, `committees` with an aggregate, `seats` (union per committee, summed) against `expectedSeats`, and `firstMs`/`lastMs`. Decide if the `outcome=ignored` line, which is always on, moves behind the ledger flag and into this count.
+  Code: [aggregate ledger lines](beacon-chain/sync/vote_ledger.go), [FFG vote summary](beacon-chain/sync/ffg_summary.go), [metrics](beacon-chain/sync/metrics.go).
 
 - [ ] **Size GossipSub queues for the simulation workload.** Review validation, per-peer outbound, and topic subscription queues against the slot's burst of votes. Measure drops, processing delay, and memory use before choosing sizes; increasing capacity alone does not resolve slow consumers. Validation and outbound queues currently share `pubsub-queue-size` (CLI default 1000); topic buffers have separate settings, including 5000 for beacon attestations and four times the available-attestation committee size for available attestations.
   Code: [pubsub options](beacon-chain/p2p/pubsub.go), [subscription options](beacon-chain/sync/subscriber.go), [CLI flags](cmd/flags.go).
