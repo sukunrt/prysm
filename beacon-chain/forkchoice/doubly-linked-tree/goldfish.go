@@ -2,11 +2,15 @@ package doublylinkedtree
 
 import (
 	"bytes"
+	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/decoupled"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
+	"github.com/sirupsen/logrus"
 )
 
 // goldfishVoteRetention is how many slots behind the current one available
@@ -233,10 +237,54 @@ func (s *Store) goldfishNewSlot(slot primitives.Slot) {
 		fields["seats"] = seats
 		fields["cutoff"] = "next_slot_start"
 		fields["committeeSeats"] = uint64(decoupled.AvailableAttestationCommitteeSize)
+		s.addGoldfishVoterFields(fields, slot-1)
 		log.WithFields(fields).Info("Goldfish votes")
 	}
 	s.goldfishVotes.prune(slot)
 	s.goldfishProposals.prune(slots.RoundAt(slot))
+}
+
+func (s *Store) addGoldfishVoterFields(fields logrus.Fields, slot primitives.Slot) {
+	// The slot's block is the head chain's block at the slot, none if the slot is empty.
+	block := s.canonicalNodeAt(slot)
+	if block != nil && block.slot != slot {
+		block = nil
+	}
+	fields["blockRoot"] = ""
+	if block != nil {
+		fields["blockRoot"] = decoupled.SummaryRoot(block.root)
+	}
+	votes := s.goldfishVotes.votes[slot]
+	var blockVoters, otherVoters, nonVoters uint64
+	otherRoots := make(map[string]int)
+	for _, v := range votes {
+		if block != nil && v.root == block.root {
+			blockVoters++
+			continue
+		}
+		otherVoters++
+		otherRoots[decoupled.SummaryRoot(v.root)]++
+	}
+	allSeats := make([]int, decoupled.AvailableAttestationCommitteeSize)
+	for i := range allSeats {
+		allSeats[i] = i
+	}
+	committee := decoupled.AvailableAttestationSeatsToValidatorIndices(
+		slot, allSeats, decoupled.TotalValidatorCount())
+	for _, index := range committee {
+		if _, ok := votes[index]; !ok {
+			nonVoters++
+		}
+	}
+	roots := make([]string, 0, len(otherRoots))
+	for root, n := range otherRoots {
+		roots = append(roots, fmt.Sprintf("%s:%d", root, n))
+	}
+	slices.Sort(roots)
+	fields["blockVoters"] = blockVoters
+	fields["otherVoters"] = otherVoters
+	fields["otherRoots"] = strings.Join(roots, ",")
+	fields["nonVoters"] = nonVoters
 }
 
 // goldfishScores holds one walk's available-attestation scores. Scores are

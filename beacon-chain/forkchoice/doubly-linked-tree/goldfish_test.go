@@ -364,6 +364,9 @@ func TestGoldfishNewSlot_WritesTheSummaryLine(t *testing.T) {
 	require.Equal(t, "next_slot_start", entry.Data["cutoff"])
 	require.Equal(t, uint64(5), entry.Data["seats"])
 	require.Equal(t, uint64(decoupled.AvailableAttestationCommitteeSize), entry.Data["committeeSeats"])
+	require.Equal(t, "", entry.Data["blockRoot"])
+	require.Equal(t, uint64(2), entry.Data["otherVoters"])
+	require.Equal(t, "0x61000000:2", entry.Data["otherRoots"])
 
 	hook.Reset()
 	require.NoError(t, f.NewSlot(ctx, 3))
@@ -373,4 +376,84 @@ func TestGoldfishNewSlot_WritesTheSummaryLine(t *testing.T) {
 	require.Equal(t, primitives.Slot(2), entry.Data["slot"])
 	require.Equal(t, uint64(0), entry.Data["uniqueValidators"])
 	require.Equal(t, uint64(0), entry.Data["seats"])
+}
+
+func TestGoldfishNewSlot_SummaryCountsTheVoters(t *testing.T) {
+	rootA, rootB := [32]byte{'a'}, [32]byte{'b'}
+	zero := [32]byte{}
+	all := []primitives.ValidatorIndex{0, 1, 2, 3, 4, 5, 6, 7}
+	type votes struct {
+		root    [32]byte
+		indices []primitives.ValidatorIndex
+	}
+	tests := []struct {
+		name        string
+		noBlock     bool
+		votes       []votes
+		blockRoot   string
+		blockVoters uint64
+		otherVoters uint64
+		otherRoots  string
+		nonVoters   uint64
+	}{
+		{
+			name:        "all voted for the block",
+			votes:       []votes{{rootA, all}},
+			blockRoot:   "0x61000000",
+			blockVoters: 8,
+		},
+		{
+			name:        "some voted for another root",
+			votes:       []votes{{rootA, all[:5]}, {zero, all[5:7]}, {rootB, all[7:]}},
+			blockRoot:   "0x61000000",
+			blockVoters: 5,
+			otherVoters: 3,
+			otherRoots:  "0x00000000:2,0x62000000:1",
+		},
+		{
+			name:        "some did not vote",
+			votes:       []votes{{rootA, all[:5]}},
+			blockRoot:   "0x61000000",
+			blockVoters: 5,
+			nonVoters:   3,
+		},
+		{
+			name:        "no block at the slot",
+			noBlock:     true,
+			votes:       []votes{{zero, all}},
+			otherVoters: 8,
+			otherRoots:  "0x00000000:8",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hook := logTest.NewGlobal()
+			f := setupGoldfish(t, 0, 0)
+			// Eight validators fill all 512 seats, so the committee is 0..7.
+			cfg := params.BeaconConfig().Copy()
+			cfg.MinGenesisActiveValidatorCount = 8
+			params.OverrideBeaconConfig(cfg)
+			driftGenesisTime(f, 1, 0)
+			if !tt.noBlock {
+				insertGoldfishBlock(t, f, 1, rootA, zero, true)
+			}
+			_, err := f.Head(t.Context())
+			require.NoError(t, err)
+			for _, v := range tt.votes {
+				for _, index := range v.indices {
+					f.InsertAvailableAttestation(1, index, 1, v.root, false)
+				}
+			}
+
+			require.NoError(t, f.NewSlot(t.Context(), 2))
+			entry := hook.LastEntry()
+			require.NotNil(t, entry)
+			require.Equal(t, "Goldfish votes", entry.Message)
+			require.Equal(t, tt.blockRoot, entry.Data["blockRoot"])
+			require.Equal(t, tt.blockVoters, entry.Data["blockVoters"])
+			require.Equal(t, tt.otherVoters, entry.Data["otherVoters"])
+			require.Equal(t, tt.otherRoots, entry.Data["otherRoots"])
+			require.Equal(t, tt.nonVoters, entry.Data["nonVoters"])
+		})
+	}
 }

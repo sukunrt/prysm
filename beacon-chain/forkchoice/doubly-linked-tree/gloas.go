@@ -23,14 +23,7 @@ import (
 // If the slot is in the past the boolean indicates between full or empty.
 func (f *ForkChoice) CanonicalNodeAtSlot(slot primitives.Slot) ([32]byte, bool) {
 	s := f.store
-	n := s.headNode
-	for n != nil && n.slot > slot {
-		if n.parent == nil {
-			n = nil
-		} else {
-			n = n.parent.node
-		}
-	}
+	n := s.canonicalNodeAt(slot)
 	if n == nil {
 		return [32]byte{}, false
 	}
@@ -39,6 +32,17 @@ func (f *ForkChoice) CanonicalNodeAtSlot(slot primitives.Slot) ([32]byte, bool) 
 	}
 	pn := s.choosePayloadContent(n)
 	return pn.node.root, pn.full
+}
+
+func (s *Store) canonicalNodeAt(slot primitives.Slot) *Node {
+	n := s.headNode
+	for n != nil && n.slot > slot {
+		if n.parent == nil {
+			return nil
+		}
+		n = n.parent.node
+	}
+	return n
 }
 
 func (s *Store) resolveParentPayloadStatus(block interfaces.ReadOnlyBeaconBlock, parent **PayloadNode,

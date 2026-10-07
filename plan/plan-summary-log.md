@@ -46,21 +46,42 @@ at the slot boundary, so the line reports the slot that just ended and a
 vote that arrives after the tick is not counted. `goldfishNewSlot` is
 already reached only when Goldfish is active.
 
-One gossip message carries one validator's seats, so `votes` is the
-number of validators heard from. Add `voters(slot) uint64` on
-`goldfishVotes`, returning `len(g.votes[slot])`. The name is `voters`
+One gossip message carries one validator's seats, so `uniqueValidators`
+is the number of validators heard from. `voters(slot) uint64` on
+`goldfishVotes` returns `len(g.votes[slot])`. The name is `voters`
 because `votes` is already the field.
+
+The line also counts the voters. The slot's block is the block at that
+slot on the node's head chain (`canonicalNodeAt`): walk back from the
+head to the latest block at or before the slot. If that block is from
+an earlier slot, the slot is empty and `blockRoot` is empty. Then every
+vote is in `otherVoters`, usually for the parent.
+
+Each validator with a vote counts in `blockVoters` or in `otherVoters`.
+An equivocator counts by its first vote. `nonVoters` counts the
+committee validators with no vote. The committee is the validators on
+the 512 seats (`AvailableAttestationSeatsToValidatorIndices` over all
+seats, `TotalValidatorCount`).
 
 | field | type | meaning |
 |---|---|---|
 | `slot` | Slot | the slot that ended |
-| `votes` | uint64 | validators with a vote in the store |
+| `uniqueValidators` | uint64 | validators with a vote in the store |
+| `recordedMessages` | uint64 | votes taken in, duplicates and equivocations included |
 | `seats` | uint64 | seats those votes cover (sum of aggregation bits) |
 | `committeeSeats` | uint64 | `decoupled.AvailableAttestationCommitteeSize` |
+| `cutoff` | string | `next_slot_start` |
+| `blockRoot` | string | `SummaryRoot` of the slot's block, empty if the slot is empty |
+| `blockVoters` | uint64 | validators that voted for `blockRoot` |
+| `otherVoters` | uint64 | validators that voted for a different root |
+| `otherRoots` | string | `root:count` pairs of `otherVoters`, `SummaryRoot`, sorted |
+| `nonVoters` | uint64 | committee validators with no vote |
 
 ```
-Goldfish votes  purpose=decoupled-consensus-summary slot=1234 votes=120 seats=497
-  committeeSeats=512
+Goldfish votes  purpose=decoupled-consensus-summary slot=1234 uniqueValidators=8
+  recordedMessages=9 seats=8 committeeSeats=512 cutoff=next_slot_start
+  blockRoot=0x1a2b3c4d blockVoters=6 otherVoters=2
+  otherRoots="0x5e6f7a8b:2" nonVoters=1
 ```
 
 An empty slot still writes the line with zeros. Dropped and queued votes
