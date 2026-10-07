@@ -132,23 +132,27 @@ func Test_generateGenesis_TimestampHandling(t *testing.T) {
 		genesisTime      uint64 // --genesis-time (0 = not set)
 		genesisTimeDelay uint64 // --genesis-time-delay
 		wantTimestamp    uint64
+		wantELTimestamp  uint64
 	}{
 		{
-			name:           "uses input file timestamp when no --genesis-time",
-			inputTimestamp: 1700000000,
-			wantTimestamp:  1700000000,
+			name:            "uses input file timestamp when no --genesis-time",
+			inputTimestamp:  1700000000,
+			wantTimestamp:   1700000000,
+			wantELTimestamp: 1700000000,
 		},
 		{
-			name:           "explicit --genesis-time overrides input file",
-			inputTimestamp: 1700000000,
-			genesisTime:    1600000000,
-			wantTimestamp:  1600000000,
+			name:            "explicit --genesis-time overrides input file",
+			inputTimestamp:  1700000000,
+			genesisTime:     1600000000,
+			wantTimestamp:   1600000000,
+			wantELTimestamp: 1700000000,
 		},
 		{
 			name:             "delay applied to input file timestamp",
 			inputTimestamp:   1700000000,
 			genesisTimeDelay: 100,
 			wantTimestamp:    1700000100,
+			wantELTimestamp:  1700000000,
 		},
 		{
 			name:             "delay applied to explicit --genesis-time",
@@ -156,6 +160,7 @@ func Test_generateGenesis_TimestampHandling(t *testing.T) {
 			genesisTime:      1600000000,
 			genesisTimeDelay: 50,
 			wantTimestamp:    1600000050,
+			wantELTimestamp:  1700000000,
 		},
 	}
 
@@ -190,8 +195,59 @@ func Test_generateGenesis_TimestampHandling(t *testing.T) {
 			st, err := generateGenesis(context.Background())
 			require.NoError(t, err)
 			assert.Equal(t, int64(tt.wantTimestamp), st.GenesisTime().Unix())
+			header, err := st.LatestExecutionPayloadHeader()
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantELTimestamp, header.Timestamp())
 		})
 	}
+}
+
+func Test_generateGenesis_KeepsInputBlock0(t *testing.T) {
+	originalFlags := generateGenesisStateFlags
+	defer func() {
+		generateGenesisStateFlags = originalFlags
+	}()
+
+	zero := uint64(0)
+	genesis := &core.Genesis{
+		Timestamp:  1700000000,
+		BaseFee:    big.NewInt(1000000000),
+		Difficulty: big.NewInt(0),
+		GasLimit:   15000000,
+		Alloc:      types.GenesisAlloc{},
+		Config: &params.ChainConfig{
+			ChainID:                 big.NewInt(32382),
+			LondonBlock:             big.NewInt(0),
+			TerminalTotalDifficulty: big.NewInt(0),
+			ShanghaiTime:            &zero,
+		},
+	}
+	want := genesis.ToBlock().Hash()
+	genesisJSON, err := json.Marshal(genesis)
+	require.NoError(t, err)
+	tmpFile := t.TempDir() + "/genesis.json"
+	require.NoError(t, writeFile(tmpFile, genesisJSON))
+
+	generateGenesisStateFlags.NumValidators = 2
+	generateGenesisStateFlags.GenesisTimeDelay = 60
+	generateGenesisStateFlags.ForkName = version.String(version.Deneb)
+	generateGenesisStateFlags.GethGenesisJsonIn = tmpFile
+
+	st, err := generateGenesis(context.Background())
+	require.NoError(t, err)
+	header, err := st.LatestExecutionPayloadHeader()
+	require.NoError(t, err)
+	assert.DeepEqual(t, want.Bytes(), header.BlockHash())
+	assert.DeepEqual(t, want.Bytes(), st.Eth1Data().BlockHash)
+}
+
+func Test_writeToOutputFile_ReadableByAll(t *testing.T) {
+	path := t.TempDir() + "/genesis.ssz"
+	marshal := func(any) ([]byte, error) { return []byte{1}, nil }
+	require.NoError(t, writeToOutputFile(path, nil, marshal))
+	info, err := os.Stat(path)
+	require.NoError(t, err)
+	assert.Equal(t, os.FileMode(0o644), info.Mode().Perm())
 }
 
 func writeFile(path string, data []byte) error {

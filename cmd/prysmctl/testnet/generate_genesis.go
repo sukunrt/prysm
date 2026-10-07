@@ -272,13 +272,19 @@ func generateGenesis(ctx context.Context) (state.BeaconState, error) {
 
 	// Set the timestamps for genesis and forks
 	if f.GethGenesisJsonIn != "" {
-		gen.Timestamp = f.GenesisTime
+		// The EL client loads block 0 from the input file. Keep the timestamp and the
+		// fork times that the file sets, or the genesis state refers to a block hash
+		// the EL client does not have.
+		if gen.Timestamp == 0 {
+			gen.Timestamp = f.GenesisTime
+		}
 		genesis := time.Unix(int64(f.GenesisTime), 0)
-		gen.Config.ShanghaiTime = interop.GethShanghaiTime(genesis, params.BeaconConfig())
-		gen.Config.CancunTime = interop.GethCancunTime(genesis, params.BeaconConfig())
-		gen.Config.PragueTime = interop.GethPragueTime(genesis, params.BeaconConfig())
-		gen.Config.OsakaTime = interop.GethOsakaTime(genesis, params.BeaconConfig())
-		gen.Config.AmsterdamTime = interop.GethAmsterdamTime(genesis, params.BeaconConfig())
+		cfg := params.BeaconConfig()
+		setIfUnset(&gen.Config.ShanghaiTime, interop.GethShanghaiTime(genesis, cfg))
+		setIfUnset(&gen.Config.CancunTime, interop.GethCancunTime(genesis, cfg))
+		setIfUnset(&gen.Config.PragueTime, interop.GethPragueTime(genesis, cfg))
+		setIfUnset(&gen.Config.OsakaTime, interop.GethOsakaTime(genesis, cfg))
+		setIfUnset(&gen.Config.AmsterdamTime, interop.GethAmsterdamTime(genesis, cfg))
 
 		fields := logrus.Fields{}
 		if gen.Config.ShanghaiTime != nil {
@@ -318,7 +324,7 @@ func generateGenesis(ctx context.Context) (state.BeaconState, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := os.WriteFile(f.GethGenesisJsonOut, gbytes, 0o600); err != nil {
+		if err := os.WriteFile(f.GethGenesisJsonOut, gbytes, 0o644); err != nil {
 			return nil, errors.Wrapf(err, "failed to write %s", f.GethGenesisJsonOut)
 		}
 	}
@@ -412,6 +418,12 @@ func depositJSONToDepositData(input *depositDataJSON) ([]byte, *ethpb.Deposit_Da
 	}, nil
 }
 
+func setIfUnset(forkTime **uint64, v *uint64) {
+	if *forkTime == nil {
+		*forkTime = v
+	}
+}
+
 func writeToOutputFile(
 	fPath string,
 	data any,
@@ -421,7 +433,7 @@ func writeToOutputFile(
 	if err != nil {
 		return err
 	}
-	if err := file.WriteFile(fPath, encoded); err != nil {
+	if err := os.WriteFile(fPath, encoded, 0o644); err != nil {
 		return err
 	}
 	log.Printf("Done writing genesis state to %s", fPath)

@@ -217,9 +217,7 @@ def sim_config(args, country, supers, vals):
                 "fulu_epoch": 0,
                 "gloas_epoch": 0,
                 "extra_env": {
-                    # prysmctl hashes the EL genesis with the delay added to its
-                    # timestamp, but geth init already stored the undelayed block.
-                    # Pin the timestamp to the genesis instant and use no delay.
+                    # The EL and CL genesis are both at GENESIS_AT_S.
                     "GENESIS_TIMESTAMP": str(SIM_EPOCH + GENESIS_AT_S),
                     "GENESIS_DELAY": "0",
                     "HEZE_FORK_EPOCH": "0",

@@ -210,7 +210,6 @@ nogo(
         "//tools/analyzers/modernize/waitgroup:go_default_library",
         "//tools/analyzers/nop:go_default_library",
         "//tools/analyzers/nopanic:go_default_library",
-        "//tools/analyzers/properpermissions:go_default_library",
         "//tools/analyzers/shadowpredecl:go_default_library",
         "//tools/analyzers/slicedirect:go_default_library",
         "//tools/analyzers/uintcast:go_default_library",
