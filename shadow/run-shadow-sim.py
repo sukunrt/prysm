@@ -26,6 +26,7 @@ prysm-genesis-gen:local. The CL bootnode is lighthouse from ~/dev/lighthouse.
 
 import argparse
 import json
+import math
 import random
 import subprocess
 import sys
@@ -82,6 +83,10 @@ def parse_args():
     ap.add_argument("--subnets-per-node", type=int, default=2, help="SUBNETS_PER_NODE")
     ap.add_argument("--aggregate-due-bps", type=int, default=5000,
                     help="AGGREGATE_DUE_BPS_GLOAS; FFG votes count at this point of the slot")
+    ap.add_argument("--eoa-txs", type=int, default=8, help="calldata transfers per slot")
+    ap.add_argument("--eoa-bytes", type=int, default=16384, help="calldata bytes per transfer")
+    ap.add_argument("--blob-txs", type=int, default=2,
+                    help="blob transactions per slot, 3 sidecars each; 0 runs no blob spammer")
     ap.add_argument("--name", default=None, help="run dir name under runs/")
     ap.add_argument("--gen-only", action="store_true", help="stop before shadow")
     return ap.parse_args()
@@ -127,6 +132,10 @@ def locations(present):
     }
 
 
+def eoa_gas_limit(nbytes):
+    return math.ceil((21000 + 64 * nbytes) * 1.07 / 50000) * 50000
+
+
 def sim_config(args, country, supers, vals):
     loc, loc_yaml = locations(set(country))
     country_loc = {c: n for n, c in loc.items()}
@@ -147,7 +156,8 @@ def sim_config(args, country, supers, vals):
         })
     nodes.append(infra("monitoring", "monitoring", "prometheus"))
     nodes.append(infra("eoaspam", "spammer", "spamoor_eoatx"))
-    nodes.append(infra("blobspam", "spammer", "spamoor_blobs"))
+    if args.blob_txs:
+        nodes.append(infra("blobspam", "spammer", "spamoor_blobs"))
 
     beacon_args = (f"--p2p-max-peers {args.max_peers} --goldfish-vote-ledger "
                    "--pprof --pprofaddr=0.0.0.0")
@@ -172,25 +182,28 @@ def sim_config(args, country, supers, vals):
         "geth": {"type": "geth", "executable": str(BIN / "geth"),
                  "extra_args": f"--miner.gaslimit={GAS_LIMIT}"},
         "geth_bootnode": {"type": "geth_bootnode", "executable": str(BIN / "bootnode")},
-        # 16 KiB calldata transfers: 21000 + 64 x 16384 gas on this chain, 7 % over.
+        # Calldata transfers cost 21000 + 64 x bytes gas on this chain; 7 % over, rounded up.
         "spamoor_eoatx": {
             "type": "spamoor", "executable": str(BIN / "spamoor"), "scenario": "eoatx",
-            "throughput": 8, "max_pending": 8, "max_wallets": 8,
+            "throughput": args.eoa_txs, "max_pending": args.eoa_txs, "max_wallets": 8,
             "el_first": 0, "el_count": args.nodes,
-            "extra_args": f"--seed {args.name}-eoa --data random:16384 --gaslimit 1150000 "
+            "extra_args": f"--seed {args.name}-eoa --data random:{args.eoa_bytes} "
+                          f"--gaslimit {eoa_gas_limit(args.eoa_bytes)} "
                           "--basefee 100 --rebroadcast 0",
             "private_key": EOATX_KEY, "start_time": f"{GENESIS_AT_S + SLOT_S}s",
         },
-        # Two pending blob transactions of three sidecars: 6 blobs a block.
+        # Blob transactions of three sidecars each: 6 blobs a block at the default 2.
         "spamoor_blobs": {
             "type": "spamoor", "executable": str(BIN / "spamoor"), "scenario": "blobs",
-            "throughput": 2, "max_pending": 2, "max_wallets": 6,
+            "throughput": args.blob_txs, "max_pending": args.blob_txs, "max_wallets": 6,
             "el_first": 0, "el_count": args.nodes,
             "extra_args": f"--seed {args.name}-blob --sidecars 3 "
                           f"--fulu-activation {SIM_EPOCH + GENESIS_AT_S} --rebroadcast 0",
             "private_key": BLOBS_KEY, "start_time": f"{GENESIS_AT_S + SLOT_S}s",
         },
     }
+    if not args.blob_txs:
+        del clients["spamoor_blobs"]
     for k in sorted(set(vals)):
         clients[f"prysm_vc_{k}"] = {"type": "prysm_vc",
                                     "executable": str(BIN / "prysm-validator"),
