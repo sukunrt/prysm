@@ -9,6 +9,7 @@ import (
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/encoder"
 	"github.com/OffchainLabs/prysm/v7/cmd/beacon-chain/flags"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	pbrpc "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
@@ -16,6 +17,7 @@ import (
 	pubsubpb "github.com/libp2p/go-libp2p-pubsub/pb"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/pkg/errors"
+	gossipsubtrace "github.com/sukunrt/go-gossipsub-trace"
 )
 
 const (
@@ -162,12 +164,13 @@ func (s *Service) peerInspector(peerMap map[peer.ID]*pubsub.PeerScoreSnapshot) {
 func (s *Service) pubsubOptions() []pubsub.Option {
 	filt := pubsub.NewAllowlistSubscriptionFilter(s.allTopicStrings()...)
 	filt = pubsub.WrapLimitSubscriptionFilter(filt, pubsubSubscriptionRequestLimit)
+	msgID := func(pmsg *pubsubpb.Message) string {
+		return MsgID(s.genesisValidatorsRoot, pmsg)
+	}
 	psOpts := []pubsub.Option{
 		pubsub.WithMessageSignaturePolicy(pubsub.StrictNoSign),
 		pubsub.WithNoAuthor(),
-		pubsub.WithMessageIdFn(func(pmsg *pubsubpb.Message) string {
-			return MsgID(s.genesisValidatorsRoot, pmsg)
-		}),
+		pubsub.WithMessageIdFn(msgID),
 		pubsub.WithSubscriptionFilter(filt),
 		pubsub.WithPeerOutboundQueueSize(int(s.cfg.QueueSize)),
 		pubsub.WithMaxMessageSize(int(MaxMessageSize())), // lint:ignore uintcast -- Max Message Size is a config value and is naturally bounded by networking limitations.
@@ -189,6 +192,23 @@ func (s *Service) pubsubOptions() []pubsub.Option {
 	}
 	if s.partialColumnBroadcaster != nil {
 		psOpts = s.partialColumnBroadcaster.AppendPubSubOpts(psOpts)
+	}
+	if features.Get().GossipsubTrace {
+		// Nil Registerer and Logger select the default Prometheus registry and stderr.
+		tracer, err := gossipsubtrace.New(gossipsubtrace.Config{
+			LogInterval: 100 * time.Millisecond,
+			MessageIDFn: msgID,
+		})
+		if err != nil {
+			log.WithError(err).Error("Could not create GossipSub bandwidth tracer")
+			return psOpts
+		}
+		// GossipSub runs on s.ctx; later callbacks to a closed tracer are ignored.
+		go func() {
+			<-s.ctx.Done()
+			_ = tracer.Close()
+		}()
+		psOpts = append(psOpts, pubsub.WithRawTracer(tracer))
 	}
 
 	return psOpts

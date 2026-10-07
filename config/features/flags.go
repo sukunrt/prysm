@@ -240,6 +240,10 @@ var (
 		Name:  "goldfish-vote-ledger",
 		Usage: "Logs every available attestation head vote and every drop, one line each, for per-slot seat reconciliation.",
 	}
+	gossipsubTrace = &cli.BoolFlag{
+		Name:  "gossipsub-trace",
+		Usage: "Logs GossipSub RPC bytes by kind and topic every 100ms and exports them as metrics.",
+	}
 
 	// DecoupledFFGVoteAtSlotStart moves the FFG (committee) attestation from the
 	// attestation due time to the start of the slot, plus a bounded random jitter.
@@ -355,6 +359,7 @@ var BeaconChainFlags = combinedFlags([]cli.Flag{
 	ignoreUnviableAttestations,
 	disableTrackEquivocations,
 	GoldfishVoteLedger,
+	gossipsubTrace,
 	FFGCommitteesPerSubnetPerSlot,
 	enableFullSSZDataLogging,
 	disableVerboseSigVerification,

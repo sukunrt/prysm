@@ -79,6 +79,7 @@ Options:
 | `--aggregate-due-bps` | 5000 | `AGGREGATE_DUE_BPS_GLOAS`; FFG votes count at this point of the slot |
 | `--block-scratch` | 0 | `CONSENSUS_BLOCK_SCRATCH_SPACE`, bytes on each gossiped block |
 | `--max-peers` | 99 | `--p2p-max-peers` on each beacon node |
+| `--gossipsub-trace` | | `--gossipsub-trace` on each beacon node; logs go to its stderr |
 | `--name` | `n<nodes>-v<validators>-s<seed>` | the directory under `runs/` |
 | `--gen-only` | | stop before `shadow` |
 

@@ -87,6 +87,8 @@ def parse_args():
     ap.add_argument("--eoa-bytes", type=int, default=16384, help="calldata bytes per transfer")
     ap.add_argument("--blob-txs", type=int, default=2,
                     help="blob transactions per slot, 3 sidecars each; 0 runs no blob spammer")
+    ap.add_argument("--gossipsub-trace", action="store_true",
+                    help="log GossipSub RPC bytes by kind and topic on every beacon node")
     ap.add_argument("--name", default=None, help="run dir name under runs/")
     ap.add_argument("--gen-only", action="store_true", help="stop before shadow")
     return ap.parse_args()
@@ -170,6 +172,8 @@ def sim_config(args, country, supers, vals):
         vc_args += ffg
     if args.ffg_vote_spread:
         vc_args += " --decoupled-ffg-vote-spread"
+    if args.gossipsub_trace:
+        beacon_args += " --gossipsub-trace"
     clients = {
         "prysm": {"type": "prysm", "executable": str(BIN / "prysm-beacon"),
                   "lower_target_peers": False, "extra_args": beacon_args},

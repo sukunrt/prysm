@@ -3,6 +3,7 @@ package p2p
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"testing"
 	"time"
@@ -12,9 +13,11 @@ import (
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/encoder"
 	testp2p "github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/testing"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/startup"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestService_PublishToTopicConcurrentMapWrite(t *testing.T) {
@@ -57,6 +60,27 @@ func TestService_PublishToTopicConcurrentMapWrite(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
+}
+
+func TestPubsubOptions_GossipsubTrace(t *testing.T) {
+	registry := prometheus.NewRegistry()
+	defaultRegisterer := prometheus.DefaultRegisterer
+	prometheus.DefaultRegisterer = registry
+	defer func() { prometheus.DefaultRegisterer = defaultRegisterer }()
+
+	s := &Service{ctx: t.Context(), cfg: &Config{}}
+	off := len(s.pubsubOptions())
+	reset := features.InitWithReset(&features.Flags{GossipsubTrace: true})
+	defer reset()
+	require.Equal(t, off+1, len(s.pubsubOptions()))
+
+	families, err := registry.Gather()
+	require.NoError(t, err)
+	var names []string
+	for _, f := range families {
+		names = append(names, f.GetName())
+	}
+	require.Equal(t, true, slices.Contains(names, "gossipsub_rpc_bytes_total"))
 }
 
 func TestExtractGossipDigest(t *testing.T) {

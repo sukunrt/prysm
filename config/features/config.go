@@ -74,6 +74,7 @@ type Flags struct {
 	IgnoreUnviableAttestations bool // Ignore attestations whose target state is not viable (avoids lagging-node DoS).
 	TrackEquivocations         bool // Record proposer equivocations seen on gossip into forkchoice.
 	GoldfishVoteLedger         bool // Log one line per available attestation head vote, for per-slot seat reconciliation.
+	GossipsubTrace             bool // Log and export GossipSub RPC bytes by kind and topic.
 
 	EnableHashtree               bool // Enables usage of the hashtree library for hashing
 	EnableVerboseSigVerification bool // EnableVerboseSigVerification specifies whether to verify individual signature if batch verification fails
@@ -328,6 +329,10 @@ func ConfigureBeaconChain(ctx *cli.Context) error {
 	if ctx.IsSet(GoldfishVoteLedger.Name) && ctx.Bool(GoldfishVoteLedger.Name) {
 		logEnabled(GoldfishVoteLedger)
 		cfg.GoldfishVoteLedger = true
+	}
+	if ctx.Bool(gossipsubTrace.Name) {
+		logEnabled(gossipsubTrace)
+		cfg.GossipsubTrace = true
 	}
 	cfg.FFGCommitteesPerSubnetPerSlot = ctx.Uint64(FFGCommitteesPerSubnetPerSlot.Name)
 	if ctx.IsSet(EnableStateDiff.Name) {
