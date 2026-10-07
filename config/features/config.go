@@ -75,6 +75,7 @@ type Flags struct {
 	TrackEquivocations         bool // Record proposer equivocations seen on gossip into forkchoice.
 	GoldfishVoteLedger         bool // Log one line per available attestation head vote, for per-slot seat reconciliation.
 	GossipsubTrace             bool // Log and export GossipSub RPC bytes by kind and topic.
+	ShadowQUIC                 bool // Use only QUIC, made to connect in the Shadow network simulator.
 
 	EnableHashtree               bool // Enables usage of the hashtree library for hashing
 	EnableVerboseSigVerification bool // EnableVerboseSigVerification specifies whether to verify individual signature if batch verification fails
@@ -333,6 +334,11 @@ func ConfigureBeaconChain(ctx *cli.Context) error {
 	if ctx.Bool(gossipsubTrace.Name) {
 		logEnabled(gossipsubTrace)
 		cfg.GossipsubTrace = true
+	}
+	if ctx.Bool(shadowQUIC.Name) {
+		logEnabled(shadowQUIC)
+		cfg.ShadowQUIC = true
+		cfg.EnableQUIC = true
 	}
 	cfg.FFGCommitteesPerSubnetPerSlot = ctx.Uint64(FFGCommitteesPerSubnetPerSlot.Name)
 	if ctx.IsSet(EnableStateDiff.Name) {

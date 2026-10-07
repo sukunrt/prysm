@@ -28,6 +28,7 @@ import argparse
 import json
 import math
 import random
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -80,15 +81,27 @@ def parse_args():
                     help="X; with X > 1, the X committees of a subnet send one after the other")
     ap.add_argument("--ffg-vote-spread", action="store_true",
                     help="--decoupled-ffg-vote-spread on each validator client")
+    ap.add_argument("--ffg-vote-jitter", default=None,
+                    help="--decoupled-ffg-vote-jitter on each validator client, e.g. 0s")
     ap.add_argument("--subnets-per-node", type=int, default=2, help="SUBNETS_PER_NODE")
     ap.add_argument("--aggregate-due-bps", type=int, default=5000,
                     help="AGGREGATE_DUE_BPS_GLOAS; FFG votes count at this point of the slot")
-    ap.add_argument("--eoa-txs", type=int, default=8, help="calldata transfers per slot")
+    ap.add_argument("--eoa-txs", type=int, default=8,
+                    help="calldata transfers per slot; 0 runs no calldata spammer")
     ap.add_argument("--eoa-bytes", type=int, default=16384, help="calldata bytes per transfer")
     ap.add_argument("--blob-txs", type=int, default=2,
                     help="blob transactions per slot, 3 sidecars each; 0 runs no blob spammer")
     ap.add_argument("--gossipsub-trace", action="store_true",
                     help="log GossipSub RPC bytes by kind and topic on every beacon node")
+    ap.add_argument("--no-el-peers", action="store_true",
+                    help="geth has no peers and no discovery; only its beacon node talks to it")
+    ap.add_argument("--shadow-quic", action="store_true",
+                    help="--shadow-quic on each beacon node: QUIC only, no TCP")
+    ap.add_argument("--pcap", action="store_true",
+                    help="Shadow pcap on every host; headers only, 96 B a packet")
+    ap.add_argument("--graph-from", default=None,
+                    help="an eth-slot-sim shadow.yaml; node i + 1 takes its graph node i, with "
+                         "shortest-path routing, so both sims share every latency")
     ap.add_argument("--name", default=None, help="run dir name under runs/")
     ap.add_argument("--gen-only", action="store_true", help="stop before shadow")
     return ap.parse_args()
@@ -157,7 +170,8 @@ def sim_config(args, country, supers, vals):
                         "vc": f"prysm_vc_{vals[i]}"},
         })
     nodes.append(infra("monitoring", "monitoring", "prometheus"))
-    nodes.append(infra("eoaspam", "spammer", "spamoor_eoatx"))
+    if args.eoa_txs:
+        nodes.append(infra("eoaspam", "spammer", "spamoor_eoatx"))
     if args.blob_txs:
         nodes.append(infra("blobspam", "spammer", "spamoor_blobs"))
 
@@ -172,6 +186,10 @@ def sim_config(args, country, supers, vals):
         vc_args += ffg
     if args.ffg_vote_spread:
         vc_args += " --decoupled-ffg-vote-spread"
+    if args.ffg_vote_jitter is not None:
+        vc_args += f" --decoupled-ffg-vote-jitter={args.ffg_vote_jitter}"
+    if args.shadow_quic:
+        beacon_args += " --shadow-quic"
     if args.gossipsub_trace:
         beacon_args += " --gossipsub-trace"
     clients = {
@@ -206,8 +224,12 @@ def sim_config(args, country, supers, vals):
             "private_key": BLOBS_KEY, "start_time": f"{GENESIS_AT_S + SLOT_S}s",
         },
     }
+    if not args.eoa_txs:
+        del clients["spamoor_eoatx"]
     if not args.blob_txs:
         del clients["spamoor_blobs"]
+    if args.no_el_peers:
+        clients["geth"]["extra_args"] += " --nodiscover --maxpeers 0"
     for k in sorted(set(vals)):
         clients[f"prysm_vc_{k}"] = {"type": "prysm_vc",
                                     "executable": str(BIN / "prysm-validator"),
@@ -262,6 +284,36 @@ def sim_config(args, country, supers, vals):
     }
 
 
+def bandwidths(gml):
+    out = {}
+    for block in re.findall(r"node \[(.*?)\]", gml, re.S):
+        f = dict(re.findall(r'(\w+) "?([^"\n]*)"?', block))
+        out[int(f["id"])] = (f.get("host_bandwidth_up"), f.get("host_bandwidth_down"))
+    return out
+
+
+def use_graph(path, args, country, supers):
+    """Move every host onto the eth-slot-sim graph. Infra hosts share the graph node of the
+    first supernode in INFRA_COUNTRY."""
+    cfg = yaml.safe_load(path.read_text())
+    src = yaml.safe_load(Path(args.graph_from).read_text())
+    ids = {int(n[4:]): h["network_node_id"] for n, h in src["hosts"].items()}
+    old = bandwidths(cfg["network"]["graph"]["inline"])
+    new = bandwidths(src["network"]["graph"]["inline"])
+    infra = next((i for i in sorted(supers) if country[i] == INFRA_COUNTRY), None)
+    if infra is None:
+        sys.exit(f"no supernode in {INFRA_COUNTRY} to hold the infra hosts")
+    for name, host in cfg["hosts"].items():
+        m = re.fullmatch(r"node(\d+)", name)
+        i = int(m.group(1)) - 1 if m else infra
+        if m and old[host["network_node_id"]] != new[ids[i]]:
+            sys.exit(f"{name}: bandwidth {old[host['network_node_id']]}, "
+                     f"graph node {ids[i]} has {new[ids[i]]}")
+        host["network_node_id"] = ids[i]
+    cfg["network"] = {"graph": src["network"]["graph"], "use_shortest_path": True}
+    path.write_text(yaml.safe_dump(cfg, sort_keys=False, width=120))
+
+
 def run(cmd, log=None, **kw):
     print("+", " ".join(str(c) for c in cmd), flush=True)
     if log is None:
@@ -293,16 +345,21 @@ def main():
           f"{pool // committees}, {args.subnets} subnets, {args.subnets_per_node} per node")
 
     sim = out / "sim.yaml"
-    text = yaml.safe_dump(sim_config(args, country, supers, vals),
-                          sort_keys=False, default_flow_style=False, width=120)
+    cfg = sim_config(args, country, supers, vals)
+    if args.pcap:
+        cfg["host_option_defaults"] = {"pcap_enabled": True, "pcap_capture_size": "96 B"}
+    text = yaml.safe_dump(cfg, sort_keys=False, default_flow_style=False, width=120)
     text = text.replace("    premine: {}\n",
                         f"{PREMINE_BEGIN}\n    premine: {{}}\n{PREMINE_END}\n", 1)
     sim.write_text(text)
-    run(["go", "run", "./spamoor-premine", "-sim", str(sim), "-inject"], cwd=HERE)
+    if args.eoa_txs or args.blob_txs:
+        run(["go", "run", "./spamoor-premine", "-sim", str(sim), "-inject"], cwd=HERE)
 
     data = out / "data"
     run([str(BIN / "ethshadow"), "--gen-only", "-d", str(data), str(sim)],
         log=out / "ethshadow.log")
+    if args.graph_from:
+        use_graph(data / "shadow.yaml", args, country, supers)
     print(f"  generated {data}")
     if args.gen_only:
         return

@@ -13,6 +13,7 @@ import (
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/attestation"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/sirupsen/logrus"
 )
 
@@ -92,10 +93,10 @@ func recordVote(
 // recordFFGVote takes in one FFG attestation that passed gossip validation.
 // arrived is when the attestation entered validation, carried as milliseconds
 // into the attestation's own slot: the same clock basis as the head-vote lines
-// above, so both parse the same way.
+// above, so both parse the same way. from is the peer that sent it.
 //
 // The metric is always on; the ledger line needs --goldfish-vote-ledger.
-func (s *Service) recordFFGVote(att ethpb.Att, arrived time.Time) {
+func (s *Service) recordFFGVote(att ethpb.Att, from peer.ID, arrived time.Time) {
 	if att == nil {
 		return
 	}
@@ -119,6 +120,8 @@ func (s *Service) recordFFGVote(att ethpb.Att, arrived time.Time) {
 		"committeeIndex": att.GetCommitteeIndex(),
 		"seats":          seats,
 		"arrivedMs":      int64(msIntoSlot(genesis, data.Slot, arrived)),
+		"decidedMs":      int64(msIntoSlot(genesis, data.Slot, time.Now())),
+		"from":           from.String(),
 		"blockRoot":      fmt.Sprintf("%#x", bytesutil.ToBytes32(data.BeaconBlockRoot)),
 		"dataRoot":       decoupled.VoteLedgerDataRoot(att),
 	}

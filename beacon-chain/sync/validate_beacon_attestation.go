@@ -241,7 +241,7 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 	// Attach final validated attestation to the message for further pipeline use
 	msg.ValidatorData = attForValidation
 
-	s.recordFFGVote(att, start)
+	s.recordFFGVote(att, pid, start)
 	s.countFFGVote(data.Slot, subnet)
 
 	return pubsub.ValidationAccept, nil

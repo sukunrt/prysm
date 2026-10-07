@@ -80,6 +80,9 @@ Options:
 | `--block-scratch` | 0 | `CONSENSUS_BLOCK_SCRATCH_SPACE`, bytes on each gossiped block |
 | `--max-peers` | 99 | `--p2p-max-peers` on each beacon node |
 | `--gossipsub-trace` | | `--gossipsub-trace` on each beacon node; logs go to its stderr |
+| `--no-el-peers` | | geth runs with `--nodiscover --maxpeers 0`; only its beacon node talks to it |
+| `--shadow-quic` | | `--shadow-quic` on each beacon node: QUIC only, no TCP |
+| `--pcap` | | Shadow pcap on every host, `<interface>.pcap` in its host dir; headers only, 96 B a packet |
 | `--name` | `n<nodes>-v<validators>-s<seed>` | the directory under `runs/` |
 | `--gen-only` | | stop before `shadow` |
 

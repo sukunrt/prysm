@@ -37,14 +37,16 @@ func MultiAddressBuilder(ip net.IP, tcpPort, quicPort uint) ([]ma.Multiaddr, err
 		return nil, errors.Wrap(err, "unable to determine IP type")
 	}
 
-	// Example: /ip4/1.2.3.4./tcp/5678
-	multiaddrStr := fmt.Sprintf("/%s/%s/tcp/%d", ipType, ip, tcpPort)
-	multiAddrTCP, err := ma.NewMultiaddr(multiaddrStr)
-	if err != nil {
-		return nil, errors.Wrapf(err, "cannot produce TCP multiaddr format from %s:%d", ip, tcpPort)
+	var multiaddrs []ma.Multiaddr
+	if !features.Get().ShadowQUIC {
+		// Example: /ip4/1.2.3.4./tcp/5678
+		multiaddrStr := fmt.Sprintf("/%s/%s/tcp/%d", ipType, ip, tcpPort)
+		multiAddrTCP, err := ma.NewMultiaddr(multiaddrStr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "cannot produce TCP multiaddr format from %s:%d", ip, tcpPort)
+		}
+		multiaddrs = append(multiaddrs, multiAddrTCP)
 	}
-
-	multiaddrs := []ma.Multiaddr{multiAddrTCP}
 
 	if features.Get().EnableQUIC {
 		// Example: /ip4/1.2.3.4/udp/5678/quic-v1
@@ -92,6 +94,7 @@ func (s *Service) buildOptions(ip net.IP, priKey *ecdsa.PrivateKey) ([]libp2p.Op
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot produce multiaddr format from %s:%d", cfg.LocalIP, cfg.TCPPort)
 		}
+		ip = localIP
 	}
 	ifaceKey, err := ecdsaprysm.ConvertToInterfacePrivkey(priKey)
 	if err != nil {
@@ -108,7 +111,6 @@ func (s *Service) buildOptions(ip net.IP, priKey *ecdsa.PrivateKey) ([]libp2p.Op
 		libp2p.ListenAddrs(multiaddrs...),
 		libp2p.UserAgent(version.BuildData()),
 		libp2p.ConnectionGater(s),
-		libp2p.Transport(libp2ptcp.NewTCPTransport),
 		libp2p.DefaultMuxers,
 		libp2p.Muxer("/mplex/6.7.0", mplex.DefaultTransport),
 		libp2p.Security(noise.ID, noise.New),
@@ -119,8 +121,14 @@ func (s *Service) buildOptions(ip net.IP, priKey *ecdsa.PrivateKey) ([]libp2p.Op
 		return nil, errors.Wrap(err, "set connection manager option")
 	}
 
+	if !features.Get().ShadowQUIC {
+		options = append(options, libp2p.Transport(libp2ptcp.NewTCPTransport))
+	}
 	if features.Get().EnableQUIC {
 		options = append(options, libp2p.Transport(libp2pquic.NewTransport))
+	}
+	if features.Get().ShadowQUIC {
+		options = append(options, shadowQUIC(ip))
 	}
 
 	if cfg.EnableUPnP {

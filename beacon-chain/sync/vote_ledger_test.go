@@ -15,6 +15,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/encoding/bytesutil"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
+	"github.com/libp2p/go-libp2p/core/peer"
 	dto "github.com/prometheus/client_model/go"
 	logTest "github.com/sirupsen/logrus/hooks/test"
 )
@@ -69,12 +70,13 @@ func TestLogFFGVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
 		},
 	}
 
-	s.recordFFGVote(att, time.Now())
+	from := peer.ID("sender")
+	s.recordFFGVote(att, from, time.Now())
 	require.Equal(t, 0, len(hook.AllEntries()))
 
 	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
 	defer reset()
-	s.recordFFGVote(att, time.Now())
+	s.recordFFGVote(att, from, time.Now())
 	require.Equal(t, 1, len(hook.AllEntries()))
 	entry := hook.LastEntry()
 	require.Equal(t, "FFG vote", entry.Message)
@@ -83,6 +85,9 @@ func TestLogFFGVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	require.Equal(t, primitives.CommitteeIndex(2), entry.Data["committeeIndex"])
 	require.Equal(t, uint64(1), entry.Data["seats"])
 	require.Equal(t, primitives.ValidatorIndex(7), entry.Data["validator"])
+	require.Equal(t, from.String(), entry.Data["from"])
+	_, ok := entry.Data["decidedMs"]
+	require.Equal(t, true, ok)
 }
 
 func TestLogFFGAggregate_QuietUnlessTheLedgerIsOn(t *testing.T) {

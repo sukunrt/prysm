@@ -244,6 +244,10 @@ var (
 		Name:  "gossipsub-trace",
 		Usage: "Logs GossipSub RPC bytes by kind and topic every 100ms and exports them as metrics.",
 	}
+	shadowQUIC = &cli.BoolFlag{
+		Name:  "shadow-quic",
+		Usage: "Uses only QUIC, with no TCP, and makes it connect in the Shadow network simulator. Use only in Shadow.",
+	}
 
 	// DecoupledFFGVoteAtSlotStart moves the FFG (committee) attestation from the
 	// attestation due time to the start of the slot, plus a bounded random jitter.
@@ -360,6 +364,7 @@ var BeaconChainFlags = combinedFlags([]cli.Flag{
 	disableTrackEquivocations,
 	GoldfishVoteLedger,
 	gossipsubTrace,
+	shadowQUIC,
 	FFGCommitteesPerSubnetPerSlot,
 	enableFullSSZDataLogging,
 	disableVerboseSigVerification,
