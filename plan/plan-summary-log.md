@@ -20,7 +20,7 @@ through them so the values cannot drift between call sites.
 
 | export | meaning |
 |---|---|
-| `SummaryPurpose = "goldfish-summary"` | the value of the `purpose` field |
+| `SummaryPurpose = "decoupled-consensus-summary"` | the value of the `purpose` field |
 | `SummaryFields(slot) logrus.Fields` | `{"purpose": SummaryPurpose, "slot": slot}` |
 | `SummaryActive(slot) bool` | `slots.ToEpoch(slot) >= HezeForkEpoch` |
 | `SummaryRoot(root [32]byte) string` | `fmt.Sprintf("%#x", root[:4])`, so `0x1a2b3c4d` |
@@ -59,7 +59,7 @@ because `votes` is already the field.
 | `committeeSeats` | uint64 | `decoupled.AvailableAttestationCommitteeSize` |
 
 ```
-Goldfish votes  purpose=goldfish-summary slot=1234 votes=120 seats=497
+Goldfish votes  purpose=decoupled-consensus-summary slot=1234 votes=120 seats=497
   committeeSeats=512
 ```
 
@@ -107,7 +107,7 @@ format. A subscribed subnet with zero votes appears with `0`.
 | `perSubnet` | string | `subnet:votes` pairs, comma separated, sorted by subnet |
 
 ```
-FFG votes  purpose=goldfish-summary slot=1234 subnets=2 votes=241 seats=241
+FFG votes  purpose=decoupled-consensus-summary slot=1234 subnets=2 votes=241 seats=241
   perSubnet=3:120,17:121
 ```
 
@@ -140,7 +140,7 @@ route.
 | `ffgSeats` | uint64 | sum of `AggregationBits().Count()` over all attestations |
 
 ```
-Block received  purpose=goldfish-summary slot=1234 blockRoot=0x1a2b3c4d
+Block received  purpose=decoupled-consensus-summary slot=1234 blockRoot=0x1a2b3c4d
   proposerIndex=77 arrivedMs=412 validationMs=9 bytes=118204 attestations=2
   ffgSeats=239
 ```
@@ -172,14 +172,14 @@ every other field, `gasUsed` included.
 | `blobCount` | int | from the bid, when present |
 
 ```
-Payload received  purpose=goldfish-summary slot=1234 blockRoot=0x1a2b3c4d
+Payload received  purpose=decoupled-consensus-summary slot=1234 blockRoot=0x1a2b3c4d
   builderIndex=5 arrivedMs=1980 payloadBytes=402113 txCount=133 gasUsed=9981234
   blobCount=3
 ```
 
 ## Conventions
 
-- Every summary line carries `purpose=goldfish-summary`, from
+- Every summary line carries `purpose=decoupled-consensus-summary`, from
   `SummaryFields`. One `grep` pulls all four lines out of a node's log.
   No other line uses this key.
 - Time fields are `int64` milliseconds into the slot the message belongs
@@ -288,12 +288,12 @@ does not show. Example:
 ```
 time="2026-09-03 11:13:50.13" level=info msg="Block received" arrivedMs=136
   attestations=2 blockRoot=0x7ef99de6 bytes=1616 ffgSeats=45
-  package="beacon-chain/sync" proposerIndex=225 purpose=goldfish-summary
+  package="beacon-chain/sync" proposerIndex=225 purpose=decoupled-consensus-summary
   slot=2 validationMs=1
 ```
 
 Parsing: scan the file once, keep lines that contain
-`purpose=goldfish-summary`, split into `key=value` tokens with quote
+`purpose=decoupled-consensus-summary`, split into `key=value` tokens with quote
 handling. Ledger lines (`msg="Goldfish vote"`, `msg="FFG vote"`,
 `msg="FFG vote included"`) are collected in the same pass when present.
 The `logfmt` helper lives in `evaluators/`;

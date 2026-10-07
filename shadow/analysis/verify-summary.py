@@ -50,7 +50,8 @@ for i in range(1, n + 1):
     total = 0
     for line in open(paths[0], errors="replace"):
         total += 1
-        if "purpose=goldfish-summary" in line:
+        # Runs before the rename logged purpose=goldfish-summary.
+        if "purpose=decoupled-consensus-summary" in line or "purpose=goldfish-summary" in line:
             d = parse(line)
             key = (d["msg"], num(d, "slot"))
             if key in summary[d["msg"]]:

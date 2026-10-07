@@ -94,7 +94,7 @@ func VoteLedgerRootPrefix(root string) string {
 
 // SummaryPurpose is the value of the purpose field on every per-slot summary
 // line. One grep on it pulls all four lines out of a node's log.
-const SummaryPurpose = "goldfish-summary"
+const SummaryPurpose = "decoupled-consensus-summary"
 
 // SummaryFields is the field set every summary line starts from.
 func SummaryFields(slot primitives.Slot) logrus.Fields {
