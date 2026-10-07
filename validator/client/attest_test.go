@@ -314,6 +314,101 @@ func TestSubmitAttestation_SpreadAloneKeepsConventionalWait(t *testing.T) {
 	require.Equal(t, true, time.Since(start) >= 300*time.Millisecond, "spread alone skipped the conventional wait")
 }
 
+func TestSubmitAttestation_SpreadWithoutSlotStart(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 6000
+	cfg.AttestationDueBPS = 1000
+	cfg.AggregateDueBPS = 7500
+	cfg.ElectraForkEpoch = 0
+	cfg.GloasForkEpoch = 1
+	cfg.HezeForkEpoch = 1
+	params.OverrideBeaconConfig(cfg)
+	reset := features.InitWithReset(&features.Flags{
+		DecoupledFFGVoteSpread: true,
+		DecoupledFFGVoteJitter: 50 * time.Millisecond,
+	})
+	defer reset()
+
+	v, m, key, finish := setup(t, false)
+	defer finish()
+	v.slotFeed = new(event.Feed)
+	v.genesisTime = time.Now().Add(-5800 * time.Millisecond)
+	slotStart := v.genesisTime.Add(6 * time.Second)
+	var pubKey [fieldparams.BLSPubkeyLength]byte
+	copy(pubKey[:], key.PublicKey().Marshal())
+	v.duties = testDutyStore(&ethpb.ValidatorDuty{
+		PublicKey:               key.PublicKey().Marshal(),
+		ValidatorCommitteeIndex: 11,
+		CommitteeLength:         12,
+	})
+
+	var dataAt, publishedAt time.Time
+	m.validatorClient.EXPECT().AttestationData(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ *ethpb.AttestationDataRequest) (*ethpb.AttestationData, error) {
+			dataAt = time.Now()
+			return &ethpb.AttestationData{
+				BeaconBlockRoot: make([]byte, fieldparams.RootLength),
+				Target:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+				Source:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+			}, nil
+		})
+	m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).Times(2).
+		Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
+	m.validatorClient.EXPECT().ProposeAttestationElectra(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ *ethpb.SingleAttestation) (*ethpb.AttestResponse, error) {
+			publishedAt = time.Now()
+			return &ethpb.AttestResponse{}, nil
+		})
+
+	v.SubmitAttestation(t.Context(), 1, pubKey)
+	require.Equal(t, true, !dataAt.Before(slotStart.Add(600*time.Millisecond)), "skipped the conventional wait")
+	require.Equal(t, true, !publishedAt.Before(slotStart.Add(time.Second)), "published before its group")
+}
+
+func TestSubmitAttestation_FFGCommitteeScheduleIgnoresSpread(t *testing.T) {
+	params.SetupTestConfigCleanup(t)
+	cfg := params.BeaconConfig().Copy()
+	cfg.SlotDurationMilliseconds = 6000
+	cfg.AggregateDueBPS = 7500
+	cfg.AttestationSubnetCount = 1
+	params.OverrideBeaconConfig(cfg)
+	reset := features.InitWithReset(&features.Flags{
+		FFGCommitteesPerSubnetPerSlot: 6,
+		DecoupledFFGVoteAtSlotStart:   true,
+		DecoupledFFGVoteSpread:        true,
+		DecoupledFFGVoteJitter:        100 * time.Millisecond,
+	})
+	defer reset()
+
+	v, m, key, finish := setup(t, false)
+	defer finish()
+	var pubKey [fieldparams.BLSPubkeyLength]byte
+	copy(pubKey[:], key.PublicKey().Marshal())
+	// Alone, the spread sends index 3 of 4 one second after slot start. The first
+	// committee's window ends at 750ms.
+	v.duties = testDutyStore(&ethpb.ValidatorDuty{
+		PublicKey:               key.PublicKey().Marshal(),
+		ValidatorCommitteeIndex: 3,
+		CommitteeLength:         4,
+	})
+
+	var publishedAt time.Time
+	m.validatorClient.EXPECT().AttestationData(gomock.Any(), gomock.Any()).
+		Return(util.HydrateAttestationData(&ethpb.AttestationData{}), nil)
+	m.validatorClient.EXPECT().DomainData(gomock.Any(), gomock.Any()).AnyTimes().
+		Return(&ethpb.DomainResponse{SignatureDomain: make([]byte, 32)}, nil)
+	m.validatorClient.EXPECT().ProposeAttestation(gomock.Any(), gomock.Any()).
+		Do(func(_ context.Context, _ *ethpb.Attestation) { publishedAt = time.Now() }).
+		Return(&ethpb.AttestResponse{}, nil)
+
+	v.genesisTime = time.Now().Add(300 * time.Millisecond)
+	v.SubmitAttestation(t.Context(), 0, pubKey)
+	require.Equal(t, false, publishedAt.Before(v.genesisTime), "published before slot start")
+	require.Equal(t, true, publishedAt.Before(v.genesisTime.Add(750*time.Millisecond)),
+		"published after the committee window")
+}
+
 func TestSubmitAttestation_HezeSkipsConventionalWait(t *testing.T) {
 	for _, spread := range []bool{false, true} {
 		t.Run(fmt.Sprintf("spread:%v", spread), func(t *testing.T) {

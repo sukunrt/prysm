@@ -92,7 +92,7 @@ type Flags struct {
 	// DecoupledFFGHeadAtRoundStart makes every FFG vote of a round name the head the
 	// beacon node returned for the round's first vote, instead of asking again.
 	DecoupledFFGVoteAtSlotStart  bool
-	DecoupledFFGVoteSpread       bool // Applies from Heze or with DecoupledFFGVoteAtSlotStart.
+	DecoupledFFGVoteSpread       bool
 	DecoupledFFGHeadAtRoundStart bool
 
 	SaveInvalidBlock bool // SaveInvalidBlock saves invalid block to temp.

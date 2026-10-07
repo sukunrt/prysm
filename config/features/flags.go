@@ -253,7 +253,6 @@ var (
 	DecoupledFFGVoteSpread = &cli.BoolFlag{
 		Name: "decoupled-ffg-vote-spread",
 		Usage: "(Decoupled research): Spreads FFG attestation publication across the committee. " +
-			"Only takes effect from Heze or with --decoupled-ffg-vote-at-slot-start. " +
 			"Ignored when --ffg-committees-per-subnet-per-slot is 2 or more.",
 	}
 	// decoupledFFGVoteJitter bounds the random delay added to a slot-start FFG vote.

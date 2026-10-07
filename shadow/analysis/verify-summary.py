@@ -104,16 +104,20 @@ for i, (summary, dup, ledger, total) in nodes.items():
             bad(f"node{i} slot {s}: no Goldfish votes line")
         else:
             d = gf[s]
-            seats, votes, cs = num(d, "seats"), num(d, "votes"), num(d, "committeeSeats")
+            # Runs before the field split logged `votes` for both counts.
+            voters = num(d, "uniqueValidators" if "uniqueValidators" in d else "votes")
+            msgs = num(d, "recordedMessages" if "recordedMessages" in d else "votes")
+            seats, cs = num(d, "seats"), num(d, "committeeSeats")
             if not (0 < seats <= cs):
                 bad(f"node{i} slot {s}: seats={seats} committeeSeats={cs}")
             if seats * 3 < cs * 2:
                 bad(f"node{i} slot {s}: seats={seats} below 2/3 of {cs}")
-            if votes > seats:
-                bad(f"node{i} slot {s}: votes={votes} > seats={seats}")
+            if voters > seats or voters > msgs:
+                bad(f"node{i} slot {s}: uniqueValidators={voters} seats={seats} "
+                    f"recordedMessages={msgs}")
             lv, ls = gv[s]
-            if (votes, seats) != (lv, ls):
-                bad(f"node{i} slot {s}: Goldfish votes={votes} seats={seats}, "
+            if (msgs, seats) != (lv, ls):
+                bad(f"node{i} slot {s}: Goldfish recordedMessages={msgs} seats={seats}, "
                     f"ledger votes={lv} seats={ls}")
         if s not in ffg:
             bad(f"node{i} slot {s}: no FFG votes line")
