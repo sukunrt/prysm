@@ -314,6 +314,33 @@ func TestSubmitAttestation_SpreadAloneKeepsConventionalWait(t *testing.T) {
 	require.Equal(t, true, time.Since(start) >= 300*time.Millisecond, "spread alone skipped the conventional wait")
 }
 
+func TestSubmitAttestation_HezeSkipsConventionalWait(t *testing.T) {
+	for _, spread := range []bool{false, true} {
+		t.Run(fmt.Sprintf("spread:%v", spread), func(t *testing.T) {
+			params.SetupTestConfigCleanup(t)
+			cfg := params.BeaconConfig().Copy()
+			cfg.SlotDurationMilliseconds = 12000
+			cfg.AttestationDueBPS = 1000
+			cfg.GloasForkEpoch = 1
+			cfg.HezeForkEpoch = 0
+			params.OverrideBeaconConfig(cfg)
+			reset := features.InitWithReset(&features.Flags{
+				DecoupledFFGVoteSpread: spread,
+				DecoupledFFGVoteJitter: 50 * time.Millisecond,
+			})
+			defer reset()
+
+			v, _, _, finish := setup(t, false)
+			defer finish()
+			v.slotFeed = new(event.Feed)
+			v.genesisTime = time.Now().Add(-12600 * time.Millisecond)
+			start := time.Now()
+			v.SubmitAttestation(t.Context(), 1, [fieldparams.BLSPubkeyLength]byte{})
+			require.Equal(t, true, time.Since(start) < 300*time.Millisecond, "waited for the attestation due")
+		})
+	}
+}
+
 func TestSubmitAttestation_FFGCommitteeSchedule(t *testing.T) {
 	for _, decoupled := range []bool{true, false} {
 		t.Run(fmt.Sprintf("decoupled:%v", decoupled), func(t *testing.T) {

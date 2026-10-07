@@ -244,23 +244,24 @@ var (
 	// DecoupledFFGVoteAtSlotStart moves the FFG (committee) attestation from the
 	// attestation due time to the start of the slot, plus a bounded random jitter.
 	// The available attestation keeps its own due time, which is a config value.
+	// From Heze, this is the default.
 	DecoupledFFGVoteAtSlotStart = &cli.BoolFlag{
 		Name: "decoupled-ffg-vote-at-slot-start",
 		Usage: "(Decoupled research): Casts the FFG attestation at the start of the slot instead of " +
-			"waiting for a block or the attestation due time.",
+			"waiting for a block or the attestation due time. Always on from Heze.",
 	}
 	DecoupledFFGVoteSpread = &cli.BoolFlag{
 		Name: "decoupled-ffg-vote-spread",
 		Usage: "(Decoupled research): Spreads FFG attestation publication across the committee. " +
-			"Only takes effect with --decoupled-ffg-vote-at-slot-start. " +
+			"Only takes effect from Heze or with --decoupled-ffg-vote-at-slot-start. " +
 			"Ignored when --ffg-committees-per-subnet-per-slot is 2 or more.",
 	}
 	// decoupledFFGVoteJitter bounds the random delay added to a slot-start FFG vote.
 	decoupledFFGVoteJitter = &cli.DurationFlag{
 		Name: "decoupled-ffg-vote-jitter",
 		Usage: "(Decoupled research): Upper bound of the random delay added to a slot-start FFG " +
-			"vote. Only read when --decoupled-ffg-vote-at-slot-start is set or " +
-			"--ffg-committees-per-subnet-per-slot is 2 or more.",
+			"vote. Only read from Heze, with --decoupled-ffg-vote-at-slot-start, or with " +
+			"--ffg-committees-per-subnet-per-slot of 2 or more.",
 		Value: 200 * time.Millisecond,
 	}
 	FFGCommitteesPerSubnetPerSlot = &cli.Uint64Flag{

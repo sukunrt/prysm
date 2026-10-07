@@ -37,10 +37,12 @@ func (v *validator) SubmitAttestation(ctx context.Context, slot primitives.Slot,
 	span.SetAttributes(trace.StringAttribute("validator", fmt.Sprintf("%#x", pubKey)))
 
 	staggered := features.Get().FFGCommitteesPerSubnetPerSlot >= 2
-	spread := features.Get().DecoupledFFGVoteAtSlotStart && features.Get().DecoupledFFGVoteSpread
-	if !staggered && features.Get().DecoupledFFGVoteAtSlotStart && !spread {
+	atSlotStart := features.Get().DecoupledFFGVoteAtSlotStart ||
+		slots.ToEpoch(slot) >= params.BeaconConfig().HezeForkEpoch
+	spread := atSlotStart && features.Get().DecoupledFFGVoteSpread
+	if !staggered && atSlotStart && !spread {
 		v.waitSlotStartJitter(ctx, slot)
-	} else if !staggered && !features.Get().DecoupledFFGVoteAtSlotStart {
+	} else if !staggered && !atSlotStart {
 		v.waitUntilAttestationDueOrValidBlock(ctx, slot)
 	}
 

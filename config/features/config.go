@@ -88,10 +88,11 @@ type Flags struct {
 	//
 	// DecoupledFFGVoteAtSlotStart casts the FFG attestation at the start of the slot
 	// rather than at the attestation due time, delayed only by a random jitter.
+	// From Heze, this is the default.
 	// DecoupledFFGHeadAtRoundStart makes every FFG vote of a round name the head the
 	// beacon node returned for the round's first vote, instead of asking again.
 	DecoupledFFGVoteAtSlotStart  bool
-	DecoupledFFGVoteSpread       bool // Only applies with DecoupledFFGVoteAtSlotStart.
+	DecoupledFFGVoteSpread       bool // Applies from Heze or with DecoupledFFGVoteAtSlotStart.
 	DecoupledFFGHeadAtRoundStart bool
 
 	SaveInvalidBlock bool // SaveInvalidBlock saves invalid block to temp.
