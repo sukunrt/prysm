@@ -48,11 +48,12 @@ func addScratchPrefix(b []byte) ([]byte, error) {
 		return nil, errors.Errorf(
 			"CONSENSUS_BLOCK_SCRATCH_SPACE is %d bytes, the maximum is %d", n, params.MaxScratchSpace)
 	}
-	out := make([]byte, scratchHeaderLen+int(n)+len(b))
+	size := int(n) // lint:ignore uintcast -- n <= MaxScratchSpace.
+	out := make([]byte, scratchHeaderLen+size+len(b))
 	binary.LittleEndian.PutUint32(out, scratchMagic)
 	binary.LittleEndian.PutUint32(out[4:], uint32(n))
-	copy(out[scratchHeaderLen:], bytesutil.RandomBytes(int(n)))
-	copy(out[scratchHeaderLen+int(n):], b)
+	copy(out[scratchHeaderLen:], bytesutil.RandomBytes(size))
+	copy(out[scratchHeaderLen+size:], b)
 	return out, nil
 }
 
@@ -68,9 +69,10 @@ func stripScratchPrefix(b []byte) ([]byte, error) {
 		return nil, errors.Errorf(
 			"scratch prefix is %d bytes, the maximum is %d", n, params.MaxScratchSpace)
 	}
-	if scratchHeaderLen+int(n) > len(b) {
+	size := int(n) // lint:ignore uintcast -- n <= MaxScratchSpace.
+	if scratchHeaderLen+size > len(b) {
 		return nil, errors.Errorf(
 			"scratch prefix of %d bytes overruns a message of %d bytes", n, len(b))
 	}
-	return b[scratchHeaderLen+int(n):], nil
+	return b[scratchHeaderLen+size:], nil
 }
