@@ -198,34 +198,34 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 	}
 
 	// TODO(sukunrt): delete this path. don't want slashing in stubbing.
-	if s.slasherEnabled {
-		// // Feed the indexed attestation to slasher if enabled. This action
-		// // is done in the background to avoid adding more load to this critical code path.
-		// go func() {
-		// 	// Using a different context to prevent timeouts as this operation can be expensive
-		// 	// and we want to avoid affecting the critical code path.
-		// 	ctx := context.TODO()
-		// 	preState, err := s.cfg.chain.AttestationTargetState(ctx, data.Target)
-		// 	if err != nil {
-		// 		log.WithError(err).Error("Could not retrieve pre state")
-		// 		tracing.AnnotateError(span, err)
-		// 		return
-		// 	}
-		// 	committee, err := helpers.BeaconCommitteeFromState(ctx, preState, data.Slot, committeeIndex)
-		// 	if err != nil {
-		// 		log.WithError(err).Error("Could not get attestation committee")
-		// 		tracing.AnnotateError(span, err)
-		// 		return
-		// 	}
-		// 	indexedAtt, err := attestation.ConvertToIndexed(ctx, attForValidation, committee)
-		// 	if err != nil {
-		// 		log.WithError(err).Error("Could not convert to indexed attestation")
-		// 		tracing.AnnotateError(span, err)
-		// 		return
-		// 	}
-		// 	s.cfg.slasherAttestationsFeed.Send(&types.WrappedIndexedAtt{IndexedAtt: indexedAtt})
-		// }()
-	}
+	// if s.slasherEnabled {
+	// // Feed the indexed attestation to slasher if enabled. This action
+	// // is done in the background to avoid adding more load to this critical code path.
+	// go func() {
+	// 	// Using a different context to prevent timeouts as this operation can be expensive
+	// 	// and we want to avoid affecting the critical code path.
+	// 	ctx := context.TODO()
+	// 	preState, err := s.cfg.chain.AttestationTargetState(ctx, data.Target)
+	// 	if err != nil {
+	// 		log.WithError(err).Error("Could not retrieve pre state")
+	// 		tracing.AnnotateError(span, err)
+	// 		return
+	// 	}
+	// 	committee, err := helpers.BeaconCommitteeFromState(ctx, preState, data.Slot, committeeIndex)
+	// 	if err != nil {
+	// 		log.WithError(err).Error("Could not get attestation committee")
+	// 		tracing.AnnotateError(span, err)
+	// 		return
+	// 	}
+	// 	indexedAtt, err := attestation.ConvertToIndexed(ctx, attForValidation, committee)
+	// 	if err != nil {
+	// 		log.WithError(err).Error("Could not convert to indexed attestation")
+	// 		tracing.AnnotateError(span, err)
+	// 		return
+	// 	}
+	// 	s.cfg.slasherAttestationsFeed.Send(&types.WrappedIndexedAtt{IndexedAtt: indexedAtt})
+	// }()
+	// }
 
 	// Notify other services in the beacon node
 	s.cfg.attestationNotifier.OperationFeed().Send(&feed.Event{
