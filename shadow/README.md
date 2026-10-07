@@ -74,6 +74,7 @@ Options:
 | `--aggregators-per-committee` | 64 | `TARGET_AGGREGATORS_PER_COMMITTEE`; expected aggregators in a committee |
 | `--subnets` | 1 | `ATTESTATION_SUBNET_COUNT` |
 | `--ffg-committees-per-subnet-per-slot` | 1 | X; with X > 1, set on each beacon node and validator client; the X committees of a subnet send one after the other |
+| `--ffg-vote-spread` | | `--decoupled-ffg-vote-spread` on each validator client |
 | `--subnets-per-node` | 2 | `SUBNETS_PER_NODE` |
 | `--aggregate-due-bps` | 5000 | `AGGREGATE_DUE_BPS_GLOAS`; FFG votes count at this point of the slot |
 | `--block-scratch` | 0 | `CONSENSUS_BLOCK_SCRATCH_SPACE`, bytes on each gossiped block |
