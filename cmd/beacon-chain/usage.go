@@ -104,6 +104,8 @@ var appHelpFlagGroups = []flagGroup{
 			flags.DataColumnBatchLimit,
 			flags.DataColumnBatchLimitBurstFactor,
 			flags.PartialDataColumns,
+			flags.PartialAttestations,
+			flags.PartialAttestationsPushInterval,
 			flags.BlockBatchLimit,
 			flags.BlockBatchLimitBurstFactor,
 			flags.MaxConcurrentDials,

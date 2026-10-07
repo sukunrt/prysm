@@ -1,8 +1,10 @@
 package: "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 types:
+  - name: "AttestationBundle"
   - name: "BeaconBlockContentsFulu"
   - name: "BeaconStateFulu"
   - name: "BlindedBeaconBlockFulu"
+  - name: "CommitteeAttestationPartsMetadata"
   - name: "DataColumnSidecar"
   - name: "DataColumnsByRootIdentifier"
   - name: "PartialDataColumnHeader"

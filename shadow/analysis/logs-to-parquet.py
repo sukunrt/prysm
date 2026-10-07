@@ -68,7 +68,8 @@ payload_attestations -- msg="Submitted payload attestation message"
 
 ffg_votes -- msg="FFG vote", one row per FFG attestation (prysm >= 3cb8aa37)
     att_slot, target_round, committee_index, validator, seats, outcome,
-    arrived_ms, data_root, block_root.  outcome is gossip | local.
+    transport, arrived_ms, data_root, block_root.  outcome is gossip | local;
+    transport is gossip | bundle, the route the vote took to this node.
     data_root is the pool's grouping key -- two votes aggregate together
     exactly when it matches -- and block_root is the head the vote named.
     Both are empty on runs built before prysm f8ccc75f.
@@ -112,6 +113,29 @@ ffg_aggregate_groups -- msg="FFG aggregate groups", one row per aggregation duty
     seats is a bit UNION over that group's candidates, while chosen_seats is
     the single published attestation's own bit count.  Explode it with
     string_split / unnest when you need per-group rows.
+
+ffg_summary -- msg="FFG votes", the per-slot summary line, one row per slot
+    slot, votes, seats, subnets, per_subnet.  The marker keeps its closing
+    quote, so it never matches the "FFG vote" ledger lines above.
+
+att_bundles -- msg="Attestation bundles", one row per bundle send or receive
+    path, slot, bundles, signatures, peers, new.  path is push | serve | recv;
+    push and serve are sent, recv is received.  new counts the entries of a
+    received bundle that were queued for validation.
+
+blocks_received -- msg="Block received", gossip arrival of a block on a node
+    slot, proposer_index, arrived_ms, validation_ms, bytes, attestations,
+    ffg_seats, block_root.  The proposer never logs it, so a slot has one row
+    per other node.  received_blocks above carries the older "Received block"
+    marker, which this tree no longer writes.
+
+p2p_bandwidth -- msg="P2P bandwidth", one cumulative row per node every 10 s
+    total_in, total_out, meshsub_in, meshsub_out, att_publish_in,
+    att_publish_out, att_bundle_in, att_bundle_out, att_meta_in, att_meta_out,
+    att_ihave_in, att_ihave_out, iwant_in, iwant_out, idontwant_in,
+    idontwant_out.  IWANT and IDONTWANT name message IDs, not topics, so they
+    cover every topic.  Every column counts from process start, so difference
+    two rows for a window.  The control columns are null on older logs.
 
 parse_stats -- one row per (log file, table): matched, parsed, failed
 file_summary -- one row per log file: lines, matched_any, unmatched
@@ -273,10 +297,74 @@ TABLES = {
             ("validator", "validator", "INTEGER"),
             ("seats", "seats", "INTEGER"),
             ("outcome", "outcome", "VARCHAR"),
+            ("transport", "transport", "VARCHAR"),
             ("arrived_ms", "arrivedMs", "INTEGER"),
             ("data_root", "dataRoot", "VARCHAR"),
             ("block_root", "blockRoot", "VARCHAR"),
             ("source", "package", "VARCHAR"),
+        ],
+    },
+    "ffg_summary": {
+        "marker": "FFG votes",
+        "required": ["ts", "slot", "votes", "seats"],
+        "order": "node_index, slot",
+        "columns": [
+            ("slot", "slot", "INTEGER"),
+            ("votes", "votes", "INTEGER"),
+            ("seats", "seats", "INTEGER"),
+            ("subnets", "subnets", "INTEGER"),
+            ("per_subnet", "perSubnet", "VARCHAR"),
+        ],
+    },
+    "att_bundles": {
+        "marker": "Attestation bundles",
+        "required": ["ts", "slot", "path"],
+        "order": "node_index, slot, ts",
+        "columns": [
+            ("path", "path", "VARCHAR"),
+            ("slot", "slot", "INTEGER"),
+            ("bundles", "bundles", "INTEGER"),
+            ("signatures", "signatures", "INTEGER"),
+            ("peers", "peers", "INTEGER"),
+            ("new", "new", "INTEGER"),
+        ],
+    },
+    "blocks_received": {
+        "marker": "Block received",
+        "required": ["ts", "slot", "arrived_ms"],
+        "order": "node_index, slot",
+        "columns": [
+            ("slot", "slot", "INTEGER"),
+            ("proposer_index", "proposerIndex", "INTEGER"),
+            ("arrived_ms", "arrivedMs", "INTEGER"),
+            ("validation_ms", "validationMs", "INTEGER"),
+            ("bytes", "bytes", "INTEGER"),
+            ("attestations", "attestations", "INTEGER"),
+            ("ffg_seats", "ffgSeats", "INTEGER"),
+            ("block_root", "blockRoot", "VARCHAR"),
+        ],
+    },
+    "p2p_bandwidth": {
+        "marker": "P2P bandwidth",
+        "required": ["ts", "total_in", "total_out"],
+        "order": "node_index, ts",
+        "columns": [
+            ("total_in", "totalIn", "BIGINT"),
+            ("total_out", "totalOut", "BIGINT"),
+            ("meshsub_in", "meshsubIn", "BIGINT"),
+            ("meshsub_out", "meshsubOut", "BIGINT"),
+            ("att_publish_in", "attPublishIn", "BIGINT"),
+            ("att_publish_out", "attPublishOut", "BIGINT"),
+            ("att_bundle_in", "attBundleIn", "BIGINT"),
+            ("att_bundle_out", "attBundleOut", "BIGINT"),
+            ("att_meta_in", "attMetaIn", "BIGINT"),
+            ("att_meta_out", "attMetaOut", "BIGINT"),
+            ("att_ihave_in", "attIhaveIn", "BIGINT"),
+            ("att_ihave_out", "attIhaveOut", "BIGINT"),
+            ("iwant_in", "iwantIn", "BIGINT"),
+            ("iwant_out", "iwantOut", "BIGINT"),
+            ("idontwant_in", "idontwantIn", "BIGINT"),
+            ("idontwant_out", "idontwantOut", "BIGINT"),
         ],
     },
     "ffg_aggregates": {

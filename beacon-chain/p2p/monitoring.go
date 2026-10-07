@@ -4,10 +4,13 @@ import (
 	"strings"
 
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/peers"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/peerstore"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	dto "github.com/prometheus/client_model/go"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -210,6 +213,18 @@ var (
 		Help: "The number of capable peers in mesh",
 	},
 		[]string{"topic", "supports_partial"})
+	pubsubRPCBytes = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "p2p_pubsub_rpc_bytes_total",
+		Help: "Payload bytes of gossipsub RPCs by direction, kind and topic family.",
+	}, []string{"direction", "kind", "family"})
+	p2pBandwidthBytes = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "p2p_bandwidth_bytes",
+		Help: "Cumulative bytes on the libp2p host by protocol and direction.",
+	}, []string{"protocol", "direction"})
+	p2pPeerBandwidthBytes = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "p2p_peer_bandwidth_bytes",
+		Help: "Cumulative bytes on the libp2p host by peer and direction.",
+	}, []string{"peer", "direction"})
 )
 
 func (s *Service) updateMetrics() {
@@ -257,6 +272,63 @@ func (s *Service) updateMetrics() {
 		avgScore := average(scoringData)
 		avgScoreConnectedClients.WithLabelValues(agent).Set(avgScore)
 	}
+
+	s.recordBandwidth()
+}
+
+// recordBandwidth exports the host's byte counters and, with the ledger on,
+// writes one cumulative line the run analysis can difference.
+func (s *Service) recordBandwidth() {
+	var meshsubIn, meshsubOut int64
+	for id, st := range s.bandwidth.GetBandwidthByProtocol() {
+		p2pBandwidthBytes.WithLabelValues(string(id), "in").Set(float64(st.TotalIn))
+		p2pBandwidthBytes.WithLabelValues(string(id), "out").Set(float64(st.TotalOut))
+		if strings.HasPrefix(string(id), "/meshsub/") {
+			meshsubIn += st.TotalIn
+			meshsubOut += st.TotalOut
+		}
+	}
+	for pid, st := range s.bandwidth.GetBandwidthByPeer() {
+		p2pPeerBandwidthBytes.WithLabelValues(pid.String(), "in").Set(float64(st.TotalIn))
+		p2pPeerBandwidthBytes.WithLabelValues(pid.String(), "out").Set(float64(st.TotalOut))
+	}
+	if !features.Get().GoldfishVoteLedger {
+		return
+	}
+	total := s.bandwidth.GetBandwidthTotals()
+	att := func(direction, kind string) uint64 {
+		return counterValue(pubsubRPCBytes.WithLabelValues(direction, kind, "attestation"))
+	}
+	unknown := func(direction, kind string) uint64 {
+		return counterValue(pubsubRPCBytes.WithLabelValues(direction, kind, "unknown"))
+	}
+	log.WithFields(logrus.Fields{
+		"totalIn":       total.TotalIn,
+		"totalOut":      total.TotalOut,
+		"meshsubIn":     meshsubIn,
+		"meshsubOut":    meshsubOut,
+		"attPublishIn":  att("recv", "publish"),
+		"attPublishOut": att("sent", "publish"),
+		"attBundleIn":   att("recv", "bundle"),
+		"attBundleOut":  att("sent", "bundle"),
+		"attMetaIn":     att("recv", "metadata"),
+		"attMetaOut":    att("sent", "metadata"),
+		"attIhaveIn":    att("recv", "ihave"),
+		"attIhaveOut":   att("sent", "ihave"),
+		"iwantIn":       unknown("recv", "iwant"),
+		"iwantOut":      unknown("sent", "iwant"),
+		"idontwantIn":   unknown("recv", "idontwant"),
+		"idontwantOut":  unknown("sent", "idontwant"),
+	}).Info("P2P bandwidth")
+}
+
+// counterValue reads a prometheus counter without the registry.
+func counterValue(c prometheus.Counter) uint64 {
+	var m dto.Metric
+	if err := c.Write(&m); err != nil {
+		return 0
+	}
+	return uint64(m.GetCounter().GetValue())
 }
 
 func average(xs []float64) float64 {

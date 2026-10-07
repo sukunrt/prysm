@@ -5,6 +5,7 @@ package flags
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/OffchainLabs/prysm/v7/cmd"
 	"github.com/OffchainLabs/prysm/v7/config/params"
@@ -374,5 +375,18 @@ var (
 	PartialDataColumns = &cli.BoolFlag{
 		Name:  "partial-data-columns",
 		Usage: "Enable cell-level dissemination for PeerDAS data columns",
+	}
+	// PartialAttestations enables bundled attestation propagation over
+	// gossipsub partial messages on the attestation subnets.
+	PartialAttestations = &cli.BoolFlag{
+		Name:  "partial-attestations",
+		Usage: "Enable bundled attestation propagation over gossipsub partial messages",
+	}
+	// PartialAttestationsPushInterval sets how often validated attestations are
+	// pushed as bundles. Longer intervals pack more signatures per bundle.
+	PartialAttestationsPushInterval = &cli.DurationFlag{
+		Name:  "partial-attestations-push-interval",
+		Usage: "Interval between bundle pushes over partial messages",
+		Value: 20 * time.Millisecond,
 	}
 )

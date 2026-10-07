@@ -83,12 +83,13 @@ var (
 			Help: "Unique Goldfish committee seats recorded by this node before the next slot start cutoff.",
 		},
 	)
-	ffgVoteArrival = promauto.NewHistogram(
+	ffgVoteArrival = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "ffg_vote_arrival_milliseconds",
 			Help:    "Time from slot start to an FFG attestation that passed gossip validation.",
 			Buckets: slotMsBuckets,
 		},
+		[]string{"transport"},
 	)
 	ffgVoteSeats = promauto.NewGauge(
 		prometheus.GaugeOpts{

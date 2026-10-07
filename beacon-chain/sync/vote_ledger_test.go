@@ -71,12 +71,12 @@ func TestLogFFGVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	}
 
 	from := peer.ID("sender")
-	s.recordFFGVote(att, from, time.Now())
+	s.recordFFGVote(att, transportBundle, from, time.Now())
 	require.Equal(t, 0, len(hook.AllEntries()))
 
 	reset := features.InitWithReset(&features.Flags{GoldfishVoteLedger: true})
 	defer reset()
-	s.recordFFGVote(att, from, time.Now())
+	s.recordFFGVote(att, transportBundle, from, time.Now())
 	require.Equal(t, 1, len(hook.AllEntries()))
 	entry := hook.LastEntry()
 	require.Equal(t, "FFG vote", entry.Message)
@@ -85,6 +85,7 @@ func TestLogFFGVote_QuietUnlessTheLedgerIsOn(t *testing.T) {
 	require.Equal(t, primitives.CommitteeIndex(2), entry.Data["committeeIndex"])
 	require.Equal(t, uint64(1), entry.Data["seats"])
 	require.Equal(t, primitives.ValidatorIndex(7), entry.Data["validator"])
+	require.Equal(t, transportBundle, entry.Data["transport"])
 	require.Equal(t, from.String(), entry.Data["from"])
 	_, ok := entry.Data["decidedMs"]
 	require.Equal(t, true, ok)

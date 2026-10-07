@@ -29,6 +29,12 @@ const (
 	voteLocal    = "local"    // this node's own vote, handed to forkchoice by the RPC
 )
 
+// Transport of an FFG vote that passed gossip validation.
+const (
+	transportGossip = "gossip" // a classic gossipsub message
+	transportBundle = "bundle" // an entry of a partial-message bundle
+)
+
 // msIntoSlot is a time as milliseconds into the slot it belongs to. Negative
 // for an arrival inside the early tolerance.
 func msIntoSlot(genesis time.Time, slot primitives.Slot, t time.Time) float64 {
@@ -91,12 +97,13 @@ func recordVote(
 }
 
 // recordFFGVote takes in one FFG attestation that passed gossip validation.
-// arrived is when the attestation entered validation, carried as milliseconds
-// into the attestation's own slot: the same clock basis as the head-vote lines
-// above, so both parse the same way. from is the peer that sent it.
+// transport names how the attestation reached this node and from is the peer
+// that sent it. arrived is when the attestation entered validation, carried as
+// milliseconds into the attestation's own slot: the same clock basis as the
+// head-vote lines above, so both parse the same way.
 //
 // The metric is always on; the ledger line needs --goldfish-vote-ledger.
-func (s *Service) recordFFGVote(att ethpb.Att, from peer.ID, arrived time.Time) {
+func (s *Service) recordFFGVote(att ethpb.Att, transport string, from peer.ID, arrived time.Time) {
 	if att == nil {
 		return
 	}
@@ -105,7 +112,7 @@ func (s *Service) recordFFGVote(att ethpb.Att, from peer.ID, arrived time.Time) 
 		return
 	}
 	genesis := s.cfg.clock.GenesisTime()
-	ffgVoteArrival.Observe(msIntoSlot(genesis, data.Slot, arrived))
+	ffgVoteArrival.WithLabelValues(transport).Observe(msIntoSlot(genesis, data.Slot, arrived))
 	if !features.Get().GoldfishVoteLedger {
 		return
 	}
@@ -115,6 +122,7 @@ func (s *Service) recordFFGVote(att ethpb.Att, from peer.ID, arrived time.Time) 
 	}
 	fields := logrus.Fields{
 		"outcome":        "gossip",
+		"transport":      transport,
 		"attSlot":        data.Slot,
 		"targetRound":    data.Target.Epoch,
 		"committeeIndex": att.GetCommitteeIndex(),

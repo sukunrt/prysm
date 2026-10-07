@@ -11,7 +11,9 @@ import (
 
 	"github.com/OffchainLabs/prysm/v7/async"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/encoder"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/partialattestationbroadcaster"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/partialdatacolumnbroadcaster"
+	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/partialmsgmux"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/peers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/peers/scorers"
 	"github.com/OffchainLabs/prysm/v7/beacon-chain/p2p/types"
@@ -30,6 +32,7 @@ import (
 	"github.com/libp2p/go-libp2p"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
+	libp2pmetrics "github.com/libp2p/go-libp2p/core/metrics"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
@@ -79,6 +82,8 @@ type Service struct {
 	metaData                 metadata.Metadata
 	pubsub                   *pubsub.PubSub
 	partialColumnBroadcaster partialdatacolumnbroadcaster.Broadcaster
+	partialAttBroadcaster    *partialattestationbroadcaster.Broadcaster
+	partialMsgMux            *partialmsgmux.Mux
 	joinedTopics             map[string]*pubsub.Topic
 	joinedTopicsLock         sync.RWMutex
 	subnetsLock              map[uint64]*sync.RWMutex
@@ -97,6 +102,7 @@ type Service struct {
 	custodyInfoLock          sync.RWMutex // Lock access to custodyInfo
 	custodyInfoSet           chan struct{}
 	allForkDigests           map[[4]byte]struct{}
+	bandwidth                *libp2pmetrics.BandwidthCounter
 }
 
 type custodyInfo struct {
@@ -147,10 +153,32 @@ func NewService(ctx context.Context, cfg *Config) (*Service, error) {
 		subnetsLock:           make(map[uint64]*sync.RWMutex),
 		peerDisconnectionTime: cache.New(1*time.Second, 1*time.Minute),
 		custodyInfoSet:        make(chan struct{}),
+		bandwidth:             libp2pmetrics.NewBandwidthCounter(),
 	}
 
+	// gossipsub supports a single partial-messages extension per host, so all
+	// topic families share it through the mux.
+	if cfg.PartialDataColumns || cfg.PartialAttestations {
+		s.partialMsgMux = partialmsgmux.New()
+	}
 	if cfg.PartialDataColumns {
 		s.partialColumnBroadcaster = partialdatacolumnbroadcaster.NewBroadcaster(ctx, log.Logger)
+		s.partialMsgMux.RegisterDataColumnHandler(s.partialColumnBroadcaster)
+	}
+	if cfg.PartialAttestations {
+		// Before genesis time is learned, CurrentSlot on the zero time is
+		// enormous, so every group is out of the propagation window and
+		// ignored; attestation topics are only joined after genesis anyway.
+		currentSlot := func() primitives.Slot { return slots.CurrentSlot(s.genesisTime) }
+		// pushDue is the end of the slot. Past it a slot's votes are served
+		// on request only.
+		pushDue := func(slot primitives.Slot) time.Time {
+			end, _ := slots.StartTime(s.genesisTime, slot+1)
+			return end
+		}
+		s.partialAttBroadcaster = partialattestationbroadcaster.NewBroadcaster(
+			ctx, currentSlot, pushDue, cfg.PartialAttestationsPushInterval)
+		s.partialMsgMux.RegisterAttestationHandler(s.partialAttBroadcaster)
 	}
 
 	ipAddr := prysmnetwork.IPAddr()
@@ -359,6 +387,12 @@ func (s *Service) PubSub() *pubsub.PubSub {
 
 func (s *Service) PartialColumnBroadcaster() partialdatacolumnbroadcaster.Broadcaster {
 	return s.partialColumnBroadcaster
+}
+
+// PartialAttestationBroadcaster returns the broadcaster for partial
+// attestation messages, nil when the feature is disabled.
+func (s *Service) PartialAttestationBroadcaster() *partialattestationbroadcaster.Broadcaster {
+	return s.partialAttBroadcaster
 }
 
 // Host returns the currently running libp2p

@@ -1,6 +1,7 @@
 package p2p
 
 import (
+	"strings"
 	"sync"
 
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
@@ -138,8 +139,50 @@ func (g *gossipTracer) ThrottlePeer(p peer.ID) {
 	pubsubPeerThrottle.WithLabelValues(agent).Inc()
 }
 
+// topicFamily maps a topic to the family label of the byte counters.
+func topicFamily(topic string) string {
+	switch {
+	case strings.Contains(topic, GossipAttestationMessage):
+		return "attestation"
+	case strings.Contains(topic, GossipDataColumnSidecarMessage):
+		return "data_column"
+	}
+	return "other"
+}
+
+// recordRPCBytes counts the payload bytes of one RPC in one direction.
+func recordRPCBytes(direction string, rpc *pubsub.RPC) {
+	for _, msg := range rpc.Publish {
+		pubsubRPCBytes.WithLabelValues(direction, "publish", topicFamily(msg.GetTopic())).
+			Add(float64(proto.Size(msg)))
+	}
+	ctl := rpc.GetControl()
+	for _, ihave := range ctl.GetIhave() {
+		pubsubRPCBytes.WithLabelValues(direction, "ihave", topicFamily(ihave.GetTopicID())).
+			Add(float64(proto.Size(ihave)))
+	}
+	// IWANT and IDONTWANT name message IDs, not topics.
+	for _, iwant := range ctl.GetIwant() {
+		pubsubRPCBytes.WithLabelValues(direction, "iwant", "unknown").Add(float64(proto.Size(iwant)))
+	}
+	for _, idontwant := range ctl.GetIdontwant() {
+		pubsubRPCBytes.WithLabelValues(direction, "idontwant", "unknown").
+			Add(float64(proto.Size(idontwant)))
+	}
+	p := rpc.Partial
+	if p == nil {
+		return
+	}
+	family := topicFamily(p.GetTopicID())
+	pubsubRPCBytes.WithLabelValues(direction, "bundle", family).
+		Add(float64(len(p.GetPartialMessage())))
+	pubsubRPCBytes.WithLabelValues(direction, "metadata", family).
+		Add(float64(len(p.GetPartsMetadata())))
+}
+
 // RecvRPC .
 func (g *gossipTracer) RecvRPC(rpc *pubsub.RPC) {
+	recordRPCBytes("recv", rpc)
 	from := rpc.From()
 	g.setMetricFromRPC(recv, pubsubRPCSubRecv, pubsubRPCPubRecv, pubsubRPCPubRecvSize, pubsubRPCRecv, rpc)
 
@@ -173,6 +216,7 @@ func (g *gossipTracer) RecvRPC(rpc *pubsub.RPC) {
 
 // SendRPC .
 func (g *gossipTracer) SendRPC(rpc *pubsub.RPC, p peer.ID) {
+	recordRPCBytes("sent", rpc)
 	g.setMetricFromRPC(send, pubsubRPCSubSent, pubsubRPCPubSent, pubsubRPCPubSentSize, pubsubRPCSent, rpc)
 }
 

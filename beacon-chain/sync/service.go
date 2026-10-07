@@ -215,6 +215,9 @@ type Service struct {
 	pendingPayloadAttestations           map[[32]byte][]pendingPayloadAttestation
 	pendingPayloadAttestationLock        sync.RWMutex
 	ffgVotes                             *ffgVoteCounters
+	// submitPartialAtt feeds a gossip-accepted attestation into the partial
+	// broadcaster; nil unless --partial-attestations is set.
+	submitPartialAtt func(topic string, att *ethpb.SingleAttestation)
 }
 
 // NewService initializes new regular sync service.
@@ -323,6 +326,10 @@ func (s *Service) Start() {
 
 	if broadcaster := s.cfg.p2p.PartialColumnBroadcaster(); broadcaster != nil {
 		go broadcaster.Start(&partialColumnCallbacks{service: s})
+	}
+	if broadcaster := s.cfg.p2p.PartialAttestationBroadcaster(); broadcaster != nil {
+		s.submitPartialAtt = broadcaster.Submit
+		go broadcaster.Start(s.processPartialAttestation)
 	}
 
 	go s.startDiscoveryAndSubscriptions()

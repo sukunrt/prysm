@@ -123,6 +123,14 @@ func WithGoldfishVoteLedger() E2EConfigOpt {
 	}
 }
 
+// WithPartialAttestations broadcasts attestations over the gossipsub
+// partial-messages extension on every beacon node.
+func WithPartialAttestations() E2EConfigOpt {
+	return func(cfg *E2EConfig) {
+		cfg.BeaconFlags = append(cfg.BeaconFlags, "--partial-attestations")
+	}
+}
+
 // WithExitEpoch sets a custom epoch for voluntary exit submission.
 // This affects ProposeVoluntaryExit, ValidatorsHaveExited, SubmitWithdrawal, and ValidatorsHaveWithdrawn evaluators.
 func WithExitEpoch(e primitives.Epoch) E2EConfigOpt {

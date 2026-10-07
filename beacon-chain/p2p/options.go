@@ -115,6 +115,7 @@ func (s *Service) buildOptions(ip net.IP, priKey *ecdsa.PrivateKey) ([]libp2p.Op
 		libp2p.Muxer("/mplex/6.7.0", mplex.DefaultTransport),
 		libp2p.Security(noise.ID, noise.New),
 		libp2p.Ping(false), // Disable Ping Service.
+		libp2p.BandwidthReporter(s.bandwidth),
 	}
 	options, err = setConnManagerOption(s.cfg, options)
 	if err != nil {

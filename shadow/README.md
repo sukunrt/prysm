@@ -83,6 +83,9 @@ Options:
 | `--no-el-peers` | | geth runs with `--nodiscover --maxpeers 0`; only its beacon node talks to it |
 | `--shadow-quic` | | `--shadow-quic` on each beacon node: QUIC only, no TCP |
 | `--pcap` | | Shadow pcap on every host, `<interface>.pcap` in its host dir; headers only, 96 B a packet |
+| `--spamoor-seed` | `--name` | the spamoor wallet seed; equal seeds give equal genesis and committees |
+| `--partial-attestations` | off | `--partial-attestations` on each beacon node |
+| `--push-interval-ms` | node default | `--partial-attestations-push-interval` on each beacon node |
 | `--name` | `n<nodes>-v<validators>-s<seed>` | the directory under `runs/` |
 | `--gen-only` | | stop before `shadow` |
 
@@ -91,6 +94,11 @@ The generator template has a placeholder for each of them.
 
 Genesis needs at least about 128 validators. Below that `prysmctl` cannot
 fill the PTC window and does not return.
+
+The spamoor wallets go into the EL premine, so they change the EL genesis
+block hash, and with it the genesis randao mix and the per-slot seat
+assignment. Two runs that must hold the same committees need the same
+`--spamoor-seed` as well as the same `--seed`.
 
 ## Verify a run
 
@@ -112,6 +120,10 @@ sed 's#{DIR}#runs/<name>/parquet#g' analysis/latency-report.sql | duckdb
 Set `ffg_due_ms` at the top of `latency-report.sql` to the run's aggregate
 due in milliseconds.
 
+`analysis/partial-ab.sql` compares two runs, a classic arm A against a
+partial-message arm B; substitute `{A}`, `{B}`, `{FIRST}`, `{LAST}` and
+`{POOL}` with `sed` and pipe the file to `duckdb`.
+
 Deadlines, as the code counts them:
 
 | object | counted at |
@@ -119,6 +131,9 @@ Deadlines, as the code counts them:
 | Goldfish head vote | the next slot start, 12 000 ms |
 | FFG vote | the aggregate due, `AGGREGATE_DUE_BPS_GLOAS` |
 | FFG aggregate | published at the aggregate due; with X >= 2, position i publishes at (i + 1) * D / X ms, the last at the aggregate due |
+
+The run leaves the monitoring host out when `prometheus` is not on PATH:
+Shadow refuses to start a process whose binary it cannot resolve.
 
 The monitoring host records prometheus data in
 `runs/<name>/data/node<N>monitoring/prometheus`. Serve that directory with

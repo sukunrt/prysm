@@ -224,6 +224,7 @@ ssz_proto_files(
         "heze.proto",
         "light_client.proto",
         "partial_data_columns.proto",
+        "partial_attestations.proto",
         "sync_committee.proto",
         "withdrawals.proto",
     ],

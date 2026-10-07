@@ -29,6 +29,7 @@ import json
 import math
 import random
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -102,6 +103,13 @@ def parse_args():
     ap.add_argument("--graph-from", default=None,
                     help="an eth-slot-sim shadow.yaml; node i + 1 takes its graph node i, with "
                          "shortest-path routing, so both sims share every latency")
+    ap.add_argument("--spamoor-seed", default=None,
+                    help="spamoor wallet seed, defaults to --name; equal seeds give "
+                         "equal premine, genesis and committees")
+    ap.add_argument("--partial-attestations", action="store_true",
+                    help="--partial-attestations on every beacon node")
+    ap.add_argument("--push-interval-ms", type=int, default=None,
+                    help="--partial-attestations-push-interval on every beacon node")
     ap.add_argument("--name", default=None, help="run dir name under runs/")
     ap.add_argument("--gen-only", action="store_true", help="stop before shadow")
     return ap.parse_args()
@@ -152,6 +160,7 @@ def eoa_gas_limit(nbytes):
 
 
 def sim_config(args, country, supers, vals):
+    spamoor_seed = args.spamoor_seed or args.name
     loc, loc_yaml = locations(set(country))
     country_loc = {c: n for n, c in loc.items()}
 
@@ -169,7 +178,12 @@ def sim_config(args, country, supers, vals):
             "clients": {"el": "geth", "cl": "prysm_super" if sup else "prysm",
                         "vc": f"prysm_vc_{vals[i]}"},
         })
-    nodes.append(infra("monitoring", "monitoring", "prometheus"))
+    # Shadow refuses to start when a process binary is not on PATH, so the
+    # monitoring host is only added when prometheus is installed.
+    if shutil.which("prometheus"):
+        nodes.append(infra("monitoring", "monitoring", "prometheus"))
+    else:
+        print("  prometheus not on PATH: no monitoring host in this run")
     if args.eoa_txs:
         nodes.append(infra("eoaspam", "spammer", "spamoor_eoatx"))
     if args.blob_txs:
@@ -177,6 +191,10 @@ def sim_config(args, country, supers, vals):
 
     beacon_args = (f"--p2p-max-peers {args.max_peers} --goldfish-vote-ledger "
                    "--pprof --pprofaddr=0.0.0.0")
+    if args.partial_attestations:
+        beacon_args += " --partial-attestations"
+    if args.push_interval_ms is not None:
+        beacon_args += f" --partial-attestations-push-interval={args.push_interval_ms}ms"
     vc_args = ("--decoupled-ffg-vote-at-slot-start --enable-beacon-rest-api "
                "--beacon-rest-api-provider=http://127.0.0.1:31001 "
                f"--suggested-gas-limit={GAS_LIMIT}")
@@ -209,7 +227,7 @@ def sim_config(args, country, supers, vals):
             "type": "spamoor", "executable": str(BIN / "spamoor"), "scenario": "eoatx",
             "throughput": args.eoa_txs, "max_pending": args.eoa_txs, "max_wallets": 8,
             "el_first": 0, "el_count": args.nodes,
-            "extra_args": f"--seed {args.name}-eoa --data random:{args.eoa_bytes} "
+            "extra_args": f"--seed {spamoor_seed}-eoa --data random:{args.eoa_bytes} "
                           f"--gaslimit {eoa_gas_limit(args.eoa_bytes)} "
                           "--basefee 100 --rebroadcast 0",
             "private_key": EOATX_KEY, "start_time": f"{GENESIS_AT_S + SLOT_S}s",
@@ -219,7 +237,7 @@ def sim_config(args, country, supers, vals):
             "type": "spamoor", "executable": str(BIN / "spamoor"), "scenario": "blobs",
             "throughput": args.blob_txs, "max_pending": args.blob_txs, "max_wallets": 6,
             "el_first": 0, "el_count": args.nodes,
-            "extra_args": f"--seed {args.name}-blob --sidecars 3 "
+            "extra_args": f"--seed {spamoor_seed}-blob --sidecars 3 "
                           f"--fulu-activation {SIM_EPOCH + GENESIS_AT_S} --rebroadcast 0",
             "private_key": BLOBS_KEY, "start_time": f"{GENESIS_AT_S + SLOT_S}s",
         },
