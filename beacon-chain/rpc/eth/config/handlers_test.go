@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/OffchainLabs/prysm/v7/api/server/structs"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
@@ -251,7 +252,7 @@ func TestGetSpec(t *testing.T) {
 	require.NoError(t, json.Unmarshal(writer.Body.Bytes(), &resp))
 	data, ok := resp.Data.(map[string]any)
 	require.Equal(t, true, ok)
-	assert.Equal(t, 218, len(data))
+	assert.Equal(t, 219, len(data))
 	for k, v := range data {
 		t.Run(k, func(t *testing.T) {
 			switch k {
@@ -713,6 +714,8 @@ func TestGetSpec(t *testing.T) {
 				assert.Equal(t, strconv.FormatUint(uint64(fieldparams.BuilderRegistryLimit), 10), v)
 			case "BUILDER_PENDING_WITHDRAWALS_LIMIT":
 				assert.Equal(t, strconv.FormatUint(uint64(fieldparams.BuilderPendingWithdrawalsLimit), 10), v)
+			case "FFG_COMMITTEES_PER_SUBNET_PER_SLOT":
+				assert.Equal(t, "1", v)
 			default:
 				t.Errorf("Incorrect key: %s", k)
 			}
@@ -763,6 +766,23 @@ func TestForkSchedule_Ok(t *testing.T) {
 		os := params.SortedForkSchedule()
 		assert.Equal(t, len(os), len(resp.Data))
 	})
+}
+
+func TestGetSpec_FFGCommitteesPerSubnetPerSlot(t *testing.T) {
+	for x, want := range map[uint64]string{0: "1", 1: "1", 3: "3"} {
+		reset := features.InitWithReset(&features.Flags{FFGCommitteesPerSubnetPerSlot: x})
+		request := httptest.NewRequest(http.MethodGet, "http://example.com/eth/v1/config/spec", nil)
+		writer := httptest.NewRecorder()
+		GetSpec(writer, request)
+		reset()
+
+		require.Equal(t, http.StatusOK, writer.Code)
+		resp := structs.GetSpecResponse{}
+		require.NoError(t, json.Unmarshal(writer.Body.Bytes(), &resp))
+		data, ok := resp.Data.(map[string]any)
+		require.Equal(t, true, ok)
+		assert.Equal(t, want, data["FFG_COMMITTEES_PER_SUBNET_PER_SLOT"], "x=%d", x)
+	}
 }
 
 func TestGetSpec_BlobSchedule(t *testing.T) {

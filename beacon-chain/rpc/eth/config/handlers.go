@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/OffchainLabs/prysm/v7/api/server/structs"
+	"github.com/OffchainLabs/prysm/v7/config/features"
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
@@ -196,6 +197,9 @@ func prepareConfigSpec() (map[string]any, error) {
 	data["MAX_PAYLOAD_ATTESTATIONS"] = convertValueForJSON(reflect.ValueOf(uint64(fieldparams.MaxPayloadAttestations)), "MAX_PAYLOAD_ATTESTATIONS")
 	data["BUILDER_REGISTRY_LIMIT"] = convertValueForJSON(reflect.ValueOf(uint64(fieldparams.BuilderRegistryLimit)), "BUILDER_REGISTRY_LIMIT")
 	data["BUILDER_PENDING_WITHDRAWALS_LIMIT"] = convertValueForJSON(reflect.ValueOf(uint64(fieldparams.BuilderPendingWithdrawalsLimit)), "BUILDER_PENDING_WITHDRAWALS_LIMIT")
+	// Node flag, not chain config: it changes committees per slot.
+	ffg := max(features.Get().FFGCommitteesPerSubnetPerSlot, 1)
+	data["FFG_COMMITTEES_PER_SUBNET_PER_SLOT"] = strconv.FormatUint(ffg, 10)
 
 	return data, nil
 }
