@@ -432,6 +432,11 @@ var (
 		Name:  "disable-partial-data-columns",
 		Usage: "Disables cell-level dissemination for PeerDAS data columns, falling back to full column gossip.",
 	}
+	// EnableWaggle starts the waggle protocol on the libp2p host.
+	EnableWaggle = &cli.BoolFlag{
+		Name:  "enable-waggle",
+		Usage: "Starts the waggle protocol on the libp2p host.",
+	}
 	// DisableGraffitiClientAppend disables appending consensus and execution client version info to the block graffiti.
 	DisableGraffitiClientAppend = &cli.BoolFlag{
 		Name:  "disable-graffiti-client-append",

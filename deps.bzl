@@ -3201,6 +3201,12 @@ def prysm_deps():
         version = "v1.12.1",
     )
     go_repository(
+        name = "com_github_sukunrt_go_waggle",
+        importpath = "github.com/sukunrt/go-waggle",
+        sum = "h1:mO67OKiMsotRwqAdX0ujU606SUSv4TjmeIaFxbELRtY=",
+        version = "v0.0.0-20261028112908-f56df46a6b0a",
+    )
+    go_repository(
         name = "com_github_supranational_blst",
         build_file_generation = "off",
         importpath = "github.com/supranational/blst",

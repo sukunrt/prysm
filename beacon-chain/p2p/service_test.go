@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"net"
+	"slices"
 	"testing"
 	"time"
 
@@ -23,9 +24,11 @@ import (
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	noise "github.com/libp2p/go-libp2p/p2p/security/noise"
 	"github.com/multiformats/go-multiaddr"
 	logTest "github.com/sirupsen/logrus/hooks/test"
+	wagglecon "github.com/sukunrt/go-waggle/conn"
 )
 
 const testPingInterval = 100 * time.Millisecond
@@ -55,6 +58,31 @@ func TestService_Stop_DontPanicIfDv5ListenerIsNotInited(t *testing.T) {
 	s, err := NewService(t.Context(), &Config{StateNotifier: &mock.MockStateNotifier{}, DB: testDB.SetupDB(t)})
 	require.NoError(t, err)
 	assert.NoError(t, s.Stop())
+}
+
+func TestService_Waggle(t *testing.T) {
+	hasWaggle := func(s *Service) bool {
+		return slices.Contains(s.host.Mux().Protocols(), protocol.ID(wagglecon.WaggleProtocolID))
+	}
+
+	t.Run("disabled", func(t *testing.T) {
+		params.SetupTestConfigCleanup(t)
+		s, err := NewService(t.Context(), &Config{StateNotifier: &mock.MockStateNotifier{}, DB: testDB.SetupDB(t)})
+		require.NoError(t, err)
+		assert.Equal(t, true, s.waggle == nil)
+		assert.Equal(t, false, hasWaggle(s))
+		assert.NoError(t, s.Stop())
+	})
+
+	t.Run("enabled", func(t *testing.T) {
+		params.SetupTestConfigCleanup(t)
+		s, err := NewService(t.Context(), &Config{StateNotifier: &mock.MockStateNotifier{}, DB: testDB.SetupDB(t), EnableWaggle: true})
+		require.NoError(t, err)
+		assert.NotNil(t, s.waggle)
+		assert.Equal(t, true, hasWaggle(s))
+		assert.NoError(t, s.Stop())
+		assert.Equal(t, false, hasWaggle(s))
+	})
 }
 
 func TestService_Start_OnlyStartsOnce(t *testing.T) {

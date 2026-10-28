@@ -37,6 +37,8 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	wagglelibp2p "github.com/sukunrt/go-waggle/libp2p"
+	"github.com/sukunrt/go-waggle/waggle"
 )
 
 var _ runtime.Service = (*Service)(nil)
@@ -79,6 +81,8 @@ type Service struct {
 	metaData                 metadata.Metadata
 	pubsub                   *pubsub.PubSub
 	partialColumnBroadcaster partialdatacolumnbroadcaster.Broadcaster
+	waggle                   *waggle.Waggle
+	stopWaggle               func()
 	joinedTopics             map[string]*pubsub.Topic
 	joinedTopicsLock         sync.RWMutex
 	subnetsLock              map[uint64]*sync.RWMutex
@@ -169,6 +173,14 @@ func NewService(ctx context.Context, cfg *Config) (*Service, error) {
 	}
 
 	s.host = h
+
+	if cfg.EnableWaggle {
+		s.waggle = waggle.NewWaggle()
+		s.stopWaggle, err = wagglelibp2p.ConfigureHost(s.waggle, h)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to configure waggle")
+		}
+	}
 
 	// Gossipsub registration is done before we add in any new peers
 	// due to libp2p's gossipsub implementation not taking into
@@ -320,6 +332,10 @@ func (s *Service) Stop() error {
 	s.started = false
 	if s.dv5Listener != nil {
 		s.dv5Listener.Close()
+	}
+	if s.waggle != nil {
+		s.stopWaggle()
+		s.waggle.Close()
 	}
 
 	return nil

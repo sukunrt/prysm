@@ -735,6 +735,7 @@ func (b *BeaconNode) registerP2P(cliCtx *cli.Context) error {
 		StateGen:              b.stateGen,
 		ClockWaiter:           b.ClockWaiter,
 		PartialDataColumns:    !b.cliCtx.Bool(flags.DisablePartialDataColumns.Name),
+		EnableWaggle:          b.cliCtx.Bool(flags.EnableWaggle.Name),
 	})
 	if err != nil {
 		return err

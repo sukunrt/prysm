@@ -73,6 +73,7 @@ require (
 	github.com/spf13/afero v1.15.0
 	github.com/status-im/keycard-go v0.2.0
 	github.com/stretchr/testify v1.12.1
+	github.com/sukunrt/go-waggle v0.0.0-20261028112908-f56df46a6b0a
 	github.com/supranational/blst v0.3.16
 	github.com/thomaso-mirodin/intmath v0.0.0-20160323211736-5dc6d854e46e
 	github.com/trailofbits/go-mutexasserts v0.0.0-20250212181730-4c2b8e9e784b

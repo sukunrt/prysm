@@ -173,6 +173,7 @@ var appFlags = []cli.Flag{
 	flags.ArchiveOriginState,
 	flags.DisableEphemeralLogFile,
 	flags.DisablePartialDataColumns,
+	flags.EnableWaggle,
 	flags.DisableGraffitiClientAppend,
 }
 
