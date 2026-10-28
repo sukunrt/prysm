@@ -137,6 +137,11 @@ func (s *Service) internalBroadcastAttestation(ctx context.Context, subnet uint6
 	defer span.End()
 	ctx = trace.NewContext(context.Background(), span) // clear parent context / deadline.
 
+	// Waggle does not wait for the gossipsub peer search below. It checks the slot itself.
+	if single, ok := att.(*ethpb.SingleAttestation); ok && s.waggleAtt != nil {
+		s.waggleAtt.Submit(attestationToTopic(subnet, forkDigest)+s.Encoding().ProtocolSuffix(), single)
+	}
+
 	oneEpoch := params.EpochsDuration(1, params.BeaconConfig())
 	ctx, cancel := context.WithTimeout(ctx, oneEpoch)
 	defer cancel()
@@ -183,9 +188,6 @@ func (s *Service) internalBroadcastAttestation(ctx context.Context, subnet uint6
 	if err := s.broadcastObject(ctx, att, attestationToTopic(subnet, forkDigest)); err != nil {
 		log.WithError(err).Error("Failed to broadcast attestation")
 		tracing.AnnotateError(span, err)
-	}
-	if single, ok := att.(*ethpb.SingleAttestation); ok && s.waggleAtt != nil {
-		s.waggleAtt.Submit(attestationToTopic(subnet, forkDigest)+s.Encoding().ProtocolSuffix(), single)
 	}
 }
 
