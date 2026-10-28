@@ -58,6 +58,15 @@ func (s *Service) JoinTopic(topic string, opts ...pubsub.TopicOpt) (*pubsub.Topi
 			return nil, err
 		}
 		s.joinedTopics[topic] = topicHandle
+
+		if s.waggleAtt != nil && isAttestationTopic(topic) {
+			digest, err := ExtractGossipDigest(topic)
+			if err != nil {
+				log.WithError(err).WithField("topic", topic).Error("Could not create waggle topics")
+			} else {
+				s.waggleAtt.EnsureDigest(digest)
+			}
+		}
 	}
 
 	return s.joinedTopics[topic], nil
@@ -69,6 +78,9 @@ func (s *Service) LeaveTopic(topic string) error {
 	s.joinedTopicsLock.Lock()
 	defer s.joinedTopicsLock.Unlock()
 
+	if s.waggleAtt != nil {
+		s.waggleAtt.Unsubscribe(topic)
+	}
 	if t, ok := s.joinedTopics[topic]; ok {
 		if err := t.Close(); err != nil {
 			return err
@@ -138,7 +150,14 @@ func (s *Service) SubscribeToTopic(topic string, opts ...pubsub.SubOpt) (*pubsub
 		}
 		logGossipParameters(topic, scoringParams)
 	}
-	return topicHandle.Subscribe(opts...)
+	sub, err := topicHandle.Subscribe(opts...)
+	if err != nil {
+		return nil, err
+	}
+	if s.waggleAtt != nil {
+		s.waggleAtt.Subscribe(topic)
+	}
+	return sub, nil
 }
 
 // peerInspector will scrape all the relevant scoring data and add it to our

@@ -174,6 +174,7 @@ var appFlags = []cli.Flag{
 	flags.DisableEphemeralLogFile,
 	flags.DisablePartialDataColumns,
 	flags.EnableWaggle,
+	flags.WaggleAttestations,
 	flags.DisableGraffitiClientAppend,
 }
 

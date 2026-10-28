@@ -28,6 +28,7 @@ const (
 type Config struct {
 	PartialDataColumns    bool
 	EnableWaggle          bool
+	WaggleAttestations    bool
 	NoDiscovery           bool
 	EnableUPnP            bool
 	StaticPeerID          bool

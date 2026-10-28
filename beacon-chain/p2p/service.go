@@ -83,6 +83,7 @@ type Service struct {
 	partialColumnBroadcaster partialdatacolumnbroadcaster.Broadcaster
 	waggle                   *waggle.Waggle
 	stopWaggle               func()
+	waggleAtt                *waggleAttestations
 	joinedTopics             map[string]*pubsub.Topic
 	joinedTopicsLock         sync.RWMutex
 	subnetsLock              map[uint64]*sync.RWMutex
@@ -174,11 +175,14 @@ func NewService(ctx context.Context, cfg *Config) (*Service, error) {
 
 	s.host = h
 
-	if cfg.EnableWaggle {
+	if cfg.EnableWaggle || cfg.WaggleAttestations {
 		s.waggle = waggle.NewWaggle()
 		s.stopWaggle, err = wagglelibp2p.ConfigureHost(s.waggle, h)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to configure waggle")
+		}
+		if cfg.WaggleAttestations {
+			s.waggleAtt = newWaggleAttestations(s.waggle, s.Encoding().ProtocolSuffix())
 		}
 	}
 
@@ -285,6 +289,9 @@ func (s *Service) Start() {
 	async.RunEvery(s.ctx, 30*time.Minute, s.Peers().Prune)
 	async.RunEvery(s.ctx, time.Duration(params.BeaconConfig().RespTimeout)*time.Second, s.updateMetrics)
 	async.RunEvery(s.ctx, refreshRate, s.RefreshPersistentSubnets)
+	if s.waggleAtt != nil {
+		async.RunEvery(s.ctx, params.BeaconConfig().SlotDuration(), s.pruneWaggleAttestationTopics)
+	}
 	async.RunEvery(s.ctx, 1*time.Minute, func() {
 		inboundQUICCount := len(s.peers.InboundConnectedWithProtocol(peers.QUIC))
 		inboundTCPCount := len(s.peers.InboundConnectedWithProtocol(peers.TCP))
@@ -335,6 +342,9 @@ func (s *Service) Stop() error {
 	}
 	if s.waggle != nil {
 		s.stopWaggle()
+		if s.waggleAtt != nil {
+			s.waggleAtt.Close()
+		}
 		s.waggle.Close()
 	}
 

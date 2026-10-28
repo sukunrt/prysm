@@ -437,6 +437,11 @@ var (
 		Name:  "enable-waggle",
 		Usage: "Starts the waggle protocol on the libp2p host.",
 	}
+	// WaggleAttestations propagates attestations over waggle. It implies EnableWaggle.
+	WaggleAttestations = &cli.BoolFlag{
+		Name:  "waggle-attestations",
+		Usage: "Propagates attestations over the waggle protocol. Implies --enable-waggle.",
+	}
 	// DisableGraffitiClientAppend disables appending consensus and execution client version info to the block graffiti.
 	DisableGraffitiClientAppend = &cli.BoolFlag{
 		Name:  "disable-graffiti-client-append",

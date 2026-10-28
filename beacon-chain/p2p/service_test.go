@@ -83,6 +83,38 @@ func TestService_Waggle(t *testing.T) {
 		assert.NoError(t, s.Stop())
 		assert.Equal(t, false, hasWaggle(s))
 	})
+
+	t.Run("attestations", func(t *testing.T) {
+		params.SetupTestConfigCleanup(t)
+		params.BeaconConfig().InitializeForkSchedule()
+		gs := startup.NewClockSynchronizer()
+		s, err := NewService(t.Context(), &Config{StateNotifier: &mock.MockStateNotifier{}, ClockWaiter: gs, DB: testDB.SetupDB(t), WaggleAttestations: true})
+		require.NoError(t, err)
+		require.NotNil(t, s.waggleAtt)
+		assert.Equal(t, true, hasWaggle(s))
+		digest := initializeStateWithForkDigest(t.Context(), t, gs)
+		s.setAllForkDigests()
+		s.awaitStateInitialized()
+		s.activeValidatorCount = 1
+
+		suffix := s.Encoding().ProtocolSuffix()
+		_, err = s.JoinTopic(fmt.Sprintf(BlockSubnetTopicFormat, digest) + suffix)
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(s.waggleAtt.topics))
+
+		topic := attestationToTopic(1, digest) + suffix
+		sub, err := s.SubscribeToTopic(topic)
+		require.NoError(t, err)
+		_, err = s.JoinTopic(attestationToTopic(2, digest) + suffix)
+		require.NoError(t, err)
+		assert.Equal(t, int(attestationSubnetCount), len(s.waggleAtt.topics))
+
+		sub.Cancel()
+		require.NoError(t, s.LeaveTopic(topic))
+		assert.Equal(t, int(attestationSubnetCount), len(s.waggleAtt.topics))
+		assert.NoError(t, s.Stop())
+		assert.Equal(t, 0, len(s.waggleAtt.topics))
+	})
 }
 
 func TestService_Start_OnlyStartsOnce(t *testing.T) {
