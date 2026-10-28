@@ -343,6 +343,13 @@ func (p *TestP2P) PartialColumnBroadcaster() partialdatacolumnbroadcaster.Broadc
 	return p.partialBroadcaster
 }
 
+// StartWaggleAttestations -- fake.
+func (*TestP2P) StartWaggleAttestations(func(context.Context, peer.ID, string, *ethpb.SingleAttestation) bool) {
+}
+
+// SubmitWaggleAttestation -- fake.
+func (*TestP2P) SubmitWaggleAttestation(string, *ethpb.SingleAttestation) {}
+
 // Disconnect from a peer.
 func (p *TestP2P) Disconnect(pid peer.ID) error {
 	return p.BHost.Network().ClosePeer(pid)

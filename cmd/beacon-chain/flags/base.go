@@ -5,6 +5,7 @@ package flags
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/OffchainLabs/prysm/v7/cmd"
 	"github.com/OffchainLabs/prysm/v7/config/features"
@@ -441,6 +442,48 @@ var (
 	WaggleAttestations = &cli.BoolFlag{
 		Name:  "waggle-attestations",
 		Usage: "Propagates attestations over the waggle protocol. Implies --enable-waggle.",
+	}
+	// WagglePushPeers sets D, the number of peers that get each new attestation over waggle.
+	WagglePushPeers = &cli.IntFlag{
+		Name:  "waggle-push-peers",
+		Usage: "Number of peers that get each new attestation over waggle (D).",
+		Value: 8,
+	}
+	// WagglePushInterval sets the interval of the waggle attestation push.
+	WagglePushInterval = &cli.DurationFlag{
+		Name:  "waggle-push-interval",
+		Usage: "Interval of the waggle attestation push.",
+		Value: 20 * time.Millisecond,
+	}
+	// WaggleMetadataPeers sets K, the number of peers that get our available attestations on each metadata tick.
+	WaggleMetadataPeers = &cli.IntFlag{
+		Name:  "waggle-metadata-peers",
+		Usage: "Number of peers that get our available attestations on each waggle metadata tick (K).",
+		Value: 2,
+	}
+	// WaggleMetadataInterval sets the interval of the waggle metadata tick.
+	WaggleMetadataInterval = &cli.DurationFlag{
+		Name:  "waggle-metadata-interval",
+		Usage: "Interval of the waggle metadata tick.",
+		Value: 100 * time.Millisecond,
+	}
+	// WaggleRequestPeers sets the maximum number of open requests for one attestation.
+	WaggleRequestPeers = &cli.IntFlag{
+		Name:  "waggle-request-peers",
+		Usage: "Maximum number of open waggle requests for one attestation.",
+		Value: 2,
+	}
+	// WaggleRequestTimeout sets the time after which a waggle request goes to another peer.
+	WaggleRequestTimeout = &cli.DurationFlag{
+		Name:  "waggle-request-timeout",
+		Usage: "Time after which a waggle attestation request goes to another peer.",
+		Value: 500 * time.Millisecond,
+	}
+	// WaggleMaxValidations limits the waggle attestation validations that run at the same time.
+	WaggleMaxValidations = &cli.IntFlag{
+		Name:  "waggle-max-validations",
+		Usage: "Maximum number of waggle attestation validations that run at the same time.",
+		Value: 100_000,
 	}
 	// DisableGraffitiClientAppend disables appending consensus and execution client version info to the block graffiti.
 	DisableGraffitiClientAppend = &cli.BoolFlag{

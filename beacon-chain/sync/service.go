@@ -329,6 +329,7 @@ func (s *Service) Start() {
 	if broadcaster := s.cfg.p2p.PartialColumnBroadcaster(); broadcaster != nil {
 		go broadcaster.Start(&partialColumnCallbacks{service: s})
 	}
+	s.cfg.p2p.StartWaggleAttestations(s.validateWaggleAttestation)
 
 	go s.startDiscoveryAndSubscriptions()
 	go s.processDataColumnLogs()

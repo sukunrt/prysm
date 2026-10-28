@@ -55,6 +55,7 @@ type Config struct {
 	DB                    db.ReadOnlyDatabaseWithSeqNum
 	StateGen              stategen.StateManager
 	ClockWaiter           startup.ClockWaiter
+	WaggleAtt             WaggleAttConfig
 }
 
 // connManagerLowHigh picks the low and high water marks for the connection manager based

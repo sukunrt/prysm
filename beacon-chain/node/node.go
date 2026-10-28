@@ -737,6 +737,15 @@ func (b *BeaconNode) registerP2P(cliCtx *cli.Context) error {
 		PartialDataColumns:    !b.cliCtx.Bool(flags.DisablePartialDataColumns.Name),
 		EnableWaggle:          b.cliCtx.Bool(flags.EnableWaggle.Name),
 		WaggleAttestations:    b.cliCtx.Bool(flags.WaggleAttestations.Name),
+		WaggleAtt: p2p.WaggleAttConfig{
+			PushPeers:        b.cliCtx.Int(flags.WagglePushPeers.Name),
+			PushInterval:     b.cliCtx.Duration(flags.WagglePushInterval.Name),
+			MetadataPeers:    b.cliCtx.Int(flags.WaggleMetadataPeers.Name),
+			MetadataInterval: b.cliCtx.Duration(flags.WaggleMetadataInterval.Name),
+			RequestPeers:     b.cliCtx.Int(flags.WaggleRequestPeers.Name),
+			RequestTimeout:   b.cliCtx.Duration(flags.WaggleRequestTimeout.Name),
+			MaxValidations:   b.cliCtx.Int(flags.WaggleMaxValidations.Name),
+		},
 	})
 	if err != nil {
 		return err

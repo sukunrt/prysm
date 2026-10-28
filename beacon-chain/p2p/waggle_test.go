@@ -3,6 +3,7 @@ package p2p
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
@@ -28,7 +29,7 @@ func TestWaggleAttestations(t *testing.T) {
 	d2 := [fieldparams.VersionLength]byte{2}
 	setup := func(t *testing.T) *waggleAttestations {
 		w := waggle.NewWaggle()
-		a := newWaggleAttestations(t.Context(), w, suffix, defaultWaggleAttConfig())
+		a := newWaggleAttestations(t.Context(), w, suffix, DefaultWaggleAttConfig(), time.Now)
 		t.Cleanup(func() {
 			a.Close()
 			w.Close()
@@ -179,5 +180,18 @@ func TestWaggleMessage(t *testing.T) {
 				require.ErrorIs(t, err, tt.err)
 			})
 		}
+	})
+}
+
+func TestWaggleAttConfigWithDefaults(t *testing.T) {
+	t.Run("zero gets defaults", func(t *testing.T) {
+		got := WaggleAttConfig{}.withDefaults()
+		want := DefaultWaggleAttConfig()
+		want.PushPeers, want.MetadataPeers = 0, 0
+		assert.DeepEqual(t, want, got)
+	})
+	t.Run("set values stay", func(t *testing.T) {
+		in := WaggleAttConfig{PushPeers: 3, PushInterval: time.Second, MetadataPeers: 4, MetadataInterval: time.Second, RequestPeers: 5, RequestTimeout: time.Second, MaxValidations: 7}
+		assert.DeepEqual(t, in, in.withDefaults())
 	})
 }

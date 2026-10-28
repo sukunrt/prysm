@@ -175,6 +175,13 @@ var appFlags = []cli.Flag{
 	flags.DisablePartialDataColumns,
 	flags.EnableWaggle,
 	flags.WaggleAttestations,
+	flags.WagglePushPeers,
+	flags.WagglePushInterval,
+	flags.WaggleMetadataPeers,
+	flags.WaggleMetadataInterval,
+	flags.WaggleRequestPeers,
+	flags.WaggleRequestTimeout,
+	flags.WaggleMaxValidations,
 	flags.DisableGraffitiClientAppend,
 }
 

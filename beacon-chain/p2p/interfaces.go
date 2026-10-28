@@ -30,6 +30,7 @@ type (
 		SetStreamHandler
 		PubSubProvider
 		PartialColumnBroadcasterProvider
+		WaggleAttestationProvider
 		PubSubTopicUser
 		SenderEncoder
 		PeerManager
@@ -98,6 +99,12 @@ type (
 	// PartialColumnBroadcasterProvider provides the broadcaster for partial messages.
 	PartialColumnBroadcasterProvider interface {
 		PartialColumnBroadcaster() partialdatacolumnbroadcaster.Broadcaster
+	}
+
+	// WaggleAttestationProvider connects attestation propagation over waggle to the sync service.
+	WaggleAttestationProvider interface {
+		StartWaggleAttestations(validate ValidateAttestationFn)
+		SubmitWaggleAttestation(topic string, att *ethpb.SingleAttestation)
 	}
 
 	// PeerManager abstracts some peer management methods from libp2p.

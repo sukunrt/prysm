@@ -184,6 +184,9 @@ func (s *Service) internalBroadcastAttestation(ctx context.Context, subnet uint6
 		log.WithError(err).Error("Failed to broadcast attestation")
 		tracing.AnnotateError(span, err)
 	}
+	if single, ok := att.(*ethpb.SingleAttestation); ok && s.waggleAtt != nil {
+		s.waggleAtt.Submit(attestationToTopic(subnet, forkDigest)+s.Encoding().ProtocolSuffix(), single)
+	}
 }
 
 func (s *Service) broadcastSyncCommittee(ctx context.Context, subnet uint64, sMsg *ethpb.SyncCommitteeMessage, forkDigest [fieldparams.VersionLength]byte) {

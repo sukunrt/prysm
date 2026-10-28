@@ -113,6 +113,13 @@ func (*FakeP2P) PartialColumnBroadcaster() partialdatacolumnbroadcaster.Broadcas
 	return nil
 }
 
+// StartWaggleAttestations -- fake.
+func (*FakeP2P) StartWaggleAttestations(func(context.Context, peer.ID, string, *ethpb.SingleAttestation) bool) {
+}
+
+// SubmitWaggleAttestation -- fake.
+func (*FakeP2P) SubmitWaggleAttestation(string, *ethpb.SingleAttestation) {}
+
 // MetadataSeq -- fake.
 func (*FakeP2P) MetadataSeq() uint64 {
 	return 0

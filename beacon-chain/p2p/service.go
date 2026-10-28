@@ -22,6 +22,7 @@ import (
 	leakybucket "github.com/OffchainLabs/prysm/v7/container/leaky-bucket"
 	"github.com/OffchainLabs/prysm/v7/monitoring/tracing/trace"
 	prysmnetwork "github.com/OffchainLabs/prysm/v7/network"
+	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1/metadata"
 	"github.com/OffchainLabs/prysm/v7/runtime"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
@@ -182,7 +183,8 @@ func NewService(ctx context.Context, cfg *Config) (*Service, error) {
 			return nil, errors.Wrap(err, "failed to configure waggle")
 		}
 		if cfg.WaggleAttestations {
-			s.waggleAtt = newWaggleAttestations(s.ctx, s.waggle, s.Encoding().ProtocolSuffix(), defaultWaggleAttConfig())
+			genesis := func() time.Time { return s.genesisTime }
+			s.waggleAtt = newWaggleAttestations(s.ctx, s.waggle, s.Encoding().ProtocolSuffix(), cfg.WaggleAtt.withDefaults(), genesis)
 		}
 	}
 
@@ -386,6 +388,22 @@ func (s *Service) PubSub() *pubsub.PubSub {
 
 func (s *Service) PartialColumnBroadcaster() partialdatacolumnbroadcaster.Broadcaster {
 	return s.partialColumnBroadcaster
+}
+
+// StartWaggleAttestations starts the validation of attestations from waggle. It does nothing
+// without --waggle-attestations.
+func (s *Service) StartWaggleAttestations(validate ValidateAttestationFn) {
+	if s.waggleAtt != nil {
+		s.waggleAtt.Start(validate)
+	}
+}
+
+// SubmitWaggleAttestation gives a validated attestation to waggle. It does nothing
+// without --waggle-attestations.
+func (s *Service) SubmitWaggleAttestation(topic string, att *ethpb.SingleAttestation) {
+	if s.waggleAtt != nil {
+		s.waggleAtt.Submit(topic, att)
+	}
 }
 
 // Host returns the currently running libp2p

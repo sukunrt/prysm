@@ -4,10 +4,13 @@ import (
 	"context"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/sukunrt/go-waggle/waggle"
 )
@@ -16,23 +19,66 @@ import (
 // Topics stay open while their digest is in use, because a closed topic loses the
 // streams that peers opened to us. Subnet membership uses Subscribe and Unsubscribe.
 type waggleAttestations struct {
-	ctx     context.Context
-	w       *waggle.Waggle
-	suffix  string
-	cfg     waggleAttConfig
-	mu      sync.Mutex
-	digests map[[fieldparams.VersionLength]byte]bool
-	topics  map[string]*waggleAttTopic
+	ctx         context.Context
+	w           *waggle.Waggle
+	suffix      string
+	cfg         WaggleAttConfig
+	genesis     func() time.Time
+	validate    atomic.Pointer[ValidateAttestationFn]
+	validations chan struct{}
+	mu          sync.Mutex
+	digests     map[[fieldparams.VersionLength]byte]bool
+	topics      map[string]*waggleAttTopic
 }
 
-func newWaggleAttestations(ctx context.Context, w *waggle.Waggle, suffix string, cfg waggleAttConfig) *waggleAttestations {
+func newWaggleAttestations(ctx context.Context, w *waggle.Waggle, suffix string, cfg WaggleAttConfig, genesis func() time.Time) *waggleAttestations {
 	return &waggleAttestations{
-		ctx:     ctx,
-		w:       w,
-		suffix:  suffix,
-		cfg:     cfg,
-		digests: make(map[[fieldparams.VersionLength]byte]bool),
-		topics:  make(map[string]*waggleAttTopic),
+		ctx:         ctx,
+		w:           w,
+		suffix:      suffix,
+		cfg:         cfg,
+		genesis:     genesis,
+		validations: make(chan struct{}, cfg.MaxValidations),
+		digests:     make(map[[fieldparams.VersionLength]byte]bool),
+		topics:      make(map[string]*waggleAttTopic),
+	}
+}
+
+// Start sets the validation function. Until then, attestations from peers are dropped.
+func (a *waggleAttestations) Start(validate ValidateAttestationFn) {
+	a.validate.Store(&validate)
+}
+
+// startValidation validates j on a new goroutine. It returns false if there is no validation
+// function or MaxValidations validations run.
+func (a *waggleAttestations) startValidation(j valJob) bool {
+	validate := a.validate.Load()
+	if validate == nil {
+		return false
+	}
+	select {
+	case a.validations <- struct{}{}:
+	default:
+		return false
+	}
+	go func() {
+		defer func() { <-a.validations }()
+		r := valResult{dataRoot: j.dataRoot, att: j.att, accepted: (*validate)(j.ctx, j.from, j.topic, j.att)}
+		select {
+		case j.done <- r:
+		case <-j.ctx.Done():
+		}
+	}()
+	return true
+}
+
+// Submit gives a validated attestation to the topic. It does nothing for an unknown topic.
+func (a *waggleAttestations) Submit(topic string, att *ethpb.SingleAttestation) {
+	if att == nil {
+		return
+	}
+	if t := a.topic(topic); t != nil {
+		t.submit(att)
 	}
 }
 
@@ -50,7 +96,7 @@ func (a *waggleAttestations) EnsureDigest(digest [fieldparams.VersionLength]byte
 	a.digests[digest] = true
 	for subnet := range attestationSubnetCount {
 		topic := attestationToTopic(subnet, digest) + a.suffix
-		t := newWaggleAttTopic(topic, a.cfg)
+		t := newWaggleAttTopic(topic, a.cfg, a.genesis, a.startValidation)
 		wt, err := a.w.NewTopic(topic, 0, t.onSendComplete)
 		if err != nil {
 			log.WithError(err).WithField("topic", topic).Error("Could not create waggle topic")
