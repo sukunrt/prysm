@@ -182,7 +182,7 @@ func NewService(ctx context.Context, cfg *Config) (*Service, error) {
 			return nil, errors.Wrap(err, "failed to configure waggle")
 		}
 		if cfg.WaggleAttestations {
-			s.waggleAtt = newWaggleAttestations(s.waggle, s.Encoding().ProtocolSuffix())
+			s.waggleAtt = newWaggleAttestations(s.ctx, s.waggle, s.Encoding().ProtocolSuffix(), defaultWaggleAttConfig())
 		}
 	}
 

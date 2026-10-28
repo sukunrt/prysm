@@ -7,8 +7,10 @@ import (
 	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
+	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/assert"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
+	"github.com/sukunrt/go-waggle/pb"
 	"github.com/sukunrt/go-waggle/waggle"
 )
 
@@ -26,7 +28,7 @@ func TestWaggleAttestations(t *testing.T) {
 	d2 := [fieldparams.VersionLength]byte{2}
 	setup := func(t *testing.T) *waggleAttestations {
 		w := waggle.NewWaggle()
-		a := newWaggleAttestations(w, suffix)
+		a := newWaggleAttestations(t.Context(), w, suffix, defaultWaggleAttConfig())
 		t.Cleanup(func() {
 			a.Close()
 			w.Close()
@@ -104,4 +106,78 @@ func TestWantedDigests(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestWaggleMessage(t *testing.T) {
+	bundle := func(slot primitives.Slot, indices ...uint64) *ethpb.AttestationBundle {
+		sigs := make([][]byte, len(indices))
+		for i := range sigs {
+			sigs[i] = make([]byte, fieldparams.BLSSignatureLength)
+		}
+		return &ethpb.AttestationBundle{
+			CommitteeIndex: 1,
+			AttestationData: &ethpb.AttestationData{
+				Slot:            slot,
+				BeaconBlockRoot: make([]byte, fieldparams.RootLength),
+				Source:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+				Target:          &ethpb.Checkpoint{Root: make([]byte, fieldparams.RootLength)},
+			},
+			AttesterIndices: indices,
+			Signatures:      sigs,
+		}
+	}
+	encode := func(t *testing.T, m waggleMessage) *pb.ObjectPieces {
+		msg, err := m.encode()
+		require.NoError(t, err)
+		return msg
+	}
+
+	t.Run("round trip", func(t *testing.T) {
+		in := waggleMessage{
+			Slot:     5,
+			Bundle:   bundle(5, 10, 20),
+			Metadata: &ethpb.CommitteeAttestationPartsMetadata{CommitteeIndex: 1, Available: []uint64{10, 20}, Requests: []uint64{30}},
+		}
+		out, err := decodeWaggleMessage(encode(t, in))
+		require.NoError(t, err)
+		assert.Equal(t, in.Slot, out.Slot)
+		assert.DeepEqual(t, in.Bundle, out.Bundle)
+		assert.DeepEqual(t, in.Metadata, out.Metadata)
+	})
+
+	t.Run("metadata only", func(t *testing.T) {
+		in := waggleMessage{Slot: 5, Metadata: &ethpb.CommitteeAttestationPartsMetadata{Available: []uint64{1}, Requests: []uint64{}}}
+		out, err := decodeWaggleMessage(encode(t, in))
+		require.NoError(t, err)
+		assert.Equal(t, true, out.Bundle == nil)
+		assert.NotNil(t, out.Metadata)
+	})
+
+	t.Run("errors", func(t *testing.T) {
+		tooMany := make([]uint64, maxAttestationsPerBundle+1)
+		for i := range tooMany {
+			tooMany[i] = uint64(i)
+		}
+		uneven := bundle(5, 1, 2)
+		uneven.Signatures = uneven.Signatures[:1]
+		tests := []struct {
+			name string
+			msg  *pb.ObjectPieces
+			err  error
+		}{
+			{name: "short object id", msg: &pb.ObjectPieces{ObjectID: []byte{1}}, err: errWaggleObjectID},
+			{name: "empty", msg: encode(t, waggleMessage{Slot: 5}), err: errWaggleEmptyMessage},
+			{name: "no attestations", msg: encode(t, waggleMessage{Slot: 5, Bundle: bundle(5)}), err: errWaggleBundleEmpty},
+			{name: "too many attestations", msg: encode(t, waggleMessage{Slot: 5, Bundle: bundle(5, tooMany...)}), err: errWaggleBundleSize},
+			{name: "uneven lengths", msg: encode(t, waggleMessage{Slot: 5, Bundle: uneven}), err: errWaggleBundleLengths},
+			{name: "wrong slot", msg: encode(t, waggleMessage{Slot: 5, Bundle: bundle(6, 1)}), err: errWaggleBundleSlot},
+			{name: "duplicate validator", msg: encode(t, waggleMessage{Slot: 5, Bundle: bundle(5, 1, 1)}), err: errWaggleBundleDup},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				_, err := decodeWaggleMessage(tt.msg)
+				require.ErrorIs(t, err, tt.err)
+			})
+		}
+	})
 }

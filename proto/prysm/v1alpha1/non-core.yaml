@@ -1,8 +1,10 @@
 package: "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 types:
+  - name: "AttestationBundle"
   - name: "BeaconBlocksByRangeRequest"
   - name: "BlobSidecarsByRangeRequest"
   - name: "BuilderBid"
+  - name: "CommitteeAttestationPartsMetadata"
   - name: "DataColumnSidecarsByRangeRequest"
   - name: "DepositSnapshot"
   - name: "ExecutionPayloadEnvelopesByRangeRequest"

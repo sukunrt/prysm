@@ -236,6 +236,7 @@ ssz_proto_files(
     name = "ssz_proto_files",
     srcs = [
         "attestation.proto",
+        "attestation_bundle.proto",
         "beacon_block.proto",
         "beacon_core_types.proto",
         "blobs.proto",

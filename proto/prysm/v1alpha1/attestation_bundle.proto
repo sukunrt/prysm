@@ -1,0 +1,48 @@
+// Copyright 2026 Offchain Labs.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+syntax = "proto3";
+
+package ethereum.eth.v1alpha1;
+
+import "proto/eth/ext/options.proto";
+import "proto/prysm/v1alpha1/attestation.proto";
+
+option go_package = "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1;eth";
+
+// EIP-8334 containers. They go over waggle on the beacon_attestation subnets
+// and are not in the gossip topic mappings.
+
+// AttestationBundle holds attestations of one committee with the same data.
+// Signatures[i] is the signature of validator AttesterIndices[i].
+message AttestationBundle {
+  uint64 committee_index = 1 [ (ethereum.eth.ext.cast_type) =
+                                 "github.com/OffchainLabs/prysm/v7/"
+                                 "consensus-types/primitives.CommitteeIndex" ];
+  AttestationData attestation_data = 2;
+  repeated uint64 attester_indices = 3 [ (ethereum.eth.ext.ssz_max) = "2048" ];
+  repeated bytes signatures = 4 [
+    (ethereum.eth.ext.ssz_size) = "?,96",
+    (ethereum.eth.ext.ssz_max) = "2048"
+  ];
+}
+
+// CommitteeAttestationPartsMetadata lists, by validator index, the
+// attestations of one committee that the sender has and the ones it requests.
+message CommitteeAttestationPartsMetadata {
+  uint64 committee_index = 1 [ (ethereum.eth.ext.cast_type) =
+                                 "github.com/OffchainLabs/prysm/v7/"
+                                 "consensus-types/primitives.CommitteeIndex" ];
+  repeated uint64 available = 2 [ (ethereum.eth.ext.ssz_max) = "2048" ];
+  repeated uint64 requests = 3 [ (ethereum.eth.ext.ssz_max) = "2048" ];
+}

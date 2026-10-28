@@ -1,6 +1,7 @@
 package p2p
 
 import (
+	"context"
 	"strings"
 	"sync"
 
@@ -15,19 +16,23 @@ import (
 // Topics stay open while their digest is in use, because a closed topic loses the
 // streams that peers opened to us. Subnet membership uses Subscribe and Unsubscribe.
 type waggleAttestations struct {
+	ctx     context.Context
 	w       *waggle.Waggle
 	suffix  string
+	cfg     waggleAttConfig
 	mu      sync.Mutex
 	digests map[[fieldparams.VersionLength]byte]bool
-	topics  map[string]*waggle.Topic
+	topics  map[string]*waggleAttTopic
 }
 
-func newWaggleAttestations(w *waggle.Waggle, suffix string) *waggleAttestations {
+func newWaggleAttestations(ctx context.Context, w *waggle.Waggle, suffix string, cfg waggleAttConfig) *waggleAttestations {
 	return &waggleAttestations{
+		ctx:     ctx,
 		w:       w,
 		suffix:  suffix,
+		cfg:     cfg,
 		digests: make(map[[fieldparams.VersionLength]byte]bool),
-		topics:  make(map[string]*waggle.Topic),
+		topics:  make(map[string]*waggleAttTopic),
 	}
 }
 
@@ -45,16 +50,19 @@ func (a *waggleAttestations) EnsureDigest(digest [fieldparams.VersionLength]byte
 	a.digests[digest] = true
 	for subnet := range attestationSubnetCount {
 		topic := attestationToTopic(subnet, digest) + a.suffix
-		t, err := a.w.NewTopic(topic, 0, nil)
+		t := newWaggleAttTopic(topic, a.cfg)
+		wt, err := a.w.NewTopic(topic, 0, t.onSendComplete)
 		if err != nil {
 			log.WithError(err).WithField("topic", topic).Error("Could not create waggle topic")
 			continue
 		}
+		t.topic = wt
+		t.start(a.ctx)
 		a.topics[topic] = t
 	}
 }
 
-func (a *waggleAttestations) topic(topic string) *waggle.Topic {
+func (a *waggleAttestations) topic(topic string) *waggleAttTopic {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	return a.topics[topic]
@@ -63,20 +71,20 @@ func (a *waggleAttestations) topic(topic string) *waggle.Topic {
 // Subscribe subscribes to the waggle topic. It does nothing for an unknown topic.
 func (a *waggleAttestations) Subscribe(topic string) {
 	if t := a.topic(topic); t != nil {
-		t.Subscribe()
+		t.topic.Subscribe()
 	}
 }
 
 // Unsubscribe unsubscribes from the waggle topic. It does nothing for an unknown topic.
 func (a *waggleAttestations) Unsubscribe(topic string) {
 	if t := a.topic(topic); t != nil {
-		t.Unsubscribe()
+		t.topic.Unsubscribe()
 	}
 }
 
 // Prune closes the topics of all digests that keep does not accept.
 func (a *waggleAttestations) Prune(keep func([fieldparams.VersionLength]byte) bool) {
-	var closed []*waggle.Topic
+	var closed []*waggleAttTopic
 	a.mu.Lock()
 	for digest := range a.digests {
 		if keep(digest) {
@@ -93,7 +101,8 @@ func (a *waggleAttestations) Prune(keep func([fieldparams.VersionLength]byte) bo
 	}
 	a.mu.Unlock()
 	for _, t := range closed {
-		t.Close()
+		t.topic.Close()
+		t.stop()
 	}
 }
 
