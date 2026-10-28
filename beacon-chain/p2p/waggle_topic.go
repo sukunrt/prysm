@@ -24,8 +24,6 @@ import (
 const (
 	// maxIndicesPerMetadata is the ssz_max of the metadata lists.
 	maxIndicesPerMetadata = 2048
-	// maxOutboxPerPeer limits the requests, replies and available lists that wait for capacity to one peer.
-	maxOutboxPerPeer = 64
 	// advertWindow is the time after its arrival during which an attestation goes in available lists.
 	advertWindow = 3 * time.Second
 	// tombstoneAfter is the time after its arrival after which we keep only the vote of an
@@ -217,7 +215,7 @@ func (s *slotAttestations) full(v primitives.ValidatorIndex) bool {
 func (s *slotAttestations) peer(p peer.ID) *slotPeer {
 	sp := s.peers[p]
 	if sp == nil {
-		sp = &slotPeer{known: make(map[vote]struct{})}
+		sp = &slotPeer{}
 		s.peers[p] = sp
 	}
 	return sp
@@ -228,7 +226,8 @@ func (s *slotAttestations) peerHas(p peer.ID, vt vote) bool {
 	return sp != nil && sp.has(vt)
 }
 
-// slotPeer is our view of one peer in one slot.
+// slotPeer is our view of one peer in one slot. The messages to the peer are built from it when
+// the peer has send capacity, so nothing waits in a queue and nothing is dropped.
 type slotPeer struct {
 	// known is our view of the peer's set: the votes sent by us, sent to us, or in its
 	// available lists.
@@ -236,9 +235,17 @@ type slotPeer struct {
 	// told is the peer's view of our set: the part of the slot order that our available lists
 	// to the peer cover. Lists start at max(head, told).
 	told int
+	// asks holds the votes that we request from the peer and did not send the request for.
+	asks []vote
+	// requested holds the votes that the peer requested from us and that we did not send. It
+	// holds only votes that we have, so our set limits it.
+	requested map[vote]struct{}
 }
 
 func (sp *slotPeer) has(vt vote) bool {
+	if sp == nil {
+		return false
+	}
 	_, ok := sp.known[vt]
 	return ok
 }
@@ -247,13 +254,10 @@ func (sp *slotPeer) has(vt vote) bool {
 // fill known with junk in each live slot. Limit it to MAX_VALIDATORS_PER_COMMITTEE for each peer
 // and slot, and use peer scoring.
 func (sp *slotPeer) markKnown(vt vote) {
+	if sp.known == nil {
+		sp.known = make(map[vote]struct{})
+	}
 	sp.known[vt] = struct{}{}
-}
-
-// listKey identifies a metadata list: one slot, committee and data root.
-type listKey struct {
-	slot primitives.Slot
-	bundleKey
 }
 
 type openRequest struct {
@@ -309,8 +313,22 @@ type waggleAttTopic struct {
 	validate func(valJob) bool
 	valDone  chan valResult
 
-	slots  map[primitives.Slot]*slotAttestations
-	outbox map[peer.ID][]waggleMessage
+	slots map[primitives.Slot]*slotAttestations
+	// slotOrder holds the keys of slots, oldest first.
+	slotOrder []primitives.Slot
+	// listsDue holds the peers that get our available lists when they have send capacity.
+	listsDue map[peer.ID]struct{}
+
+	// scratch is reused space for building messages. Only the run loop uses it.
+	scratch struct {
+		bundle ethpb.AttestationBundle
+		meta   ethpb.CommitteeAttestationPartsMetadata
+		root   [32]byte
+		keys   []bundleKey
+		ids    []uint64
+		votes  []vote
+		peers  []peer.ID
+	}
 }
 
 func newWaggleAttTopic(name string, cfg WaggleAttConfig, genesis func() time.Time, validate func(valJob) bool) *waggleAttTopic {
@@ -325,7 +343,7 @@ func newWaggleAttTopic(name string, cfg WaggleAttConfig, genesis func() time.Tim
 		validate: validate,
 		valDone:  make(chan valResult, 256),
 		slots:    make(map[primitives.Slot]*slotAttestations),
-		outbox:   make(map[peer.ID][]waggleMessage),
+		listsDue: make(map[peer.ID]struct{}),
 	}
 }
 
@@ -470,20 +488,10 @@ func (t *waggleAttTopic) slot(slot primitives.Slot) *slotAttestations {
 	if s == nil {
 		s = newSlotAttestations()
 		t.slots[slot] = s
+		i, _ := slices.BinarySearch(t.slotOrder, slot)
+		t.slotOrder = slices.Insert(t.slotOrder, i, slot)
 	}
 	return s
-}
-
-// pendingSlots returns the slots with attestations to push, oldest first.
-func (t *waggleAttTopic) pendingSlots() []primitives.Slot {
-	var keys []primitives.Slot
-	for slot, s := range t.slots {
-		if len(s.pending) > 0 {
-			keys = append(keys, slot)
-		}
-	}
-	slices.Sort(keys)
-	return keys
 }
 
 func (t *waggleAttTopic) handleIncoming(ctx context.Context, in waggleIncoming) {
@@ -493,8 +501,6 @@ func (t *waggleAttTopic) handleIncoming(ctx context.Context, in waggleIncoming) 
 	}
 	if m.Metadata != nil {
 		t.handleMetadata(in.from, m.Slot, m.Metadata)
-	}
-	if len(t.outbox[in.from]) > 0 {
 		t.flush(in.from)
 	}
 }
@@ -648,38 +654,37 @@ func (s *slotAttestations) tombstone(vt vote) {
 	}
 }
 
-// handleMetadata requests the announced attestations that we do not have, and serves the
-// requests from our store. A request that we cannot serve is dropped.
+// handleMetadata records the announced votes that we do not have as asks, and the requested
+// votes that we have as replies. They go to the peer when it has send capacity. A request for a
+// vote that we do not have is dropped.
 func (t *waggleAttTopic) handleMetadata(from peer.ID, slot primitives.Slot, md *ethpb.CommitteeAttestationPartsMetadata) {
 	s := t.slot(slot)
 	sp := s.peer(from)
 	root := bytesutil.ToBytes32(md.DataRoot)
 	now := time.Now()
-	var requests []uint64
 	for _, idx := range md.Available {
 		vt := vote{root: root, v: primitives.ValidatorIndex(idx)}
 		sp.markKnown(vt)
 		if s.has(vt) || s.full(vt.v) {
 			continue
 		}
-		if t.request(s, vt, md.CommitteeIndex, from, now) {
-			requests = append(requests, idx)
+		t.request(s, sp, vt, md.CommitteeIndex, from, now)
+	}
+	for _, idx := range md.Requests {
+		vt := vote{root: root, v: primitives.ValidatorIndex(idx)}
+		if _, ok := s.votes[vt]; !ok || sp.has(vt) {
+			continue
 		}
-	}
-	if len(requests) > 0 {
-		t.enqueue(from, waggleMessage{
-			Slot:     slot,
-			Metadata: &ethpb.CommitteeAttestationPartsMetadata{CommitteeIndex: md.CommitteeIndex, DataRoot: root[:], Requests: requests},
-		})
-	}
-	if len(md.Requests) > 0 {
-		t.serve(from, sp, slot, s, root, md.Requests)
+		if sp.requested == nil {
+			sp.requested = make(map[vote]struct{})
+		}
+		sp.requested[vt] = struct{}{}
 	}
 }
 
-// request records an open request for vt to p. It returns false if vt has enough open requests
-// or p was already asked.
-func (t *waggleAttTopic) request(s *slotAttestations, vt vote, committee primitives.CommitteeIndex, p peer.ID, now time.Time) bool {
+// request records an open request for vt to p, and adds vt to the asks of p. It returns false if
+// vt has enough open requests or p was already asked.
+func (t *waggleAttTopic) request(s *slotAttestations, sp *slotPeer, vt vote, committee primitives.CommitteeIndex, p peer.ID, now time.Time) bool {
 	w := s.wants[vt]
 	if w == nil {
 		w = &want{committee: committee, asked: make(map[peer.ID]struct{})}
@@ -693,37 +698,12 @@ func (t *waggleAttTopic) request(s *slotAttestations, vt vote, committee primiti
 	}
 	w.open = append(w.open, openRequest{peer: p, at: now})
 	w.asked[p] = struct{}{}
+	sp.asks = append(sp.asks, vt)
 	return true
 }
 
-func (t *waggleAttTopic) serve(from peer.ID, sp *slotPeer, slot primitives.Slot, s *slotAttestations, root [32]byte, requests []uint64) {
-	bb := newBundler(slot, s)
-	for _, idx := range requests {
-		vt := vote{root: root, v: primitives.ValidatorIndex(idx)}
-		if _, ok := s.votes[vt]; !ok || sp.has(vt) {
-			continue
-		}
-		sp.markKnown(vt)
-		bb.add(vt)
-	}
-	for _, m := range bb.msgs {
-		t.enqueue(from, m)
-	}
-}
-
-// enqueue holds a request, a reply or an available list for p until p has capacity. It returns
-// false if the outbox of p is full.
-func (t *waggleAttTopic) enqueue(p peer.ID, m waggleMessage) bool {
-	if len(t.outbox[p]) >= maxOutboxPerPeer {
-		log.WithField("peer", p).Debug("Waggle outbox full, dropping message")
-		return false
-	}
-	t.outbox[p] = append(t.outbox[p], m)
-	return true
-}
-
-func (t *waggleAttTopic) send(p peer.ID, m waggleMessage) {
-	msg, err := m.encode()
+func (t *waggleAttTopic) send(p peer.ID, slot primitives.Slot, b *ethpb.AttestationBundle, md *ethpb.CommitteeAttestationPartsMetadata) {
+	msg, err := waggleMessage{Slot: slot, Bundle: b, Metadata: md}.encode()
 	if err != nil {
 		log.WithError(err).Debug("Could not encode waggle message")
 		return
@@ -731,12 +711,21 @@ func (t *waggleAttTopic) send(p peer.ID, m waggleMessage) {
 	t.topic.SendMessage(p, msg)
 }
 
-// flush sends to p while it has capacity: first the outbox, then the push. If p has no stream
-// to us, its state goes, so that it starts fresh when it subscribes again.
+// sendList sends one metadata list. Exactly one of available and requests is set.
+func (t *waggleAttTopic) sendList(p peer.ID, slot primitives.Slot, k bundleKey, available, requests []uint64) {
+	md := &t.scratch.meta
+	t.scratch.root = k.dataRoot
+	md.CommitteeIndex, md.DataRoot, md.Available, md.Requests = k.committee, t.scratch.root[:], available, requests
+	t.send(p, slot, nil, md)
+}
+
+// flush fills the free send slots of p, in this order: our requests, replies to its requests,
+// available lists if they are due, and push. If p has no stream to us, its state goes, so that it
+// starts fresh when it subscribes again.
 func (t *waggleAttTopic) flush(p peer.ID) {
 	free, err := t.topic.GetPeerCapacity(p)
 	if errors.Is(err, waggle.ErrPeerNotFound) {
-		delete(t.outbox, p)
+		delete(t.listsDue, p)
 		for _, s := range t.slots {
 			delete(s.peers, p)
 		}
@@ -745,19 +734,107 @@ func (t *waggleAttTopic) flush(p peer.ID) {
 	if err != nil || free == 0 {
 		return
 	}
-	q := t.outbox[p]
-	n := min(free, len(q))
-	for _, m := range q[:n] {
-		t.send(p, m)
+	free = t.sendAsks(p, free)
+	free = t.sendReplies(p, free)
+	if _, due := t.listsDue[p]; due {
+		var done bool
+		if free, done = t.sendLists(p, free); done {
+			delete(t.listsDue, p)
+		}
 	}
-	if n == len(q) {
-		delete(t.outbox, p)
-	} else {
-		t.outbox[p] = q[n:]
-	}
-	if free -= n; free > 0 {
+	if free > 0 {
 		t.pushTo(p, free)
 	}
+}
+
+// sendAsks sends our requests to p, oldest slot first. The requests of a slot go together or wait.
+func (t *waggleAttTopic) sendAsks(p peer.ID, free int) int {
+	for _, slot := range t.slotOrder {
+		s := t.slots[slot]
+		sp := s.peers[p]
+		if sp == nil || len(sp.asks) == 0 {
+			continue
+		}
+		sp.asks = slices.DeleteFunc(sp.asks, func(vt vote) bool {
+			_, ok := s.wants[vt]
+			return !ok
+		})
+		keyOf := func(vt vote) (bundleKey, bool) {
+			w, ok := s.wants[vt]
+			if !ok {
+				return bundleKey{}, false
+			}
+			return bundleKey{committee: w.committee, dataRoot: vt.root}, true
+		}
+		n := t.lists(sp.asks, keyOf, nil)
+		if n > free {
+			return free
+		}
+		t.lists(sp.asks, keyOf, func(k bundleKey, ids []uint64) { t.sendList(p, slot, k, nil, ids) })
+		sp.asks = sp.asks[:0]
+		free -= n
+	}
+	return free
+}
+
+// sendReplies sends the votes that p requested, oldest slot first, in up to free bundles.
+func (t *waggleAttTopic) sendReplies(p peer.ID, free int) int {
+	for _, slot := range t.slotOrder {
+		if free == 0 {
+			return 0
+		}
+		s := t.slots[slot]
+		sp := s.peers[p]
+		if sp == nil || len(sp.requested) == 0 {
+			continue
+		}
+		votes := t.scratch.votes[:0]
+		for vt := range sp.requested {
+			if _, ok := s.votes[vt]; !ok || sp.has(vt) {
+				delete(sp.requested, vt)
+				continue
+			}
+			votes = append(votes, vt)
+		}
+		t.scratch.votes = votes
+		t.bundleVotes(s, votes, func(b *ethpb.AttestationBundle, root [32]byte) bool {
+			if free == 0 {
+				return false
+			}
+			for _, idx := range b.AttesterIndices {
+				vt := vote{root: root, v: primitives.ValidatorIndex(idx)}
+				delete(sp.requested, vt)
+				sp.markKnown(vt)
+			}
+			t.send(p, slot, b, nil)
+			free--
+			return true
+		})
+	}
+	return free
+}
+
+// sendLists sends our available lists to p, oldest slot first. The lists of a slot go together
+// or wait. It returns true when all slots are done.
+func (t *waggleAttTopic) sendLists(p peer.ID, free int) (int, bool) {
+	for _, slot := range t.slotOrder {
+		s := t.slots[slot]
+		sp := s.peers[p]
+		n := t.availableLists(s, sp, nil)
+		if n > free {
+			return free, false
+		}
+		if n == 0 {
+			continue
+		}
+		t.availableLists(s, sp, func(k bundleKey, ids []uint64) { t.sendList(p, slot, k, ids, nil) })
+		free -= n
+		if sp == nil {
+			sp = s.peer(p)
+		}
+		sp.told = len(s.order)
+	}
+	return free, true
 }
 
 // push sends the pending attestations to peers with capacity, in random order. Each
@@ -773,33 +850,45 @@ func (t *waggleAttTopic) push() {
 	}
 }
 
-// pushTo sends up to free bundles to p, oldest slot first.
-func (t *waggleAttTopic) pushTo(p peer.ID, free int) {
-	for _, slot := range t.pendingSlots() {
-		s := t.slots[slot]
-		bb := newBundler(slot, s)
-		for _, vt := range s.pending {
-			if s.sends[vt] < t.cfg.PushPeers && !s.peerHas(p, vt) {
-				bb.add(vt)
-			}
+// pushTo sends up to free bundles of pending votes to p, oldest slot first.
+func (t *waggleAttTopic) pushTo(p peer.ID, free int) int {
+	for _, slot := range t.slotOrder {
+		if free == 0 {
+			return 0
 		}
-		if len(bb.msgs) == 0 {
+		s := t.slots[slot]
+		if len(s.pending) == 0 {
 			continue
 		}
-		sp := s.peer(p)
-		for i, m := range bb.msgs {
-			if free == 0 {
-				return
+		sp := s.peers[p]
+		votes := t.scratch.votes[:0]
+		for _, vt := range s.pending {
+			if s.sends[vt] < t.cfg.PushPeers && !sp.has(vt) {
+				votes = append(votes, vt)
 			}
-			for _, idx := range m.Bundle.AttesterIndices {
-				vt := vote{root: bb.roots[i], v: primitives.ValidatorIndex(idx)}
+		}
+		t.scratch.votes = votes
+		if len(votes) == 0 {
+			continue
+		}
+		if sp == nil {
+			sp = s.peer(p)
+		}
+		t.bundleVotes(s, votes, func(b *ethpb.AttestationBundle, root [32]byte) bool {
+			if free == 0 {
+				return false
+			}
+			for _, idx := range b.AttesterIndices {
+				vt := vote{root: root, v: primitives.ValidatorIndex(idx)}
 				s.sends[vt]++
 				sp.markKnown(vt)
 			}
-			t.send(p, m)
+			t.send(p, slot, b, nil)
 			free--
-		}
+			return true
+		})
 	}
+	return free
 }
 
 // compactPending drops the attestations that went to pushPeers peers.
@@ -807,57 +896,109 @@ func (s *slotAttestations) compactPending(pushPeers int) {
 	s.pending = slices.DeleteFunc(s.pending, func(vt vote) bool { return s.sends[vt] >= pushPeers })
 }
 
-// sendMetadata sends our available lists to MetadataPeers random peers with capacity. The
+// sendMetadata makes our available lists due for MetadataPeers random peers with capacity. The
 // lists are deltas: a peer gets each vote at most once, and only in the advert window.
 func (t *waggleAttTopic) sendMetadata() {
 	peers := t.topic.PeersWithCapacity()
 	t.rng.Shuffle(len(peers), func(i, j int) { peers[i], peers[j] = peers[j], peers[i] })
 	for _, p := range peers[:min(t.cfg.MetadataPeers, len(peers))] {
-		for slot, s := range t.slots {
-			sp := s.peer(p)
-			msgs := availableDelta(slot, s, sp)
-			if len(t.outbox[p])+len(msgs) > maxOutboxPerPeer {
-				continue
-			}
-			for _, m := range msgs {
-				t.enqueue(p, m)
-			}
-			sp.told = len(s.order)
-		}
+		t.listsDue[p] = struct{}{}
 		t.flush(p)
 	}
 }
 
-// availableDelta returns the available lists for the votes that we got after the last list to
-// the peer and in the advert window, without the ones that the peer is known to have. It has one
-// list per committee and data root, split at maxIndicesPerMetadata.
-func availableDelta(slot primitives.Slot, s *slotAttestations, sp *slotPeer) []waggleMessage {
-	from := max(s.head, sp.told)
-	if from >= len(s.order) {
-		return nil
+// availableLists calls emit for each available list to the peer: the votes that we got after the
+// last list to the peer and in the advert window, without the ones that the peer is known to
+// have. It returns the number of lists. sp can be nil.
+func (t *waggleAttTopic) availableLists(s *slotAttestations, sp *slotPeer, emit func(k bundleKey, ids []uint64)) int {
+	from := s.head
+	if sp != nil {
+		from = max(from, sp.told)
 	}
-	byKey := make(map[bundleKey][]uint64)
-	var keys []bundleKey
-	for _, vt := range s.order[from:] {
+	if from >= len(s.order) {
+		return 0
+	}
+	return t.lists(s.order[from:], func(vt vote) (bundleKey, bool) {
 		if sp.has(vt) {
-			continue
+			return bundleKey{}, false
 		}
-		k := bundleKey{committee: s.votes[vt], dataRoot: vt.root}
-		if _, ok := byKey[k]; !ok {
+		c, ok := s.votes[vt]
+		return bundleKey{committee: c, dataRoot: vt.root}, ok
+	}, emit)
+}
+
+// lists groups votes by keyOf into lists of at most maxIndicesPerMetadata validator indices, one
+// key after the other, and calls emit for each list. emit can be nil. ids is valid only during the
+// call. It returns the number of lists.
+func (t *waggleAttTopic) lists(votes []vote, keyOf func(vote) (bundleKey, bool), emit func(k bundleKey, ids []uint64)) int {
+	keys := t.scratch.keys[:0]
+	for _, vt := range votes {
+		if k, ok := keyOf(vt); ok && !slices.Contains(keys, k) {
 			keys = append(keys, k)
 		}
-		byKey[k] = append(byKey[k], uint64(vt.v))
 	}
-	var msgs []waggleMessage
+	t.scratch.keys = keys
+	n := 0
 	for _, k := range keys {
-		for ids := range slices.Chunk(byKey[k], maxIndicesPerMetadata) {
-			msgs = append(msgs, waggleMessage{
-				Slot:     slot,
-				Metadata: &ethpb.CommitteeAttestationPartsMetadata{CommitteeIndex: k.committee, DataRoot: k.dataRoot[:], Available: ids},
-			})
+		ids := t.scratch.ids[:0]
+		for _, vt := range votes {
+			if kk, ok := keyOf(vt); !ok || kk != k {
+				continue
+			}
+			ids = append(ids, uint64(vt.v))
+			if len(ids) == maxIndicesPerMetadata {
+				n++
+				if emit != nil {
+					emit(k, ids)
+				}
+				ids = ids[:0]
+			}
+		}
+		if len(ids) > 0 {
+			n++
+			if emit != nil {
+				emit(k, ids)
+			}
+		}
+		t.scratch.ids = ids
+	}
+	return n
+}
+
+// bundleVotes groups the votes of s by committee and data root into bundles of at most
+// maxAttestationsPerBundle, and calls send for each bundle. send returns false to stop. The
+// bundle is scratch space, valid only during the call. Votes that are not in s.votes are skipped.
+func (t *waggleAttTopic) bundleVotes(s *slotAttestations, votes []vote, send func(b *ethpb.AttestationBundle, root [32]byte) bool) {
+	keys := t.scratch.keys[:0]
+	for _, vt := range votes {
+		c, ok := s.votes[vt]
+		if k := (bundleKey{committee: c, dataRoot: vt.root}); ok && !slices.Contains(keys, k) {
+			keys = append(keys, k)
 		}
 	}
-	return msgs
+	t.scratch.keys = keys
+	b := &t.scratch.bundle
+	for _, k := range keys {
+		wb := s.bundles[k]
+		b.CommitteeIndex, b.AttestationData = k.committee, wb.data
+		b.AttesterIndices, b.Signatures = b.AttesterIndices[:0], b.Signatures[:0]
+		for _, vt := range votes {
+			if c, ok := s.votes[vt]; !ok || c != k.committee || vt.root != k.dataRoot {
+				continue
+			}
+			b.AttesterIndices = append(b.AttesterIndices, uint64(vt.v))
+			b.Signatures = append(b.Signatures, wb.sigs[vt.v])
+			if len(b.AttesterIndices) == maxAttestationsPerBundle {
+				if !send(b, k.dataRoot) {
+					return
+				}
+				b.AttesterIndices, b.Signatures = b.AttesterIndices[:0], b.Signatures[:0]
+			}
+		}
+		if len(b.AttesterIndices) > 0 && !send(b, k.dataRoot) {
+			return
+		}
+	}
 }
 
 // expireRequests drops open requests that are older than RequestTimeout, and asks other
@@ -865,40 +1006,33 @@ func availableDelta(slot primitives.Slot, s *slotAttestations, sp *slotPeer) []w
 // TODO: peer scoring. Peers that do not serve the attestations that they announced are at fault.
 func (t *waggleAttTopic) expireRequests() {
 	now := time.Now()
-	batches := make(map[peer.ID]map[listKey][]uint64)
-	for slot, s := range t.slots {
+	asked := t.scratch.peers[:0]
+	for _, s := range t.slots {
 		for vt, w := range s.wants {
 			w.open = slices.DeleteFunc(w.open, func(r openRequest) bool { return now.Sub(r.at) >= t.cfg.RequestTimeout })
 			for p, sp := range s.peers {
 				if len(w.open) >= t.cfg.RequestPeers {
 					break
 				}
-				if !sp.has(vt) || !t.request(s, vt, w.committee, p, now) {
+				if !sp.has(vt) || !t.request(s, sp, vt, w.committee, p, now) {
 					continue
 				}
-				if batches[p] == nil {
-					batches[p] = make(map[listKey][]uint64)
+				if !slices.Contains(asked, p) {
+					asked = append(asked, p)
 				}
-				lk := listKey{slot: slot, bundleKey: bundleKey{committee: w.committee, dataRoot: vt.root}}
-				batches[p][lk] = append(batches[p][lk], uint64(vt.v))
 			}
 			if len(w.open) == 0 {
 				delete(s.wants, vt)
 			}
 		}
 	}
-	for p, byList := range batches {
-		for lk, ids := range byList {
-			t.enqueue(p, waggleMessage{
-				Slot:     lk.slot,
-				Metadata: &ethpb.CommitteeAttestationPartsMetadata{CommitteeIndex: lk.committee, DataRoot: lk.dataRoot[:], Requests: ids},
-			})
-		}
+	t.scratch.peers = asked
+	for _, p := range asked {
 		t.flush(p)
 	}
 }
 
-// prune drops the expired slots and their messages in the outbox.
+// prune drops the expired slots.
 func (t *waggleAttTopic) prune() {
 	live := t.oldestLive()
 	for slot := range t.slots {
@@ -906,39 +1040,5 @@ func (t *waggleAttTopic) prune() {
 			delete(t.slots, slot)
 		}
 	}
-	for p, q := range t.outbox {
-		if q = slices.DeleteFunc(q, func(m waggleMessage) bool { return m.Slot < live }); len(q) == 0 {
-			delete(t.outbox, p)
-		} else {
-			t.outbox[p] = q
-		}
-	}
-}
-
-// bundler groups the votes of one slot into bundles: one per committee and data, with at most
-// maxAttestationsPerBundle attestations. roots[i] is the data root of msgs[i].
-type bundler struct {
-	slot  primitives.Slot
-	s     *slotAttestations
-	byKey map[bundleKey]*ethpb.AttestationBundle
-	msgs  []waggleMessage
-	roots [][32]byte
-}
-
-func newBundler(slot primitives.Slot, s *slotAttestations) *bundler {
-	return &bundler{slot: slot, s: s, byKey: make(map[bundleKey]*ethpb.AttestationBundle)}
-}
-
-func (b *bundler) add(vt vote) {
-	key := bundleKey{committee: b.s.votes[vt], dataRoot: vt.root}
-	wb := b.s.bundles[key]
-	cur := b.byKey[key]
-	if cur == nil || len(cur.AttesterIndices) >= maxAttestationsPerBundle {
-		cur = &ethpb.AttestationBundle{CommitteeIndex: key.committee, AttestationData: wb.data}
-		b.byKey[key] = cur
-		b.msgs = append(b.msgs, waggleMessage{Slot: b.slot, Bundle: cur})
-		b.roots = append(b.roots, vt.root)
-	}
-	cur.AttesterIndices = append(cur.AttesterIndices, uint64(vt.v))
-	cur.Signatures = append(cur.Signatures, wb.sigs[vt.v])
+	t.slotOrder = slices.DeleteFunc(t.slotOrder, func(slot primitives.Slot) bool { return slot < live })
 }

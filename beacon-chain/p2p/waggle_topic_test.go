@@ -222,17 +222,14 @@ func TestWaggleAttTopicExpiry(t *testing.T) {
 		tp := newWaggleAttTopic("t", cfg, genesisAt(testWaggleSlot, 0), nil)
 		old, cur := prevEpochStart-1, prevEpochStart
 		p1, p2 := peer.ID("p1"), peer.ID("p2")
-		tp.slot(old).peer(p1).markKnown(vote{v: 1})
 		tp.slot(cur).peer(p2).markKnown(vote{v: 1})
-		tp.outbox[p1] = []waggleMessage{{Slot: old}}
-		tp.outbox[p2] = []waggleMessage{{Slot: old}, {Slot: cur}}
+		tp.slot(old).peer(p1).markKnown(vote{v: 1})
+		require.DeepEqual(t, []primitives.Slot{old, cur}, tp.slotOrder)
 
 		tp.prune()
 		require.Equal(t, 1, len(tp.slots))
 		require.Equal(t, true, tp.slots[cur].peerHas(p2, vote{v: 1}))
-		require.Equal(t, 1, len(tp.outbox))
-		require.Equal(t, 1, len(tp.outbox[p2]))
-		require.Equal(t, cur, tp.outbox[p2][0].Slot)
+		require.DeepEqual(t, []primitives.Slot{cur}, tp.slotOrder)
 	})
 }
 
@@ -243,11 +240,12 @@ func TestAvailableDelta(t *testing.T) {
 		att.CommitteeId = committee
 		s.store([32]byte{byte(committee)}, att)
 	}
-	ids := func(msgs []waggleMessage) map[primitives.CommitteeIndex][]uint64 {
+	ids := func(s *slotAttestations, sp *slotPeer) map[primitives.CommitteeIndex][]uint64 {
 		got := make(map[primitives.CommitteeIndex][]uint64)
-		for _, m := range msgs {
-			got[m.Metadata.CommitteeIndex] = append(got[m.Metadata.CommitteeIndex], m.Metadata.Available...)
-		}
+		n := tp.availableLists(s, sp, func(k bundleKey, ids []uint64) {
+			got[k.committee] = append(got[k.committee], ids...)
+		})
+		require.Equal(t, n, len(got))
 		return got
 	}
 
@@ -257,12 +255,12 @@ func TestAvailableDelta(t *testing.T) {
 		add(s, 0, 1)
 		add(s, 0, 2)
 		add(s, 1, 3)
-		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {1}, 1: {3}}, ids(availableDelta(testWaggleSlot, s, ps)))
+		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {1}, 1: {3}}, ids(s, ps))
 
 		ps.told = len(s.order)
-		require.Equal(t, 0, len(availableDelta(testWaggleSlot, s, ps)))
+		require.Equal(t, 0, tp.availableLists(s, ps, nil))
 		add(s, 0, 4)
-		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {4}}, ids(availableDelta(testWaggleSlot, s, ps)))
+		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {4}}, ids(s, ps))
 	})
 
 	t.Run("only the advert window", func(t *testing.T) {
@@ -272,7 +270,7 @@ func TestAvailableDelta(t *testing.T) {
 		s.added[0] = time.Now().Add(-advertWindow - time.Second)
 		s.age(time.Now())
 		require.Equal(t, 1, s.head)
-		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {2}}, ids(availableDelta(testWaggleSlot+2, s, &slotPeer{known: map[vote]struct{}{}})))
+		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {2}}, ids(s, nil))
 	})
 
 	t.Run("splits long lists", func(t *testing.T) {
@@ -280,10 +278,10 @@ func TestAvailableDelta(t *testing.T) {
 		for v := range primitives.ValidatorIndex(maxIndicesPerMetadata + 1) {
 			add(s, 0, v)
 		}
-		msgs := availableDelta(testWaggleSlot+1, s, &slotPeer{known: map[vote]struct{}{}})
-		require.Equal(t, 2, len(msgs))
-		require.Equal(t, maxIndicesPerMetadata, len(msgs[0].Metadata.Available))
-		require.Equal(t, 1, len(msgs[1].Metadata.Available))
+		var sizes []int
+		n := tp.availableLists(s, nil, func(_ bundleKey, ids []uint64) { sizes = append(sizes, len(ids)) })
+		require.Equal(t, 2, n)
+		require.DeepEqual(t, []int{maxIndicesPerMetadata, 1}, sizes)
 	})
 }
 
@@ -382,12 +380,12 @@ func TestWaggleDoubleVotes(t *testing.T) {
 	require.Equal(t, 2, len(s.order))
 
 	t.Run("lists per data root", func(t *testing.T) {
-		msgs := availableDelta(testWaggleSlot, s, &slotPeer{known: map[vote]struct{}{}})
-		require.Equal(t, 2, len(msgs))
-		for i, m := range msgs {
-			require.DeepEqual(t, roots[i][:], m.Metadata.DataRoot)
-			require.DeepEqual(t, []uint64{1}, m.Metadata.Available)
-		}
+		var got []bundleKey
+		tp.availableLists(s, nil, func(k bundleKey, ids []uint64) {
+			got = append(got, k)
+			require.DeepEqual(t, []uint64{1}, ids)
+		})
+		require.DeepEqual(t, []bundleKey{{dataRoot: roots[0]}, {dataRoot: roots[1]}}, got)
 	})
 
 	t.Run("full validator is not validated or requested", func(t *testing.T) {
@@ -396,9 +394,77 @@ func TestWaggleDoubleVotes(t *testing.T) {
 		require.Equal(t, 0, len(jobs))
 
 		tp.handleMetadata("p", testWaggleSlot, &ethpb.CommitteeAttestationPartsMetadata{DataRoot: roots[3][:], Available: []uint64{1, 2}})
-		require.Equal(t, 1, len(tp.outbox["p"]))
-		md := tp.outbox["p"][0].Metadata
-		require.DeepEqual(t, roots[3][:], md.DataRoot)
-		require.DeepEqual(t, []uint64{2}, md.Requests)
+		require.DeepEqual(t, []vote{{root: roots[3], v: 2}}, s.peers["p"].asks)
+	})
+}
+
+func newStandaloneTopic(t *testing.T) *waggleAttTopic {
+	w := waggle.NewWaggle()
+	tp := newWaggleAttTopic("t", DefaultWaggleAttConfig(), genesisAt(testWaggleSlot, 0), nil)
+	wt, err := w.NewTopic("t", 0, tp.onSendComplete)
+	require.NoError(t, err)
+	tp.topic = wt
+	t.Cleanup(func() {
+		wt.Close()
+		w.Close()
+	})
+	return tp
+}
+
+func TestWaggleSendWhenCapacity(t *testing.T) {
+	root := [32]byte{1}
+	p := peer.ID("p")
+	setup := func(t *testing.T, n int) (*waggleAttTopic, *slotAttestations) {
+		tp := newStandaloneTopic(t)
+		s := tp.slot(testWaggleSlot)
+		for v := range primitives.ValidatorIndex(n) {
+			s.store(root, testSingleAttestation(v))
+		}
+		return tp, s
+	}
+	all := func(n int) []uint64 {
+		ids := make([]uint64, n)
+		for i := range ids {
+			ids[i] = uint64(i)
+		}
+		return ids
+	}
+
+	t.Run("replies wait for capacity", func(t *testing.T) {
+		tp, s := setup(t, 120)
+		tp.handleMetadata(p, testWaggleSlot, &ethpb.CommitteeAttestationPartsMetadata{DataRoot: root[:], Requests: append(all(120), 500)})
+		sp := s.peers[p]
+		require.Equal(t, 120, len(sp.requested))
+
+		require.Equal(t, 0, tp.sendReplies(p, 1))
+		require.Equal(t, 120-maxAttestationsPerBundle, len(sp.requested))
+		require.Equal(t, 3, tp.sendReplies(p, 5))
+		require.Equal(t, 0, len(sp.requested))
+		require.Equal(t, 120, len(sp.known))
+	})
+
+	t.Run("asks wait for capacity", func(t *testing.T) {
+		tp, s := setup(t, 0)
+		other := [32]byte{2}
+		tp.handleMetadata(p, testWaggleSlot, &ethpb.CommitteeAttestationPartsMetadata{DataRoot: other[:], Available: all(3)})
+		sp := s.peers[p]
+		require.Equal(t, 3, len(sp.asks))
+		require.Equal(t, 0, tp.sendAsks(p, 0))
+		require.Equal(t, 3, len(sp.asks))
+		require.Equal(t, 1, tp.sendAsks(p, 2))
+		require.Equal(t, 0, len(sp.asks))
+	})
+
+	t.Run("lists wait for capacity", func(t *testing.T) {
+		tp, s := setup(t, maxIndicesPerMetadata+1)
+		free, done := tp.sendLists(p, 1)
+		require.Equal(t, false, done)
+		require.Equal(t, 1, free)
+		require.Equal(t, true, s.peers[p] == nil)
+
+		free, done = tp.sendLists(p, 3)
+		require.Equal(t, true, done)
+		require.Equal(t, 1, free)
+		require.Equal(t, len(s.order), s.peers[p].told)
 	})
 }
