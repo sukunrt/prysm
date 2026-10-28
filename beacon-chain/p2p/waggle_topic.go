@@ -24,6 +24,11 @@ const (
 	maxIndicesPerMetadata = 2048
 	// maxOutboxPerPeer limits the requests, replies and available lists that wait for capacity to one peer.
 	maxOutboxPerPeer = 64
+	// advertWindow is the time after its arrival during which an attestation goes in available lists.
+	advertWindow = 3 * time.Second
+	// tombstoneAfter is the time after its arrival after which we keep only the validator of an
+	// attestation, for dedup.
+	tombstoneAfter = 6 * time.Second
 )
 
 // WaggleAttConfig holds the parameters of attestation propagation over waggle.
@@ -117,17 +122,28 @@ type waggleBundle struct {
 	sigs map[primitives.ValidatorIndex][]byte
 }
 
-// waggleSlot holds all the state of one slot. The state expires with the slot.
-type waggleSlot struct {
-	// seen is the dedup before validation. The key includes the data and the signature.
+// slotAttestations holds all the state of one slot. It expires when the attestations of the slot
+// are no longer valid for gossip.
+type slotAttestations struct {
+	// seen is the dedup before validation. The key includes the data and the signature. It holds
+	// the keys in validation and the rejected keys. validators and tombstones dedup the accepted ones.
 	seen map[[32]byte]struct{}
 	// queued counts the jobs in validation for each validator.
 	queued map[primitives.ValidatorIndex]int
-	// validators holds the validated attestations. After validation, (slot, validator) is the dedup key.
+	// validators holds the validated attestations that are not tombstoned. After validation,
+	// (slot, validator) is the dedup key.
 	validators map[primitives.ValidatorIndex]bundleKey
 	bundles    map[bundleKey]*waggleBundle
-	// order holds the validated validators in the order we got them. It only grows.
+	// tombstones holds the validators of the validated attestations that we no longer keep.
+	tombstones map[primitives.ValidatorIndex]struct{}
+	// order holds the validated validators in the order we got them, and added their arrival
+	// times. They only grow.
 	order []primitives.ValidatorIndex
+	added []time.Time
+	// head is the first entry of order that is in the advert window. Entries before cold are
+	// tombstoned. cold <= head.
+	head int
+	cold int
 	// pending holds the validated validators that went to fewer than PushPeers peers.
 	pending []primitives.ValidatorIndex
 	// sends counts the peers that we pushed each attestation to.
@@ -136,12 +152,13 @@ type waggleSlot struct {
 	wants map[primitives.ValidatorIndex]*want
 }
 
-func newWaggleSlot() *waggleSlot {
-	return &waggleSlot{
+func newSlotAttestations() *slotAttestations {
+	return &slotAttestations{
 		seen:       make(map[[32]byte]struct{}),
 		queued:     make(map[primitives.ValidatorIndex]int),
 		validators: make(map[primitives.ValidatorIndex]bundleKey),
 		bundles:    make(map[bundleKey]*waggleBundle),
+		tombstones: make(map[primitives.ValidatorIndex]struct{}),
 		sends:      make(map[primitives.ValidatorIndex]int),
 		peers:      make(map[peer.ID]*slotPeer),
 		wants:      make(map[primitives.ValidatorIndex]*want),
@@ -149,14 +166,19 @@ func newWaggleSlot() *waggleSlot {
 }
 
 // has reports whether we have the attestation of v or validate one now.
-func (s *waggleSlot) has(v primitives.ValidatorIndex) bool {
+func (s *slotAttestations) has(v primitives.ValidatorIndex) bool {
+	return s.validated(v) || s.queued[v] > 0
+}
+
+func (s *slotAttestations) validated(v primitives.ValidatorIndex) bool {
 	if _, ok := s.validators[v]; ok {
 		return true
 	}
-	return s.queued[v] > 0
+	_, ok := s.tombstones[v]
+	return ok
 }
 
-func (s *waggleSlot) peer(p peer.ID) *slotPeer {
+func (s *slotAttestations) peer(p peer.ID) *slotPeer {
 	sp := s.peers[p]
 	if sp == nil {
 		sp = &slotPeer{known: make(map[primitives.ValidatorIndex]struct{})}
@@ -165,7 +187,7 @@ func (s *waggleSlot) peer(p peer.ID) *slotPeer {
 	return sp
 }
 
-func (s *waggleSlot) peerHas(p peer.ID, v primitives.ValidatorIndex) bool {
+func (s *slotAttestations) peerHas(p peer.ID, v primitives.ValidatorIndex) bool {
 	sp := s.peers[p]
 	return sp != nil && sp.has(v)
 }
@@ -174,7 +196,8 @@ func (s *waggleSlot) peerHas(p peer.ID, v primitives.ValidatorIndex) bool {
 type slotPeer struct {
 	// known holds the attestations that the peer has: sent by us, sent to us, or in its available list.
 	known map[primitives.ValidatorIndex]struct{}
-	// told is the part of the slot order that our available lists to the peer cover.
+	// told is the part of the slot order that our available lists to the peer cover. Lists start
+	// at max(head, told).
 	told int
 }
 
@@ -221,7 +244,7 @@ type waggleAttTopic struct {
 	validate func(valJob) bool
 	valDone  chan valResult
 
-	slots  map[primitives.Slot]*waggleSlot
+	slots  map[primitives.Slot]*slotAttestations
 	outbox map[peer.ID][]waggleMessage
 }
 
@@ -236,7 +259,7 @@ func newWaggleAttTopic(name string, cfg WaggleAttConfig, genesis func() time.Tim
 		sendDone: make(chan struct{}, 1),
 		validate: validate,
 		valDone:  make(chan valResult, 256),
-		slots:    make(map[primitives.Slot]*waggleSlot),
+		slots:    make(map[primitives.Slot]*slotAttestations),
 		outbox:   make(map[peer.ID][]waggleMessage),
 	}
 }
@@ -338,6 +361,7 @@ func (t *waggleAttTopic) run(ctx context.Context) {
 			t.expireRequests()
 			t.push()
 		case <-meta.C:
+			t.age()
 			t.sendMetadata()
 		case <-expiry.C:
 			t.prune()
@@ -346,20 +370,28 @@ func (t *waggleAttTopic) run(ctx context.Context) {
 	}
 }
 
-// A slot expires at its end plus the clock disparity. After that, waggle drops its state and
-// its attestations go only over gossipsub.
+// A slot lives while its attestations are valid for gossip: until the end of the next epoch
+// (EIP-7045), plus the clock disparity. After that, waggle drops its state.
 func (t *waggleAttTopic) expiryGenesis() time.Time {
 	return t.genesis().Add(params.BeaconConfig().MaximumGossipClockDisparityDuration())
 }
 
-// oldestLive returns the oldest slot that has not expired.
-func (t *waggleAttTopic) oldestLive() primitives.Slot {
-	return slots.CurrentSlot(t.expiryGenesis())
+func (t *waggleAttTopic) expiryEpoch() primitives.Epoch {
+	return slots.ToEpoch(slots.CurrentSlot(t.expiryGenesis()))
 }
 
-// nextExpiry returns when the oldest live slot expires.
+// oldestLive returns the oldest slot that has not expired: the start of the previous epoch.
+func (t *waggleAttTopic) oldestLive() primitives.Slot {
+	e := t.expiryEpoch()
+	if e == 0 {
+		return 0
+	}
+	return slots.UnsafeEpochStart(e - 1)
+}
+
+// nextExpiry returns when the oldest live epoch expires.
 func (t *waggleAttTopic) nextExpiry() time.Time {
-	return slots.UnsafeStartTime(t.expiryGenesis(), t.oldestLive()+1)
+	return slots.UnsafeStartTime(t.expiryGenesis(), slots.UnsafeEpochStart(t.expiryEpoch()+1))
 }
 
 // inWindow reports whether slot is live: not expired and at most one slot ahead of the clock.
@@ -367,20 +399,22 @@ func (t *waggleAttTopic) inWindow(slot primitives.Slot) bool {
 	return slot >= t.oldestLive() && slot <= slots.CurrentSlot(t.genesis())+1
 }
 
-func (t *waggleAttTopic) slot(slot primitives.Slot) *waggleSlot {
+func (t *waggleAttTopic) slot(slot primitives.Slot) *slotAttestations {
 	s := t.slots[slot]
 	if s == nil {
-		s = newWaggleSlot()
+		s = newSlotAttestations()
 		t.slots[slot] = s
 	}
 	return s
 }
 
-// liveSlots returns the slots with state, oldest first.
-func (t *waggleAttTopic) liveSlots() []primitives.Slot {
-	keys := make([]primitives.Slot, 0, len(t.slots))
-	for slot := range t.slots {
-		keys = append(keys, slot)
+// pendingSlots returns the slots with attestations to push, oldest first.
+func (t *waggleAttTopic) pendingSlots() []primitives.Slot {
+	var keys []primitives.Slot
+	for slot, s := range t.slots {
+		if len(s.pending) > 0 {
+			keys = append(keys, slot)
+		}
 	}
 	slices.Sort(keys)
 	return keys
@@ -418,7 +452,7 @@ func (t *waggleAttTopic) handleBundle(ctx context.Context, from peer.ID, slot pr
 	for i, idx := range b.AttesterIndices {
 		v := primitives.ValidatorIndex(idx)
 		sp.markKnown(v)
-		if _, ok := s.validators[v]; ok {
+		if s.validated(v) {
 			continue
 		}
 		key := attestationKey(root, b.CommitteeIndex, v, b.Signatures[i])
@@ -458,6 +492,7 @@ func (t *waggleAttTopic) handleValResult(r valResult) {
 		delete(s.queued, v)
 	}
 	if r.accepted {
+		delete(s.seen, attestationKey(r.dataRoot, r.att.CommitteeId, v, r.att.Signature))
 		s.store(r.dataRoot, r.att)
 	}
 }
@@ -468,9 +503,9 @@ func (t *waggleAttTopic) handleLocal(l localAttestation) {
 }
 
 // store keeps the first validated attestation of each validator and queues it for push.
-func (s *waggleSlot) store(root [32]byte, att *ethpb.SingleAttestation) {
+func (s *slotAttestations) store(root [32]byte, att *ethpb.SingleAttestation) {
 	v := att.AttesterIndex
-	if _, ok := s.validators[v]; ok {
+	if s.validated(v) {
 		return
 	}
 	key := bundleKey{committee: att.CommitteeId, dataRoot: root}
@@ -482,8 +517,53 @@ func (s *waggleSlot) store(root [32]byte, att *ethpb.SingleAttestation) {
 	b.sigs[v] = att.Signature
 	s.validators[v] = key
 	s.order = append(s.order, v)
+	s.added = append(s.added, time.Now())
 	s.pending = append(s.pending, v)
 	delete(s.wants, v)
+}
+
+func (t *waggleAttTopic) age() {
+	now := time.Now()
+	for _, s := range t.slots {
+		s.age(now)
+	}
+}
+
+// age moves the head past the attestations older than advertWindow, and tombstones the ones
+// older than tombstoneAfter.
+func (s *slotAttestations) age(now time.Time) {
+	for s.head < len(s.order) && now.Sub(s.added[s.head]) > advertWindow {
+		s.head++
+	}
+	start := s.cold
+	for s.cold < s.head && now.Sub(s.added[s.cold]) > tombstoneAfter {
+		s.tombstone(s.order[s.cold])
+		s.cold++
+	}
+	if s.cold > start {
+		s.pending = slices.DeleteFunc(s.pending, func(v primitives.ValidatorIndex) bool {
+			_, ok := s.validators[v]
+			return !ok
+		})
+	}
+}
+
+func (s *slotAttestations) tombstone(v primitives.ValidatorIndex) {
+	key, ok := s.validators[v]
+	if !ok {
+		return
+	}
+	delete(s.validators, v)
+	s.tombstones[v] = struct{}{}
+	if b := s.bundles[key]; b != nil {
+		if delete(b.sigs, v); len(b.sigs) == 0 {
+			delete(s.bundles, key)
+		}
+	}
+	delete(s.sends, v)
+	for _, sp := range s.peers {
+		delete(sp.known, v)
+	}
 }
 
 // handleMetadata requests the announced attestations that we do not have, and serves the
@@ -516,7 +596,7 @@ func (t *waggleAttTopic) handleMetadata(from peer.ID, slot primitives.Slot, md *
 
 // request records an open request for v to p. It returns false if v has enough open requests
 // or p was already asked.
-func (t *waggleAttTopic) request(s *waggleSlot, v primitives.ValidatorIndex, committee primitives.CommitteeIndex, p peer.ID, now time.Time) bool {
+func (t *waggleAttTopic) request(s *slotAttestations, v primitives.ValidatorIndex, committee primitives.CommitteeIndex, p peer.ID, now time.Time) bool {
 	w := s.wants[v]
 	if w == nil {
 		w = &want{committee: committee, asked: make(map[peer.ID]struct{})}
@@ -533,7 +613,7 @@ func (t *waggleAttTopic) request(s *waggleSlot, v primitives.ValidatorIndex, com
 	return true
 }
 
-func (t *waggleAttTopic) serve(from peer.ID, sp *slotPeer, slot primitives.Slot, s *waggleSlot, requests []uint64) {
+func (t *waggleAttTopic) serve(from peer.ID, sp *slotPeer, slot primitives.Slot, s *slotAttestations, requests []uint64) {
 	bb := newBundler(slot, s)
 	for _, idx := range requests {
 		v := primitives.ValidatorIndex(idx)
@@ -612,7 +692,7 @@ func (t *waggleAttTopic) push() {
 
 // pushTo sends up to free bundles to p, oldest slot first.
 func (t *waggleAttTopic) pushTo(p peer.ID, free int) {
-	for _, slot := range t.liveSlots() {
+	for _, slot := range t.pendingSlots() {
 		s := t.slots[slot]
 		bb := newBundler(slot, s)
 		for _, v := range s.pending {
@@ -640,12 +720,12 @@ func (t *waggleAttTopic) pushTo(p peer.ID, free int) {
 }
 
 // compactPending drops the attestations that went to pushPeers peers.
-func (s *waggleSlot) compactPending(pushPeers int) {
+func (s *slotAttestations) compactPending(pushPeers int) {
 	s.pending = slices.DeleteFunc(s.pending, func(v primitives.ValidatorIndex) bool { return s.sends[v] >= pushPeers })
 }
 
 // sendMetadata sends our available lists to MetadataPeers random peers with capacity. The
-// lists are deltas: a peer gets each validator at most once.
+// lists are deltas: a peer gets each validator at most once, and only in the advert window.
 func (t *waggleAttTopic) sendMetadata() {
 	peers := t.topic.PeersWithCapacity()
 	t.rng.Shuffle(len(peers), func(i, j int) { peers[i], peers[j] = peers[j], peers[i] })
@@ -666,12 +746,16 @@ func (t *waggleAttTopic) sendMetadata() {
 }
 
 // availableDelta returns the available lists for the validators that we got after the last list
-// to the peer, without the ones that the peer is known to have. It has one list per committee,
-// split at maxIndicesPerMetadata.
-func availableDelta(slot primitives.Slot, s *waggleSlot, sp *slotPeer) []waggleMessage {
+// to the peer and in the advert window, without the ones that the peer is known to have. It has
+// one list per committee, split at maxIndicesPerMetadata.
+func availableDelta(slot primitives.Slot, s *slotAttestations, sp *slotPeer) []waggleMessage {
+	from := max(s.head, sp.told)
+	if from >= len(s.order) {
+		return nil
+	}
 	byCommittee := make(map[primitives.CommitteeIndex][]uint64)
 	var committees []primitives.CommitteeIndex
-	for _, v := range s.order[sp.told:] {
+	for _, v := range s.order[from:] {
 		if sp.has(v) {
 			continue
 		}
@@ -751,12 +835,12 @@ func (t *waggleAttTopic) prune() {
 // with at most maxAttestationsPerBundle attestations.
 type bundler struct {
 	slot  primitives.Slot
-	s     *waggleSlot
+	s     *slotAttestations
 	byKey map[bundleKey]*ethpb.AttestationBundle
 	msgs  []waggleMessage
 }
 
-func newBundler(slot primitives.Slot, s *waggleSlot) *bundler {
+func newBundler(slot primitives.Slot, s *slotAttestations) *bundler {
 	return &bundler{slot: slot, s: s, byKey: make(map[bundleKey]*ethpb.AttestationBundle)}
 }
 

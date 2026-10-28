@@ -12,6 +12,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/testing/require"
+	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -176,22 +177,30 @@ func TestWaggleAttTopicExpiry(t *testing.T) {
 	cfg := DefaultWaggleAttConfig()
 	disparity := params.BeaconConfig().MaximumGossipClockDisparityDuration()
 
-	t.Run("window", func(t *testing.T) {
-		late := newWaggleAttTopic("t", cfg, genesisAt(testWaggleSlot, 2*disparity), nil)
-		require.Equal(t, testWaggleSlot, late.oldestLive())
-		require.Equal(t, false, late.inWindow(testWaggleSlot-1))
-		require.Equal(t, true, late.inWindow(testWaggleSlot))
-		require.Equal(t, true, late.inWindow(testWaggleSlot+1))
-		require.Equal(t, false, late.inWindow(testWaggleSlot+2))
+	epochStart := slots.UnsafeEpochStart(slots.ToEpoch(testWaggleSlot))
+	prevEpochStart := slots.UnsafeEpochStart(slots.ToEpoch(testWaggleSlot) - 1)
 
-		early := newWaggleAttTopic("t", cfg, genesisAt(testWaggleSlot, disparity/2), nil)
-		require.Equal(t, true, early.inWindow(testWaggleSlot-1))
-		require.Equal(t, true, early.nextExpiry().After(time.Now()))
+	t.Run("window", func(t *testing.T) {
+		tp := newWaggleAttTopic("t", cfg, genesisAt(testWaggleSlot, 0), nil)
+		require.Equal(t, prevEpochStart, tp.oldestLive())
+		require.Equal(t, false, tp.inWindow(prevEpochStart-1))
+		require.Equal(t, true, tp.inWindow(prevEpochStart))
+		require.Equal(t, true, tp.inWindow(testWaggleSlot+1))
+		require.Equal(t, false, tp.inWindow(testWaggleSlot+2))
+		require.Equal(t, true, tp.nextExpiry().After(time.Now()))
+	})
+
+	t.Run("epoch expires after the clock disparity", func(t *testing.T) {
+		late := newWaggleAttTopic("t", cfg, genesisAt(epochStart, 2*disparity), nil)
+		require.Equal(t, false, late.inWindow(prevEpochStart-1))
+
+		early := newWaggleAttTopic("t", cfg, genesisAt(epochStart, disparity/2), nil)
+		require.Equal(t, true, early.inWindow(prevEpochStart-1))
 	})
 
 	t.Run("prune drops the expired slots", func(t *testing.T) {
-		tp := newWaggleAttTopic("t", cfg, genesisAt(testWaggleSlot, 2*disparity), nil)
-		old, cur := testWaggleSlot-1, testWaggleSlot
+		tp := newWaggleAttTopic("t", cfg, genesisAt(testWaggleSlot, 0), nil)
+		old, cur := prevEpochStart-1, prevEpochStart
 		p1, p2 := peer.ID("p1"), peer.ID("p2")
 		tp.slot(old).peer(p1).markKnown(1)
 		tp.slot(cur).peer(p2).markKnown(1)
@@ -209,7 +218,7 @@ func TestWaggleAttTopicExpiry(t *testing.T) {
 
 func TestAvailableDelta(t *testing.T) {
 	tp := newWaggleAttTopic("t", DefaultWaggleAttConfig(), genesisAt(testWaggleSlot, 0), nil)
-	add := func(s *waggleSlot, committee primitives.CommitteeIndex, v primitives.ValidatorIndex) {
+	add := func(s *slotAttestations, committee primitives.CommitteeIndex, v primitives.ValidatorIndex) {
 		att := testSingleAttestation(v)
 		att.CommitteeId = committee
 		s.store([32]byte{byte(committee)}, att)
@@ -236,6 +245,16 @@ func TestAvailableDelta(t *testing.T) {
 		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {4}}, ids(availableDelta(testWaggleSlot, s, ps)))
 	})
 
+	t.Run("only the advert window", func(t *testing.T) {
+		s := tp.slot(testWaggleSlot + 2)
+		add(s, 0, 1)
+		add(s, 0, 2)
+		s.added[0] = time.Now().Add(-advertWindow - time.Second)
+		s.age(time.Now())
+		require.Equal(t, 1, s.head)
+		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {2}}, ids(availableDelta(testWaggleSlot+2, s, &slotPeer{known: map[primitives.ValidatorIndex]struct{}{}})))
+	})
+
 	t.Run("splits long lists", func(t *testing.T) {
 		s := tp.slot(testWaggleSlot + 1)
 		for v := range primitives.ValidatorIndex(maxIndicesPerMetadata + 1) {
@@ -245,5 +264,54 @@ func TestAvailableDelta(t *testing.T) {
 		require.Equal(t, 2, len(msgs))
 		require.Equal(t, maxIndicesPerMetadata, len(msgs[0].Metadata.Available))
 		require.Equal(t, 1, len(msgs[1].Metadata.Available))
+	})
+}
+
+func TestSlotAttestationsAge(t *testing.T) {
+	tp := newWaggleAttTopic("t", DefaultWaggleAttConfig(), genesisAt(testWaggleSlot, 0), nil)
+	s := tp.slot(testWaggleSlot)
+	p := peer.ID("p")
+	root := [32]byte{1}
+	for v := range primitives.ValidatorIndex(3) {
+		s.store(root, testSingleAttestation(v))
+		s.peer(p).markKnown(v)
+	}
+	now := time.Now()
+	s.added[0] = now.Add(-tombstoneAfter - time.Second)
+	s.added[1] = now.Add(-advertWindow - time.Second)
+	s.age(now)
+
+	require.Equal(t, 2, s.head)
+	require.Equal(t, 1, s.cold)
+	require.Equal(t, true, s.has(0))
+	_, hot := s.validators[0]
+	require.Equal(t, false, hot)
+	require.Equal(t, false, s.peerHas(p, 0))
+	require.Equal(t, true, s.peerHas(p, 1))
+	require.DeepEqual(t, []primitives.ValidatorIndex{1, 2}, s.pending)
+	key := bundleKey{dataRoot: root}
+	_, ok := s.bundles[key].sigs[0]
+	require.Equal(t, false, ok)
+
+	s.store(root, testSingleAttestation(0))
+	require.Equal(t, 3, len(s.order))
+
+	t.Run("tombstoning all removes the bundle", func(t *testing.T) {
+		for i := range s.added {
+			s.added[i] = now.Add(-tombstoneAfter - time.Second)
+		}
+		s.age(now)
+		require.Equal(t, 3, s.cold)
+		require.Equal(t, 0, len(s.bundles))
+		require.Equal(t, 0, len(s.pending))
+	})
+
+	t.Run("accept removes the seen key", func(t *testing.T) {
+		att := testSingleAttestation(7)
+		s.seen[attestationKey(root, att.CommitteeId, 7, att.Signature)] = struct{}{}
+		s.queued[7] = 1
+		tp.handleValResult(valResult{dataRoot: root, att: att, accepted: true})
+		require.Equal(t, 0, len(s.seen))
+		require.Equal(t, true, s.has(7))
 	})
 }
