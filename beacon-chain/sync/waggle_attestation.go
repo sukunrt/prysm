@@ -14,12 +14,12 @@ import (
 
 // validateWaggleAttestation validates one attestation from waggle with the gossip rules.
 // If it is valid, it goes to the pool and to gossipsub, for the peers without waggle.
-func (s *Service) validateWaggleAttestation(ctx context.Context, from peer.ID, topic string, att *eth.SingleAttestation) bool {
+func (s *Service) validateWaggleAttestation(ctx context.Context, from peer.ID, topic string, att *eth.SingleAttestation) pubsub.ValidationResult {
 	if s.cfg.initialSync.Syncing() {
-		return false
+		return pubsub.ValidationIgnore
 	}
 	if digest, err := p2p.ExtractGossipDigest(topic); err != nil || digest != s.currentForkDigest() {
-		return false
+		return pubsub.ValidationIgnore
 	}
 	ctx, cancel := context.WithTimeout(ctx, pubsubMessageTimeout)
 	defer cancel()
@@ -29,7 +29,7 @@ func (s *Service) validateWaggleAttestation(ctx context.Context, from peer.ID, t
 		if res == pubsub.ValidationReject {
 			log.WithError(err).WithField("peer", from).Debug("Rejected attestation from waggle")
 		}
-		return false
+		return res
 	}
 	if err := s.committeeIndexBeaconAttestationSubscriber(ctx, attForPool); err != nil {
 		log.WithError(err).Error("Could not save attestation from waggle")
@@ -37,12 +37,12 @@ func (s *Service) validateWaggleAttestation(ctx context.Context, from peer.ID, t
 	subnet, err := attestationSubnetFromTopic(topic)
 	if err != nil {
 		log.WithError(err).WithField("topic", topic).Error("Could not get subnet of waggle topic")
-		return true
+		return pubsub.ValidationAccept
 	}
 	if err := s.cfg.p2p.BroadcastAttestation(ctx, subnet, att); err != nil {
 		log.WithError(err).Debug("Could not broadcast attestation from waggle")
 	}
-	return true
+	return pubsub.ValidationAccept
 }
 
 // attestationSubnetFromTopic returns the subnet of a beacon_attestation_{subnet} topic.

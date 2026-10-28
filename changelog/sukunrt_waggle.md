@@ -6,3 +6,4 @@
 - Attestation propagation over waggle (EIP-8334): push to D peers, available lists to K peers, and request and serve. Attestations from waggle go through the gossip validation, and then to the pool and to gossipsub.
 - Flags for the waggle attestation parameters: `--waggle-push-peers`, `--waggle-push-interval`, `--waggle-metadata-peers`, `--waggle-metadata-interval`, `--waggle-request-peers`, `--waggle-request-timeout` and `--waggle-max-validations`.
 - Waggle keeps attestation state while the attestations are valid for gossip, so late attestations also go over waggle. An attestation goes in available lists for 3s after it arrives. After 6s, waggle keeps only its validator, for dedup.
+- Waggle records the peers that send each attestation that fails validation, for peer scoring later.

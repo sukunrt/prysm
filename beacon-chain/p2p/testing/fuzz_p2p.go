@@ -114,7 +114,7 @@ func (*FakeP2P) PartialColumnBroadcaster() partialdatacolumnbroadcaster.Broadcas
 }
 
 // StartWaggleAttestations -- fake.
-func (*FakeP2P) StartWaggleAttestations(func(context.Context, peer.ID, string, *ethpb.SingleAttestation) bool) {
+func (*FakeP2P) StartWaggleAttestations(func(context.Context, peer.ID, string, *ethpb.SingleAttestation) pubsub.ValidationResult) {
 }
 
 // SubmitWaggleAttestation -- fake.

@@ -13,6 +13,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/crypto/rand"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/pkg/errors"
 	"github.com/sukunrt/go-waggle/pb"
@@ -83,7 +84,8 @@ func (c WaggleAttConfig) withDefaults() WaggleAttConfig {
 
 // ValidateAttestationFn sends one attestation from peer from through the classic gossip
 // validator. If the attestation is valid, it also stores it and sends it on gossipsub.
-type ValidateAttestationFn = func(ctx context.Context, from peer.ID, topic string, att *ethpb.SingleAttestation) bool
+// ValidationReject means that from is at fault. ValidationIgnore does not.
+type ValidateAttestationFn = func(ctx context.Context, from peer.ID, topic string, att *ethpb.SingleAttestation) pubsub.ValidationResult
 
 // waggleIncoming is a decoded message in the propagation window. dataRoot is the root of the bundle data.
 type waggleIncoming struct {
@@ -109,7 +111,20 @@ type localAttestation struct {
 type valResult struct {
 	dataRoot [32]byte
 	att      *ethpb.SingleAttestation
-	accepted bool
+	res      pubsub.ValidationResult
+}
+
+// seenEntry is a key in validation or a key that did not pass validation. senders holds the
+// peers that sent the key.
+type seenEntry struct {
+	rejected bool
+	senders  []peer.ID
+}
+
+func (e *seenEntry) addSender(p peer.ID) {
+	if !slices.Contains(e.senders, p) {
+		e.senders = append(e.senders, p)
+	}
 }
 
 type bundleKey struct {
@@ -126,8 +141,11 @@ type waggleBundle struct {
 // are no longer valid for gossip.
 type slotAttestations struct {
 	// seen is the dedup before validation. The key includes the data and the signature. It holds
-	// the keys in validation and the rejected keys. validators and tombstones dedup the accepted ones.
-	seen map[[32]byte]struct{}
+	// the keys in validation and the keys that did not pass. validators and tombstones dedup the
+	// accepted ones.
+	// TODO: the keys that did not pass stay until the slot expires, so a peer can fill seen with
+	// bad signatures. Peer scoring must limit this.
+	seen map[[32]byte]*seenEntry
 	// queued counts the jobs in validation for each validator.
 	queued map[primitives.ValidatorIndex]int
 	// validators holds the validated attestations that are not tombstoned. After validation,
@@ -154,7 +172,7 @@ type slotAttestations struct {
 
 func newSlotAttestations() *slotAttestations {
 	return &slotAttestations{
-		seen:       make(map[[32]byte]struct{}),
+		seen:       make(map[[32]byte]*seenEntry),
 		queued:     make(map[primitives.ValidatorIndex]int),
 		validators: make(map[primitives.ValidatorIndex]bundleKey),
 		bundles:    make(map[bundleKey]*waggleBundle),
@@ -206,6 +224,9 @@ func (sp *slotPeer) has(v primitives.ValidatorIndex) bool {
 	return ok
 }
 
+// TODO: known has no limit. The indices are not checked against the committee, so a peer can
+// fill known with junk in each live slot. Limit it to MAX_VALIDATORS_PER_COMMITTEE for each peer
+// and slot, and use peer scoring.
 func (sp *slotPeer) markKnown(v primitives.ValidatorIndex) {
 	sp.known[v] = struct{}{}
 }
@@ -310,6 +331,7 @@ func (t *waggleAttTopic) receive(ctx context.Context) {
 		}
 		in, err := t.decode(from, raw)
 		if err != nil {
+			// TODO: peer scoring. The sender of a message that we cannot decode is at fault.
 			log.WithError(err).WithField("peer", from).Debug("Could not decode waggle message")
 			continue
 		}
@@ -456,7 +478,9 @@ func (t *waggleAttTopic) handleBundle(ctx context.Context, from peer.ID, slot pr
 			continue
 		}
 		key := attestationKey(root, b.CommitteeIndex, v, b.Signatures[i])
-		if _, ok := s.seen[key]; ok {
+		if e := s.seen[key]; e != nil {
+			// TODO: peer scoring. If e.rejected, from is at fault.
+			e.addSender(from)
 			continue
 		}
 		job := valJob{
@@ -476,7 +500,7 @@ func (t *waggleAttTopic) handleBundle(ctx context.Context, from peer.ID, slot pr
 			log.WithField("topic", t.name).Debug("Waggle validation limit reached, dropping attestations")
 			return
 		}
-		s.seen[key] = struct{}{}
+		s.seen[key] = &seenEntry{senders: []peer.ID{from}}
 		s.queued[v]++
 		delete(s.wants, v)
 	}
@@ -491,10 +515,16 @@ func (t *waggleAttTopic) handleValResult(r valResult) {
 	if s.queued[v]--; s.queued[v] <= 0 {
 		delete(s.queued, v)
 	}
-	if r.accepted {
-		delete(s.seen, attestationKey(r.dataRoot, r.att.CommitteeId, v, r.att.Signature))
-		s.store(r.dataRoot, r.att)
+	key := attestationKey(r.dataRoot, r.att.CommitteeId, v, r.att.Signature)
+	if r.res != pubsub.ValidationAccept {
+		// TODO: peer scoring. On ValidationReject, all senders of the key are at fault, as in gossipsub.
+		if e := s.seen[key]; e != nil {
+			e.rejected = r.res == pubsub.ValidationReject
+		}
+		return
 	}
+	delete(s.seen, key)
+	s.store(r.dataRoot, r.att)
 }
 
 // handleLocal stores an attestation that is already validated: our own, or one from gossipsub.
@@ -779,6 +809,7 @@ func availableDelta(slot primitives.Slot, s *slotAttestations, sp *slotPeer) []w
 
 // expireRequests drops open requests that are older than RequestTimeout, and asks other
 // peers that announced the attestation.
+// TODO: peer scoring. Peers that do not serve the attestations that they announced are at fault.
 func (t *waggleAttTopic) expireRequests() {
 	now := time.Now()
 	batches := make(map[peer.ID]map[slotCommittee][]uint64)

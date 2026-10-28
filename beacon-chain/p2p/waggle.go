@@ -63,7 +63,7 @@ func (a *waggleAttestations) startValidation(j valJob) bool {
 	}
 	go func() {
 		defer func() { <-a.validations }()
-		r := valResult{dataRoot: j.dataRoot, att: j.att, accepted: (*validate)(j.ctx, j.from, j.topic, j.att)}
+		r := valResult{dataRoot: j.dataRoot, att: j.att, res: (*validate)(j.ctx, j.from, j.topic, j.att)}
 		select {
 		case j.done <- r:
 		case <-j.ctx.Done():

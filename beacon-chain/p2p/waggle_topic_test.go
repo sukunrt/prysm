@@ -14,6 +14,7 @@ import (
 	"github.com/OffchainLabs/prysm/v7/testing/require"
 	"github.com/OffchainLabs/prysm/v7/time/slots"
 	"github.com/libp2p/go-libp2p"
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	wagglelibp2p "github.com/sukunrt/go-waggle/libp2p"
@@ -35,12 +36,15 @@ func newValidateRecorder(reject bool) *validateRecorder {
 	return &validateRecorder{calls: make(map[primitives.ValidatorIndex]int), reject: reject, got: make(chan primitives.ValidatorIndex, 64)}
 }
 
-func (r *validateRecorder) validate(_ context.Context, _ peer.ID, _ string, att *ethpb.SingleAttestation) bool {
+func (r *validateRecorder) validate(_ context.Context, _ peer.ID, _ string, att *ethpb.SingleAttestation) pubsub.ValidationResult {
 	r.mu.Lock()
 	r.calls[att.AttesterIndex]++
 	r.mu.Unlock()
 	r.got <- att.AttesterIndex
-	return !r.reject
+	if r.reject {
+		return pubsub.ValidationReject
+	}
+	return pubsub.ValidationAccept
 }
 
 func (r *validateRecorder) count(v primitives.ValidatorIndex) int {
@@ -308,10 +312,37 @@ func TestSlotAttestationsAge(t *testing.T) {
 
 	t.Run("accept removes the seen key", func(t *testing.T) {
 		att := testSingleAttestation(7)
-		s.seen[attestationKey(root, att.CommitteeId, 7, att.Signature)] = struct{}{}
+		s.seen[attestationKey(root, att.CommitteeId, 7, att.Signature)] = &seenEntry{senders: []peer.ID{"p"}}
 		s.queued[7] = 1
-		tp.handleValResult(valResult{dataRoot: root, att: att, accepted: true})
+		tp.handleValResult(valResult{dataRoot: root, att: att, res: pubsub.ValidationAccept})
 		require.Equal(t, 0, len(s.seen))
 		require.Equal(t, true, s.has(7))
 	})
+}
+
+func TestWaggleSeenSenders(t *testing.T) {
+	var jobs []valJob
+	validate := func(j valJob) bool {
+		jobs = append(jobs, j)
+		return true
+	}
+	tp := newWaggleAttTopic("t", DefaultWaggleAttConfig(), genesisAt(testWaggleSlot, 0), validate)
+	att := testSingleAttestation(1)
+	b := &ethpb.AttestationBundle{AttestationData: att.Data, AttesterIndices: []uint64{1}, Signatures: [][]byte{att.Signature}}
+	root := [32]byte{1}
+	key := attestationKey(root, 0, 1, att.Signature)
+	p1, p2, p3 := peer.ID("p1"), peer.ID("p2"), peer.ID("p3")
+
+	tp.handleBundle(t.Context(), p1, testWaggleSlot, b, root)
+	tp.handleBundle(t.Context(), p2, testWaggleSlot, b, root)
+	tp.handleBundle(t.Context(), p2, testWaggleSlot, b, root)
+	require.Equal(t, 1, len(jobs))
+	s := tp.slots[testWaggleSlot]
+	require.DeepEqual(t, []peer.ID{p1, p2}, s.seen[key].senders)
+
+	tp.handleValResult(valResult{dataRoot: root, att: jobs[0].att, res: pubsub.ValidationReject})
+	require.Equal(t, true, s.seen[key].rejected)
+	tp.handleBundle(t.Context(), p3, testWaggleSlot, b, root)
+	require.Equal(t, 1, len(jobs))
+	require.DeepEqual(t, []peer.ID{p1, p2, p3}, s.seen[key].senders)
 }
