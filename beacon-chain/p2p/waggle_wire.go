@@ -2,6 +2,7 @@ package p2p
 
 import (
 	"encoding/binary"
+	"slices"
 
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	ethpb "github.com/OffchainLabs/prysm/v7/proto/prysm/v1alpha1"
@@ -31,21 +32,28 @@ type waggleMessage struct {
 	Metadata *ethpb.CommitteeAttestationPartsMetadata
 }
 
+// encode writes the object ID, the bundle and the metadata into one buffer.
 func (m waggleMessage) encode() (*pb.ObjectPieces, error) {
-	msg := &pb.ObjectPieces{ObjectID: binary.LittleEndian.AppendUint64(nil, uint64(m.Slot))}
+	var bn, mn int
 	if m.Bundle != nil {
-		b, err := m.Bundle.MarshalSSZ()
-		if err != nil {
-			return nil, errors.Wrap(err, "marshal bundle")
-		}
-		msg.Pieces = b
+		bn = m.Bundle.SizeSSZ()
 	}
 	if m.Metadata != nil {
-		b, err := m.Metadata.MarshalSSZ()
-		if err != nil {
+		mn = m.Metadata.SizeSSZ()
+	}
+	buf := make([]byte, 8, 8+bn+mn)
+	binary.LittleEndian.PutUint64(buf, uint64(m.Slot))
+	msg := &pb.ObjectPieces{ObjectID: buf[:8:8]}
+	var err error
+	if m.Bundle != nil {
+		if msg.Pieces, err = m.Bundle.MarshalSSZTo(buf[8 : 8 : 8+bn]); err != nil {
+			return nil, errors.Wrap(err, "marshal bundle")
+		}
+	}
+	if m.Metadata != nil {
+		if msg.PiecesMetadata, err = m.Metadata.MarshalSSZTo(buf[8+bn : 8+bn : 8+bn+mn]); err != nil {
 			return nil, errors.Wrap(err, "marshal metadata")
 		}
-		msg.PiecesMetadata = b
 	}
 	return msg, nil
 }
@@ -91,12 +99,14 @@ func checkBundle(b *ethpb.AttestationBundle, slot primitives.Slot) error {
 	case b.AttestationData.Slot != slot:
 		return errWaggleBundleSlot
 	}
-	seen := make(map[uint64]struct{}, n)
-	for _, v := range b.AttesterIndices {
-		if _, ok := seen[v]; ok {
+	var buf [maxAttestationsPerBundle]uint64
+	ids := buf[:n]
+	copy(ids, b.AttesterIndices)
+	slices.Sort(ids)
+	for i := 1; i < n; i++ {
+		if ids[i] == ids[i-1] {
 			return errWaggleBundleDup
 		}
-		seen[v] = struct{}{}
 	}
 	return nil
 }

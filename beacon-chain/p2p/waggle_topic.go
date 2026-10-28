@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	fieldparams "github.com/OffchainLabs/prysm/v7/config/fieldparams"
 	"github.com/OffchainLabs/prysm/v7/config/params"
 	"github.com/OffchainLabs/prysm/v7/consensus-types/primitives"
 	"github.com/OffchainLabs/prysm/v7/crypto/rand"
@@ -116,16 +117,17 @@ type valResult struct {
 	res      pubsub.ValidationResult
 }
 
-// seenEntry is a key in validation or a key that did not pass validation. senders holds the
-// peers that sent the key.
+// seenEntry is a key in validation or a key that did not pass validation. first and others are
+// the peers that sent the key. Most keys have one sender, so first does not allocate.
 type seenEntry struct {
 	rejected bool
-	senders  []peer.ID
+	first    peer.ID
+	others   []peer.ID
 }
 
 func (e *seenEntry) addSender(p peer.ID) {
-	if !slices.Contains(e.senders, p) {
-		e.senders = append(e.senders, p)
+	if p != e.first && !slices.Contains(e.others, p) {
+		e.others = append(e.others, p)
 	}
 }
 
@@ -154,7 +156,17 @@ type slotAttestations struct {
 	// accepted ones.
 	// TODO: the keys that did not pass stay until the slot expires, so a peer can fill seen with
 	// bad signatures. Peer scoring must limit this.
-	seen map[[32]byte]*seenEntry
+	// This is the same as in gossipsub
+	seen map[[32]byte]seenEntry
+	// We should make this map
+	// or vote => struct {
+	// queued, ci, sends, wants, or whatever
+	//} 
+	//
+	//
+	//
+	//
+
 	// queued counts the jobs in validation for each vote.
 	queued map[vote]int
 	// votes holds the committees of the validated votes that are not tombstoned.
@@ -177,12 +189,12 @@ type slotAttestations struct {
 	// sends counts the peers that we pushed each vote to.
 	sends map[vote]int
 	peers map[peer.ID]*slotPeer
-	wants map[vote]*want
+	wants map[vote]want
 }
 
 func newSlotAttestations() *slotAttestations {
 	return &slotAttestations{
-		seen:         make(map[[32]byte]*seenEntry),
+		seen:         make(map[[32]byte]seenEntry),
 		queued:       make(map[vote]int),
 		votes:        make(map[vote]primitives.CommitteeIndex),
 		bundles:      make(map[bundleKey]*waggleBundle),
@@ -190,7 +202,7 @@ func newSlotAttestations() *slotAttestations {
 		perValidator: make(map[primitives.ValidatorIndex]int),
 		sends:        make(map[vote]int),
 		peers:        make(map[peer.ID]*slotPeer),
-		wants:        make(map[vote]*want),
+		wants:        make(map[vote]want),
 	}
 }
 
@@ -265,11 +277,21 @@ type openRequest struct {
 	at   time.Time
 }
 
-// want is a vote that we do not have and that a peer announced.
+// want is a vote that we do not have and that a peer announced. asked holds the peers that we
+// asked for it, and when. A request is open for RequestTimeout.
 type want struct {
 	committee primitives.CommitteeIndex
-	open      []openRequest
-	asked     map[peer.ID]struct{}
+	asked     []openRequest
+}
+
+func (w *want) open(now time.Time, timeout time.Duration) int {
+	n := 0
+	for _, r := range w.asked {
+		if now.Sub(r.at) < timeout {
+			n++
+		}
+	}
+	return n
 }
 
 // waggleAttTopic runs EIP-8334 on one attestation subnet topic. The run loop owns all state.
@@ -508,12 +530,12 @@ func (t *waggleAttTopic) handleIncoming(ctx context.Context, in waggleIncoming) 
 // attestationKey is the dedup key before validation. It includes the data and the signature,
 // so an invalid signature cannot stop a valid one.
 func attestationKey(dataRoot [32]byte, committee primitives.CommitteeIndex, v primitives.ValidatorIndex, sig []byte) [32]byte {
-	buf := make([]byte, 0, 32+8+8+len(sig))
-	buf = append(buf, dataRoot[:]...)
-	buf = binary.LittleEndian.AppendUint64(buf, uint64(committee))
-	buf = binary.LittleEndian.AppendUint64(buf, uint64(v))
-	buf = append(buf, sig...)
-	return sha256.Sum256(buf)
+	var buf [32 + 8 + 8 + fieldparams.BLSSignatureLength]byte
+	copy(buf[:32], dataRoot[:])
+	binary.LittleEndian.PutUint64(buf[32:40], uint64(committee))
+	binary.LittleEndian.PutUint64(buf[40:48], uint64(v))
+	copy(buf[48:], sig)
+	return sha256.Sum256(buf[:])
 }
 
 // handleBundle drops validated votes, votes of validators with maxVotesPerValidator votes, and
@@ -530,9 +552,10 @@ func (t *waggleAttTopic) handleBundle(ctx context.Context, from peer.ID, slot pr
 			continue
 		}
 		key := attestationKey(root, b.CommitteeIndex, v, b.Signatures[i])
-		if e := s.seen[key]; e != nil {
+		if e, ok := s.seen[key]; ok {
 			// TODO: peer scoring. If e.rejected, from is at fault.
 			e.addSender(from)
+			s.seen[key] = e
 			continue
 		}
 		job := valJob{
@@ -552,7 +575,7 @@ func (t *waggleAttTopic) handleBundle(ctx context.Context, from peer.ID, slot pr
 			log.WithField("topic", t.name).Debug("Waggle validation limit reached, dropping attestations")
 			return
 		}
-		s.seen[key] = &seenEntry{senders: []peer.ID{from}}
+		s.seen[key] = seenEntry{first: from}
 		s.queued[vt]++
 		delete(s.wants, vt)
 	}
@@ -570,8 +593,9 @@ func (t *waggleAttTopic) handleValResult(r valResult) {
 	key := attestationKey(r.dataRoot, r.att.CommitteeId, vt.v, r.att.Signature)
 	if r.res != pubsub.ValidationAccept {
 		// TODO: peer scoring. On ValidationReject, all senders of the key are at fault, as in gossipsub.
-		if e := s.seen[key]; e != nil {
+		if e, ok := s.seen[key]; ok {
 			e.rejected = r.res == pubsub.ValidationReject
+			s.seen[key] = e
 		}
 		return
 	}
@@ -668,7 +692,13 @@ func (t *waggleAttTopic) handleMetadata(from peer.ID, slot primitives.Slot, md *
 		if s.has(vt) || s.full(vt.v) {
 			continue
 		}
-		t.request(s, sp, vt, md.CommitteeIndex, from, now)
+		w, ok := s.wants[vt]
+		if !ok {
+			w = want{committee: md.CommitteeIndex, asked: make([]openRequest, 0, t.cfg.RequestPeers)}
+		}
+		if t.ask(&w, sp, vt, from, now) {
+			s.wants[vt] = w
+		}
 	}
 	for _, idx := range md.Requests {
 		vt := vote{root: root, v: primitives.ValidatorIndex(idx)}
@@ -682,22 +712,16 @@ func (t *waggleAttTopic) handleMetadata(from peer.ID, slot primitives.Slot, md *
 	}
 }
 
-// request records an open request for vt to p, and adds vt to the asks of p. It returns false if
-// vt has enough open requests or p was already asked.
-func (t *waggleAttTopic) request(s *slotAttestations, sp *slotPeer, vt vote, committee primitives.CommitteeIndex, p peer.ID, now time.Time) bool {
-	w := s.wants[vt]
-	if w == nil {
-		w = &want{committee: committee, asked: make(map[peer.ID]struct{})}
-		s.wants[vt] = w
-	}
-	if len(w.open) >= t.cfg.RequestPeers {
+// ask records an open request for vt to p in w, and adds vt to the asks of p. It returns false if
+// w has enough open requests or p was already asked. The caller stores w.
+func (t *waggleAttTopic) ask(w *want, sp *slotPeer, vt vote, p peer.ID, now time.Time) bool {
+	if w.open(now, t.cfg.RequestTimeout) >= t.cfg.RequestPeers {
 		return false
 	}
-	if _, ok := w.asked[p]; ok {
+	if slices.ContainsFunc(w.asked, func(r openRequest) bool { return r.peer == p }) {
 		return false
 	}
-	w.open = append(w.open, openRequest{peer: p, at: now})
-	w.asked[p] = struct{}{}
+	w.asked = append(w.asked, openRequest{peer: p, at: now})
 	sp.asks = append(sp.asks, vt)
 	return true
 }
@@ -1009,20 +1033,23 @@ func (t *waggleAttTopic) expireRequests() {
 	asked := t.scratch.peers[:0]
 	for _, s := range t.slots {
 		for vt, w := range s.wants {
-			w.open = slices.DeleteFunc(w.open, func(r openRequest) bool { return now.Sub(r.at) >= t.cfg.RequestTimeout })
+			open := w.open(now, t.cfg.RequestTimeout)
 			for p, sp := range s.peers {
-				if len(w.open) >= t.cfg.RequestPeers {
+				if open >= t.cfg.RequestPeers {
 					break
 				}
-				if !sp.has(vt) || !t.request(s, sp, vt, w.committee, p, now) {
+				if !sp.has(vt) || !t.ask(&w, sp, vt, p, now) {
 					continue
 				}
+				open++
 				if !slices.Contains(asked, p) {
 					asked = append(asked, p)
 				}
 			}
-			if len(w.open) == 0 {
+			if open == 0 {
 				delete(s.wants, vt)
+			} else {
+				s.wants[vt] = w
 			}
 		}
 	}

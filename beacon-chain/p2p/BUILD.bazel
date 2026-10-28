@@ -156,6 +156,7 @@ go_test(
         "subnets_test.go",
         "topics_test.go",
         "utils_test.go",
+        "waggle_bench_test.go",
         "waggle_test.go",
         "waggle_topic_test.go",
     ],

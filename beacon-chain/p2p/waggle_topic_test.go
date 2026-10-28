@@ -327,7 +327,7 @@ func TestSlotAttestationsAge(t *testing.T) {
 
 	t.Run("accept removes the seen key", func(t *testing.T) {
 		att := testSingleAttestation(7)
-		s.seen[attestationKey(root, att.CommitteeId, 7, att.Signature)] = &seenEntry{senders: []peer.ID{"p"}}
+		s.seen[attestationKey(root, att.CommitteeId, 7, att.Signature)] = seenEntry{first: "p"}
 		s.queued[vt(7)] = 1
 		tp.handleValResult(valResult{dataRoot: root, att: att, res: pubsub.ValidationAccept})
 		require.Equal(t, 0, len(s.seen))
@@ -353,13 +353,14 @@ func TestWaggleSeenSenders(t *testing.T) {
 	tp.handleBundle(t.Context(), p2, testWaggleSlot, b, root)
 	require.Equal(t, 1, len(jobs))
 	s := tp.slots[testWaggleSlot]
-	require.DeepEqual(t, []peer.ID{p1, p2}, s.seen[key].senders)
+	require.Equal(t, p1, s.seen[key].first)
+	require.DeepEqual(t, []peer.ID{p2}, s.seen[key].others)
 
 	tp.handleValResult(valResult{dataRoot: root, att: jobs[0].att, res: pubsub.ValidationReject})
 	require.Equal(t, true, s.seen[key].rejected)
 	tp.handleBundle(t.Context(), p3, testWaggleSlot, b, root)
 	require.Equal(t, 1, len(jobs))
-	require.DeepEqual(t, []peer.ID{p1, p2, p3}, s.seen[key].senders)
+	require.DeepEqual(t, []peer.ID{p2, p3}, s.seen[key].others)
 }
 
 func TestWaggleDoubleVotes(t *testing.T) {
@@ -466,5 +467,43 @@ func TestWaggleSendWhenCapacity(t *testing.T) {
 		require.Equal(t, true, done)
 		require.Equal(t, 1, free)
 		require.Equal(t, len(s.order), s.peers[p].told)
+	})
+}
+
+func TestWaggleWants(t *testing.T) {
+	tp := newStandaloneTopic(t)
+	tp.cfg.RequestTimeout = time.Hour
+	root := [32]byte{1}
+	md := func(v uint64) *ethpb.CommitteeAttestationPartsMetadata {
+		return &ethpb.CommitteeAttestationPartsMetadata{DataRoot: root[:], Available: []uint64{v}}
+	}
+	vt := vote{root: root, v: 1}
+	for _, p := range []peer.ID{"p1", "p2", "p3", "p1"} {
+		tp.handleMetadata(p, testWaggleSlot, md(1))
+	}
+	s := tp.slots[testWaggleSlot]
+	w := s.wants[vt]
+	require.Equal(t, tp.cfg.RequestPeers, len(w.asked))
+	require.Equal(t, peer.ID("p1"), w.asked[0].peer)
+	require.Equal(t, peer.ID("p2"), w.asked[1].peer)
+	require.Equal(t, 0, len(s.peers["p3"].asks))
+
+	t.Run("expired requests go to other peers", func(t *testing.T) {
+		w.asked[0].at = time.Now().Add(-2 * time.Hour)
+		s.wants[vt] = w
+		tp.expireRequests()
+		w = s.wants[vt]
+		require.Equal(t, 3, len(w.asked))
+		require.Equal(t, peer.ID("p3"), w.asked[2].peer)
+	})
+
+	t.Run("want goes when no request is open", func(t *testing.T) {
+		for i := range w.asked {
+			w.asked[i].at = time.Now().Add(-2 * time.Hour)
+		}
+		s.wants[vt] = w
+		tp.expireRequests()
+		_, ok := s.wants[vt]
+		require.Equal(t, false, ok)
 	})
 }
