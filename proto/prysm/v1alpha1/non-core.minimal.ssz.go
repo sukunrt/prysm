@@ -452,7 +452,7 @@ func (c *BuilderBid) HashTreeRootWith(hh *ssz.Hasher) (err error) {
 }
 
 func (c *CommitteeAttestationPartsMetadata) SizeSSZ() int {
-	size := 16
+	size := 48
 	size += len(c.Available) * 8
 	size += len(c.Requests) * 8
 	return size
@@ -465,22 +465,28 @@ func (c *CommitteeAttestationPartsMetadata) MarshalSSZ() ([]byte, error) {
 
 func (c *CommitteeAttestationPartsMetadata) MarshalSSZTo(dst []byte) ([]byte, error) {
 	var err error
-	offset := 16
+	offset := 48
 
 	// Field 0: CommitteeIndex
 	if dst, err = c.CommitteeIndex.MarshalSSZTo(dst); err != nil {
 		return nil, fmt.Errorf("CommitteeIndex: %w", err)
 	}
 
-	// Field 1: Available
+	// Field 1: DataRoot
+	if len(c.DataRoot) != 32 {
+		return nil, ssz.ErrBytesLength
+	}
+	dst = append(dst, c.DataRoot...)
+
+	// Field 2: Available
 	dst = ssz.WriteOffset(dst, offset)
 	offset += len(c.Available) * 8
 
-	// Field 2: Requests
+	// Field 3: Requests
 	dst = ssz.WriteOffset(dst, offset)
 	offset += len(c.Requests) * 8
 
-	// Field 1: Available
+	// Field 2: Available
 	if len(c.Available) > 2048 {
 		return nil, ssz.ErrListTooBig
 	}
@@ -488,7 +494,7 @@ func (c *CommitteeAttestationPartsMetadata) MarshalSSZTo(dst []byte) ([]byte, er
 		dst = binary.LittleEndian.AppendUint64(dst, o)
 	}
 
-	// Field 2: Requests
+	// Field 3: Requests
 	if len(c.Requests) > 2048 {
 		return nil, ssz.ErrListTooBig
 	}
@@ -501,37 +507,42 @@ func (c *CommitteeAttestationPartsMetadata) MarshalSSZTo(dst []byte) ([]byte, er
 func (c *CommitteeAttestationPartsMetadata) UnmarshalSSZ(buf []byte) error {
 	var err error
 	size := uint64(len(buf))
-	if size < 16 {
+	if size < 48 {
 		return ssz.ErrSize
 	}
 
-	sszSlice0 := buf[0:8] // c.CommitteeIndex
+	sszSlice0 := buf[0:8]  // c.CommitteeIndex
+	sszSlice1 := buf[8:40] // c.DataRoot
 
-	sszVarOffset1 := ssz.ReadOffset(buf[8:12]) // c.Available
-	if sszVarOffset1 != 16 {
+	sszVarOffset2 := ssz.ReadOffset(buf[40:44]) // c.Available
+	if sszVarOffset2 != 48 {
 		return ssz.ErrInvalidVariableOffset
 	}
-	if sszVarOffset1 > size {
+	if sszVarOffset2 > size {
 		return ssz.ErrOffset
 	}
-	sszVarOffset2 := ssz.ReadOffset(buf[12:16]) // c.Requests
-	if sszVarOffset2 > size || sszVarOffset2 < sszVarOffset1 {
+	sszVarOffset3 := ssz.ReadOffset(buf[44:48]) // c.Requests
+	if sszVarOffset3 > size || sszVarOffset3 < sszVarOffset2 {
 		return ssz.ErrOffset
 	}
-	sszSlice1 := buf[sszVarOffset1:sszVarOffset2] // c.Available
-	sszSlice2 := buf[sszVarOffset2:]              // c.Requests
+	sszSlice2 := buf[sszVarOffset2:sszVarOffset3] // c.Available
+	sszSlice3 := buf[sszVarOffset3:]              // c.Requests
 
 	// Field 0: CommitteeIndex
 	if err = c.CommitteeIndex.UnmarshalSSZ(sszSlice0); err != nil {
 		return fmt.Errorf("CommitteeIndex: %w", err)
 	}
 
-	// Field 1: Available
+	// Field 1: DataRoot
+	c.DataRoot = make([]byte, 0, 32)
+	c.DataRoot = append(c.DataRoot, sszSlice1...)
+
+	// Field 2: Available
 	{
-		if len(sszSlice1)%8 != 0 {
-			return fmt.Errorf("misaligned bytes: c.Available length is %d, which is not a multiple of 8: %w", len(sszSlice1), ssz.ErrIncorrectListSize)
+		if len(sszSlice2)%8 != 0 {
+			return fmt.Errorf("misaligned bytes: c.Available length is %d, which is not a multiple of 8: %w", len(sszSlice2), ssz.ErrIncorrectListSize)
 		}
-		numElem := len(sszSlice1) / 8
+		numElem := len(sszSlice2) / 8
 		if numElem > 2048 {
 			return fmt.Errorf("ssz-max exceeded: c.Available has %d elements, ssz-max is 2048: %w", numElem, ssz.ErrListTooBig)
 		}
@@ -539,18 +550,18 @@ func (c *CommitteeAttestationPartsMetadata) UnmarshalSSZ(buf []byte) error {
 		for i := 0; i < numElem; i++ {
 			var tmp uint64
 
-			tmpSlice := sszSlice1[i*8 : (1+i)*8]
+			tmpSlice := sszSlice2[i*8 : (1+i)*8]
 			tmp = binary.LittleEndian.Uint64(tmpSlice)
 			c.Available[i] = tmp
 		}
 	}
 
-	// Field 2: Requests
+	// Field 3: Requests
 	{
-		if len(sszSlice2)%8 != 0 {
-			return fmt.Errorf("misaligned bytes: c.Requests length is %d, which is not a multiple of 8: %w", len(sszSlice2), ssz.ErrIncorrectListSize)
+		if len(sszSlice3)%8 != 0 {
+			return fmt.Errorf("misaligned bytes: c.Requests length is %d, which is not a multiple of 8: %w", len(sszSlice3), ssz.ErrIncorrectListSize)
 		}
-		numElem := len(sszSlice2) / 8
+		numElem := len(sszSlice3) / 8
 		if numElem > 2048 {
 			return fmt.Errorf("ssz-max exceeded: c.Requests has %d elements, ssz-max is 2048: %w", numElem, ssz.ErrListTooBig)
 		}
@@ -558,7 +569,7 @@ func (c *CommitteeAttestationPartsMetadata) UnmarshalSSZ(buf []byte) error {
 		for i := 0; i < numElem; i++ {
 			var tmp uint64
 
-			tmpSlice := sszSlice2[i*8 : (1+i)*8]
+			tmpSlice := sszSlice3[i*8 : (1+i)*8]
 			tmp = binary.LittleEndian.Uint64(tmpSlice)
 			c.Requests[i] = tmp
 		}
@@ -583,7 +594,12 @@ func (c *CommitteeAttestationPartsMetadata) HashTreeRootWith(hh *ssz.Hasher) (er
 	if err := c.CommitteeIndex.HashTreeRootWith(hh); err != nil {
 		return fmt.Errorf("CommitteeIndex: %w", err)
 	}
-	// Field 1: Available
+	// Field 1: DataRoot
+	if len(c.DataRoot) != 32 {
+		return ssz.ErrBytesLength
+	}
+	hh.PutBytes(c.DataRoot)
+	// Field 2: Available
 	{
 		if len(c.Available) > 2048 {
 			return ssz.ErrListTooBig
@@ -596,7 +612,7 @@ func (c *CommitteeAttestationPartsMetadata) HashTreeRootWith(hh *ssz.Hasher) (er
 		numItems := uint64(len(c.Available))
 		hh.MerkleizeWithMixin(subIndx, numItems, ssz.CalculateLimit(2048, numItems, 8))
 	}
-	// Field 2: Requests
+	// Field 3: Requests
 	{
 		if len(c.Requests) > 2048 {
 			return ssz.ErrListTooBig

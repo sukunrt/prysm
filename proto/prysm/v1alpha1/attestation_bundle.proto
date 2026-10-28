@@ -38,11 +38,14 @@ message AttestationBundle {
 }
 
 // CommitteeAttestationPartsMetadata lists, by validator index, the
-// attestations of one committee that the sender has and the ones it requests.
+// attestations of one committee and one data root that the sender has and the
+// ones it requests. A validator can have more than one vote in a slot (a
+// double vote), so a vote is (data root, validator index).
 message CommitteeAttestationPartsMetadata {
   uint64 committee_index = 1 [ (ethereum.eth.ext.cast_type) =
                                  "github.com/OffchainLabs/prysm/v7/"
                                  "consensus-types/primitives.CommitteeIndex" ];
-  repeated uint64 available = 2 [ (ethereum.eth.ext.ssz_max) = "2048" ];
-  repeated uint64 requests = 3 [ (ethereum.eth.ext.ssz_max) = "2048" ];
+  bytes data_root = 2 [ (ethereum.eth.ext.ssz_size) = "32" ];
+  repeated uint64 available = 3 [ (ethereum.eth.ext.ssz_max) = "2048" ];
+  repeated uint64 requests = 4 [ (ethereum.eth.ext.ssz_max) = "2048" ];
 }

@@ -12,8 +12,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+var errAttestationSeen = errors.New("attestation of a seen validator")
+
 // validateWaggleAttestation validates one attestation from waggle with the gossip rules.
 // If it is valid, it goes to the pool and to gossipsub, for the peers without waggle.
+// A valid second vote of a validator in a slot (a double vote) goes only back to waggle, so
+// that the slashers on the network get it.
 func (s *Service) validateWaggleAttestation(ctx context.Context, from peer.ID, topic string, att *eth.SingleAttestation) pubsub.ValidationResult {
 	if s.cfg.initialSync.Syncing() {
 		return pubsub.ValidationIgnore
@@ -24,12 +28,15 @@ func (s *Service) validateWaggleAttestation(ctx context.Context, from peer.ID, t
 	ctx, cancel := context.WithTimeout(ctx, pubsubMessageTimeout)
 	defer cancel()
 
-	attForPool, res, err := s.validateAttestation(ctx, from, att, topic)
+	attForPool, res, err := s.validateAttestation(ctx, from, att, topic, true)
 	if res != pubsub.ValidationAccept {
 		if res == pubsub.ValidationReject {
 			log.WithError(err).WithField("peer", from).Debug("Rejected attestation from waggle")
 		}
 		return res
+	}
+	if errors.Is(err, errAttestationSeen) {
+		return pubsub.ValidationAccept
 	}
 	if err := s.committeeIndexBeaconAttestationSubscriber(ctx, attForPool); err != nil {
 		log.WithError(err).Error("Could not save attestation from waggle")

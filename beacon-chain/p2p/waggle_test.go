@@ -137,7 +137,7 @@ func TestWaggleMessage(t *testing.T) {
 		in := waggleMessage{
 			Slot:     5,
 			Bundle:   bundle(5, 10, 20),
-			Metadata: &ethpb.CommitteeAttestationPartsMetadata{CommitteeIndex: 1, Available: []uint64{10, 20}, Requests: []uint64{30}},
+			Metadata: &ethpb.CommitteeAttestationPartsMetadata{CommitteeIndex: 1, DataRoot: make([]byte, 32), Available: []uint64{10, 20}, Requests: []uint64{30}},
 		}
 		out, err := decodeWaggleMessage(encode(t, in))
 		require.NoError(t, err)
@@ -147,7 +147,7 @@ func TestWaggleMessage(t *testing.T) {
 	})
 
 	t.Run("metadata only", func(t *testing.T) {
-		in := waggleMessage{Slot: 5, Metadata: &ethpb.CommitteeAttestationPartsMetadata{Available: []uint64{1}, Requests: []uint64{}}}
+		in := waggleMessage{Slot: 5, Metadata: &ethpb.CommitteeAttestationPartsMetadata{DataRoot: make([]byte, 32), Available: []uint64{1}, Requests: []uint64{}}}
 		out, err := decodeWaggleMessage(encode(t, in))
 		require.NoError(t, err)
 		assert.Equal(t, true, out.Bundle == nil)

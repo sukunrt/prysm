@@ -457,6 +457,44 @@ func TestService_validateCommitteeIndexBeaconAttestationElectra(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("allowSeen validates a second vote", func(t *testing.T) {
+		helpers.ClearCache()
+		v := committee[1]
+		vote := func(source byte, sign bool) *ethpb.SingleAttestation {
+			data := &ethpb.AttestationData{
+				BeaconBlockRoot: validBlockRoot[:],
+				Slot:            s.cfg.clock.CurrentSlot(),
+				Target:          &ethpb.Checkpoint{Epoch: s.cfg.clock.CurrentEpoch(), Root: validBlockRoot[:]},
+				Source:          &ethpb.Checkpoint{Root: bytes.Repeat([]byte{source}, fieldparams.RootLength)},
+			}
+			domain, err := signing.Domain(savedState.Fork(), data.Target.Epoch, params.BeaconConfig().DomainBeaconAttester, savedState.GenesisValidatorsRoot())
+			require.NoError(t, err)
+			root, err := signing.ComputeSigningRoot(data, domain)
+			require.NoError(t, err)
+			key := keys[v]
+			if !sign {
+				key = keys[committee[0]]
+			}
+			return &ethpb.SingleAttestation{Data: data, AttesterIndex: v, Signature: key.Sign(root[:]).Marshal()}
+		}
+		topic := fmt.Sprintf("/eth2/%x/beacon_attestation_1", digest) + p.Encoding().ProtocolSuffix()
+
+		_, res, err := s.validateAttestation(ctx, "", vote(0, true), topic, false)
+		require.NoError(t, err)
+		require.Equal(t, pubsub.ValidationAccept, res)
+
+		_, res, _ = s.validateAttestation(ctx, "", vote(1, true), topic, false)
+		require.Equal(t, pubsub.ValidationIgnore, res)
+
+		att, res, err := s.validateAttestation(ctx, "", vote(1, true), topic, true)
+		require.ErrorIs(t, err, errAttestationSeen)
+		require.Equal(t, pubsub.ValidationAccept, res)
+		require.NotNil(t, att)
+
+		_, res, _ = s.validateAttestation(ctx, "", vote(2, false), topic, true)
+		require.Equal(t, pubsub.ValidationReject, res)
+	})
 }
 
 func TestService_setSeenUnaggregatedAtt(t *testing.T) {

@@ -164,6 +164,22 @@ func TestWaggleAttTopic(t *testing.T) {
 		require.Equal(t, 1, c.rec.count(4))
 	})
 
+	t.Run("propagates double votes", func(t *testing.T) {
+		cfg := DefaultWaggleAttConfig()
+		a, b, c := newWaggleTestNode(t, cfg, false), newWaggleTestNode(t, cfg, false), newWaggleTestNode(t, cfg, false)
+		connectWaggleNodes(t, a, b)
+		connectWaggleNodes(t, b, c)
+
+		for i := range maxVotesPerValidator + 1 {
+			att := testSingleAttestation(6)
+			att.Data.BeaconBlockRoot = bytes.Repeat([]byte{byte(i + 1)}, fieldparams.RootLength)
+			a.att.Submit(testWaggleTopic(), att)
+		}
+		require.Eventually(t, func() bool { return c.rec.count(6) == maxVotesPerValidator }, 5*time.Second, 10*time.Millisecond)
+		time.Sleep(300 * time.Millisecond)
+		require.Equal(t, maxVotesPerValidator, c.rec.count(6))
+	})
+
 	t.Run("does not forward invalid attestations", func(t *testing.T) {
 		cfg := DefaultWaggleAttConfig()
 		a, b, c := newWaggleTestNode(t, cfg, false), newWaggleTestNode(t, cfg, true), newWaggleTestNode(t, cfg, false)
@@ -206,14 +222,14 @@ func TestWaggleAttTopicExpiry(t *testing.T) {
 		tp := newWaggleAttTopic("t", cfg, genesisAt(testWaggleSlot, 0), nil)
 		old, cur := prevEpochStart-1, prevEpochStart
 		p1, p2 := peer.ID("p1"), peer.ID("p2")
-		tp.slot(old).peer(p1).markKnown(1)
-		tp.slot(cur).peer(p2).markKnown(1)
+		tp.slot(old).peer(p1).markKnown(vote{v: 1})
+		tp.slot(cur).peer(p2).markKnown(vote{v: 1})
 		tp.outbox[p1] = []waggleMessage{{Slot: old}}
 		tp.outbox[p2] = []waggleMessage{{Slot: old}, {Slot: cur}}
 
 		tp.prune()
 		require.Equal(t, 1, len(tp.slots))
-		require.Equal(t, true, tp.slots[cur].peerHas(p2, 1))
+		require.Equal(t, true, tp.slots[cur].peerHas(p2, vote{v: 1}))
 		require.Equal(t, 1, len(tp.outbox))
 		require.Equal(t, 1, len(tp.outbox[p2]))
 		require.Equal(t, cur, tp.outbox[p2][0].Slot)
@@ -237,7 +253,7 @@ func TestAvailableDelta(t *testing.T) {
 
 	t.Run("each validator once", func(t *testing.T) {
 		s := tp.slot(testWaggleSlot)
-		ps := &slotPeer{known: map[primitives.ValidatorIndex]struct{}{2: {}}}
+		ps := &slotPeer{known: map[vote]struct{}{{v: 2}: {}}}
 		add(s, 0, 1)
 		add(s, 0, 2)
 		add(s, 1, 3)
@@ -256,7 +272,7 @@ func TestAvailableDelta(t *testing.T) {
 		s.added[0] = time.Now().Add(-advertWindow - time.Second)
 		s.age(time.Now())
 		require.Equal(t, 1, s.head)
-		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {2}}, ids(availableDelta(testWaggleSlot+2, s, &slotPeer{known: map[primitives.ValidatorIndex]struct{}{}})))
+		require.DeepEqual(t, map[primitives.CommitteeIndex][]uint64{0: {2}}, ids(availableDelta(testWaggleSlot+2, s, &slotPeer{known: map[vote]struct{}{}})))
 	})
 
 	t.Run("splits long lists", func(t *testing.T) {
@@ -264,7 +280,7 @@ func TestAvailableDelta(t *testing.T) {
 		for v := range primitives.ValidatorIndex(maxIndicesPerMetadata + 1) {
 			add(s, 0, v)
 		}
-		msgs := availableDelta(testWaggleSlot+1, s, &slotPeer{known: map[primitives.ValidatorIndex]struct{}{}})
+		msgs := availableDelta(testWaggleSlot+1, s, &slotPeer{known: map[vote]struct{}{}})
 		require.Equal(t, 2, len(msgs))
 		require.Equal(t, maxIndicesPerMetadata, len(msgs[0].Metadata.Available))
 		require.Equal(t, 1, len(msgs[1].Metadata.Available))
@@ -276,9 +292,10 @@ func TestSlotAttestationsAge(t *testing.T) {
 	s := tp.slot(testWaggleSlot)
 	p := peer.ID("p")
 	root := [32]byte{1}
+	vt := func(v primitives.ValidatorIndex) vote { return vote{root: root, v: v} }
 	for v := range primitives.ValidatorIndex(3) {
 		s.store(root, testSingleAttestation(v))
-		s.peer(p).markKnown(v)
+		s.peer(p).markKnown(vt(v))
 	}
 	now := time.Now()
 	s.added[0] = now.Add(-tombstoneAfter - time.Second)
@@ -287,12 +304,12 @@ func TestSlotAttestationsAge(t *testing.T) {
 
 	require.Equal(t, 2, s.head)
 	require.Equal(t, 1, s.cold)
-	require.Equal(t, true, s.has(0))
-	_, hot := s.validators[0]
+	require.Equal(t, true, s.has(vt(0)))
+	_, hot := s.votes[vt(0)]
 	require.Equal(t, false, hot)
-	require.Equal(t, false, s.peerHas(p, 0))
-	require.Equal(t, true, s.peerHas(p, 1))
-	require.DeepEqual(t, []primitives.ValidatorIndex{1, 2}, s.pending)
+	require.Equal(t, false, s.peerHas(p, vt(0)))
+	require.Equal(t, true, s.peerHas(p, vt(1)))
+	require.DeepEqual(t, []vote{vt(1), vt(2)}, s.pending)
 	key := bundleKey{dataRoot: root}
 	_, ok := s.bundles[key].sigs[0]
 	require.Equal(t, false, ok)
@@ -313,10 +330,10 @@ func TestSlotAttestationsAge(t *testing.T) {
 	t.Run("accept removes the seen key", func(t *testing.T) {
 		att := testSingleAttestation(7)
 		s.seen[attestationKey(root, att.CommitteeId, 7, att.Signature)] = &seenEntry{senders: []peer.ID{"p"}}
-		s.queued[7] = 1
+		s.queued[vt(7)] = 1
 		tp.handleValResult(valResult{dataRoot: root, att: att, res: pubsub.ValidationAccept})
 		require.Equal(t, 0, len(s.seen))
-		require.Equal(t, true, s.has(7))
+		require.Equal(t, true, s.has(vt(7)))
 	})
 }
 
@@ -345,4 +362,43 @@ func TestWaggleSeenSenders(t *testing.T) {
 	tp.handleBundle(t.Context(), p3, testWaggleSlot, b, root)
 	require.Equal(t, 1, len(jobs))
 	require.DeepEqual(t, []peer.ID{p1, p2, p3}, s.seen[key].senders)
+}
+
+func TestWaggleDoubleVotes(t *testing.T) {
+	var jobs []valJob
+	validate := func(j valJob) bool {
+		jobs = append(jobs, j)
+		return true
+	}
+	tp := newWaggleAttTopic("t", DefaultWaggleAttConfig(), genesisAt(testWaggleSlot, 0), validate)
+	s := tp.slot(testWaggleSlot)
+	roots := [][32]byte{{1}, {2}, {3}, {4}}
+	att := testSingleAttestation(1)
+
+	require.Equal(t, true, s.store(roots[0], att))
+	require.Equal(t, true, s.store(roots[1], att))
+	require.Equal(t, false, s.store(roots[2], att))
+	require.Equal(t, true, s.full(1))
+	require.Equal(t, 2, len(s.order))
+
+	t.Run("lists per data root", func(t *testing.T) {
+		msgs := availableDelta(testWaggleSlot, s, &slotPeer{known: map[vote]struct{}{}})
+		require.Equal(t, 2, len(msgs))
+		for i, m := range msgs {
+			require.DeepEqual(t, roots[i][:], m.Metadata.DataRoot)
+			require.DeepEqual(t, []uint64{1}, m.Metadata.Available)
+		}
+	})
+
+	t.Run("full validator is not validated or requested", func(t *testing.T) {
+		b := &ethpb.AttestationBundle{AttestationData: att.Data, AttesterIndices: []uint64{1}, Signatures: [][]byte{att.Signature}}
+		tp.handleBundle(t.Context(), "p", testWaggleSlot, b, roots[2])
+		require.Equal(t, 0, len(jobs))
+
+		tp.handleMetadata("p", testWaggleSlot, &ethpb.CommitteeAttestationPartsMetadata{DataRoot: roots[3][:], Available: []uint64{1, 2}})
+		require.Equal(t, 1, len(tp.outbox["p"]))
+		md := tp.outbox["p"][0].Metadata
+		require.DeepEqual(t, roots[3][:], md.DataRoot)
+		require.DeepEqual(t, []uint64{2}, md.Requests)
+	})
 }

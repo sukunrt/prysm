@@ -72,7 +72,7 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 	if !ok {
 		return pubsub.ValidationReject, errWrongMessage
 	}
-	attForPipeline, res, err := s.validateAttestation(ctx, pid, att, *msg.Topic)
+	attForPipeline, res, err := s.validateAttestation(ctx, pid, att, *msg.Topic, false)
 	if res != pubsub.ValidationAccept {
 		return res, err
 	}
@@ -86,12 +86,15 @@ func (s *Service) validateCommitteeIndexBeaconAttestation(
 }
 
 // validateAttestation runs the gossip validation of a decoded unaggregated attestation from
-// pid on topic. On accept, it returns the attestation for the pipeline.
+// pid on topic. On accept, it returns the attestation for the pipeline. If allowSeen, an
+// attestation of an already seen (slot, committee, validator) is validated in full; on accept it
+// returns errAttestationSeen with ValidationAccept.
 func (s *Service) validateAttestation(
 	ctx context.Context,
 	pid peer.ID,
 	att eth.Att,
 	topic string,
+	allowSeen bool,
 ) (eth.Att, pubsub.ValidationResult, error) {
 	ctx, span := trace.StartSpan(ctx, "sync.validateAttestation")
 	defer span.End()
@@ -129,7 +132,7 @@ func (s *Service) validateAttestation(
 	if !s.slasherEnabled {
 		// Verify this the first attestation received for the participating validator for the slot. This verification is here to return early if we've already seen this attestation.
 		// This verification is carried again later after all other validations to avoid TOCTOU issues.
-		if s.hasSeenUnaggregatedAtt(attKey) {
+		if !allowSeen && s.hasSeenUnaggregatedAtt(attKey) {
 			return nil, pubsub.ValidationIgnore, nil
 		}
 		// Reject an attestation if it references an invalid block.
@@ -253,6 +256,9 @@ func (s *Service) validateAttestation(
 	})
 
 	if first := s.setSeenUnaggregatedAtt(attKey); !first {
+		if allowSeen {
+			return attForValidation, pubsub.ValidationAccept, errAttestationSeen
+		}
 		// Another concurrent validation processed the same attestation meanwhile
 		return nil, pubsub.ValidationIgnore, nil
 	}
