@@ -148,8 +148,8 @@ type waggleBundle struct {
 	sigs map[primitives.ValidatorIndex][]byte
 }
 
-// slotAttestations holds all the state of one slot. It expires when the attestations of the slot
-// are no longer valid for gossip.
+// slotAttestations holds our set of votes for one slot and the reconciliation state with each
+// peer. It expires when the attestations of the slot are no longer valid for gossip.
 type slotAttestations struct {
 	// seen is the dedup before validation. The key includes the data and the signature. It holds
 	// the keys in validation and the keys that did not pass. votes and tombstones dedup the
@@ -230,10 +230,11 @@ func (s *slotAttestations) peerHas(p peer.ID, vt vote) bool {
 
 // slotPeer is our view of one peer in one slot.
 type slotPeer struct {
-	// known holds the votes that the peer has: sent by us, sent to us, or in its available list.
+	// known is our view of the peer's set: the votes sent by us, sent to us, or in its
+	// available lists.
 	known map[vote]struct{}
-	// told is the part of the slot order that our available lists to the peer cover. Lists start
-	// at max(head, told).
+	// told is the peer's view of our set: the part of the slot order that our available lists
+	// to the peer cover. Lists start at max(head, told).
 	told int
 }
 
@@ -268,6 +269,30 @@ type want struct {
 }
 
 // waggleAttTopic runs EIP-8334 on one attestation subnet topic. The run loop owns all state.
+//
+// Logically, the topic reconciles its set of votes with all its peers, for each live slot:
+//
+//   - Universe: <committee-defining state, committee>. The state of the target checkpoint fixes
+//     the shuffling, so it fixes the committee members. A slot normally has one such state;
+//     forks can add more.
+//   - Elements: one vote for each committee member, identified by (data root, validator). A
+//     second, different vote of a member is a double vote. We keep and send at most
+//     maxVotesPerValidator votes of a member, so that the slashers get the evidence.
+//
+// The reconciliation has three parts:
+//
+//   - Push (push, pushTo): a new vote goes at once to PushPeers peers that do not have it.
+//   - Announce (sendMetadata, availableDelta): this is a full-set exchange, made cheap. Each
+//     peer gets the IDs of our votes as a delta: each vote once (slotPeer.told), only in
+//     advertWindow after the vote arrives, and not if the peer has it (slotPeer.known). A peer
+//     that we do not reach in advertWindow does not get these IDs from us, but it can get the
+//     votes by push or from other peers.
+//   - Difference (handleMetadata, request, serve, expireRequests): the receiver requests the
+//     announced votes that it does not have, and the sender serves them. Each side runs the
+//     same loop, so the difference goes in both directions.
+//
+// The lists are per (committee, data root). This key is finer than the universe: votes with
+// different data roots and the same committee-defining state have the same committee members.
 type waggleAttTopic struct {
 	name    string
 	topic   *waggle.Topic
