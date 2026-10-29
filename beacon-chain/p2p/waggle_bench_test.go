@@ -96,7 +96,10 @@ func BenchmarkWaggleAvailableLists(b *testing.B) {
 	b.ResetTimer()
 	p := peer.ID("p")
 	for range b.N {
-		tp.availableLists(s, nil, func(k bundleKey, ids []uint64) { tp.sendList(p, testWaggleSlot, k, ids, nil) })
+		tp.lists(tp.availableVotes(s, nil), func(root [32]byte, ids []uint64) bool {
+			tp.sendList(p, testWaggleSlot, s, root, ids, nil)
+			return true
+		})
 	}
 }
 
@@ -120,6 +123,7 @@ func BenchmarkWaggleDecode(b *testing.B) {
 
 func BenchmarkWaggleHandleMetadata(b *testing.B) {
 	tp := benchTopic(b, DefaultWaggleAttConfig(), nil)
+	tp.slot(testWaggleSlot).store([32]byte{}, testSingleAttestation(0))
 	available := make([]uint64, benchVotes)
 	md := &ethpb.CommitteeAttestationPartsMetadata{DataRoot: make([]byte, fieldparams.RootLength), Available: available}
 	b.ReportAllocs()
